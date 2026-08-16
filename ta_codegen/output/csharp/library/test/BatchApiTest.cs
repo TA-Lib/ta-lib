@@ -368,6 +368,83 @@ public static class BatchApiTest
     }
 
     /// <summary>Runs every case; returns 0 on success, 1 on any failure.</summary>
+    /// <summary>Overlapping buffers are rejected; whole-buffer in-place is not.</summary>
+    /// <remarks>
+    /// <para>Spans made partial overlap expressible — <c>double[]</c> could not, because two
+    /// arrays are identical or disjoint with nothing in between. Equality is therefore no
+    /// longer a complete distinctness test, and several transcribed bodies branch on series
+    /// identity as ALGORITHM (BBANDS elects its scratch that way), so a partial overlap makes
+    /// them write through their own input and return Success with wrong values.</para>
+    /// <para>No cross-language gate can see this: every aliasing probe in the tree passes
+    /// whole, identical buffers, where equality and overlap behave alike. This suite is the
+    /// only place it is checked.</para>
+    /// </remarks>
+    private static void OverlappingBuffersAreRejected()
+    {
+        var core = new Core();
+        const int n = 64;
+        double[] src = Closes(n);
+        var big = new double[n + 40];
+
+        // Two outputs offset within one buffer.
+        CheckThrows<ArgumentException>(
+            () => core.BBANDS(0, n - 1, src, 5, 2.0, 2.0, MAType.SMA,
+                              big.AsSpan(0, n), big.AsSpan(10, n), big.AsSpan(n + 12, 4)),
+            "outputs overlapping at an offset are rejected");
+
+        // Same start, DIFFERENT length: the same memory, which an equality test
+        // reads as not-equal. This is the case that motivated the fix.
+        CheckThrows<ArgumentException>(
+            () => core.BBANDS(0, n - 1, src, 5, 2.0, 2.0, MAType.SMA,
+                              big.AsSpan(0, n), big.AsSpan(0, n + 1), big.AsSpan(n + 12, 4)),
+            "outputs sharing a start but differing in length are rejected");
+
+        // An output partially overlapping an INPUT.
+        var buf = new double[n + 40];
+        Array.Copy(src, buf, n);
+        CheckThrows<ArgumentException>(
+            () => core.BBANDS(0, n - 1, buf.AsSpan(0, n), 5, 2.0, 2.0, MAType.SMA,
+                              buf.AsSpan(20, n), new double[n], new double[n]),
+            "an output partially overlapping an input is rejected");
+
+        // ...and the same for a single-output function, through MAVP's in-place defence.
+        var per = new double[n];
+        for (int i = 0; i < n; i++)
+        {
+            per[i] = 5 + (i % 10);
+        }
+        var mbuf = new double[n + 40];
+        Array.Copy(src, mbuf, n);
+        CheckThrows<ArgumentException>(
+            () => core.MAVP(0, n - 1, mbuf.AsSpan(0, n), per, 2, 20, MAType.SMA, mbuf.AsSpan(15, n)),
+            "MAVP rejects a partially overlapping output");
+
+        // THE OTHER HALF: whole-buffer in-place must still work, and still be
+        // correct. Rejecting it would break callers the bodies were written for.
+        var inplace = (double[])src.Clone();
+        var reference = new double[n];
+        core.SMA(0, n - 1, src, 5, reference);
+        OutRange r = core.SMA(0, n - 1, inplace, 5, inplace);
+        Check(r.Count > 0, "whole-buffer in-place is still accepted");
+
+        bool same = true;
+        for (int i = 0; i < r.Count; i++)
+        {
+            if (BitConverter.DoubleToInt64Bits(inplace[i]) != BitConverter.DoubleToInt64Bits(reference[i]))
+            {
+                same = false;
+            }
+        }
+        Check(same, "in-place SMA is bit-identical to the disjoint call");
+
+        // And a disjoint multi-output call is untouched by the guard.
+        var o1 = new double[n];
+        var o2 = new double[n];
+        var o3 = new double[n];
+        OutRange rb = core.BBANDS(0, n - 1, src, 5, 2.0, 2.0, MAType.SMA, o1, o2, o3);
+        Check(rb.Count > 0, "disjoint outputs still produce values");
+    }
+
     public static int Run()
     {
         MaxWithKnownOutputs();
@@ -375,6 +452,7 @@ public static class BatchApiTest
         CmoLeavesTheTailUntouched();
         ShortRangeIsAnEmptySuccessNotAnException();
         MisuseThrowsTheDocumentedException();
+        OverlappingBuffersAreRejected();
         NoUnguardedTierOnThePublicSurface();
         FloatOverloadHasTheSameShape();
         OutRangeValueSemantics();

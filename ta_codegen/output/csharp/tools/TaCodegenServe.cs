@@ -1141,6 +1141,26 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 2 aliases output 0 */ }
                 try { _ = c2.ACCBANDS_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0, f1, f1); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 2 aliases output 1 */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.ACCBANDS_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0.AsSpan(0, svN - 1), f0.AsSpan(1, svN - 1), f2); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (offset) */ }
+                try { _ = c2.ACCBANDS_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0.AsSpan(0, svN - 1), f0.AsSpan(0, svN), f2); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
+                try { _ = c2.ACCBANDS_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0.AsSpan(0, svN - 1), f1, f0.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/2 partially overlap (offset) */ }
+                try { _ = c2.ACCBANDS_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0.AsSpan(0, svN - 1), f1, f0.AsSpan(0, svN)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/2 partially overlap (same start, longer) */ }
+                try { _ = c2.ACCBANDS_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0, f1.AsSpan(0, svN - 1), f1.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 1/2 partially overlap (offset) */ }
+                try { _ = c2.ACCBANDS_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0, f1.AsSpan(0, svN - 1), f1.AsSpan(0, svN)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 1/2 partially overlap (same start, longer) */ }
+                try { _ = c2.ACCBANDS_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h.AsSpan(1, svN - 1), f1, f2); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
+                try { _ = c2.ACCBANDS_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0, fz_h.AsSpan(1, svN - 1), f2); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
+                try { _ = c2.ACCBANDS_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0, f1, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 2 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -1165,6 +1185,7 @@ public class TaCodegenServe {
                         if (SvBne(pk.RealUpperBand, up.RealUpperBand)) peekAll = false;
                         if (SvBne(pk.RealMiddleBand, up.RealMiddleBand)) peekAll = false;
                         if (SvBne(pk.RealLowerBand, up.RealLowerBand)) peekAll = false;
+                        _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         Core.ACCBANDS_Value vc = st.Value;
                         if (SvBne(vc.RealUpperBand, up.RealUpperBand)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvBne(vc.RealMiddleBand, up.RealMiddleBand)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
@@ -1294,6 +1315,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.ACOS_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.ACOS_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -1314,6 +1339,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -1432,6 +1458,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
                 try { _ = c2.AD_OpenAndFill(fz_h, fz_l, fz_c, fz_v, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inVolume */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.AD_OpenAndFill(fz_h, fz_l, fz_c, fz_v, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -1452,6 +1482,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
                         double up = st.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], fz_v[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -1566,6 +1597,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal0 */ }
                 try { _ = c2.ADD_OpenAndFill(fz_c, fz_v, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal1 */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.ADD_OpenAndFill(fz_c, fz_v, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -1586,6 +1621,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t], fz_v[t]);
                         double up = st.Update(fz_c[t], fz_v[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -1707,6 +1743,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
                 try { _ = c2.ADOSC_OpenAndFill(fz_h, fz_l, fz_c, fz_v, optInFastPeriod, optInSlowPeriod, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inVolume */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.ADOSC_OpenAndFill(fz_h, fz_l, fz_c, fz_v, optInFastPeriod, optInSlowPeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -1727,6 +1767,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
                         double up = st.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], fz_v[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -1852,6 +1893,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.ADX_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.ADX_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -1872,6 +1917,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                         double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -1997,6 +2043,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.ADXR_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.ADXR_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -2017,6 +2067,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                         double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -2156,6 +2207,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.APO_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.APO_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -2176,6 +2231,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -2309,6 +2365,16 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 1 aliases input inLow */ }
                 try { _ = c2.AROON_OpenAndFill(fz_h, fz_l, optInTimePeriod, f0, f0); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 aliases output 0 */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.AROON_OpenAndFill(fz_h, fz_l, optInTimePeriod, f0.AsSpan(0, svN - 1), f0.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (offset) */ }
+                try { _ = c2.AROON_OpenAndFill(fz_h, fz_l, optInTimePeriod, f0.AsSpan(0, svN - 1), f0.AsSpan(0, svN)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
+                try { _ = c2.AROON_OpenAndFill(fz_h, fz_l, optInTimePeriod, fz_h.AsSpan(1, svN - 1), f1); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
+                try { _ = c2.AROON_OpenAndFill(fz_h, fz_l, optInTimePeriod, f0, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -2331,6 +2397,7 @@ public class TaCodegenServe {
                         Core.AROON_Value up = st.Update(fz_h[t], fz_l[t]);
                         if (SvBne(pk.AroonDown, up.AroonDown)) peekAll = false;
                         if (SvBne(pk.AroonUp, up.AroonUp)) peekAll = false;
+                        _ = st.Peek(fz_h[t - 1], fz_l[t - 1]);
                         Core.AROON_Value vc = st.Value;
                         if (SvBne(vc.AroonDown, up.AroonDown)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvBne(vc.AroonUp, up.AroonUp)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
@@ -2458,6 +2525,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inHigh */ }
                 try { _ = c2.AROONOSC_OpenAndFill(fz_h, fz_l, optInTimePeriod, fz_l); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.AROONOSC_OpenAndFill(fz_h, fz_l, optInTimePeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -2478,6 +2549,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_h[t], fz_l[t]);
                         double up = st.Update(fz_h[t], fz_l[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_h[t - 1], fz_l[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -2597,6 +2669,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.ASIN_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.ASIN_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -2617,6 +2693,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -2729,6 +2806,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.ATAN_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.ATAN_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -2749,6 +2830,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -2867,6 +2949,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.ATR_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.ATR_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -2887,6 +2973,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                         double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -3007,6 +3094,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.AVGDEV_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.AVGDEV_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -3027,6 +3118,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -3152,6 +3244,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.AVGPRICE_OpenAndFill(fz_o, fz_h, fz_l, fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.AVGPRICE_OpenAndFill(fz_o, fz_h, fz_l, fz_c, fz_o.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -3172,6 +3268,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         double up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -3329,6 +3426,26 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 2 aliases output 0 */ }
                 try { _ = c2.BBANDS_OpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0, f1, f1); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 2 aliases output 1 */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.BBANDS_OpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0.AsSpan(0, svN - 1), f0.AsSpan(1, svN - 1), f2); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (offset) */ }
+                try { _ = c2.BBANDS_OpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0.AsSpan(0, svN - 1), f0.AsSpan(0, svN), f2); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
+                try { _ = c2.BBANDS_OpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0.AsSpan(0, svN - 1), f1, f0.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/2 partially overlap (offset) */ }
+                try { _ = c2.BBANDS_OpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0.AsSpan(0, svN - 1), f1, f0.AsSpan(0, svN)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/2 partially overlap (same start, longer) */ }
+                try { _ = c2.BBANDS_OpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0, f1.AsSpan(0, svN - 1), f1.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 1/2 partially overlap (offset) */ }
+                try { _ = c2.BBANDS_OpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0, f1.AsSpan(0, svN - 1), f1.AsSpan(0, svN)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 1/2 partially overlap (same start, longer) */ }
+                try { _ = c2.BBANDS_OpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, fz_c.AsSpan(1, svN - 1), f1, f2); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
+                try { _ = c2.BBANDS_OpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0, fz_c.AsSpan(1, svN - 1), f2); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
+                try { _ = c2.BBANDS_OpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0, f1, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 2 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -3353,6 +3470,7 @@ public class TaCodegenServe {
                         if (SvBne(pk.RealUpperBand, up.RealUpperBand)) peekAll = false;
                         if (SvBne(pk.RealMiddleBand, up.RealMiddleBand)) peekAll = false;
                         if (SvBne(pk.RealLowerBand, up.RealLowerBand)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         Core.BBANDS_Value vc = st.Value;
                         if (SvBne(vc.RealUpperBand, up.RealUpperBand)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvBne(vc.RealMiddleBand, up.RealMiddleBand)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
@@ -3485,6 +3603,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal0 */ }
                 try { _ = c2.BETA_OpenAndFill(fz_c, fz_v, optInTimePeriod, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal1 */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.BETA_OpenAndFill(fz_c, fz_v, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -3505,6 +3627,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t], fz_v[t]);
                         double up = st.Update(fz_c[t], fz_v[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -3630,6 +3753,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.BOP_OpenAndFill(fz_o, fz_h, fz_l, fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.BOP_OpenAndFill(fz_o, fz_h, fz_l, fz_c, fz_o.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -3650,6 +3777,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         double up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -3767,6 +3895,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.CCI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.CCI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -3787,6 +3919,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                         double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -3911,6 +4044,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -3931,6 +4066,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -4073,6 +4209,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -4093,6 +4231,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -4235,6 +4374,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -4255,6 +4396,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -4397,6 +4539,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -4417,6 +4561,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -4559,6 +4704,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -4579,6 +4726,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -4721,6 +4869,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -4741,6 +4891,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -4883,6 +5034,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -4903,6 +5056,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -5046,6 +5200,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -5066,6 +5222,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -5208,6 +5365,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -5228,6 +5387,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -5370,6 +5530,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -5390,6 +5552,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -5532,6 +5695,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -5552,6 +5717,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -5694,6 +5860,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -5714,6 +5882,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -5856,6 +6025,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -5876,6 +6047,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -6018,6 +6190,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -6038,6 +6212,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -6181,6 +6356,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -6201,6 +6378,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -6343,6 +6521,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -6363,6 +6543,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -6505,6 +6686,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -6525,6 +6708,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -6667,6 +6851,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -6687,6 +6873,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -6829,6 +7016,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -6849,6 +7038,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -6992,6 +7182,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -7012,6 +7204,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -7155,6 +7348,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -7175,6 +7370,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -7317,6 +7513,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -7337,6 +7535,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -7479,6 +7678,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -7499,6 +7700,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -7641,6 +7843,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -7661,6 +7865,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -7803,6 +8008,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -7823,6 +8030,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -7965,6 +8173,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -7985,6 +8195,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -8127,6 +8338,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -8147,6 +8360,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -8289,6 +8503,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -8309,6 +8525,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -8451,6 +8668,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -8471,6 +8690,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -8613,6 +8833,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -8633,6 +8855,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -8775,6 +8998,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -8795,6 +9020,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -8937,6 +9163,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -8957,6 +9185,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -9099,6 +9328,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -9119,6 +9350,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -9261,6 +9493,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -9281,6 +9515,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -9423,6 +9658,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -9443,6 +9680,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -9585,6 +9823,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -9605,6 +9845,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -9747,6 +9988,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -9767,6 +10010,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -9909,6 +10153,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -9929,6 +10175,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -10071,6 +10318,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -10091,6 +10340,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -10233,6 +10483,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -10253,6 +10505,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -10395,6 +10648,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -10415,6 +10670,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -10558,6 +10814,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -10578,6 +10836,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -10721,6 +10980,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -10741,6 +11002,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -10884,6 +11146,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -10904,6 +11168,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -11046,6 +11311,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -11066,6 +11333,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -11208,6 +11476,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -11228,6 +11498,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -11370,6 +11641,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -11390,6 +11663,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -11532,6 +11806,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -11552,6 +11828,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -11694,6 +11971,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -11714,6 +11993,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -11856,6 +12136,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -11876,6 +12158,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -12018,6 +12301,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -12038,6 +12323,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -12180,6 +12466,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -12200,6 +12488,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -12342,6 +12631,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -12362,6 +12653,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -12504,6 +12796,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -12524,6 +12818,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -12666,6 +12961,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -12686,6 +12983,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -12828,6 +13126,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -12848,6 +13148,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -12990,6 +13291,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -13010,6 +13313,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -13152,6 +13456,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -13172,6 +13478,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -13314,6 +13621,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -13334,6 +13643,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -13476,6 +13786,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -13496,6 +13808,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -13638,6 +13951,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -13658,6 +13973,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         int up = st.Update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -13795,6 +14111,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.CEIL_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.CEIL_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -13815,6 +14135,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -13934,6 +14255,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
                 try { _ = c2.CMF_OpenAndFill(fz_h, fz_l, fz_c, fz_v, optInTimePeriod, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inVolume */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.CMF_OpenAndFill(fz_h, fz_l, fz_c, fz_v, optInTimePeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -13954,6 +14279,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
                         double up = st.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], fz_v[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -14075,6 +14401,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.CMO_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.CMO_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = (svCompat == 1) ? 1 : 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -14095,6 +14425,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -14215,6 +14546,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.CMOU_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.CMOU_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -14235,6 +14570,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -14357,6 +14693,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal0 */ }
                 try { _ = c2.CORREL_OpenAndFill(fz_c, fz_v, optInTimePeriod, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal1 */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.CORREL_OpenAndFill(fz_c, fz_v, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -14377,6 +14717,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t], fz_v[t]);
                         double up = st.Update(fz_c[t], fz_v[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -14496,6 +14837,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.COS_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.COS_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -14516,6 +14861,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -14628,6 +14974,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.COSH_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.COSH_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -14648,6 +14998,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -14762,6 +15113,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.DEMA_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.DEMA_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -14782,6 +15137,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -14903,6 +15259,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal0 */ }
                 try { _ = c2.DIV_OpenAndFill(fz_c, fz_v, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal1 */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.DIV_OpenAndFill(fz_c, fz_v, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -14923,6 +15283,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t], fz_v[t]);
                         double up = st.Update(fz_c[t], fz_v[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -15041,6 +15402,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.DX_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.DX_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -15061,6 +15426,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                         double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -15183,6 +15549,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
                 try { _ = c2.EFI_OpenAndFill(fz_c, fz_v, optInTimePeriod, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inVolume */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.EFI_OpenAndFill(fz_c, fz_v, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -15203,6 +15573,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t], fz_v[t]);
                         double up = st.Update(fz_c[t], fz_v[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -15324,6 +15695,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.EMA_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.EMA_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -15344,6 +15719,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -15463,6 +15839,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.EXP_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.EXP_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -15483,6 +15863,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -15595,6 +15976,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.FLOOR_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.FLOOR_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -15615,6 +16000,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -15728,6 +16114,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.HMA_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.HMA_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -15748,6 +16138,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -15868,6 +16259,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.HT_DCPERIOD_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.HT_DCPERIOD_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -15888,6 +16283,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -16001,6 +16397,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.HT_DCPHASE_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.HT_DCPHASE_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -16021,6 +16421,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -16143,6 +16544,16 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 1 aliases input inReal */ }
                 try { _ = c2.HT_PHASOR_OpenAndFill(fz_c, f0, f0); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 aliases output 0 */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.HT_PHASOR_OpenAndFill(fz_c, f0.AsSpan(0, svN - 1), f0.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (offset) */ }
+                try { _ = c2.HT_PHASOR_OpenAndFill(fz_c, f0.AsSpan(0, svN - 1), f0.AsSpan(0, svN)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
+                try { _ = c2.HT_PHASOR_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1), f1); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
+                try { _ = c2.HT_PHASOR_OpenAndFill(fz_c, f0, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -16165,6 +16576,7 @@ public class TaCodegenServe {
                         Core.HT_PHASOR_Value up = st.Update(fz_c[t]);
                         if (SvBne(pk.InPhase, up.InPhase)) peekAll = false;
                         if (SvBne(pk.Quadrature, up.Quadrature)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         Core.HT_PHASOR_Value vc = st.Value;
                         if (SvBne(vc.InPhase, up.InPhase)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvBne(vc.Quadrature, up.Quadrature)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
@@ -16291,6 +16703,16 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 1 aliases input inReal */ }
                 try { _ = c2.HT_SINE_OpenAndFill(fz_c, f0, f0); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 aliases output 0 */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.HT_SINE_OpenAndFill(fz_c, f0.AsSpan(0, svN - 1), f0.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (offset) */ }
+                try { _ = c2.HT_SINE_OpenAndFill(fz_c, f0.AsSpan(0, svN - 1), f0.AsSpan(0, svN)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
+                try { _ = c2.HT_SINE_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1), f1); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
+                try { _ = c2.HT_SINE_OpenAndFill(fz_c, f0, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -16313,6 +16735,7 @@ public class TaCodegenServe {
                         Core.HT_SINE_Value up = st.Update(fz_c[t]);
                         if (SvBne(pk.Sine, up.Sine)) peekAll = false;
                         if (SvBne(pk.LeadSine, up.LeadSine)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         Core.HT_SINE_Value vc = st.Value;
                         if (SvBne(vc.Sine, up.Sine)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvBne(vc.LeadSine, up.LeadSine)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
@@ -16430,6 +16853,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.HT_TRENDLINE_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.HT_TRENDLINE_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -16450,6 +16877,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -16561,6 +16989,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -16581,6 +17011,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_c[t]);
                         int up = st.Update(fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -16696,6 +17127,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inOpen */ }
                 try { _ = c2.IMI_OpenAndFill(fz_o, fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.IMI_OpenAndFill(fz_o, fz_c, optInTimePeriod, fz_o.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -16716,6 +17151,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_o[t], fz_c[t]);
                         double up = st.Update(fz_o[t], fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -16837,6 +17273,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.KAMA_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.KAMA_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -16857,6 +17297,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -16977,6 +17418,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.LINEARREG_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.LINEARREG_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -16997,6 +17442,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -17117,6 +17563,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.LINEARREG_ANGLE_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.LINEARREG_ANGLE_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -17137,6 +17587,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -17257,6 +17708,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.LINEARREG_INTERCEPT_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.LINEARREG_INTERCEPT_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -17277,6 +17732,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -17397,6 +17853,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.LINEARREG_SLOPE_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.LINEARREG_SLOPE_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -17417,6 +17877,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -17536,6 +17997,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.LN_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.LN_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -17556,6 +18021,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -17668,6 +18134,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.LOG10_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.LOG10_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -17688,6 +18158,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -17819,6 +18290,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.MA_OpenAndFill(fz_c, optInTimePeriod, optInMAType, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.MA_OpenAndFill(fz_c, optInTimePeriod, optInMAType, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -17839,6 +18314,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -17982,6 +18458,26 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 2 aliases output 0 */ }
                 try { _ = c2.MACD_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, f1, f1); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 2 aliases output 1 */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.MACD_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0.AsSpan(0, svN - 1), f0.AsSpan(1, svN - 1), f2); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (offset) */ }
+                try { _ = c2.MACD_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0.AsSpan(0, svN - 1), f0.AsSpan(0, svN), f2); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
+                try { _ = c2.MACD_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0.AsSpan(0, svN - 1), f1, f0.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/2 partially overlap (offset) */ }
+                try { _ = c2.MACD_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0.AsSpan(0, svN - 1), f1, f0.AsSpan(0, svN)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/2 partially overlap (same start, longer) */ }
+                try { _ = c2.MACD_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, f1.AsSpan(0, svN - 1), f1.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 1/2 partially overlap (offset) */ }
+                try { _ = c2.MACD_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, f1.AsSpan(0, svN - 1), f1.AsSpan(0, svN)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 1/2 partially overlap (same start, longer) */ }
+                try { _ = c2.MACD_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, fz_c.AsSpan(1, svN - 1), f1, f2); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
+                try { _ = c2.MACD_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, fz_c.AsSpan(1, svN - 1), f2); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
+                try { _ = c2.MACD_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, f1, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 2 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -18006,6 +18502,7 @@ public class TaCodegenServe {
                         if (SvBne(pk.MACD, up.MACD)) peekAll = false;
                         if (SvBne(pk.MACDSignal, up.MACDSignal)) peekAll = false;
                         if (SvBne(pk.MACDHist, up.MACDHist)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         Core.MACD_Value vc = st.Value;
                         if (SvBne(vc.MACD, up.MACD)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvBne(vc.MACDSignal, up.MACDSignal)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
@@ -18184,6 +18681,26 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 2 aliases output 0 */ }
                 try { _ = c2.MACDEXT_OpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, f0, f1, f1); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 2 aliases output 1 */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.MACDEXT_OpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, f0.AsSpan(0, svN - 1), f0.AsSpan(1, svN - 1), f2); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (offset) */ }
+                try { _ = c2.MACDEXT_OpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, f0.AsSpan(0, svN - 1), f0.AsSpan(0, svN), f2); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
+                try { _ = c2.MACDEXT_OpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, f0.AsSpan(0, svN - 1), f1, f0.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/2 partially overlap (offset) */ }
+                try { _ = c2.MACDEXT_OpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, f0.AsSpan(0, svN - 1), f1, f0.AsSpan(0, svN)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/2 partially overlap (same start, longer) */ }
+                try { _ = c2.MACDEXT_OpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, f0, f1.AsSpan(0, svN - 1), f1.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 1/2 partially overlap (offset) */ }
+                try { _ = c2.MACDEXT_OpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, f0, f1.AsSpan(0, svN - 1), f1.AsSpan(0, svN)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 1/2 partially overlap (same start, longer) */ }
+                try { _ = c2.MACDEXT_OpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, fz_c.AsSpan(1, svN - 1), f1, f2); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
+                try { _ = c2.MACDEXT_OpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, f0, fz_c.AsSpan(1, svN - 1), f2); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
+                try { _ = c2.MACDEXT_OpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, f0, f1, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 2 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -18208,6 +18725,7 @@ public class TaCodegenServe {
                         if (SvBne(pk.MACD, up.MACD)) peekAll = false;
                         if (SvBne(pk.MACDSignal, up.MACDSignal)) peekAll = false;
                         if (SvBne(pk.MACDHist, up.MACDHist)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         Core.MACDEXT_Value vc = st.Value;
                         if (SvBne(vc.MACD, up.MACD)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvBne(vc.MACDSignal, up.MACDSignal)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
@@ -18359,6 +18877,26 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 2 aliases output 0 */ }
                 try { _ = c2.MACDFIX_OpenAndFill(fz_c, optInSignalPeriod, f0, f1, f1); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 2 aliases output 1 */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.MACDFIX_OpenAndFill(fz_c, optInSignalPeriod, f0.AsSpan(0, svN - 1), f0.AsSpan(1, svN - 1), f2); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (offset) */ }
+                try { _ = c2.MACDFIX_OpenAndFill(fz_c, optInSignalPeriod, f0.AsSpan(0, svN - 1), f0.AsSpan(0, svN), f2); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
+                try { _ = c2.MACDFIX_OpenAndFill(fz_c, optInSignalPeriod, f0.AsSpan(0, svN - 1), f1, f0.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/2 partially overlap (offset) */ }
+                try { _ = c2.MACDFIX_OpenAndFill(fz_c, optInSignalPeriod, f0.AsSpan(0, svN - 1), f1, f0.AsSpan(0, svN)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/2 partially overlap (same start, longer) */ }
+                try { _ = c2.MACDFIX_OpenAndFill(fz_c, optInSignalPeriod, f0, f1.AsSpan(0, svN - 1), f1.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 1/2 partially overlap (offset) */ }
+                try { _ = c2.MACDFIX_OpenAndFill(fz_c, optInSignalPeriod, f0, f1.AsSpan(0, svN - 1), f1.AsSpan(0, svN)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 1/2 partially overlap (same start, longer) */ }
+                try { _ = c2.MACDFIX_OpenAndFill(fz_c, optInSignalPeriod, fz_c.AsSpan(1, svN - 1), f1, f2); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
+                try { _ = c2.MACDFIX_OpenAndFill(fz_c, optInSignalPeriod, f0, fz_c.AsSpan(1, svN - 1), f2); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
+                try { _ = c2.MACDFIX_OpenAndFill(fz_c, optInSignalPeriod, f0, f1, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 2 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -18383,6 +18921,7 @@ public class TaCodegenServe {
                         if (SvBne(pk.MACD, up.MACD)) peekAll = false;
                         if (SvBne(pk.MACDSignal, up.MACDSignal)) peekAll = false;
                         if (SvBne(pk.MACDHist, up.MACDHist)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         Core.MACDFIX_Value vc = st.Value;
                         if (SvBne(vc.MACD, up.MACD)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvBne(vc.MACDSignal, up.MACDSignal)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
@@ -18524,6 +19063,16 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 1 aliases input inReal */ }
                 try { _ = c2.MAMA_OpenAndFill(fz_c, optInFastLimit, optInSlowLimit, f0, f0); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 aliases output 0 */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.MAMA_OpenAndFill(fz_c, optInFastLimit, optInSlowLimit, f0.AsSpan(0, svN - 1), f0.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (offset) */ }
+                try { _ = c2.MAMA_OpenAndFill(fz_c, optInFastLimit, optInSlowLimit, f0.AsSpan(0, svN - 1), f0.AsSpan(0, svN)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
+                try { _ = c2.MAMA_OpenAndFill(fz_c, optInFastLimit, optInSlowLimit, fz_c.AsSpan(1, svN - 1), f1); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
+                try { _ = c2.MAMA_OpenAndFill(fz_c, optInFastLimit, optInSlowLimit, f0, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -18546,6 +19095,7 @@ public class TaCodegenServe {
                         Core.MAMA_Value up = st.Update(fz_c[t]);
                         if (SvBne(pk.MAMA, up.MAMA)) peekAll = false;
                         if (SvBne(pk.FAMA, up.FAMA)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         Core.MAMA_Value vc = st.Value;
                         if (SvBne(vc.MAMA, up.MAMA)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvBne(vc.FAMA, up.FAMA)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
@@ -18666,6 +19216,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.MARKETFI_OpenAndFill(fz_h, fz_l, fz_v, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inVolume */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.MARKETFI_OpenAndFill(fz_h, fz_l, fz_v, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -18686,6 +19240,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_h[t], fz_l[t], fz_v[t]);
                         double up = st.Update(fz_h[t], fz_l[t], fz_v[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_v[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -18821,6 +19376,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
                 try { _ = c2.MAVP_OpenAndFill(fz_c, fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inPeriods */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.MAVP_OpenAndFill(fz_c, fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -18841,6 +19400,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t], fz_v[t]);
                         double up = st.Update(fz_c[t], fz_v[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -18961,6 +19521,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.MAX_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.MAX_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -18981,6 +19545,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -19099,6 +19664,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -19119,6 +19686,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_c[t]);
                         int up = st.Update(fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -19240,6 +19808,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inHigh */ }
                 try { _ = c2.MEDPRICE_OpenAndFill(fz_h, fz_l, fz_l); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.MEDPRICE_OpenAndFill(fz_h, fz_l, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -19260,6 +19832,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_h[t], fz_l[t]);
                         double up = st.Update(fz_h[t], fz_l[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_h[t - 1], fz_l[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -19379,6 +19952,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
                 try { _ = c2.MFI_OpenAndFill(fz_h, fz_l, fz_c, fz_v, optInTimePeriod, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inVolume */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.MFI_OpenAndFill(fz_h, fz_l, fz_c, fz_v, optInTimePeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -19399,6 +19976,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
                         double up = st.Update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], fz_v[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -19519,6 +20097,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.MIDPOINT_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.MIDPOINT_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -19539,6 +20121,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -19661,6 +20244,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inHigh */ }
                 try { _ = c2.MIDPRICE_OpenAndFill(fz_h, fz_l, optInTimePeriod, fz_l); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.MIDPRICE_OpenAndFill(fz_h, fz_l, optInTimePeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -19681,6 +20268,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_h[t], fz_l[t]);
                         double up = st.Update(fz_h[t], fz_l[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_h[t - 1], fz_l[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -19801,6 +20389,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.MIN_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.MIN_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -19821,6 +20413,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -19939,6 +20532,8 @@ public class TaCodegenServe {
                 }
                 /* R2: aliasing cross product -- every real output x every input,
                    then every same-typed output pair. Each must throw. */
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -19959,6 +20554,7 @@ public class TaCodegenServe {
                         int pk = st.Peek(fz_c[t]);
                         int up = st.Update(fz_c[t]);
                         if (pk != up) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         int vc = st.Value;
                         if (vc != up) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (up != b0[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg] + "\",\"streamv\":\"" + up + "\""; }
@@ -20088,6 +20684,16 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 1 aliases input inReal */ }
                 try { _ = c2.MINMAX_OpenAndFill(fz_c, optInTimePeriod, f0, f0); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 aliases output 0 */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.MINMAX_OpenAndFill(fz_c, optInTimePeriod, f0.AsSpan(0, svN - 1), f0.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (offset) */ }
+                try { _ = c2.MINMAX_OpenAndFill(fz_c, optInTimePeriod, f0.AsSpan(0, svN - 1), f0.AsSpan(0, svN)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
+                try { _ = c2.MINMAX_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1), f1); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
+                try { _ = c2.MINMAX_OpenAndFill(fz_c, optInTimePeriod, f0, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -20110,6 +20716,7 @@ public class TaCodegenServe {
                         Core.MINMAX_Value up = st.Update(fz_c[t]);
                         if (SvBne(pk.Min, up.Min)) peekAll = false;
                         if (SvBne(pk.Max, up.Max)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         Core.MINMAX_Value vc = st.Value;
                         if (SvBne(vc.Min, up.Min)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvBne(vc.Max, up.Max)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
@@ -20240,6 +20847,12 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.MINMAXINDEX_OpenAndFill(fz_c, optInTimePeriod, f0, f0); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 aliases output 0 */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.MINMAXINDEX_OpenAndFill(fz_c, optInTimePeriod, f0.AsSpan(0, svN - 1), f0.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (offset) */ }
+                try { _ = c2.MINMAXINDEX_OpenAndFill(fz_c, optInTimePeriod, f0.AsSpan(0, svN - 1), f0.AsSpan(0, svN)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -20262,6 +20875,7 @@ public class TaCodegenServe {
                         Core.MINMAXINDEX_Value up = st.Update(fz_c[t]);
                         if (pk.MinIdx != up.MinIdx) peekAll = false;
                         if (pk.MaxIdx != up.MaxIdx) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         Core.MINMAXINDEX_Value vc = st.Value;
                         if (vc.MinIdx != up.MinIdx) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (vc.MaxIdx != up.MaxIdx) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
@@ -20392,6 +21006,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.MINUS_DI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.MINUS_DI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -20412,6 +21030,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                         double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -20535,6 +21154,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inHigh */ }
                 try { _ = c2.MINUS_DM_OpenAndFill(fz_h, fz_l, optInTimePeriod, fz_l); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.MINUS_DM_OpenAndFill(fz_h, fz_l, optInTimePeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -20555,6 +21178,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_h[t], fz_l[t]);
                         double up = st.Update(fz_h[t], fz_l[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_h[t - 1], fz_l[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -20675,6 +21299,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.MOM_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.MOM_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -20695,6 +21323,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -20816,6 +21445,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal0 */ }
                 try { _ = c2.MULT_OpenAndFill(fz_c, fz_v, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal1 */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.MULT_OpenAndFill(fz_c, fz_v, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -20836,6 +21469,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t], fz_v[t]);
                         double up = st.Update(fz_c[t], fz_v[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -20954,6 +21588,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.NATR_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.NATR_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -20974,6 +21612,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                         double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -21095,6 +21734,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
                 try { _ = c2.NVI_OpenAndFill(fz_c, fz_v, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inVolume */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.NVI_OpenAndFill(fz_c, fz_v, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -21115,6 +21758,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t], fz_v[t]);
                         double up = st.Update(fz_c[t], fz_v[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -21229,6 +21873,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
                 try { _ = c2.OBV_OpenAndFill(fz_c, fz_v, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inVolume */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.OBV_OpenAndFill(fz_c, fz_v, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -21249,6 +21897,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t], fz_v[t]);
                         double up = st.Update(fz_c[t], fz_v[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -21367,6 +22016,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.PLUS_DI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.PLUS_DI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -21387,6 +22040,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                         double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -21510,6 +22164,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inHigh */ }
                 try { _ = c2.PLUS_DM_OpenAndFill(fz_h, fz_l, optInTimePeriod, fz_l); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.PLUS_DM_OpenAndFill(fz_h, fz_l, optInTimePeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -21530,6 +22188,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_h[t], fz_l[t]);
                         double up = st.Update(fz_h[t], fz_l[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_h[t - 1], fz_l[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -21669,6 +22328,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.PPO_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.PPO_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -21689,6 +22352,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -21810,6 +22474,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
                 try { _ = c2.PVI_OpenAndFill(fz_c, fz_v, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inVolume */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.PVI_OpenAndFill(fz_c, fz_v, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -21830,6 +22498,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t], fz_v[t]);
                         double up = st.Update(fz_c[t], fz_v[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -21962,6 +22631,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.PVO_OpenAndFill(fz_v, optInFastPeriod, optInSlowPeriod, optInMAType, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inVolume */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.PVO_OpenAndFill(fz_v, optInFastPeriod, optInSlowPeriod, optInMAType, fz_v.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -21982,6 +22655,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_v[t]);
                         double up = st.Update(fz_v[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_v[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -22104,6 +22778,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inOpen */ }
                 try { _ = c2.QSTICK_OpenAndFill(fz_o, fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.QSTICK_OpenAndFill(fz_o, fz_c, optInTimePeriod, fz_o.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -22124,6 +22802,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_o[t], fz_c[t]);
                         double up = st.Update(fz_o[t], fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_o[t - 1], fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -22244,6 +22923,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.ROC_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.ROC_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -22264,6 +22947,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -22384,6 +23068,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.ROCP_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.ROCP_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -22404,6 +23092,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -22524,6 +23213,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.ROCR_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.ROCR_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -22544,6 +23237,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -22664,6 +23358,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.ROCR100_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.ROCR100_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -22684,6 +23382,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -22805,6 +23504,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.RSI_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.RSI_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = (svCompat == 1) ? 1 : 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -22825,6 +23528,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -22948,6 +23652,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inHigh */ }
                 try { _ = c2.SAR_OpenAndFill(fz_h, fz_l, optInAcceleration, optInMaximum, fz_l); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.SAR_OpenAndFill(fz_h, fz_l, optInAcceleration, optInMaximum, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -22968,6 +23676,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_h[t], fz_l[t]);
                         double up = st.Update(fz_h[t], fz_l[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_h[t - 1], fz_l[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -23090,6 +23799,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inHigh */ }
                 try { _ = c2.SAREXT_OpenAndFill(fz_h, fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, fz_l); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.SAREXT_OpenAndFill(fz_h, fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -23110,6 +23823,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_h[t], fz_l[t]);
                         double up = st.Update(fz_h[t], fz_l[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_h[t - 1], fz_l[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -23222,6 +23936,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.SIN_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.SIN_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -23242,6 +23960,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -23354,6 +24073,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.SINH_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.SINH_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -23374,6 +24097,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -23487,6 +24211,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.SMA_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.SMA_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -23507,6 +24235,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -23626,6 +24355,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.SQRT_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.SQRT_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -23646,6 +24379,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -23760,6 +24494,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.STDDEV_OpenAndFill(fz_c, optInTimePeriod, optInNbDev, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.STDDEV_OpenAndFill(fz_c, optInTimePeriod, optInNbDev, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -23780,6 +24518,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -23941,6 +24680,16 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 1 aliases input inClose */ }
                 try { _ = c2.STOCH_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, f0, f0); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 aliases output 0 */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.STOCH_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, f0.AsSpan(0, svN - 1), f0.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (offset) */ }
+                try { _ = c2.STOCH_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, f0.AsSpan(0, svN - 1), f0.AsSpan(0, svN)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
+                try { _ = c2.STOCH_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, fz_h.AsSpan(1, svN - 1), f1); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
+                try { _ = c2.STOCH_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, f0, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -23963,6 +24712,7 @@ public class TaCodegenServe {
                         Core.STOCH_Value up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
                         if (SvBne(pk.SlowK, up.SlowK)) peekAll = false;
                         if (SvBne(pk.SlowD, up.SlowD)) peekAll = false;
+                        _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         Core.STOCH_Value vc = st.Value;
                         if (SvBne(vc.SlowK, up.SlowK)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvBne(vc.SlowD, up.SlowD)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
@@ -24126,6 +24876,16 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 1 aliases input inClose */ }
                 try { _ = c2.STOCHF_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0, f0); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 aliases output 0 */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.STOCHF_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0.AsSpan(0, svN - 1), f0.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (offset) */ }
+                try { _ = c2.STOCHF_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0.AsSpan(0, svN - 1), f0.AsSpan(0, svN)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
+                try { _ = c2.STOCHF_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, fz_h.AsSpan(1, svN - 1), f1); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
+                try { _ = c2.STOCHF_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -24148,6 +24908,7 @@ public class TaCodegenServe {
                         Core.STOCHF_Value up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
                         if (SvBne(pk.FastK, up.FastK)) peekAll = false;
                         if (SvBne(pk.FastD, up.FastD)) peekAll = false;
+                        _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         Core.STOCHF_Value vc = st.Value;
                         if (SvBne(vc.FastK, up.FastK)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvBne(vc.FastD, up.FastD)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
@@ -24305,6 +25066,16 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 1 aliases input inReal */ }
                 try { _ = c2.STOCHRSI_OpenAndFill(fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0, f0); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 aliases output 0 */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.STOCHRSI_OpenAndFill(fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0.AsSpan(0, svN - 1), f0.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (offset) */ }
+                try { _ = c2.STOCHRSI_OpenAndFill(fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0.AsSpan(0, svN - 1), f0.AsSpan(0, svN)); fillOk = false; }
+                catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
+                try { _ = c2.STOCHRSI_OpenAndFill(fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, fz_c.AsSpan(1, svN - 1), f1); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
+                try { _ = c2.STOCHRSI_OpenAndFill(fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = (svCompat == 1) ? 1 : 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -24327,6 +25098,7 @@ public class TaCodegenServe {
                         Core.STOCHRSI_Value up = st.Update(fz_c[t]);
                         if (SvBne(pk.FastK, up.FastK)) peekAll = false;
                         if (SvBne(pk.FastD, up.FastD)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         Core.STOCHRSI_Value vc = st.Value;
                         if (SvBne(vc.FastK, up.FastK)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvBne(vc.FastD, up.FastD)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
@@ -24453,6 +25225,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal0 */ }
                 try { _ = c2.SUB_OpenAndFill(fz_c, fz_v, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal1 */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.SUB_OpenAndFill(fz_c, fz_v, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -24473,6 +25249,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t], fz_v[t]);
                         double up = st.Update(fz_c[t], fz_v[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -24586,6 +25363,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.SUM_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.SUM_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -24606,6 +25387,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -24728,6 +25510,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.T3_OpenAndFill(fz_c, optInTimePeriod, optInVFactor, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.T3_OpenAndFill(fz_c, optInTimePeriod, optInVFactor, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -24748,6 +25534,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -24867,6 +25654,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.TAN_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.TAN_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -24887,6 +25678,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -24999,6 +25791,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.TANH_OpenAndFill(fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.TANH_OpenAndFill(fz_c, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -25019,6 +25815,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -25133,6 +25930,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.TEMA_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.TEMA_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -25153,6 +25954,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -25276,6 +26078,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.TRANGE_OpenAndFill(fz_h, fz_l, fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.TRANGE_OpenAndFill(fz_h, fz_l, fz_c, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -25296,6 +26102,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                         double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -25409,6 +26216,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.TRIMA_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.TRIMA_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -25429,6 +26240,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -25550,6 +26362,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.TRIX_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.TRIX_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -25570,6 +26386,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -25690,6 +26507,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.TSF_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.TSF_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -25710,6 +26531,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -25833,6 +26655,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.TYPPRICE_OpenAndFill(fz_h, fz_l, fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.TYPPRICE_OpenAndFill(fz_h, fz_l, fz_c, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -25853,6 +26679,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                         double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -25972,6 +26799,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.ULTOSC_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.ULTOSC_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -25992,6 +26823,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                         double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -26113,6 +26945,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.VAR_OpenAndFill(fz_c, optInTimePeriod, optInNbDev, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.VAR_OpenAndFill(fz_c, optInTimePeriod, optInNbDev, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -26133,6 +26969,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -26255,6 +27092,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
                 try { _ = c2.VWMA_OpenAndFill(fz_c, fz_v, optInTimePeriod, fz_v); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inVolume */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.VWMA_OpenAndFill(fz_c, fz_v, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -26275,6 +27116,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t], fz_v[t]);
                         double up = st.Update(fz_c[t], fz_v[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1], fz_v[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -26398,6 +27240,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.WAD_OpenAndFill(fz_h, fz_l, fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.WAD_OpenAndFill(fz_h, fz_l, fz_c, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -26418,6 +27264,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                         double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -26534,6 +27381,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.WCLPRICE_OpenAndFill(fz_h, fz_l, fz_c, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.WCLPRICE_OpenAndFill(fz_h, fz_l, fz_c, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -26554,6 +27405,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                         double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -26671,6 +27523,10 @@ public class TaCodegenServe {
                 catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
                 try { _ = c2.WILLR_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inClose */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.WILLR_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -26691,6 +27547,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_h[t], fz_l[t], fz_c[t]);
                         double up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
@@ -26811,6 +27668,10 @@ public class TaCodegenServe {
                    then every same-typed output pair. Each must throw. */
                 try { _ = c2.WMA_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.WMA_OpenAndFill(fz_c, optInTimePeriod, fz_c.AsSpan(1, svN - 1)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
             int seedShift = 0;
             int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
@@ -26831,6 +27692,7 @@ public class TaCodegenServe {
                         double pk = st.Peek(fz_c[t]);
                         double up = st.Update(fz_c[t]);
                         if (SvBne(pk, up)) peekAll = false;
+                        _ = st.Peek(fz_c[t - 1]);
                         double vc = st.Value;
                         if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
                         if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }

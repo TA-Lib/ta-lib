@@ -223,7 +223,10 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
+   /// span cannot be null — or two output buffers overlap, or an output
+   /// partially overlaps an input. Computing wholly in place (an output that IS
+   /// an input) is allowed.</exception>
    public OutRange CDLXSIDEGAP3METHODS( int startIdx,
                                         int endIdx,
                                         ReadOnlySpan<double> inOpen,
@@ -283,7 +286,10 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
+   /// span cannot be null — or two output buffers overlap, or an output
+   /// partially overlaps an input. Computing wholly in place (an output that IS
+   /// an input) is allowed.</exception>
    public OutRange CDLXSIDEGAP3METHODS( int startIdx,
                                         int endIdx,
                                         ReadOnlySpan<float> inOpen,
@@ -573,7 +579,8 @@ public partial class Core
    /// bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
-   /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
+   /// span cannot be null.</exception>
    public CDLXSIDEGAP3METHODS_Stream CDLXSIDEGAP3METHODS_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
       if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
@@ -611,7 +618,8 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
-   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty, or an output overlaps an input or another
+   /// output.</exception>
    public CDLXSIDEGAP3METHODS_Stream CDLXSIDEGAP3METHODS_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
       if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));

@@ -2306,7 +2306,11 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef) {
         "An optional parameter is outside its documented range, or the input series have \
          different lengths.",
     );
-    d.exception("System.ArgumentNullException", "An input array is null.");
+    d.exception(
+        "System.ArgumentException",
+        "An input series is empty — which is what a null array becomes, since a span cannot \
+         be null.",
+    );
     o.push('\n');
     o.push_str(&d.render(3));
     let _ = writeln!(
@@ -2399,7 +2403,10 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef) {
         "An optional parameter is outside its documented range, the input series have \
          different lengths, or an output array aliases an input or another output.",
     );
-    d.exception("System.ArgumentNullException", "An input or output array is null.");
+    d.exception(
+        "System.ArgumentException",
+        "An input series is empty, or an output overlaps an input or another output.",
+    );
     o.push('\n');
     o.push_str(&d.render(3));
     let _ = writeln!(

@@ -615,7 +615,20 @@ public static class MetadataTest
             $"almost every comparison produced values ({withValues}/{compared}) — an all-empty run compares nothing");
     }
 
-    /// <summary>Invokes the typed public wrapper, as an independent second path.</summary>
+    /// <summary>Checks the typed overload exists with the catalogue's declared shapes, then
+    /// invokes with SENTINEL options to compare against the caller's explicit-default call.</summary>
+    /// <remarks>
+    /// <para>Not an independent code path, and it stopped being one when the API took spans: a
+    /// span is a ref struct and cannot be boxed into <c>MethodInfo.Invoke</c>'s
+    /// <c>object[]</c>, so reflective invocation of this API is impossible. Shape LOOKUP still
+    /// works, and that half is still reflective.</para>
+    /// <para>What the value comparison still proves is sentinel resolution (#162/#182): path A
+    /// binds each optional parameter to its declared default, this path binds the sentinel, and
+    /// they must agree. For the functions with NO optional inputs the two calls are identical,
+    /// so for those this degrades to a determinism check — say so rather than imply otherwise.
+    /// Binder-thunk-versus-typed-wrapper agreement is covered instead by <c>abstract_call</c> in
+    /// the JSON-RPC server, which <c>test_abstract.c</c> compares against C per function.</para>
+    /// </remarks>
     private static OutRange? TypedCall(FunctionInfo f, double[][] realOut, int[][] intOut)
     {
         // The catalogue's declared shapes must name a real typed overload. This

@@ -196,7 +196,10 @@ public partial class Core
       } else if( (int)optInSignalMAType < MATypes.Min || (int)optInSignalMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist ) {
+      if( outMACD.Overlaps(outMACDSignal) || (outMACD.IsEmpty && outMACDSignal.IsEmpty) || outMACD.Overlaps(outMACDHist) || (outMACD.IsEmpty && outMACDHist.IsEmpty) || outMACDSignal.Overlaps(outMACDHist) || (outMACDSignal.IsEmpty && outMACDHist.IsEmpty) ) {
+         return RetCode.BadParam ;
+      }
+      if( (outMACD.Overlaps(inReal) && outMACD != inReal) || (outMACDSignal.Overlaps(inReal) && outMACDSignal != inReal) || (outMACDHist.Overlaps(inReal) && outMACDHist != inReal) ) {
          return RetCode.BadParam ;
       }
       if( optInFastMAType == MAType.EMA && optInSlowMAType == MAType.EMA && optInSignalMAType == MAType.EMA && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 ) {
@@ -370,7 +373,7 @@ public partial class Core
       } else if( (int)optInSignalMAType < MATypes.Min || (int)optInSignalMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist ) {
+      if( outMACD.Overlaps(outMACDSignal) || (outMACD.IsEmpty && outMACDSignal.IsEmpty) || outMACD.Overlaps(outMACDHist) || (outMACD.IsEmpty && outMACDHist.IsEmpty) || outMACDSignal.Overlaps(outMACDHist) || (outMACDSignal.IsEmpty && outMACDHist.IsEmpty) ) {
          return RetCode.BadParam ;
       }
       if( optInFastMAType == MAType.EMA && optInSlowMAType == MAType.EMA && optInSignalMAType == MAType.EMA && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 ) {
@@ -497,7 +500,10 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
+   /// span cannot be null — or two output buffers overlap, or an output
+   /// partially overlaps an input. Computing wholly in place (an output that IS
+   /// an input) is allowed.</exception>
    public OutRange MACDEXT( int startIdx,
                             int endIdx,
                             ReadOnlySpan<double> inReal,
@@ -584,7 +590,10 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
+   /// span cannot be null — or two output buffers overlap, or an output
+   /// partially overlaps an input. Computing wholly in place (an output that IS
+   /// an input) is allowed.</exception>
    public OutRange MACDEXT( int startIdx,
                             int endIdx,
                             ReadOnlySpan<float> inReal,
@@ -1038,7 +1047,8 @@ public partial class Core
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MACDEXT_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
-   /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
+   /// span cannot be null.</exception>
    public MACDEXT_Stream MACDEXT_Open( ReadOnlySpan<double> inReal, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
@@ -1081,7 +1091,8 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
-   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty, or an output overlaps an input or another
+   /// output.</exception>
    public MACDEXT_Stream MACDEXT_OpenAndFill( ReadOnlySpan<double> inReal, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));

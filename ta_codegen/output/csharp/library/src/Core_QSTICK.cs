@@ -106,6 +106,9 @@ public partial class Core
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( (outReal.Overlaps(inOpen) && outReal != inOpen) || (outReal.Overlaps(inClose) && outReal != inClose) ) {
+         return RetCode.BadParam ;
+      }
       /* Qstick (Chande & Kroll, The New Technical Trader, 1994): a simple moving
        * average of the candle body, close minus open. Above zero means bodies
        * were predominantly bullish over the window; the zero crossings are the
@@ -267,7 +270,10 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
+   /// span cannot be null — or two output buffers overlap, or an output
+   /// partially overlaps an input. Computing wholly in place (an output that IS
+   /// an input) is allowed.</exception>
    public OutRange QSTICK( int startIdx,
                            int endIdx,
                            ReadOnlySpan<double> inOpen,
@@ -326,7 +332,10 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
+   /// span cannot be null — or two output buffers overlap, or an output
+   /// partially overlaps an input. Computing wholly in place (an output that IS
+   /// an input) is allowed.</exception>
    public OutRange QSTICK( int startIdx,
                            int endIdx,
                            ReadOnlySpan<float> inOpen,
@@ -661,7 +670,8 @@ public partial class Core
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>QSTICK_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
-   /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
+   /// span cannot be null.</exception>
    public QSTICK_Stream QSTICK_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int optInTimePeriod )
    {
       if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
@@ -692,7 +702,8 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
-   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty, or an output overlaps an input or another
+   /// output.</exception>
    public QSTICK_Stream QSTICK_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int optInTimePeriod, Span<double> outReal )
    {
       if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));

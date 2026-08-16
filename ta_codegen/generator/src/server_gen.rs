@@ -6814,6 +6814,82 @@ fn emit_csharp_sv_func(
             );
         }
     }
+    // R2b: PARTIAL overlap, the case only spans can express and the one that
+    // distinguishes `Overlaps` from reference identity.
+    //
+    // Every probe above passes a WHOLE, identical buffer, where `==`,
+    // `ReferenceEquals` and `Overlaps` all fire alike — so those probes cannot
+    // tell a correct guard from the pre-span one. Reverting `alias_reject` to
+    // identity left the whole gate green while multi-output functions silently
+    // returned Success with every value wrong. These probes are what make the
+    // overlap guard a checked property rather than a claim.
+    //
+    // Two shapes per pair, because they fail differently:
+    //   - offset:  f{i} and a slice of it starting one element in
+    //   - same start, different length: identical memory and start, which span
+    //     `==` reads as NOT equal, so an `==`-based guard waves it through
+    if n_out >= 1 {
+        s.push_str("                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+");
+        s.push_str("                   the only shape that separates Overlaps from identity. */
+");
+        for (i, i_is_int) in out_is_int.iter().enumerate() {
+            for (j, j_is_int) in out_is_int.iter().enumerate().skip(i + 1) {
+                if i_is_int != j_is_int {
+                    continue;
+                }
+                for (shape, expr) in [
+                    ("offset", format!("f{i}.AsSpan(1, svN - 1)")),
+                    ("same start, longer", format!("f{i}.AsSpan(0, svN)")),
+                ] {
+                    let mut aargs = String::new();
+                    for k in 0..n_out {
+                        if k == j {
+                            let _ = write!(aargs, ", {expr}");
+                        } else if k == i {
+                            let _ = write!(aargs, ", f{i}.AsSpan(0, svN - 1)");
+                        } else {
+                            let _ = write!(aargs, ", f{k}");
+                        }
+                    }
+                    let _ = writeln!(
+                        s,
+                        "                try {{ _ = c2.{base}_OpenAndFill({full_ins}{opts_tail}{aargs}); fillOk = false; }}"
+                    );
+                    let _ = writeln!(
+                        s,
+                        "                catch (ArgumentException) {{ /* expected: outputs {i}/{j} partially overlap ({shape}) */ }}"
+                    );
+                }
+            }
+        }
+        // Output partially overlapping an INPUT. Whole-buffer in-place is
+        // legitimate and stays accepted; only the partial case is a reject, so
+        // this probe is the one that pins that distinction.
+        for (i, i_is_int) in out_is_int.iter().enumerate() {
+            if *i_is_int {
+                continue;
+            }
+            if let Some(arr) = arrays.first() {
+                let mut aargs = String::new();
+                for k in 0..n_out {
+                    if k == i {
+                        let _ = write!(aargs, ", {arr}.AsSpan(1, svN - 1)");
+                    } else {
+                        let _ = write!(aargs, ", f{k}");
+                    }
+                }
+                let _ = writeln!(
+                    s,
+                    "                try {{ _ = c2.{base}_OpenAndFill({full_ins}{opts_tail}{aargs}); fillOk = false; }}"
+                );
+                let _ = writeln!(
+                    s,
+                    "                catch (ArgumentException) {{ /* expected: output {i} partially overlaps an input */ }}"
+                );
+            }
+        }
+    }
     s.push_str("            } catch (ArgumentException) { fillOk = false; }\n");
 
     // ---- prefix sweep: the trajectory, bit-exact against batch ----
@@ -6886,12 +6962,30 @@ fn emit_csharp_sv_func(
         let cmp = same_tier_ne(&rd_out("pk", i), &rd_out("up", i), i);
         let _ = writeln!(s, "                        if ({cmp}) peekAll = false;");
     }
-    // `Value` == the value just returned. Java asserts REFERENCE IDENTITY of its
-    // cached record; a C# `<NAME>_Value` is a readonly record struct copied into
-    // the caller's frame, so there is no identity to assert -- and record-struct
-    // `==` would call +0.0 equal to -0.0 and NaN equal to NaN, i.e. would pass
-    // on exactly the corruption this leg exists to find. Per component,
-    // strictly.
+    // `Value` == the value just returned, read AFTER an intervening `Peek`.
+    //
+    // The intervening peek is the whole leg. Without it this compares
+    // `Update`'s return against a `Value` read with nothing in between, and
+    // both render from the same generator expression over the same fields --
+    // literally `new X_Value(cur_a, cur_b) != new X_Value(cur_a, cur_b)`. That
+    // cannot fail, and it did not: it passed unchanged while the guard it was
+    // meant to protect was reverted. Java's twin asserts REFERENCE IDENTITY of
+    // its cached record, which pins an allocation property; deleting the cache
+    // for a returned record struct removed the only thing being checked, and
+    // keeping the comparison kept the shape without the substance.
+    //
+    // Peeking a DIFFERENT bar (t-1, always in range since t >= lb+1 >= 1) makes
+    // it a real check of the documented contract: `Value` is a pure read that
+    // `Peek` does not disturb. A `Peek` that commits advances the handle, and
+    // `Value` then reports the peeked bar instead of the committed one. On
+    // FUZZ_CONSTANT the two bars carry the same number, so there the leg leans
+    // on state advancement rather than on a value difference -- which is why it
+    // is a complement to `peek_ok`, not a replacement for it.
+    //
+    // Comparison is per component and strict: record-struct `==` would call
+    // +0.0 equal to -0.0 and NaN equal to NaN, i.e. would pass on exactly the
+    // corruption this leg exists to find.
+    let _ = writeln!(s, "                        _ = st.Peek({});", bar_args("t - 1"));
     let _ = writeln!(s, "                        {up_ty} vc = st.Value;");
     for i in 0..n_out {
         let cmp = same_tier_ne(&rd_out("vc", i), &rd_out("up", i), i);

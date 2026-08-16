@@ -183,7 +183,10 @@ public partial class Core
       } else if( (int)optInMAType < MATypes.Min || (int)optInMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
+      if( outRealUpperBand.Overlaps(outRealMiddleBand) || (outRealUpperBand.IsEmpty && outRealMiddleBand.IsEmpty) || outRealUpperBand.Overlaps(outRealLowerBand) || (outRealUpperBand.IsEmpty && outRealLowerBand.IsEmpty) || outRealMiddleBand.Overlaps(outRealLowerBand) || (outRealMiddleBand.IsEmpty && outRealLowerBand.IsEmpty) ) {
+         return RetCode.BadParam ;
+      }
+      if( (outRealUpperBand.Overlaps(inReal) && outRealUpperBand != inReal) || (outRealMiddleBand.Overlaps(inReal) && outRealMiddleBand != inReal) || (outRealLowerBand.Overlaps(inReal) && outRealLowerBand != inReal) ) {
          return RetCode.BadParam ;
       }
       if( optInMAType == MAType.SMA ) {
@@ -435,7 +438,7 @@ public partial class Core
       } else if( (int)optInMAType < MATypes.Min || (int)optInMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
+      if( outRealUpperBand.Overlaps(outRealMiddleBand) || (outRealUpperBand.IsEmpty && outRealMiddleBand.IsEmpty) || outRealUpperBand.Overlaps(outRealLowerBand) || (outRealUpperBand.IsEmpty && outRealLowerBand.IsEmpty) || outRealMiddleBand.Overlaps(outRealLowerBand) || (outRealMiddleBand.IsEmpty && outRealLowerBand.IsEmpty) ) {
          return RetCode.BadParam ;
       }
       if( optInMAType == MAType.SMA ) {
@@ -642,7 +645,10 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
+   /// span cannot be null — or two output buffers overlap, or an output
+   /// partially overlaps an input. Computing wholly in place (an output that IS
+   /// an input) is allowed.</exception>
    public OutRange BBANDS( int startIdx,
                            int endIdx,
                            ReadOnlySpan<double> inReal,
@@ -724,7 +730,10 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
+   /// span cannot be null — or two output buffers overlap, or an output
+   /// partially overlaps an input. Computing wholly in place (an output that IS
+   /// an input) is allowed.</exception>
    public OutRange BBANDS( int startIdx,
                            int endIdx,
                            ReadOnlySpan<float> inReal,
@@ -1106,7 +1115,8 @@ public partial class Core
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>BBANDS_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
-   /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
+   /// span cannot be null.</exception>
    public BBANDS_Stream BBANDS_Open( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
@@ -1145,7 +1155,8 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
-   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty, or an output overlaps an input or another
+   /// output.</exception>
    public BBANDS_Stream BBANDS_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, Span<double> outRealUpperBand, Span<double> outRealMiddleBand, Span<double> outRealLowerBand )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));

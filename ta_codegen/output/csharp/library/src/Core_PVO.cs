@@ -135,6 +135,9 @@ public partial class Core
       } else if( (int)optInMAType < MATypes.Min || (int)optInMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
+      if( (outReal.Overlaps(inVolume) && outReal != inVolume) ) {
+         return RetCode.BadParam ;
+      }
       /* Allocate an intermediate buffer. */
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
       /* Make sure slow is really slower than
@@ -283,7 +286,10 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
+   /// span cannot be null — or two output buffers overlap, or an output
+   /// partially overlaps an input. Computing wholly in place (an output that IS
+   /// an input) is allowed.</exception>
    public OutRange PVO( int startIdx,
                         int endIdx,
                         ReadOnlySpan<double> inVolume,
@@ -350,7 +356,10 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
+   /// span cannot be null — or two output buffers overlap, or an output
+   /// partially overlaps an input. Computing wholly in place (an output that IS
+   /// an input) is allowed.</exception>
    public OutRange PVO( int startIdx,
                         int endIdx,
                         ReadOnlySpan<float> inVolume,
@@ -666,7 +675,8 @@ public partial class Core
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>PVO_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
-   /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
+   /// span cannot be null.</exception>
    public PVO_Stream PVO_Open( ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
       if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
@@ -699,7 +709,8 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
-   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty, or an output overlaps an input or another
+   /// output.</exception>
    public PVO_Stream PVO_OpenAndFill( ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, Span<double> outReal )
    {
       if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));

@@ -114,8 +114,10 @@ pub fn guarded_docs(
          one array.",
     );
     b.exception(
-        "System.ArgumentNullException",
-        "An input or output array is null.",
+        "System.ArgumentException",
+        "An input series is empty — which is what a null array becomes, since a span \
+         cannot be null — or two output buffers overlap, or an output partially overlaps \
+         an input. Computing wholly in place (an output that IS an input) is allowed.",
     );
     b.render()
 }

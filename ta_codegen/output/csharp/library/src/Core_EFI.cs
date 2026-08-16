@@ -112,6 +112,9 @@ public partial class Core
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( (outReal.Overlaps(inClose) && outReal != inClose) || (outReal.Overlaps(inVolume) && outReal != inVolume) ) {
+         return RetCode.BadParam ;
+      }
       optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
       /* Alexander Elder's Force Index (Trading for a Living, 1993): the one-bar
        * close-to-close move weighted by that bar's volume, then smoothed with an
@@ -349,7 +352,10 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
+   /// span cannot be null — or two output buffers overlap, or an output
+   /// partially overlaps an input. Computing wholly in place (an output that IS
+   /// an input) is allowed.</exception>
    public OutRange EFI( int startIdx,
                         int endIdx,
                         ReadOnlySpan<double> inClose,
@@ -413,7 +419,10 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
+   /// span cannot be null — or two output buffers overlap, or an output
+   /// partially overlaps an input. Computing wholly in place (an output that IS
+   /// an input) is allowed.</exception>
    public OutRange EFI( int startIdx,
                         int endIdx,
                         ReadOnlySpan<float> inClose,
@@ -820,7 +829,8 @@ public partial class Core
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>EFI_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
-   /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
+   /// span cannot be null.</exception>
    public EFI_Stream EFI_Open( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInTimePeriod )
    {
       if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
@@ -851,7 +861,8 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
-   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty, or an output overlaps an input or another
+   /// output.</exception>
    public EFI_Stream EFI_OpenAndFill( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInTimePeriod, Span<double> outReal )
    {
       if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));

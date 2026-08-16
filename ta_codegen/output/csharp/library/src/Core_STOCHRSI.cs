@@ -154,7 +154,10 @@ public partial class Core
       } else if( (int)optInFastD_MAType < MATypes.Min || (int)optInFastD_MAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( outFastK == outFastD ) {
+      if( outFastK.Overlaps(outFastD) || (outFastK.IsEmpty && outFastD.IsEmpty) ) {
+         return RetCode.BadParam ;
+      }
+      if( (outFastK.Overlaps(inReal) && outFastK != inReal) || (outFastD.Overlaps(inReal) && outFastD != inReal) ) {
          return RetCode.BadParam ;
       }
       /* Stochastic RSI
@@ -260,7 +263,7 @@ public partial class Core
       } else if( (int)optInFastD_MAType < MATypes.Min || (int)optInFastD_MAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( outFastK == outFastD ) {
+      if( outFastK.Overlaps(outFastD) || (outFastK.IsEmpty && outFastD.IsEmpty) ) {
          return RetCode.BadParam ;
       }
       outBegIdx = 0;
@@ -340,7 +343,10 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
+   /// span cannot be null — or two output buffers overlap, or an output
+   /// partially overlaps an input. Computing wholly in place (an output that IS
+   /// an input) is allowed.</exception>
    public OutRange STOCHRSI( int startIdx,
                              int endIdx,
                              ReadOnlySpan<double> inReal,
@@ -412,7 +418,10 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
+   /// span cannot be null — or two output buffers overlap, or an output
+   /// partially overlaps an input. Computing wholly in place (an output that IS
+   /// an input) is allowed.</exception>
    public OutRange STOCHRSI( int startIdx,
                              int endIdx,
                              ReadOnlySpan<float> inReal,
@@ -782,7 +791,8 @@ public partial class Core
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>STOCHRSI_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
-   /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
+   /// span cannot be null.</exception>
    public STOCHRSI_Stream STOCHRSI_Open( ReadOnlySpan<double> inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
@@ -820,7 +830,8 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
-   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty, or an output overlaps an input or another
+   /// output.</exception>
    public STOCHRSI_Stream STOCHRSI_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, Span<double> outFastK, Span<double> outFastD )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));

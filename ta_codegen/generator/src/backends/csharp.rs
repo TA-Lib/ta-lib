@@ -832,22 +832,88 @@ fn gen_func_inner(
         out.push_str("      }\n");
         // Optional parameter validation (default + range)
         out.push_str(&emit_opt_param_validation(func, "RetCode.BadParam", enums));
-        // Output-distinctness (issue #108): aliasing two different output
-        // arrays has no correct result, so reject it. Input == output stays
-        // allowed. Array `==` is reference equality in C# as in Java.
+        // Output-distinctness (issue #108): two outputs sharing memory has no
+        // correct result, so reject it. Input/output overlap stays allowed —
+        // several bodies are written to compute in place.
+        //
+        // `Overlaps`, NOT `==`. Under the old `double[]` surface two arrays
+        // were identical or disjoint, so reference equality was complete. Spans
+        // made the in-between expressible: `buf.AsSpan(0, n)` against
+        // `buf.AsSpan(0, n + 1)` is the SAME memory at the SAME start, and span
+        // `==` (ref AND length) reads false. Leaving this on `==` let 13
+        // multi-output functions return Success with every value wrong.
+        //
+        // Zero-length operands need the explicit arm: `Overlaps` short-circuits
+        // to false when either side is empty, so two empty outputs — which the
+        // array guard rejected as the same reference — would otherwise reach
+        // the body and fault on the first write.
+        //
+        // Cross-typed pairs are skipped: `Span<double>` and `Span<int>` cannot
+        // be laid over the same memory, and `Overlaps` is not defined across
+        // element types.
         if func.outputs.len() >= 2 {
             let mut pairs: Vec<String> = Vec::new();
             for i in 0..func.outputs.len() {
                 for j in (i + 1)..func.outputs.len() {
+                    let (a, b) = (&func.outputs[i], &func.outputs[j]);
+                    if (a.param_type == ParamType::Integer) != (b.param_type == ParamType::Integer) {
+                        continue;
+                    }
+                    pairs.push(format!("{}.Overlaps({})", a.name, b.name));
                     pairs.push(format!(
-                        "{} == {}",
-                        func.outputs[i].name, func.outputs[j].name
+                        "({}.IsEmpty && {}.IsEmpty)",
+                        a.name, b.name
                     ));
                 }
             }
-            out.push_str(&format!("      if( {} ) {{\n", pairs.join(" || ")));
-            out.push_str("         return RetCode.BadParam ;\n");
-            out.push_str("      }\n");
+            if !pairs.is_empty() {
+                out.push_str(&format!("      if( {} ) {{\n", pairs.join(" || ")));
+                out.push_str("         return RetCode.BadParam ;\n");
+                out.push_str("      }\n");
+            }
+        }
+
+        // PARTIAL input/output overlap (span-only hazard, no array analogue).
+        //
+        // Whole-buffer in-place is legitimate and several transcribed bodies
+        // are written for it — they branch on series identity as ALGORITHM,
+        // not as validation: BBANDS elects its scratch with
+        // `if (inReal == outRealUpperBand)`, MAVP defends with
+        // `if (outReal == inReal)`, STOCH/STOCHF likewise. Span `==` still
+        // recognises the exact-same-span case those tests were written for.
+        //
+        // What it does NOT recognise is a partial overlap, which only spans can
+        // express. There the election reads false, the body elects a buffer
+        // that collides with its own input, and it writes through what it is
+        // still reading — Success, no exception, wrong values. So reject
+        // overlapping-but-not-identical here, before any body sees it, and
+        // leave the identical case to the bodies that already handle it.
+        {
+            let mut cross: Vec<String> = Vec::new();
+            for o in &func.outputs {
+                let o_int = o.param_type == ParamType::Integer;
+                for i in &func.inputs {
+                    // The float overload widens on read, so its inputs are a
+                    // different element type from the double outputs and cannot
+                    // share memory.
+                    let i_int = i.param_type == ParamType::Integer;
+                    if single_precision && !i_int {
+                        continue;
+                    }
+                    if o_int != i_int {
+                        continue;
+                    }
+                    cross.push(format!(
+                        "({0}.Overlaps({1}) && {0} != {1})",
+                        o.name, i.name
+                    ));
+                }
+            }
+            if !cross.is_empty() {
+                out.push_str(&format!("      if( {} ) {{\n", cross.join(" || ")));
+                out.push_str("         return RetCode.BadParam ;\n");
+                out.push_str("      }\n");
+            }
         }
     }
 

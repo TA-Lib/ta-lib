@@ -187,7 +187,10 @@ public partial class Core
       } else if( (int)optInSlowD_MAType < MATypes.Min || (int)optInSlowD_MAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( outSlowK == outSlowD ) {
+      if( outSlowK.Overlaps(outSlowD) || (outSlowK.IsEmpty && outSlowD.IsEmpty) ) {
+         return RetCode.BadParam ;
+      }
+      if( (outSlowK.Overlaps(inHigh) && outSlowK != inHigh) || (outSlowK.Overlaps(inLow) && outSlowK != inLow) || (outSlowK.Overlaps(inClose) && outSlowK != inClose) || (outSlowD.Overlaps(inHigh) && outSlowD != inHigh) || (outSlowD.Overlaps(inLow) && outSlowD != inLow) || (outSlowD.Overlaps(inClose) && outSlowD != inClose) ) {
          return RetCode.BadParam ;
       }
       /* With stochastic, there is a total of 4 different lines that
@@ -438,7 +441,7 @@ public partial class Core
       } else if( (int)optInSlowD_MAType < MATypes.Min || (int)optInSlowD_MAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( outSlowK == outSlowD ) {
+      if( outSlowK.Overlaps(outSlowD) || (outSlowK.IsEmpty && outSlowD.IsEmpty) ) {
          return RetCode.BadParam ;
       }
       lookbackK = optInFastK_Period - 1;
@@ -582,7 +585,10 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
+   /// span cannot be null — or two output buffers overlap, or an output
+   /// partially overlaps an input. Computing wholly in place (an output that IS
+   /// an input) is allowed.</exception>
    public OutRange STOCH( int startIdx,
                           int endIdx,
                           ReadOnlySpan<double> inHigh,
@@ -664,7 +670,10 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
+   /// span cannot be null — or two output buffers overlap, or an output
+   /// partially overlaps an input. Computing wholly in place (an output that IS
+   /// an input) is allowed.</exception>
    public OutRange STOCH( int startIdx,
                           int endIdx,
                           ReadOnlySpan<float> inHigh,
@@ -1326,7 +1335,8 @@ public partial class Core
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>STOCH_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
-   /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
+   /// span cannot be null.</exception>
    public STOCH_Stream STOCH_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
    {
       if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
@@ -1369,7 +1379,8 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
-   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
+   /// <exception cref="System.ArgumentException">An input series is empty, or an output overlaps an input or another
+   /// output.</exception>
    public STOCH_Stream STOCH_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, Span<double> outSlowK, Span<double> outSlowD )
    {
       if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
