@@ -8,6 +8,18 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 
 ## [0.8.1] Not Released Yet
 ### Added
+- Streaming API, in C, Rust, Java and .NET. Instead of recomputing an indicator
+  over the whole series on every new bar, open a stream once from your history
+  and advance it one closed bar at a time:
+
+      var s = core.SMA_Open(history, 30);   // C#; same shape in every language
+      double v = s.Update(bar);             // O(1) per bar
+      double p = s.Peek(formingBar);        // evaluate without committing
+
+  Every streamed value is bit-identical to what the batch call returns for the
+  same bar — verified per function, per bar, in all four languages. `OpenAndFill`
+  opens a stream and fills the whole history's output in one pass, for callers
+  who want both. Available for every indicator that has one.
 - (#81) Microsoft VCPKG support. Thanks @greenTableWork !
 - (#78) CMake can now opt out of building the static or the shared library (both built by default). Thanks @BwL1289 !
 - (#75) More docs for DEMA, TEMA, T3, MFI, ULTOSC, KAMA and TRIX. Thanks @nehemiah888 !

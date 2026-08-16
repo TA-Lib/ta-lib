@@ -29,6 +29,11 @@ export const enSidebar = sidebar({
           collapsible: true,
           children: ["api/java/", "api/java/stream/"],
         },
+        {
+          text: ".NET API",
+          collapsible: true,
+          children: ["api/csharp/", "api/csharp/stream/"],
+        },
         "faq/",
       ],
     },

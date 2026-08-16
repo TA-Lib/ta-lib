@@ -14,7 +14,7 @@ Use it directly, with every algorithm implemented in your favorite language.
 | --- | --- |
 | C/C++ | [Install C/C++](/install/c/) |
 
-Rust, Java and .NET ports are verified bit-for-bit against the reference C library, but none is released yet. Follow their progress on the [Rust API](/api/rust/) and [Java API](/api/java/) pages.
+Rust, Java and .NET ports are verified bit-for-bit against the reference C library, but none is released yet. Follow their progress on the [Rust API](/api/rust/), [Java API](/api/java/) and [.NET API](/api/csharp/) pages.
 
 ## Wrappers
 

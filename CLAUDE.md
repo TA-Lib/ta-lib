@@ -325,6 +325,15 @@ so the untouched ones are the control. It reads only the generated Rust crate an
 Java fragments (no ta_abstract, no servers, no C build) and derives every call
 from the emitted signatures, so adding an indicator needs no edit there.
 
+**C# streams too, but has no lane in either tool** — there is no C# row in any
+benchmark table, and `ta_bench --mode=open` answers `unsupported_mode` for it.
+So the C# peek-scratch election is Java's predicate shipped unchanged, and the
+emitted docs deliberately state what `Peek` allocates rather than claiming it is
+cheaper, which is a comparison nothing here has measured. Adding a C# lane needs
+a control arm first: reproduce a *known* effect (switch the copy constructor to
+`Clone()` and require ~2x on array-owning functions while the array-less ones
+stay flat) before trusting the tool to settle an unknown one.
+
 ```bash
 scripts/stream_ab.py --base=origin/dev                                  # both languages
 scripts/stream_ab.py --base=HEAD~1 --lang=rust --call=peek --mark=MIN,MAX

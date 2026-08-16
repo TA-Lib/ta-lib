@@ -1,13 +1,13 @@
 # Generated Streaming (Incremental) API for ta_codegen
 
-Status: C, Rust, and Java tiers complete (all 165 functions each, bit-exact CI gates); the managed .NET emitter is the sole remaining streaming work. Planned for release 0.8.1.
+Status: complete in all four languages — C, Rust, Java and .NET stream all 172 functions, each verified bit-exact against its own batch tier by `ta_regtest --codegen`. Planned for release 0.8.1.
 
 ## Design
 
 ### Motivation
 Live-trading users often want the latest indicator value updated in O(1) per new bar — not a full recompute each tick. This has been requested over the years, and some TA-Lib derivative works have already attempted it (see prior art).
 
-This design adds an official **streaming API** to TA-Lib for C, Rust and Java (other languages may be added later).
+This design adds an official **streaming API** to TA-Lib for C, Rust, Java and .NET.
 
 The hard parts are **maintenance** and **validation**, and both are solvable when combining recent ta_codegen refactoring done in TA-Lib 0.7.1, and AI-advancement for automation.
 
@@ -284,7 +284,9 @@ OutRange fr = s2.fillRange();                    // range written, on the handle
 - `OpenAndFill` rejects output↔input and output↔output aliasing by reference
   equality (complete in Java: arrays are identical or disjoint) — Java is the
   one managed backend where `SMA_OpenAndFill(history, …, history)` compiles, so
-  the guard is load-bearing (the planned managed .NET emitter must mirror it).
+  the guard is load-bearing. The managed .NET emitter mirrors it with
+  `ReferenceEquals`, which additionally compiles for cross-typed `double[]`/
+  `int[]` output pairs where `==` would not.
 - `Integer.MIN_VALUE` keeps its batch meaning (use the documented default) in
   streaming opens; the stream gate asserts `open(MIN_VALUE) == open(default)`
   bitwise.
@@ -293,11 +295,30 @@ OutRange fr = s2.fillRange();                    // range written, on the handle
 
 **Java/.NET handle lifecycle.** Generated Java is pure Java — a stream handle
 is ordinary heap state, so "close" is literally nothing: no `AutoCloseable`,
-no finalizer; GC suffices. The same holds for .NET **provided the .NET stream
-tier is a managed C# emitter** mirroring the Java one (the plan — staging
-step 6). A P/Invoke wrapper over the C handles would instead own native memory
-and need `SafeHandle`/`IDisposable` — a worse API; this design chooses the
-managed emitter and accepts the later delivery date.
+no finalizer; GC suffices. The same holds for .NET, because the .NET stream
+tier **is** a managed C# emitter mirroring the Java one: no `IDisposable`, no
+finalizer, and the handle types are verified to implement neither. A P/Invoke
+wrapper over the C handles would instead own native memory and need
+`SafeHandle`/`IDisposable` — a worse API; this design chose the managed
+emitter and accepted the later delivery date.
+
+Two places the C# tier deliberately departs from the Java one, both because
+the language offers something Java does not:
+
+- **Multi-output values are a `readonly record struct`, not a class.** Java
+  caches the boxed `Value` so that `value()` allocates nothing; a struct is
+  allocation-free by construction, so C# has no `cachedValue` field at all.
+  The consequence for callers is that C# equality is .NET's `double` equality
+  — `NaN` equals `NaN` **and** `+0.0` equals `-0.0` — where Java's record
+  compares bitwise and disagrees on the second. Compare
+  `BitConverter.DoubleToInt64Bits` per component when bit identity is what you
+  mean. (JLS 17.5's final-field safe-publication guarantee has no ECMA-335
+  analogue, but none is needed: a returned record struct is copied into the
+  caller's frame, which is stronger.)
+- **The peek scratch is `[ThreadStatic]`, not `ThreadLocal<T>`.**
+  `ThreadLocal<T>` is itself `IDisposable`, and an undisposed static
+  `IDisposable` inside the one tier whose thesis is "nothing here needs
+  disposing" is the wrong signal.
 
 ### Rust concurrency
 
@@ -852,5 +873,9 @@ claim in *Motivation* gets measured, not asserted).
    sub-streams advanced in lockstep.
 8. **Rust emitter** (re-applying the now-complete C model) — DONE; **Java
    emitter** (nested handle classes over the same shared transition machinery,
-   verified by the same stream gate) — DONE; .NET (managed C# emitter, not
-   P/Invoke — see lifecycle section) — the sole remaining streaming work.
+   verified by the same stream gate) — DONE; **.NET emitter** (managed C#, not
+   P/Invoke — see lifecycle section) — DONE, completing the campaign. The C#
+   port confirmed the strategy: it changed nothing in `streaming.rs` or in the
+   three shipped emitters, so those stayed byte-frozen by construction while it
+   landed, and all 172 emitted step bodies came out byte-identical to Java's
+   modulo a fixed table of language spellings.
