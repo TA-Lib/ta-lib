@@ -161,9 +161,11 @@ def count_conditions(path):
     with no flip, no control and nothing in the totals to show it (CDLRICKSHAWMAN
     c3, whose band's lower edge could be relaxed with the whole tier still green).
 
-    A group containing `||` is genuinely NOT flattenable and stays one condition.
-    Its interior is reached on a different axis -- the output class, pb_signs() --
-    because a disjunct is not falsifiable while its sibling holds.
+    A group containing `||` is genuinely NOT flattenable and stays one condition,
+    because a disjunct is not falsifiable while its sibling holds. Its interior is
+    reached on a different axis: pb_signs() where the arms are output classes,
+    and otherwise pb_disjuncts() plus a sole-true case per alternative. See
+    count_disjuncts().
     """
     src = strip_comments(open(path, encoding="utf-8").read())
 
@@ -216,6 +218,85 @@ def count_conditions(path):
         else:
             total += len(_split_top(c, "&&"))  # pure conjunction: flatten it
     return total, None
+
+
+def count_disjuncts(path):
+    """Map flattened-condition index -> number of alternatives, for the
+    conditions that are disjunctions.
+
+    count_conditions() stops at the top-level conjuncts, so `A && (B || C)` is
+    two conditions and B and C are invisible to it. They are invisible to a flip
+    as well: falsifying the condition falsifies every alternative at once, and
+    the paired control only needs one of them back. An entire alternative can
+    therefore be deleted from a pattern with the whole tier green -- which is not
+    a hypothetical, it is what CDLLONGLEGGEDDOJI shipped with in unit 1.
+
+    pb_signs() does not reach these. That axis is for a disjunction whose arms
+    are output CLASSES and it works by requiring each class to fire; these arms
+    emit the same value. The axis that reaches them is a firing case in which
+    exactly one alternative holds, and this function is what pins the builder's
+    pb_disjuncts() declaration of how many there are to cover.
+    """
+    src = strip_comments(open(path, encoding="utf-8").read())
+    m = None
+    for cand in re.finditer(r"outInteger\s*\[\s*outIdx\+\+\s*\]\s*=\s*([^;]+);", src):
+        if cand.group(1).strip().rstrip("0").strip() not in ("", "+", "-"):
+            m = cand
+            break
+    if m is None:
+        return None, "no non-zero outInteger assignment found"
+    head = src[:m.start()]
+    k = head.rfind("if(")
+    if k < 0:
+        k = head.rfind("if (")
+    if k < 0:
+        return None, "no enclosing if( found"
+    if _directly_nested(src, k):
+        return None, "assignment is guarded by nested if-statements"
+    open_paren = src.index("(", k)
+    depth, i, expr = 0, open_paren, None
+    while i < len(src):
+        if src[i] == "(":
+            depth += 1
+        elif src[i] == ")":
+            depth -= 1
+            if depth == 0:
+                expr = src[open_paren + 1:i]
+                break
+        i += 1
+    if expr is None:
+        return None, "unterminated if( expression"
+    if len(_split_top(expr, "||")) > 1:
+        return None, "top-level || present; conjunct counting does not apply"
+
+    out, idx = {}, 0
+    for conj in _split_top(expr, "&&"):
+        c = _peel(conj)
+        alts = _split_top(c, "||")
+        if len(alts) > 1:
+            # A disjunction whose alternatives are each gated on a DISTINCT
+            # ta_candlecolor literal is already covered, on the output-class
+            # axis: the arms are mutually exclusive (a candle is white or
+            # black, never both) and each emits its own class, so pb_signs()
+            # requiring every class to fire is exactly the sole-true property
+            # this axis would otherwise assert. Demanding pb_disjuncts() there
+            # would be a second declaration of one fact.
+            #
+            # The test is structural rather than "alternatives == signs",
+            # which looks equivalent and is not: CDLGAPSIDESIDEWHITE is
+            # bi-signed with a two-alternative disjunction that is NOT
+            # colour-gated, and the arithmetic version would have exempted it
+            # while its arms stayed unreachable.
+            cols = [re.findall(r"ta_candlecolor\([^)]*\)\s*==\s*(-?1)", a)
+                    for a in alts]
+            gated = (all(len(x) >= 1 for x in cols) and
+                     len(set(x[0] for x in cols)) == len(alts))
+            if not gated:
+                out[idx] = len(alts)
+            idx += 1
+        else:
+            idx += len(_split_top(c, "&&"))
+    return out, None
 
 
 def _drop_calls(expr, fname):
@@ -388,9 +469,11 @@ def main():
               "conditions and grouping two comparisons cost CDLRICKSHAWMAN a "
               "boundary nothing tested. A DISJUNCTION is the one group that "
               "stays a single condition: a disjunct cannot be falsified while "
-              "its sibling holds, so its interior is unreachable by flips and is "
-              "covered on the output-class axis (pb_signs) instead -- which is "
-              "what a signs mismatch means." % bad)
+              "its sibling holds, so its interior is unreachable by flips. It "
+              "is covered on one of two other axes instead -- the output class "
+              "(pb_signs) where the arms are colour-gated, and pb_disjuncts() "
+              "with a sole-true case per alternative otherwise, which is what a "
+              "disjuncts mismatch means." % bad)
         return 1
     print("Every builder's pb_conditions() and pb_signs() matches its pattern "
           "source. OK.")

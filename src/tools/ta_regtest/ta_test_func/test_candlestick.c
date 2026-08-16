@@ -412,8 +412,10 @@ static const char *pbEl[PB_MAXEXP];
 #define PB_DETECT  1
 #define PB_FLIP    2
 #define PB_CONTROL 3
+#define PB_SOLE    4
 static int pbEkind[PB_MAXEXP];
-static int pbEcond[PB_MAXEXP];       /* condition id for FLIP/CONTROL, else -1 */
+static int pbEcond[PB_MAXEXP];       /* condition id for FLIP/CONTROL/SOLE, else -1 */
+static int pbEdisj[PB_MAXEXP];       /* disjunct id for SOLE, else -1 */
 
 /* Conditions the pattern is DECLARED to have, and the ones deliberately not
  * given a flip case. Every declared condition must be either flipped or
@@ -431,6 +433,30 @@ static int         pbNw;
  * never declares it fails the static check rather than quietly covering half
  * its decision. See the coverage check in pb_check_mcdc for why. */
 static int         pbNbSigns;
+
+/* ALTERNATIVES INSIDE ONE CONDITION. pb_conditions() counts TOP-LEVEL
+ * conjuncts, so `A && (B || C || D)` is two conditions and B, C, D are
+ * invisible to it. A flip cannot reach them either: falsifying the condition
+ * means falsifying every alternative at once, and a control only needs one of
+ * them back. So an entire alternative can be deleted from a pattern with the
+ * tier green -- which is not hypothetical. CDLLONGLEGGEDDOJI shipped in unit 1
+ * with `rb <= BodyDoji && (lsh > ShadowLong || ush > ShadowLong)`, and BOTH
+ * arms turned out to be individually deletable: its scenarios made both shadows
+ * long, so neither arm was ever the one carrying the decision.
+ *
+ * pb_signs cannot cover this. That axis exists for a disjunction whose arms are
+ * OUTPUT CLASSES (`white && x` vs `black && y`, emitting +100 and -100), and it
+ * works by requiring each class to be fired. These alternatives all emit the
+ * same value; there is no output difference to key on.
+ *
+ * The axis that does reach them is SOLE-TRUE: a firing case in which exactly
+ * one alternative holds. That is what shows the alternative to be independently
+ * sufficient, and it is the disjunction's form of the control. */
+static int         pbNbDisj[PB_MAXCOND];   /* alternatives per condition, 0 = plain */
+static int         pbDwCond[PB_MAXWAIVE];
+static int         pbDwK[PB_MAXWAIVE];
+static const char *pbDwWhy[PB_MAXWAIVE];
+static int         pbNdw;
 
 static int pb_bar4( double o, double h, double l, double c )
 {
@@ -456,6 +482,7 @@ static void pb_record( int i, int v, const char *s, int kind, int cond )
 {
    if( pbNe >= PB_MAXEXP ) { pbOverflow = 1; return; }
    pbEi[pbNe]=i; pbEv[pbNe]=v; pbEl[pbNe]=s; pbEkind[pbNe]=kind; pbEcond[pbNe]=cond;
+   pbEdisj[pbNe]=-1;
    pbNe++;
 }
 static void pb_expect( int i, int v, const char *s ) { pb_record(i, v, s, PB_LEGACY, -1); }
@@ -509,9 +536,56 @@ static void pb_waive( int cond, const char *why )
    pbWcond[pbNw] = cond; pbWhy[pbNw] = why; pbNw++;
 }
 
+/* pb_disjuncts(c,n)   condition `c` is an n-way disjunction. Each alternative
+ *                     needs a sole-true case or a disjunct waiver; the count is
+ *                     pinned against the pattern source by
+ *                     scripts/check_mcdc_conditions.py, so omitting the
+ *                     declaration fails the static check rather than quietly
+ *                     leaving the alternatives uncovered.
+ * pb_sole(i,v,c,k,s)  bars where EVERY condition holds and, within condition
+ *                     `c`, alternative `k` is the ONLY one true. The pattern
+ *                     must fire. Deleting alternative k then turns this case
+ *                     off, which is exactly what nothing could see before.
+ * pb_waive_disjunct(c,k,why)
+ *                     alternative k cannot be isolated -- typically because a
+ *                     sibling is implied by it. Same status as pb_waive: a
+ *                     refutable claim, printed at run time.
+ */
+static void pb_disjuncts( int cond, int n )
+{
+   if( cond < 0 || cond >= PB_MAXCOND || n < 2 || n > PB_MAXCOND )
+      { pbOverflow = 1; return; }
+   pbNbDisj[cond] = n;
+}
+static void pb_sole( int i, int v, int cond, int k, const char *s )
+{
+   pb_record(i, v, s, PB_SOLE, cond);
+   if( pbNe > 0 ) pbEdisj[pbNe-1] = k;
+}
+static void pb_waive_disjunct( int cond, int k, const char *why )
+{
+   int m;
+   if( pbNdw >= PB_MAXWAIVE || !why ) { pbOverflow = 1; return; }
+   for( m = 0; m < pbNdw; m++ )
+      if( pbDwCond[m] == cond && pbDwK[m] == k ) { pbOverflow = 1; return; }
+   pbDwCond[pbNdw] = cond; pbDwK[pbNdw] = k; pbDwWhy[pbNdw] = why; pbNdw++;
+}
+
+/* The disjunct model, registered by the builder rather than passed to
+ * pb_check_mcdc: the 34 builders that have no disjunction should not have to
+ * mention one, and a new argument on the entry point would make every one of
+ * them say "none". Cleared by pb_reset, set inside build_<x>(), read by
+ * pb_check_mcdc_finish. */
+typedef void (*PbDisjFn)( int i, int cond, int *d );
+static PbDisjFn pbDisjModel;
+static void pb_disj_model( PbDisjFn f ) { pbDisjModel = f; }
+
 static void pb_reset( void )
 {
+   int k;
    pbCur=0; pbNe=0; pbNw=0; pbNbCond=0; pbNbSigns=1; pbOverflow=0;
+   pbNdw=0; pbDisjModel=0;
+   for( k=0; k<PB_MAXCOND; k++ ) pbNbDisj[k] = 0;
 }
 
 /* HIKKAKE detection window (3 bars). dir +1 bull/-1 bear; each of p1/p2/p34/p56
@@ -729,6 +803,7 @@ typedef void (*PbCondFn)( int i, int *c );
  * is visible rather than asserted in the dark. A waiver count that drifts is
  * the thing most likely to hollow this gate out silently. */
 static int pbTotDetect, pbTotFlip, pbTotControl, pbTotWaive, pbTotCond;
+static int pbTotSole, pbTotDisj, pbTotDisjCond, pbTotDisjWaive;
 static int pbTotMigrated;
 
 /* Print what the gate actually covered. A gate that does not report its own
@@ -740,6 +815,9 @@ static void pb_report_totals( void )
           "%d flipped, %d control(s), %d waived\n",
           pbTotMigrated, pbTotCond, pbTotDetect, pbTotFlip, pbTotControl,
           pbTotWaive);
+   printf("  MC/DC disjuncts: %d alternative(s) inside %d condition(s), "
+          "%d sole-true case(s), %d waived\n",
+          pbTotDisj, pbTotDisjCond, pbTotSole, pbTotDisjWaive);
 }
 
 /* The body shared by pb_check_mcdc and pb_check_mcdc_p -- everything past
@@ -751,7 +829,7 @@ static ErrorNumber pb_check_mcdc_finish( const char *name, TA_RetCode rc,
                                           PbCondFn conds )
 {
    int k, j, fails=0;
-   int nDetect=0, nFlip=0, nControl=0;
+   int nDetect=0, nFlip=0, nControl=0, nSole=0;
 
    if( rc != TA_SUCCESS ) { printf("  %s MC/DC: retCode %d\n", name, rc); return TA_TSTCDL_PREDICATE_MISMATCH; }
 
@@ -778,15 +856,18 @@ static ErrorNumber pb_check_mcdc_finish( const char *name, TA_RetCode rc,
       case PB_DETECT:  nDetect++;  break;
       case PB_FLIP:    nFlip++;    break;
       case PB_CONTROL: nControl++; break;
+      case PB_SOLE:    nSole++;    break;
       default:                     break;
       }
-      /* A detect or a control that expects 0 asserts nothing: 0 is what the
-       * pattern returns nearly everywhere. Only a firing expectation carries
-       * information. */
-      if( (pbEkind[k] == PB_DETECT || pbEkind[k] == PB_CONTROL) && pbEv[k] == 0 )
+      /* A detect, control or sole-true case that expects 0 asserts nothing: 0 is
+       * what the pattern returns nearly everywhere. Only a firing expectation
+       * carries information. */
+      if( (pbEkind[k] == PB_DETECT || pbEkind[k] == PB_CONTROL ||
+           pbEkind[k] == PB_SOLE) && pbEv[k] == 0 )
       {
          printf("  %s MC/DC VACUOUS: %s expects 0 (%s)\n", name,
-                pbEkind[k] == PB_DETECT ? "detect" : "control", pbEl[k]);
+                pbEkind[k] == PB_DETECT ? "detect" :
+                pbEkind[k] == PB_SOLE   ? "sole-true" : "control", pbEl[k]);
          fails++;
       }
       if( pbEkind[k] == PB_FLIP && pbEv[k] != 0 )
@@ -823,12 +904,45 @@ static ErrorNumber pb_check_mcdc_finish( const char *name, TA_RetCode rc,
             }
             else if( !cv[m] ) { nFalse++; if( firstFalse < 0 ) firstFalse = m; }
          }
-         if( pbEkind[k] == PB_DETECT || pbEkind[k] == PB_CONTROL )
+         /* ANCHOR THE DECOMPOSITION. Everything else about a disjunct model
+          * is self-consistent by construction: it is asked which alternatives
+          * hold and its answer is checked only against the label on the case.
+          * A model that reports exactly one alternative true at each sole-true
+          * case therefore satisfies every check without describing the
+          * condition at all -- `d[0] = high < 102, d[1] = high >= 102` passes
+          * both of CDLLONGLEGGEDDOJI's sole cases and decomposes nothing.
+          * Requiring the alternatives to OR back to the condition, at every
+          * scenario rather than only the sole-true ones, is what makes them a
+          * decomposition OF that condition: the flips are where OR is false,
+          * and a fabricated model has to get those right too. */
+         if( pbDisjModel )
+         {
+            int c2;
+            for( c2 = 0; c2 < pbNbCond && c2 < PB_MAXCOND; c2++ )
+            {
+               int dv[PB_MAXCOND], any = 0, q, n2 = pbNbDisj[c2];
+               if( n2 <= 0 ) continue;
+               for( q = 0; q < n2; q++ ) dv[q] = 0;
+               pbDisjModel(pbEi[k], c2, dv);
+               for( q = 0; q < n2; q++ ) if( dv[q] ) any = 1;
+               if( cv[c2] != -1 && any != (cv[c2] ? 1 : 0) )
+               {
+                  printf("  %s MC/DC: c%d's alternatives OR to %d but the "
+                         "condition model says %d -- the alternatives are not a "
+                         "decomposition of that condition (%s)\n",
+                         name, c2, any, cv[c2] ? 1 : 0, pbEl[k]);
+                  fails++;
+               }
+            }
+         }
+         if( pbEkind[k] == PB_DETECT || pbEkind[k] == PB_CONTROL ||
+             pbEkind[k] == PB_SOLE )
          {
             if( nFalse != 0 )
             {
                printf("  %s MC/DC: %s has %d condition(s) false, first c%d (%s)\n",
-                      name, pbEkind[k]==PB_DETECT ? "detect" : "control",
+                      name, pbEkind[k]==PB_DETECT ? "detect" :
+                            pbEkind[k]==PB_SOLE   ? "sole-true" : "control",
                       nFalse, firstFalse, pbEl[k]);
                fails++;
             }
@@ -880,6 +994,96 @@ static ErrorNumber pb_check_mcdc_finish( const char *name, TA_RetCode rc,
          printf("  %s MC/DC: flip for condition %d has no paired control (%s)\n",
                 name, pbEcond[k], pbEl[k]);
          fails++;
+      }
+   }
+
+   /* DISJUNCT COVERAGE. Everything above this point treats a condition as
+    * atomic, so an alternative inside one is reachable by nothing: the flip
+    * falsifies the whole disjunction at once and the control only restores some
+    * arm of it. This is the axis that reaches them -- a firing case in which
+    * exactly one alternative holds, which is what makes deleting that
+    * alternative turn the case off. */
+   {
+      int c;
+      for( c = 0; c < pbNbCond && c < PB_MAXCOND; c++ )
+      {
+         if( pbNbDisj[c] <= 0 ) continue;
+         if( !pbDisjModel )
+         {
+            printf("  %s MC/DC: c%d declares %d alternative(s) but no disjunct "
+                   "model was registered -- they are unchecked\n",
+                   name, c, pbNbDisj[c]);
+            fails++;
+            continue;
+         }
+         for( j = 0; j < pbNbDisj[c]; j++ )
+         {
+            int found = 0, w;
+            for( k = 0; k < pbNe; k++ )
+               if( pbEkind[k] == PB_SOLE && pbEcond[k] == c && pbEdisj[k] == j )
+                  { found = 1; break; }
+            for( w = 0; w < pbNdw && !found; w++ )
+               if( pbDwCond[w] == c && pbDwK[w] == j )
+               {
+                  found = 1;
+                  printf("  %s MC/DC disjunct waiver c%d alt%d: %s\n",
+                         name, c, j, pbDwWhy[w]);
+               }
+            if( !found )
+            {
+               printf("  %s MC/DC: c%d alternative %d has no sole-true case and "
+                      "no waiver -- deleting it from the pattern would change "
+                      "nothing here\n", name, c, j);
+               fails++;
+            }
+         }
+      }
+   }
+
+   /* Each sole-true case must actually be sole-true. Without this the kind is
+    * just a second control: a case tagged alt0 that happens to satisfy alt0 AND
+    * alt2 proves neither of them independently sufficient. */
+   if( pbDisjModel )
+   {
+      for( k = 0; k < pbNe; k++ )
+      {
+         int dv[PB_MAXCOND];
+         int n, m, nTrue = 0, firstTrue = -1;
+         if( pbEkind[k] != PB_SOLE ) continue;
+         n = (pbEcond[k] >= 0 && pbEcond[k] < PB_MAXCOND) ? pbNbDisj[pbEcond[k]] : 0;
+         if( n <= 0 )
+         {
+            printf("  %s MC/DC: sole-true case names c%d, which declares no "
+                   "alternatives (%s)\n", name, pbEcond[k], pbEl[k]);
+            fails++;
+            continue;
+         }
+         for( m = 0; m < n; m++ ) dv[m] = -1;
+         pbDisjModel(pbEi[k], pbEcond[k], dv);
+         for( m = 0; m < n; m++ )
+         {
+            if( dv[m] == -1 )
+            {
+               printf("  %s MC/DC: disjunct model left c%d alt%d unset (%s)\n",
+                      name, pbEcond[k], m, pbEl[k]);
+               fails++;
+            }
+            else if( dv[m] ) { nTrue++; if( firstTrue < 0 ) firstTrue = m; }
+         }
+         if( nTrue != 1 )
+         {
+            printf("  %s MC/DC: case filed as c%d alt%d has %d alternative(s) "
+                   "true%s (%s)\n", name, pbEcond[k], pbEdisj[k], nTrue,
+                   nTrue > 1 ? " -- not a sole-true case" : " -- the condition cannot hold",
+                   pbEl[k]);
+            fails++;
+         }
+         else if( firstTrue != pbEdisj[k] )
+         {
+            printf("  %s MC/DC: case filed as c%d alt%d is actually alt%d (%s)\n",
+                   name, pbEcond[k], pbEdisj[k], firstTrue, pbEl[k]);
+            fails++;
+         }
       }
    }
 
@@ -995,6 +1199,10 @@ static ErrorNumber pb_check_mcdc_finish( const char *name, TA_RetCode rc,
 
    pbTotDetect += nDetect; pbTotFlip += nFlip; pbTotControl += nControl;
    pbTotWaive  += pbNw;
+   pbTotSole   += nSole;
+   pbTotDisjWaive += pbNdw;
+   { int c; for( c=0; c<pbNbCond && c<PB_MAXCOND; c++ )
+        if( pbNbDisj[c] > 0 ) { pbTotDisj += pbNbDisj[c]; pbTotDisjCond++; } }
    pbTotMigrated++;
 
    /* The pre-migration guard, kept for the builders still on the legacy shape:
@@ -2330,7 +2538,6 @@ static void cond_longleggeddoji( int i, int *c )
    c[0] = pb_body(i) <= pb_avg(TA_BodyDoji, i);
    c[1] = pb_losh(i) > sl || pb_upsh(i) > sl;
 }
-
 static void build_longleggeddoji( void )
 {
   pb_conditions(2);
@@ -2358,6 +2565,7 @@ static void build_longleggeddoji( void )
   int k1=pb_bar(100,104,96,100);
   pb_control(k1,100,1,"restore c1: lower shadow 4 > 0");
   pb_flat(8);
+
 }
 
 /* CDLDRAGONFLYDOJI -- a doji sitting at the top of its range.
