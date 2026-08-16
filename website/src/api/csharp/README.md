@@ -1,6 +1,6 @@
 ---
 title: .NET Core API
-description: "TALib for .NET: a native C# port with no P/Invoke, indicators as methods on a Core instance over double arrays, bit-identical to the reference C library."
+description: "TALib for .NET: a native C# port with no P/Invoke, indicators as methods on a Core instance taking spans, bit-identical to the reference C library."
 toc: false
 ---
 
@@ -8,13 +8,13 @@ toc: false
 The .NET API is not yet released. Estimated release: **Q1 2027**.
 :::
 
-The .NET library is a native port of TA-Lib in the `TALib` namespace — no P/Invoke, no native dependency, pure managed C# targeting `net10.0`. Every indicator is a method on a `Core` instance, operates on `double[]` arrays, and is **bit-identical** to the reference C library over the same inputs.
+The .NET library is a native port of TA-Lib in the `TALib` namespace — no P/Invoke, no native dependency, pure managed C# targeting `net10.0`. Every indicator is a method on a `Core` instance, takes its series as spans, and is **bit-identical** to the reference C library over the same inputs.
 
 To process a live feed one bar at a time instead of a whole array, see the companion [.NET Streaming API](/api/csharp/stream/).
 
 ## Calling a function
 
-Each indicator takes a `startIdx`/`endIdx` range, the inputs, the optional parameters, and the caller-provided output array(s). It returns an `OutRange` describing where the valid output begins and how many values were written:
+Each indicator takes a `startIdx`/`endIdx` range, the inputs, the optional parameters, and the caller-provided output buffer(s). It returns an `OutRange` describing where the valid output begins and how many values were written:
 
 ```csharp
 using TALib;
@@ -36,6 +36,16 @@ for (int i = 0; i < r.Count; i++)
     Console.WriteLine($"bar {r.BegIdx + i} = {outReal[i]}");
 }
 ```
+
+Inputs are `ReadOnlySpan<double>` and outputs `Span<double>`, so you can hand an indicator a window of a larger buffer without copying it:
+
+```csharp
+core.SMA(0, count - 1, close.AsSpan(start, count), 30, outReal);
+```
+
+Arrays still work everywhere — `double[]` converts to a span implicitly, so the call above and the one before it are both ordinary code. There is a `float[]`/`ReadOnlySpan<float>` overload of every indicator too, for callers who store series at single precision; the arithmetic is `double` either way.
+
+Two consequences worth knowing. A span is never null, so passing `null` arrives as an empty span and is rejected as one (`ArgumentException` naming the parameter). And a span cannot be boxed, so the API cannot be invoked through `MethodInfo.Invoke` — to call indicators chosen at run time, use the catalogue below, which is the supported path and is faster besides.
 
 `OutRange` is a readonly struct with two components — `BegIdx` and `Count` — plus the conveniences `IsEmpty`, `EndIdx` and `Empty`. The component names match the C, Rust and Java surfaces (`outBegIdx` / `outNBElement`), so the same concept reads the same way in every backend.
 
@@ -65,7 +75,7 @@ The public methods throw rather than return a status code:
 |---|---|
 | `startIdx`/`endIdx` negative, above `Core.MAX_INDEX`, or `endIdx < startIdx` | `ArgumentOutOfRangeException` |
 | An optional parameter outside its documented range | `ArgumentException` |
-| Two outputs sharing one array | `ArgumentException` |
+| An output overlapping an input, or another output | `ArgumentException` |
 
 ## Settings
 

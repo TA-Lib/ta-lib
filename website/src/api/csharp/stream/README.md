@@ -51,6 +51,7 @@ double provisional = s.Peek(formingClose);       // state left unchanged
 - **Allocation.** `Update` allocates nothing — not handle state, and not a return value even for multi-output indicators, because those return a `readonly record struct`. `Peek` is different: where the handle owns several arrays or a sub-handle, the copy is a scratch held per thread and reused, so it allocates nothing after that thread's first peek of that indicator; otherwise `Peek` copies the handle and allocates in proportion to the state the indicator carries. If you peek on every tick and that matters, hold the value `Update` returns instead.
 - **Parameters are fixed at `Open`.** Changing a parameter means a new stream. [Unstable period](/api/#numerical_stability) and candle settings are read from the owning `Core` at `Open`. Since `Core` is immutable they cannot change underneath a live handle — to stream with different settings, build a new `Core` and open from that.
 - **Threads.** A handle is single-writer — `Update`, `Peek`, `Value` and `Clone()` must not race with an `Update` on the same handle. With no concurrent `Update`, `Peek`/`Value`/`Clone()` never write the handle and may run concurrently. Distinct handles (a `Clone()` result included) are fully independent.
+- **Spans, not arrays.** Series parameters are `ReadOnlySpan<double>` in and `Span<double>` out, so a warm-up window can be a slice of a larger buffer with no copy. Arrays convert implicitly, so `SMA_Open(history, 30)` on a `double[]` is unchanged. Because a span is never null, a null history arrives as an empty span and is rejected as one.
 - **Not serializable.** The constructors are `internal`, so no partially built handle can be minted or deserialized. To checkpoint, retain the history and re-open — the result is bit-identical by contract.
 
 ## Full-history output (`OpenAndFill`)
@@ -68,7 +69,7 @@ OutRange r = s.FillRange;   // where the filled values start, and how many
 // ...and s is live, ready for Update.
 ```
 
-The output arguments are the batch call's, in the same order. An output array may not alias an input array, or another output — that throws `ArgumentException` and mints no handle.
+The output arguments are the batch call's, in the same order. An output may not overlap an input, or another output — that throws `ArgumentException` and mints no handle. With spans that means genuine memory overlap, not just the same buffer: two slices of one array that share even one element are rejected.
 
 ## Multi-input / multi-output
 
