@@ -6560,6 +6560,229 @@ static void build_breakaway( void )
 
 }
 
+/* ---- Hard tier: CDLABANDONEDBABY ----------------------------------------- *
+ *
+ * A long candle, a doji abandoned on a gap, then a candle gapping back the
+ * other way and closing deep into the first. Four conditions, and the first
+ * builder to run BOTH mechanisms at once: it registers through
+ * pb_check_mcdc_p, because it takes optInPenetration, and c3's alternatives
+ * hold five terms each, so it needs pb_arm as well.
+ *
+ *   c0  realbody(i-2) >  avg(BodyLong,  i-2)
+ *   c1  realbody(i-1) <= avg(BodyDoji,  i-1)      inclusive
+ *   c2  realbody(i)   >  avg(BodyShort, i)
+ *   c3  alt0 (bearish) || alt1 (bullish), each of them
+ *         term0  the 1st candle's colour
+ *         term1  the 3rd candle's colour
+ *         term2  the 3rd closes past close(1st) -/+ realbody(1st) * penetration
+ *         term3  the doji gaps away from the 1st
+ *         term4  the 3rd gaps back past the doji
+ *
+ * NOTHING HERE IS WAIVED, which is the difference from CDLBREAKAWAY and worth
+ * the note. There, an arm's single colour test was its selector and could not
+ * be broken without handing the decision to the other arm. Here each arm
+ * carries TWO colour tests -- the 1st candle's and the 3rd's -- so breaking
+ * either one leaves the other still holding the opposite arm false, and both
+ * are ordinary flips. An arm selector is only unflippable when it is the arm's
+ * only selector.
+ *
+ * THE PENETRATION ARM IS FUSED ON ONE SIDE AND NOT THE OTHER, the same split
+ * unit 5 found: the bullish term2 is emitted as fma(rb, pen, close) and the
+ * bearish one as close - rb * pen. The two boundary flips are written as the
+ * arithmetic -- `104.0-4.0*0.3` and `100.0+4.0*0.3` -- rather than as decimals,
+ * and the fused and two-step forms were measured equal at (4, 0.3, 104) rather
+ * than assumed, so both land ON the boundary instead of near it.
+ *
+ * The geometry keeps all three averages exact. BodyLong's window at i-2 is all
+ * primer, so it is the primer body 2. BodyDoji's at i-1 carries the first
+ * candle's HighLow, so that is held at the primer's 10 and the doji threshold
+ * is 1. BodyShort's at i carries the first two bodies, and 4 + 0 puts it on 2
+ * exactly -- which is why the 1st candle is body 4 in a HighLow of 10 rather
+ * than the longer body the pattern's name suggests.
+ */
+static void cond_abandonedbaby( int i, int *c )
+{
+   c[0] = pb_body(i-2) >  pb_avg(TA_BodyLong,  i-2);
+   c[1] = pb_body(i-1) <= pb_avg(TA_BodyDoji,  i-1);
+   c[2] = pb_body(i)   >  pb_avg(TA_BodyShort, i);
+   c[3] = (  pb_white(i-2) && !pb_white(i) &&
+             pbC[i] < pbC[i-2] - pb_body(i-2) * 0.3 &&
+             pbL[i-1] > pbH[i-2] && pbH[i] < pbL[i-1] )
+       || ( !pb_white(i-2) &&  pb_white(i) &&
+             pbC[i] > pbC[i-2] + pb_body(i-2) * 0.3 &&
+             pbH[i-1] < pbL[i-2] && pbL[i] > pbH[i-1] );
+}
+static void arm_abandonedbaby( int i, int cond, int arm, int *a )
+{
+   if( cond != 3 ) return;
+   if( arm == 0 )
+   {
+      a[0] =  pb_white(i-2);
+      a[1] = !pb_white(i);
+      a[2] = pbC[i] < pbC[i-2] - pb_body(i-2) * 0.3;
+      a[3] = pbL[i-1] > pbH[i-2];
+      a[4] = pbH[i]   < pbL[i-1];
+   }
+   else
+   {
+      a[0] = !pb_white(i-2);
+      a[1] =  pb_white(i);
+      a[2] = pbC[i] > pbC[i-2] + pb_body(i-2) * 0.3;
+      a[3] = pbH[i-1] < pbL[i-2];
+      a[4] = pbL[i]   > pbH[i-1];
+   }
+}
+
+static void build_abandonedbaby( void )
+{
+  pb_conditions(4);
+  pb_signs(2);
+  pb_arm(3,0,5); pb_arm(3,1,5);
+  pb_arm_model(arm_abandonedbaby);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,111,108,110);
+  int p1=pb_bar(106,107,99,100);
+  pb_detect(p1,-100,"detect bearish: long white, doji abandoned above it, black 3rd gapping back down and closing past the penetration line");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(94,95,93,94);
+  int p2=pb_bar(98,105,96,104);
+  pb_detect(p2,100,"detect bullish: the mirror, firing the other output class");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(102,106,96,104);
+  pb_bar(110,111,108,110);
+  int p3=pb_bar(106,107,99,100);
+  pb_flip(p3,0,"break c0: 1st body 2 == avg 2, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(101,106,96,104);
+  pb_bar(110,111,108,110);
+  int p4=pb_bar(106,107,99,100);
+  pb_control(p4,-100,0,"restore c0: 1st body 3 > 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,112,108,111.5);
+  int p5=pb_bar(106,107,99,100);
+  pb_flip(p5,1,"break c1: doji body 1.5 above the BodyDoji average 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,112,108,111);
+  int p6=pb_bar(106,107,99,100);
+  pb_control(p6,-100,1,"restore c1: doji body 1 == avg 1, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,111,108,110);
+  int p7=pb_bar(102,107,99,100);
+  pb_flip(p7,2,"break c2: 3rd body 2 == avg 2, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,111,108,110);
+  int p8=pb_bar(103,107,99,100);
+  pb_control(p8,-100,2,"restore c2: 3rd body 3 > 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(110,111,108,110);
+  int p9=pb_bar(106,107,97,98);
+  pb_flip_in(p9,3,0,0,"break c3 alt0 term0: 1st is black; the 3rd stays black, so the bullish alternative cannot take over");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,111,108,110);
+  int p10=pb_bar(99,107,98,102);
+  pb_flip_in(p10,3,0,1,"break c3 alt0 term1: 3rd is white; the 1st stays white, so the bullish alternative cannot take over");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,111,108,110);
+  int p11=pb_bar(106,107,102,104.0-4.0*0.3);
+  pb_flip_in(p11,3,0,2,"break c3 alt0 term2: 3rd closes 104 - 4*0.3 exactly, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,111,106,110);
+  int p12=pb_bar(105,105,99,100);
+  pb_flip_in(p12,3,0,3,"break c3 alt0 term3: doji low 106 == the 1st high, the gap test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,111,108,110);
+  int p13=pb_bar(106,108,99,100);
+  pb_flip_in(p13,3,0,4,"break c3 alt0 term4: 3rd high 108 == the doji low, the gap test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(94,95,93,94);
+  int p14=pb_bar(98,107,96,106);
+  pb_flip_in(p14,3,1,0,"break c3 alt1 term0: 1st is white; the 3rd stays white, so the bearish alternative cannot take over");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(94,95,93,94);
+  int p15=pb_bar(105,106,96,102);
+  pb_flip_in(p15,3,1,1,"break c3 alt1 term1: 3rd is black; the 1st stays black, so the bearish alternative cannot take over");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(94,95,93,94);
+  int p16=pb_bar(98,105,96,100.0+4.0*0.3);
+  pb_flip_in(p16,3,1,2,"break c3 alt1 term2: 3rd closes 100 + 4*0.3 exactly, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(94,96,93,94);
+  int p17=pb_bar(98,105,97,104);
+  pb_flip_in(p17,3,1,3,"break c3 alt1 term3: doji high 96 == the 1st low, the gap test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(94,95,93,94);
+  int p18=pb_bar(98,105,95,104);
+  pb_flip_in(p18,3,1,4,"break c3 alt1 term4: 3rd low 95 == the doji high, the gap test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,111,108,110);
+  int p19=pb_bar(106,107,99,100);
+  pb_control(p19,-100,3,"restore c3 via alt0: every term of the bearish alternative holds");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(94,95,93,94);
+  int p20=pb_bar(98,105,96,104);
+  pb_control(p20,100,3,"restore c3 via alt1: every term of the bullish alternative holds");
+  pb_flat(8);
+
+}
+
 static ErrorNumber test_marquee_predicate_coverage( void )
 {
    ErrorNumber e;
@@ -6601,6 +6824,7 @@ static ErrorNumber test_marquee_predicate_coverage( void )
    pb_reset(); build_gapsidesidewhite();    e = pb_check_mcdc("CDLGAPSIDESIDEWHITE",    TA_CDLGAPSIDESIDEWHITE,    cond_gapsidesidewhite);    if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_risefall3methods();    e = pb_check_mcdc("CDLRISEFALL3METHODS",    TA_CDLRISEFALL3METHODS,    cond_risefall3methods);    if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_breakaway();           e = pb_check_mcdc("CDLBREAKAWAY",           TA_CDLBREAKAWAY,           cond_breakaway);           if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_abandonedbaby();       e = pb_check_mcdc_p("CDLABANDONEDBABY",     TA_CDLABANDONEDBABY,     0.3, cond_abandonedbaby);   if( e != TA_TEST_PASS ) return e;
    pb_report_totals();
    return TA_TEST_PASS;
 }
