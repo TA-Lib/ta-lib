@@ -5306,6 +5306,191 @@ static void build_advanceblock( void )
   pb_flat(8);
 }
 
+/* ---- Hard tier: CDLGAPSIDESIDEWHITE -------------------------------------- *
+ *
+ * Two white candles of near-equal size opening at near-equal prices, both
+ * gapping the same way off a first candle. Seven conditions, and the last
+ * pattern in the corpus whose disjunction was reachable by nothing.
+ *
+ *   c0  ( gapup(i-1,i-2) && gapup(i,i-2) ) || ( gapdown(i-1,i-2) && gapdown(i,i-2) )
+ *   c1  color(i-1) == 1
+ *   c2  color(i)   == 1
+ *   c3  realbody(i) >= realbody(i-1) - avg(Near,  i-1)
+ *   c4  realbody(i) <= realbody(i-1) + avg(Near,  i-1)
+ *   c5  open(i)     >= open(i-1)     - avg(Equal, i-1)
+ *   c6  open(i)     <= open(i-1)     + avg(Equal, i-1)
+ *
+ * FOUR OF THE SEVEN ARE INCLUSIVE, which is the whole character of this one:
+ * c3..c6 are two tolerance BANDS, each spelled with >= and <=. An inclusive
+ * bound is pinned by the control sitting exactly on the equality, never by the
+ * flip -- there is no minimal falsifying value above a `<=` -- so all four
+ * controls below sit on their own edge and all four flips sit strictly outside.
+ * Relaxing any one of the four to its strict form is caught by its control, not
+ * by its flip.
+ *
+ * The geometry keeps both bands exact. Near and Equal are HighLow-typed over
+ * five bars ending at i-1, so their windows hold four primer bars plus the
+ * FIRST candle; giving that candle the primer's own HighLow of 10 leaves
+ * Near = 2 and Equal = 0.5 exactly, and the two bands land on whole and half
+ * units. Its body is otherwise unconstrained -- no condition reads it -- which
+ * is what makes that free to choose.
+ *
+ * c0's two alternatives are mutually exclusive (a pair of bodies cannot gap
+ * both up and down off the same candle), so a sole-true case for each is just
+ * a case of that gap direction. They are declared and covered anyway rather
+ * than argued away: the exclusivity is a fact about the predicates, and the
+ * check that reads it is the one this file now has for saying so.
+ *
+ * This is also a bi-signed pattern -- the firing arm is
+ * `gapup(i-1,i-2) ? 100 : -100` -- so the two detects fire the two classes.
+ */
+static void cond_gapsidesidewhite( int i, int *c )
+{
+   double n = pb_avg(TA_Near,  i-1);
+   double e = pb_avg(TA_Equal, i-1);
+   c[0] = ( pb_bodylo(i-1) > pb_bodyhi(i-2) && pb_bodylo(i) > pb_bodyhi(i-2) )
+       || ( pb_bodyhi(i-1) < pb_bodylo(i-2) && pb_bodyhi(i) < pb_bodylo(i-2) );
+   c[1] = pb_white(i-1);
+   c[2] = pb_white(i);
+   c[3] = pb_body(i) >= pb_body(i-1) - n;
+   c[4] = pb_body(i) <= pb_body(i-1) + n;
+   c[5] = pbO[i]     >= pbO[i-1]     - e;
+   c[6] = pbO[i]     <= pbO[i-1]     + e;
+}
+static void disj_gapsidesidewhite( int i, int cond, int *d )
+{
+   if( cond != 0 ) return;
+   d[0] = ( pb_bodylo(i-1) > pb_bodyhi(i-2) && pb_bodylo(i) > pb_bodyhi(i-2) );
+   d[1] = ( pb_bodyhi(i-1) < pb_bodylo(i-2) && pb_bodyhi(i) < pb_bodylo(i-2) );
+}
+
+static void build_gapsidesidewhite( void )
+{
+  pb_conditions(7);
+  pb_signs(2);
+  pb_disjuncts(0,2);
+  pb_disj_model(disj_gapsidesidewhite);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);                  /* 1st: body 4, HighLow 10 -> Near 2, Equal 0.5 */
+  pb_bar(110,117,109,116);                 /* 2nd: white body 6, gaps up over 104 */
+  int d1=pb_bar(110,117,109,116);          /* 3rd: same body, same open */
+  pb_detect(d1,100,"detect gap up: bodies 6 and 6, opens both 110, both gapping over 104");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(90,97,89,96);                     /* 2nd: white body 6, gaps down under 100 */
+  int d2=pb_bar(90,97,89,96);
+  pb_detect(d2,-100,"detect gap down: the mirror, firing the other output class");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(104,117,103,110);                 /* body floor 104 == the 1st candle's ceiling */
+  int f0=pb_bar(104,117,103,110);
+  pb_flip(f0,0,"break c0: body floor 104 == the first candle's ceiling 104, the gap test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,117,109,116);
+  int k0=pb_bar(110,117,109,116);
+  pb_control(k0,100,0,"restore c0: body floor 110 > 104");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,117,109,109.75);              /* 2nd BLACK, body 0.25 */
+  int f1=pb_bar(110,117,109,110.25);
+  pb_flip(f1,1,"break c1: the second candle is black");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,117,109,116);
+  int k1=pb_bar(110,117,109,116);
+  pb_control(k1,100,1,"restore c1: the second candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,117,109,110.25);
+  int f2=pb_bar(110,117,109,109.75);       /* 3rd BLACK, body 0.25 */
+  pb_flip(f2,2,"break c2: the third candle is black");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,117,109,116);
+  int k2=pb_bar(110,117,109,116);
+  pb_control(k2,100,2,"restore c2: the third candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,117,109,116);
+  int f3=pb_bar(110,117,109,113.5);        /* body 3.5, below 6 - Near 2 */
+  pb_flip(f3,3,"break c3: third body 3.5 below the band floor 6 - 2");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,117,109,116);
+  int k3=pb_bar(110,117,109,114);          /* body 4 == the floor */
+  pb_control(k3,100,3,"restore c3: third body 4 == 6 - 2, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,117,109,116);
+  int f4=pb_bar(110,119,109,118.5);        /* body 8.5, above 6 + Near 2 */
+  pb_flip(f4,4,"break c4: third body 8.5 above the band ceiling 6 + 2");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,117,109,116);
+  int k4=pb_bar(110,119,109,118);          /* body 8 == the ceiling */
+  pb_control(k4,100,4,"restore c4: third body 8 == 6 + 2, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,117,109,116);
+  int f5=pb_bar(109.25,117,108,115.25);    /* open 109.25, below 110 - Equal 0.5 */
+  pb_flip(f5,5,"break c5: third open 109.25 below the band floor 110 - 0.5");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,117,109,116);
+  int k5=pb_bar(109.5,117,108,115.5);      /* open 109.5 == the floor */
+  pb_control(k5,100,5,"restore c5: third open 109.5 == 110 - 0.5, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,117,109,116);
+  int f6=pb_bar(110.75,118,109,116.75);    /* open 110.75, above 110 + Equal 0.5 */
+  pb_flip(f6,6,"break c6: third open 110.75 above the band ceiling 110 + 0.5");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,117,109,116);
+  int k6=pb_bar(110.5,118,109,116.5);      /* open 110.5 == the ceiling */
+  pb_control(k6,100,6,"restore c6: third open 110.5 == 110 + 0.5, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,117,109,116);
+  int a0=pb_bar(110,117,109,116);
+  pb_sole(a0,100,0,0,"c0 alt0 alone: both bodies gap UP, so the gap-down alternative cannot hold");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(90,97,89,96);
+  int a1=pb_bar(90,97,89,96);
+  pb_sole(a1,-100,0,1,"c0 alt1 alone: both bodies gap DOWN, so the gap-up alternative cannot hold");
+  pb_flat(8);
+}
+
 static ErrorNumber test_marquee_predicate_coverage( void )
 {
    ErrorNumber e;
@@ -5344,6 +5529,7 @@ static ErrorNumber test_marquee_predicate_coverage( void )
    pb_reset(); build_morningdojistar();     e = pb_check_mcdc_p("CDLMORNINGDOJISTAR",   TA_CDLMORNINGDOJISTAR,   0.3, cond_morningdojistar); if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_eveningdojistar();     e = pb_check_mcdc_p("CDLEVENINGDOJISTAR",   TA_CDLEVENINGDOJISTAR,   0.3, cond_eveningdojistar); if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_advanceblock();        e = pb_check_mcdc("CDLADVANCEBLOCK",        TA_CDLADVANCEBLOCK,        cond_advanceblock);        if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_gapsidesidewhite();    e = pb_check_mcdc("CDLGAPSIDESIDEWHITE",    TA_CDLGAPSIDESIDEWHITE,    cond_gapsidesidewhite);    if( e != TA_TEST_PASS ) return e;
    pb_report_totals();
    return TA_TEST_PASS;
 }
