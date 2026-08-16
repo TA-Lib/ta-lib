@@ -149,13 +149,14 @@ def main():
         # language server; every one must have swept exactly the fixtures.
         stream = re.findall(r"Stream verify: (\d+) functions, (\d+) legs", out1)
         notsup = len(re.findall(r"Stream verify: not supported", out1))
-        # Every server must either sweep the fixtures or say so explicitly
-        # (today the C# server has no stream_verify — 3 summaries + 1 note).
-        # A server LOSING stream support drops the summary count below 3.
-        if len(stream) + notsup != LANGS or len(stream) < 3:
+        # Every server must either sweep the fixtures or say so explicitly.
+        # All four now stream, so the floor is 4: at 3 a C# server that
+        # silently lost stream support still satisfied `3 + 1 == LANGS`, which
+        # is exactly the hole this floor exists to close.
+        if len(stream) + notsup != LANGS or len(stream) < 4:
             sys.exit(f"synth_gate: VACUOUS — {len(stream)} stream-verify "
                      f"summaries + {notsup} not-supported, expected "
-                     f"{LANGS} total with at least 3 summaries")
+                     f"{LANGS} total with at least 4 summaries")
         for n, legs in stream:
             if int(n) != nfix or int(legs) == 0:
                 sys.exit(f"synth_gate: VACUOUS — stream leg swept {n} function(s) "

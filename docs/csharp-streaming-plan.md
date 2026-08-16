@@ -729,8 +729,17 @@ at least two distinct vectors executed and neither arm's leg count is 0.
 *Sabotage.* Delete the complement capture → the `Clone`/`CopyFrom` leg of at
 least one function reds. *(The C# failure mode is a stale-or-empty array rather
 than Java's NPE, which is why the COPY leg and not the update leg is the
-detector.)* Move the identity branch inside arm B → HMA at period 1 reds,
-because period 1 lands in arm A where the identity would be unreachable.
+detector.)* Move the identity branch inside **arm A** → HMA at period 1 reds
+with a NaN.
+
+*(Corrected during execution: this originally said "inside arm B … because
+period 1 lands in arm A". That is backwards. HMA's arm-A predicate is
+`optInTimePeriod == 2 || optInTimePeriod == 3`, so period 1 falls through to
+arm **B** — moving the branch there is value-neutral and the sabotage passes
+silently. HMA is also the only dual-mode function with a step identity branch
+at all. Hoisting above the predicate is still the right emission, because it is
+a property of the function rather than of a mode; only the stated reason was
+wrong.)*
 
 ### S6 — Dispatch, MA (~3 days)
 
