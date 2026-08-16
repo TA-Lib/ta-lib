@@ -275,9 +275,9 @@ systems (CMake, autotools, the generator) and must stay in step:
   STDDEV without the map, did not move). BBANDS, CORREL and HMA also call
   `sqrt` and did not move: theirs is not in a vectorizable map.
 
-  Value-safety is checked by hashing every output of all 168 functions in both
-  builds. Do not weaken it to `-ffast-math` on the strength of that: the same
-  harness shows `-ffast-math` changing 70 of the 168.
+  Value-safety is checked by hashing every function's output in both builds. Do
+  not weaken it to `-ffast-math` on the strength of that: the same harness shows
+  `-ffast-math` changing 70 functions.
 
   It is not effect-free, though, and no output-comparing gate can see what it
   changes. Vectorizing STDDEV's map if-converts it, so `sqrtpd` runs on lanes the
@@ -331,7 +331,7 @@ scripts/stream_ab.py --base=HEAD~1 --lang=rust --call=peek --mark=MIN,MAX
 scripts/stream_ab.py --base=origin/dev --call=open --mark=BBANDS,STDDEV   # the Open tier
 ```
 
-Current shape (168 functions): median ~1.6x, but **~25 stream slower than
+Current shape: median ~1.6x, but **~25 stream slower than
 batch** and another ~50 sit under 1.5x. Recursive/multi-stage state wins big
 (`HT_TRENDLINE` ~24x, `TRIX`/`TEMA` ~16x); window-recomputers and stateless
 patterns lose (`AVGDEV`, `MAVP`, `MIDPRICE`, `WILLR`, CDL*) because the handle

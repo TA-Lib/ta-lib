@@ -279,8 +279,8 @@ Nothing is published under `com.tictactec` (green field, and §7 is now closed).
   full-fidelity metadata table free — the cost fell from "hand-maintain a fourth copy" to "route an
   existing one". Shipped as `io.github.talib.metadata` (`Functions.all()` / `byName`), rendered from
   the same rows as the JSON-RPC server's table, so the two cannot disagree. It also carries what the
-  retired hand-written `meta/` island never did: function hints (168/168), per-parameter hints
-  (122/122), and named constants for the whole `TA_OUT_*` vocabulary including `NULLABLE` (0x2000)
+  retired hand-written `meta/` island never did: a hint on every function and on every parameter,
+  and named constants for the whole `TA_OUT_*` vocabulary including `NULLABLE` (0x2000)
   and the band flags. **Call-by-name ships with it** (maintainer decision 2026-07-24, the
   charting-app case): a `ParamHolder` + a *generated static switch*, never reflection.
 - **`MInteger`:** ~~shipped~~ → **REVERSED and re-locked 2026-07-26: superseded by

@@ -291,7 +291,7 @@ byte-identical numbers while the gate checks strictly less.
 sends one function twice to the *same* server — once normally, once with
 `"use_float":1` — on float-widened inputs, and requires the two to agree. That
 covers the other two float surfaces: Java's `float[]` Core overloads and C#'s,
-168 functions each. Rust has no single-precision surface and is the only
+every function in each. Rust has no single-precision surface and is the only
 exclusion. Each call must come back with `"used_float":1`; a server that ignored
 the flag would return its double result twice and pass while verifying nothing.
 
@@ -460,8 +460,9 @@ cannot catch a bug it already had. It is a *pin*. Correctness lives in the
 independent oracles: `test_stddev.c`'s two-pass/NIST variance work, the
 candlestick predicate gate, the metamorphic laws.
 
-**Scope: 142 of 168.** 26 are deliberately absent — 7 post-date v0.6.4 (CMF,
-CMOU, HMA, NVI, PVI, PVO, VWMA); STOCHRSI diverges on purpose (#107, pinned by
+**Scope: 142 functions.** The rest are deliberately absent — every function that
+post-dates v0.6.4 (there is nothing frozen to compare against, so the set grows
+with each new indicator); STOCHRSI, which diverges on purpose (#107, pinned by
 `test_stoch.c`); and 18 for one reason: **the host libm**.
 
 That reason is the one worth internalising, because it is *created* by freezing.
