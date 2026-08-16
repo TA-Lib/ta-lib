@@ -433,7 +433,9 @@ def main():
         if not d:
             sys.exit("check_mcdc_conditions: %s never calls pb_conditions()" % fn)
         s = re.search(r"pb_signs\(\s*(\d+)\s*\)", m.group(1))
-        declared[fn] = (int(d.group(1)), int(s.group(1)) if s else 1)
+        dj = dict((int(a), int(b)) for a, b in
+                  re.findall(r"pb_disjuncts\(\s*(\d+)\s*,\s*(\d+)\s*\)", m.group(1)))
+        declared[fn] = (int(d.group(1)), int(s.group(1)) if s else 1, dj)
 
     bad = 0
     print("MC/DC declared-condition check (%d builder(s))" % len(pairs))
@@ -447,17 +449,25 @@ def main():
             print("  %-20s FAIL  cannot parse: %s" % (name, err))
             bad += 1
             continue
-        want, wantSigns = declared[fn]
+        want, wantSigns, wantDisj = declared[fn]
         signs, sErr = count_signs(pat)
         if signs is None:
             print("  %-20s FAIL  cannot parse firing arm: %s" % (name, sErr))
             bad += 1
             continue
+        disj, dErr = count_disjuncts(pat)
+        # A pattern the disjunct parser declines is one this check cannot speak
+        # for; that is already reported by count_conditions above, and a declined
+        # parse must not silently read as "no alternatives to cover".
+        okDisj = (disj == wantDisj) if disj is not None else (not wantDisj)
         okCond, okSigns = want == actual, wantSigns == signs
-        flag = "ok" if okCond and okSigns else "MISMATCH"
+        flag = "ok" if okCond and okSigns and okDisj else "MISMATCH"
         print("  %-20s %-8s declared %2d, source has %2d   signs: declared %d, "
-              "source has %d" % (name, flag, want, actual, wantSigns, signs))
-        if not okCond or not okSigns:
+              "source has %d%s" % (name, flag, want, actual, wantSigns, signs,
+              "" if not (disj or wantDisj) else
+              "   disjuncts: declared %s, source has %s"
+              % (wantDisj or "{}", disj if disj is not None else "declined")))
+        if not okCond or not okSigns or not okDisj:
             bad += 1
 
     if bad:

@@ -2538,9 +2538,21 @@ static void cond_longleggeddoji( int i, int *c )
    c[0] = pb_body(i) <= pb_avg(TA_BodyDoji, i);
    c[1] = pb_losh(i) > sl || pb_upsh(i) > sl;
 }
+/* c1 is a two-way disjunction, and every scenario below the detect used to make
+ * BOTH shadows long -- so neither arm was ever the one carrying the decision and
+ * either could be deleted from the pattern with the whole suite green. The two
+ * sole-true cases are what close that. */
+static void disj_longleggeddoji( int i, int cond, int *d )
+{
+   double sl = pb_avg(TA_ShadowLong, i);
+   if( cond == 1 ) { d[0] = pb_losh(i) > sl; d[1] = pb_upsh(i) > sl; }
+}
+
 static void build_longleggeddoji( void )
 {
   pb_conditions(2);
+  pb_disjuncts(1,2);
+  pb_disj_model(disj_longleggeddoji);
 
   pb_flat(6);
   pb_primer(12,100,2,4);
@@ -2566,6 +2578,14 @@ static void build_longleggeddoji( void )
   pb_control(k1,100,1,"restore c1: lower shadow 4 > 0");
   pb_flat(8);
 
+  pb_primer(12,100,2,4);
+  int s0=pb_bar(100,100,96,100);           /* upper shadow 0: only the lower arm holds */
+  pb_sole(s0,100,1,0,"c1 alt0 alone: lower shadow 4 > 0, upper shadow 0 is not");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int s1=pb_bar(100,104,100,100);          /* lower shadow 0: only the upper arm holds */
+  pb_sole(s1,100,1,1,"c1 alt1 alone: upper shadow 4 > 0, lower shadow 0 is not");
+  pb_flat(8);
 }
 
 /* CDLDRAGONFLYDOJI -- a doji sitting at the top of its range.
@@ -4972,6 +4992,320 @@ static void build_eveningdojistar( void )
   pb_flat(8);
 }
 
+/* ---- Hard tier: CDLADVANCEBLOCK ------------------------------------------ *
+ *
+ * Three rising white candles whose advance is "blocked" -- the bodies shrink or
+ * the upper shadows lengthen. Twelve top-level conjuncts, five settings, and a
+ * structure no builder before this one has had to deal with: c11 is a FOUR-WAY
+ * DISJUNCTION of alternative blocking shapes, nine atomic comparisons inside it.
+ *
+ *   c0   color(i-2) == 1
+ *   c1   color(i-1) == 1
+ *   c2   color(i)   == 1
+ *   c3   close(i)   >  close(i-1)
+ *   c4   close(i-1) >  close(i-2)
+ *   c5   open(i-1)  >  open(i-2)
+ *   c6   open(i-1)  <= close(i-2) + avg(Near, i-2)
+ *   c7   open(i)    >  open(i-1)
+ *   c8   open(i)    <= close(i-1) + avg(Near, i-1)
+ *   c9   realbody(i-2) > avg(BodyLong, i-2)
+ *   c10  uppershadow(i-2) < avg(ShadowShort, i-2)
+ *   c11  D1 || D2 || D3 || D4, where
+ *          D1 = rb(i-1) < rb(i-2) - avg(Far,i-2) && rb(i) < rb(i-1) + avg(Near,i-1)
+ *          D2 = rb(i)   < rb(i-1) - avg(Far,i-1)
+ *          D3 = rb(i) < rb(i-1) && rb(i-1) < rb(i-2) &&
+ *               ( ush(i) > avg(ShadowShort,i) || ush(i-1) > avg(ShadowShort,i-1) )
+ *          D4 = rb(i) < rb(i-1) && ush(i) > avg(ShadowLong,i)
+ *
+ * THE GEOMETRY IS SOLVED, NOT CHOSEN. Five settings with three window lengths
+ * (BodyLong/ShadowShort over 10, Near/Far over 5, ShadowLong self-referential)
+ * and three range types (RealBody, HighLow, Shadows -- the last carrying a
+ * divisor of 2) all read windows that the scenario bars fall into. Keeping a
+ * threshold exactly representable is a constraint on the bars, not a matter of
+ * picking round numbers:
+ *
+ *   HighLow(i-2)  = 10   keeps Near(i-1) = 2 and Far(i-1) = 6 exact
+ *   Shadows(i-2)  = 3    keeps ShadowShort(i-1) = 3.75 exact
+ *   Shadows(i-1)  = 3    keeps ShadowShort(i)   = 3.5  exact
+ *
+ * and BodyLong/ShadowShort/Near/Far at i-2 stay on all-primer windows, so they
+ * are the primer's own 2, 4, 2 and 6. There is no assignment that leaves every
+ * window at its primer value: c9 needs realbody(i-2) ABOVE the primer body,
+ * which moves HighLow(i-2) into every HighLow-typed window downstream of it.
+ *
+ * THE PRIMER DECIDES WHETHER c0 IS A WAIVER. A black first candle needs
+ * open(i-2) > close(i-2) + avg(BodyLong) from c9, while c5 and c6 bound
+ * open(i-1) into (open(i-2), close(i-2) + avg(Near)] -- satisfiable only when
+ * Near(i-2) > BodyLong(i-2), i.e. only when hr > 2*bd. The file's usual
+ * pb_primer(12,100,2,4) sits EXACTLY on that boundary (both are 2), so c0 is
+ * entailed there and a builder copying the convention would waive it and be
+ * right by accident. It is flipped below on hr=5, where Near is 2.4 against a
+ * BodyLong of 2 and a black first candle exists.
+ *
+ * c11 IS COUPLED TO EVERYTHING. Every disjunct compares real bodies, and c3..c8
+ * are opens and closes -- which ARE the bodies. Moving a close to its boundary
+ * moves a body, and three of the twelve flips (c4, c6, c7) drop c11 with them
+ * unless bar i is re-cut to restore a disjunct. c7 is the sharp case: with
+ * open(i) == open(i-1) and close(i) > close(i-1), realbody(i) > realbody(i-1)
+ * is FORCED, which kills D2, D3 and D4 outright. Only D1 survives, and D1 needs
+ * realbody(i-2) > realbody(i-1) + avg(Far,i-2) -- a geometry the other eleven
+ * flips do not use. That flip therefore carries its own primer-to-bar layout.
+ */
+static void cond_advanceblock( int i, int *c )
+{
+   c[0]  = pb_white(i-2);
+   c[1]  = pb_white(i-1);
+   c[2]  = pb_white(i);
+   c[3]  = pbC[i]   > pbC[i-1];
+   c[4]  = pbC[i-1] > pbC[i-2];
+   c[5]  = pbO[i-1] > pbO[i-2];
+   c[6]  = pbO[i-1] <= pbC[i-2] + pb_avg(TA_Near, i-2);
+   c[7]  = pbO[i]   > pbO[i-1];
+   c[8]  = pbO[i]   <= pbC[i-1] + pb_avg(TA_Near, i-1);
+   c[9]  = pb_body(i-2) > pb_avg(TA_BodyLong, i-2);
+   c[10] = pb_upsh(i-2) < pb_avg(TA_ShadowShort, i-2);
+   c[11] = ( pb_body(i-1) < pb_body(i-2) - pb_avg(TA_Far,  i-2) &&
+             pb_body(i)   < pb_body(i-1) + pb_avg(TA_Near, i-1) )
+        || ( pb_body(i)   < pb_body(i-1) - pb_avg(TA_Far,  i-1) )
+        || ( pb_body(i)   < pb_body(i-1) &&
+             pb_body(i-1) < pb_body(i-2) &&
+             ( pb_upsh(i)   > pb_avg(TA_ShadowShort, i) ||
+               pb_upsh(i-1) > pb_avg(TA_ShadowShort, i-1) ) )
+        || ( pb_body(i)   < pb_body(i-1) &&
+             pb_upsh(i)   > pb_avg(TA_ShadowLong, i) );
+}
+
+/* c11's four alternatives. A flip of c11 falsifies all four at once and a
+ * control only restores whichever one the bars happen to satisfy, so nothing
+ * above this makes any single alternative necessary: with D3 and D4 both live
+ * in the detect, D2 could be deleted from the pattern outright and every case
+ * here still passed. */
+static void disj_advanceblock( int i, int cond, int *d )
+{
+   if( cond != 11 ) return;
+   d[0] = ( pb_body(i-1) < pb_body(i-2) - pb_avg(TA_Far,  i-2) &&
+            pb_body(i)   < pb_body(i-1) + pb_avg(TA_Near, i-1) );
+   d[1] = ( pb_body(i)   < pb_body(i-1) - pb_avg(TA_Far,  i-1) );
+   d[2] = ( pb_body(i)   < pb_body(i-1) &&
+            pb_body(i-1) < pb_body(i-2) &&
+            ( pb_upsh(i)   > pb_avg(TA_ShadowShort, i) ||
+              pb_upsh(i-1) > pb_avg(TA_ShadowShort, i-1) ) );
+   d[3] = ( pb_body(i)   < pb_body(i-1) &&
+            pb_upsh(i)   > pb_avg(TA_ShadowLong, i) );
+}
+
+static void build_advanceblock( void )
+{
+  pb_conditions(12);
+  pb_disjuncts(11,4);
+  pb_disj_model(disj_advanceblock);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(104,111,102,110);
+  int s1=pb_bar(108,117,106,112);
+  pb_detect(s1,-100,"detect: three rising whites, bodies 7/6/4, ush(i) 5 > ShadowLong 4 -- D3 and D4 both hold");
+  pb_flat(8);
+
+  pb_primer(12,100,2,5);
+  pb_bar(102.25,103.25,99,100);
+  pb_bar(102.375,107,102,106);
+  int s2=pb_bar(104,111,103,107);
+  pb_flip(s2,0,"break c0: the first candle is black (hr=5 puts Near 2.4 above BodyLong 2)");
+  pb_flat(8);
+
+  pb_primer(12,100,2,5);
+  pb_bar(100,103.25,99,102.25);
+  pb_bar(102.375,107,102,106);
+  int s3=pb_bar(104,111,103,107);
+  pb_control(s3,-100,0,"restore c0: the first candle is white, same hr=5 layout");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(109,110,107.5,108);
+  int s4=pb_bar(109.5,112,109,110);
+  pb_flip(s4,1,"break c1: the second candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(104,111,102,110);
+  int s5=pb_bar(108,117,106,112);
+  pb_control(s5,-100,1,"restore c1: the second candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(104,111,102,110);
+  int s6=pb_bar(112,117,110,111);
+  pb_flip(s6,2,"break c2: the third candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(104,111,102,110);
+  int s7=pb_bar(108,117,106,112);
+  pb_control(s7,-100,2,"restore c2: the third candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(104,111,102,110);
+  int s8=pb_bar(108,117,106,110);
+  pb_flip(s8,3,"break c3: close 110 == the second close, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(104,111,102,110);
+  int s9=pb_bar(108,117,106,112);
+  pb_control(s9,-100,3,"restore c3: close 112 > 110");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(104,111,102,107);
+  int s10=pb_bar(108,117,106,110);
+  pb_flip(s10,4,"break c4: close 107 == the first close, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(104,111,102,110);
+  int s11=pb_bar(108,117,106,112);
+  pb_control(s11,-100,4,"restore c4: close 110 > 107");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(100,111,98,110);
+  int s12=pb_bar(108,117,106,112);
+  pb_flip(s12,5,"break c5: open 100 == the first open, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(104,111,102,110);
+  int s13=pb_bar(108,117,106,112);
+  pb_control(s13,-100,5,"restore c5: open 104 > 100");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(109.5,111,102,110);
+  int s14=pb_bar(110,112,109,110.25);
+  pb_flip(s14,6,"break c6: open 109.5 above close(i-2) 107 + Near 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(109,111,102,110);
+  int s15=pb_bar(110,112,109,110.25);
+  pb_control(s15,-100,6,"restore c6: open 109 == 107 + Near 2, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,109,99,108);
+  pb_bar(108,110,107,109);
+  int s16=pb_bar(108,111,107,110);
+  pb_flip(s16,7,"break c7: open 108 == the second open, the test is strict (D1 is the only disjunct that survives it)");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,109,99,108);
+  pb_bar(108,110,107,109);
+  int s17=pb_bar(109,111,107,110);
+  pb_control(s17,-100,7,"restore c7: open 109 > 108, same D1 layout");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(104,111,102,110);
+  int s18=pb_bar(112.5,117,106,113);
+  pb_flip(s18,8,"break c8: open 112.5 above close(i-1) 110 + Near 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(104,111,102,110);
+  int s19=pb_bar(112,117,106,113);
+  pb_control(s19,-100,8,"restore c8: open 112 == 110 + Near 2, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,103,98,102);
+  pb_bar(104,111,102,110);
+  int s20=pb_bar(108,117,106,112);
+  pb_flip(s20,9,"break c9: first body 2 == avg 2, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(104,111,102,110);
+  int s21=pb_bar(108,117,106,112);
+  pb_control(s21,-100,9,"restore c9: first body 7 > 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,111,98,107);
+  pb_bar(104,111,102,110);
+  int s22=pb_bar(108,117,106,112);
+  pb_flip(s22,10,"break c10: first upper shadow 4 == avg 4, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(104,111,102,110);
+  int s23=pb_bar(108,117,106,112);
+  pb_control(s23,-100,10,"restore c10: first upper shadow 1 < 4");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(104,111,102,110);
+  int s24=pb_bar(108,119,106,118);
+  pb_flip(s24,11,"break c11: body(i) 10 exceeds body(i-1) 6, so D2/D3/D4 fail, and body(i-1) 6 is not below body(i-2) 7 - Far 6, so D1 fails too");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(104,111,102,110);
+  int s25=pb_bar(108,117,106,112);
+  pb_control(s25,-100,11,"restore c11: D3 and D4 hold");
+  pb_flat(8);
+
+  /* One firing case per alternative, each with the other three false. */
+  pb_primer(12,100,2,4);
+  pb_bar(100,109,99,108);                  /* body 8 */
+  pb_bar(108,110,107,109);                 /* body 1 < 8 - Far 6 */
+  int a0=pb_bar(109,111,107,110);
+  pb_sole(a0,-100,11,0,"c11 alt D1 alone: 2nd far smaller than 1st, 3rd not longer than 2nd");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(105,114,103,113);                 /* body 8 */
+  int a1=pb_bar(114,115,113,115);          /* body 1 < 8 - Far 6 */
+  pb_sole(a1,-100,11,1,"c11 alt D2 alone: 3rd far smaller than 2nd");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);                  /* body 7 */
+  pb_bar(104,114,102,110);                 /* body 6, upper shadow 4 > 3.75 */
+  int a2=pb_bar(106,111,105,111);          /* body 5, upper shadow 0 -- D4 cannot hold */
+  pb_sole(a2,-100,11,2,"c11 alt D3 alone: bodies 7 > 6 > 5 with the 2nd carrying the long upper shadow");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(105,114,103,113);                 /* body 8 */
+  int a3=pb_bar(114,121,113,117);          /* body 3, ush 4 > ShadowLong 3; 3 is not < 8-6 */
+  pb_sole(a3,-100,11,3,"c11 alt D4 alone: 3rd smaller than 2nd with a long upper shadow");
+  pb_flat(8);
+}
+
 static ErrorNumber test_marquee_predicate_coverage( void )
 {
    ErrorNumber e;
@@ -5009,6 +5343,7 @@ static ErrorNumber test_marquee_predicate_coverage( void )
    pb_reset(); build_eveningstar();         e = pb_check_mcdc_p("CDLEVENINGSTAR",       TA_CDLEVENINGSTAR,       0.3, cond_eveningstar);     if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_morningdojistar();     e = pb_check_mcdc_p("CDLMORNINGDOJISTAR",   TA_CDLMORNINGDOJISTAR,   0.3, cond_morningdojistar); if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_eveningdojistar();     e = pb_check_mcdc_p("CDLEVENINGDOJISTAR",   TA_CDLEVENINGDOJISTAR,   0.3, cond_eveningdojistar); if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_advanceblock();        e = pb_check_mcdc("CDLADVANCEBLOCK",        TA_CDLADVANCEBLOCK,        cond_advanceblock);        if( e != TA_TEST_PASS ) return e;
    pb_report_totals();
    return TA_TEST_PASS;
 }
