@@ -7148,6 +7148,231 @@ static void build_mathold( void )
 
 }
 
+/* ---- Hard tier: CDLSTALLEDPATTERN ---------------------------------------- *
+ *
+ * Three rising white candles where the third stalls -- small, riding the second
+ * candle's shoulder. Twelve conditions, and the densest settings coupling in
+ * the corpus: FOUR settings read at SIX places across three bars, on two window
+ * lengths and two range types.
+ *
+ *   BodyLong  at i-2 (all primer) and at i-1 (carries the 1st body)
+ *   BodyShort at i   (carries the 1st and 2nd bodies)
+ *   ShadowVeryShort at i-1, HighLow-typed, carrying the 1st candle's range
+ *   Near      at i-2 (all primer) and at i-1 (carries the 1st candle's range)
+ *
+ * The geometry has to satisfy all six at once. Holding HighLow(i-2) at the
+ * primer's 10 fixes both Near reads and the ShadowVeryShort read; the two
+ * RealBody cascades then want the two long bodies chosen so that (18 + A2)/10
+ * and (16 + A2 + A1)/10 both land exactly, which 7 and 7 do -- giving 2, 2.5
+ * and 3 for BodyLong(i-2), BodyLong(i-1) and BodyShort(i). A first body of 12,
+ * the natural choice everywhere else in this file, is not available here: it
+ * would need a HighLow above 10 and move both Near reads off their exact
+ * values.
+ *
+ * TWO CONDITIONS ARE ENTAILED UNDER THE FILE'S USUAL PRIMER AND FLIPPABLE UNDER
+ * ANOTHER, which is the same trap CDLADVANCEBLOCK's c0 carries and the reason
+ * this builder runs two primers. c8 and c9 bound open(i-1) into
+ * (open(i-2), close(i-2) + Near], so a black 1st candle needs its body under
+ * Near while c5 needs it over BodyLong -- satisfiable only when Near exceeds
+ * BodyLong, which pb_primer(12,100,2,4) does not do (both are 2). c1 is the
+ * same argument one bar along, needing BodyLong(i-1) below Near. Both flips run
+ * on hr=5, where Near is 2.4.
+ *
+ * c11 IS WAIVED, and its derivation does not depend on the primer. For a white
+ * 3rd candle realbody(i) is close(i) - open(i), so
+ *   open(i) >= close(i-1) - realbody(i) - Near
+ * cancels to close(i) >= close(i-1) - Near. c3 already puts close(i) above
+ * close(i-1), and Near cannot be negative -- it is a HighLow range times a
+ * positive factor -- so c2 and c3 entail it for every valid input. Unlike a
+ * threshold comparison, that is a settings reference the builder cannot vary:
+ * it uses only the sign of Near, not its value.
+ */
+static void cond_stalledpattern( int i, int *c )
+{
+   c[0]  = pb_white(i-2);
+   c[1]  = pb_white(i-1);
+   c[2]  = pb_white(i);
+   c[3]  = pbC[i]   > pbC[i-1];
+   c[4]  = pbC[i-1] > pbC[i-2];
+   c[5]  = pb_body(i-2) > pb_avg(TA_BodyLong, i-2);
+   c[6]  = pb_body(i-1) > pb_avg(TA_BodyLong, i-1);
+   c[7]  = pb_upsh(i-1) < pb_avg(TA_ShadowVeryShort, i-1);
+   c[8]  = pbO[i-1] > pbO[i-2];
+   c[9]  = pbO[i-1] <= pbC[i-2] + pb_avg(TA_Near, i-2);
+   c[10] = pb_body(i) < pb_avg(TA_BodyShort, i);
+   c[11] = pbO[i] >= pbC[i-1] - pb_body(i) - pb_avg(TA_Near, i-1);
+}
+
+static void build_stalledpattern( void )
+{
+  pb_conditions(12);
+
+  pb_waive(11, "for a white 3rd candle realbody(i) is close(i) - open(i), so the test reduces to close(i) >= close(i-1) - avg(Near, i-1); c3 already puts close(i) above close(i-1), and Near is a HighLow range times a positive factor and so is never negative. c2 and c3 therefore entail it for every valid input, whatever the primer -- a 200k-sample random search over all three bars found no case breaking it alone");
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(105,112.5,104,112);
+  int q1=pb_bar(111,114,110,113);
+  pb_detect(q1,-100,"detect: three rising whites, the first two long with a very short 2nd upper shadow, a small 3rd riding the 2nd's shoulder");
+  pb_flat(8);
+
+  pb_primer(12,100,2,5);
+  pb_bar(102.25,103,91,100);
+  pb_bar(102.375,106.5,102,106);
+  int q2=pb_bar(105,108,104,107);
+  pb_flip(q2,0,"break c0: the 1st candle is black -- on hr=5, where Near 2.4 clears BodyLong 2 and a black 1st candle exists at all");
+  pb_flat(8);
+
+  pb_primer(12,100,2,5);
+  pb_bar(100,103,91,102.25);
+  pb_bar(102,106.5,101,106);
+  int q3=pb_bar(105,108,104,107);
+  pb_control(q3,-100,0,"restore c0: the 1st candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,5);
+  pb_bar(100,103,91,102.25);
+  pb_bar(104.5,105,102,102.4);
+  int q4=pb_bar(101,104,100,103);
+  pb_flip(q4,1,"break c1: the 2nd candle is black -- same hr=5 layout, with a 1st body short enough that BodyLong(i-1) stays under Near");
+  pb_flat(8);
+
+  pb_primer(12,100,2,5);
+  pb_bar(100,103,91,102.25);
+  pb_bar(102,106.5,101,106);
+  int q5=pb_bar(105,108,104,107);
+  pb_control(q5,-100,1,"restore c1: the 2nd candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(105,112.5,104,112);
+  int q6=pb_bar(114,115,112,113);
+  pb_flip(q6,2,"break c2: the 3rd candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(105,112.5,104,112);
+  int q7=pb_bar(111,114,110,113);
+  pb_control(q7,-100,2,"restore c2: the 3rd candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(105,112.5,104,112);
+  int q8=pb_bar(111,114,110,112);
+  pb_flip(q8,3,"break c3: 3rd close 112 == the 2nd close, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(105,112.5,104,112);
+  int q9=pb_bar(111,114,110,113);
+  pb_control(q9,-100,3,"restore c3: 3rd close 113 > the 2nd close 112");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(104,107.5,103,107);
+  int q10=pb_bar(107,110,106,109);
+  pb_flip(q10,4,"break c4: 2nd close 107 == the 1st close, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(104,108.5,103,108);
+  int q11=pb_bar(108,111,107,110);
+  pb_control(q11,-100,4,"restore c4: 2nd close 108 > the 1st close 107");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,103,93,102);
+  pb_bar(103,110.5,102,110);
+  int q12=pb_bar(109,112,108,111);
+  pb_flip(q12,5,"break c5: 1st body 2 == avg 2, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,104,94,103);
+  pb_bar(103,110.5,102,110);
+  int q13=pb_bar(109,112,108,111);
+  pb_control(q13,-100,5,"restore c5: 1st body 3 > avg 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(105,108,104,107.5);
+  int q14=pb_bar(107,110,106,109);
+  pb_flip(q14,6,"break c6: 2nd body 2.5 == avg 2.5, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(105,108.5,104,108);
+  int q15=pb_bar(107,110,106,109);
+  pb_control(q15,-100,6,"restore c6: 2nd body 3 > avg 2.5");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(105,113,104,112);
+  int q16=pb_bar(111,114,110,113);
+  pb_flip(q16,7,"break c7: 2nd upper shadow 1 == avg 1, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(105,112.5,104,112);
+  int q17=pb_bar(111,114,110,113);
+  pb_control(q17,-100,7,"restore c7: 2nd upper shadow 0.5 < avg 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(100,112.5,99,112);
+  int q18=pb_bar(111,114,110,113);
+  pb_flip(q18,8,"break c8: 2nd opens 100 == the 1st open, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(105,112.5,104,112);
+  int q19=pb_bar(111,114,110,113);
+  pb_control(q19,-100,8,"restore c8: 2nd opens 105 > the 1st open 100");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(109.5,113.5,108,113);
+  int q20=pb_bar(113,116,112,115);
+  pb_flip(q20,9,"break c9: 2nd opens 109.5, above close(1st) 107 + Near 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(109,113.5,108,113);
+  int q21=pb_bar(113,116,112,115);
+  pb_control(q21,-100,9,"restore c9: 2nd opens 109 == close(1st) 107 + Near 2, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(105,112.5,104,112);
+  int q22=pb_bar(111,115,110,114);
+  pb_flip(q22,10,"break c10: 3rd body 3 == avg 3, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(105,112.5,104,112);
+  int q23=pb_bar(111,114,110,113);
+  pb_control(q23,-100,10,"restore c10: 3rd body 2 < avg 3");
+  pb_flat(8);
+
+}
+
 static ErrorNumber test_marquee_predicate_coverage( void )
 {
    ErrorNumber e;
@@ -7191,6 +7416,7 @@ static ErrorNumber test_marquee_predicate_coverage( void )
    pb_reset(); build_breakaway();           e = pb_check_mcdc("CDLBREAKAWAY",           TA_CDLBREAKAWAY,           cond_breakaway);           if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_abandonedbaby();       e = pb_check_mcdc_p("CDLABANDONEDBABY",     TA_CDLABANDONEDBABY,     0.3, cond_abandonedbaby);   if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_mathold();             e = pb_check_mcdc_p("CDLMATHOLD",           TA_CDLMATHOLD,           0.5, cond_mathold);         if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_stalledpattern();      e = pb_check_mcdc("CDLSTALLEDPATTERN",     TA_CDLSTALLEDPATTERN,      cond_stalledpattern);      if( e != TA_TEST_PASS ) return e;
    pb_report_totals();
    return TA_TEST_PASS;
 }
