@@ -219,6 +219,108 @@ typedef struct {
 static FuncTimingResult g_timingResults[MAX_FUNCTIONS];
 static int              g_numTimingResults = 0;
 
+/* ---- Per-function stream counters, per language ------------------------- *
+ *
+ * `legs` and `benign` are deterministic integers over the same algorithm and
+ * the same generated inputs, so two languages that render the SAME source
+ * must produce the SAME pair for every function. That is the only observer
+ * this tree has for a class of defect nothing else can see: `svXtierNe`
+ * counts a cross-tier +0.0/-0.0 difference as benign and never fails, and
+ * `stream_verify` runs both of its arms inside ONE server — so a defect whose
+ * only symptom is a zero's sign is green in the stream gate, absent from
+ * --xlang-hash (batch only), and invisible in the nightly.
+ *
+ * Compared JAVA vs C# ONLY, deliberately. Those two render identically, down
+ * to `Math.Min` keeping -0.0. C and Rust legitimately differ: the C `min()`
+ * macro is a ternary that returns +0.0 for `min(-0.0, 0.0)`, and C also
+ * counts candidate prefixes rather than successful opens, so its `legs` is on
+ * a different accounting entirely. Adding either to the comparison would make
+ * this a permanent red that teaches nothing. */
+typedef struct {
+    char      funcName[64];
+    int       seen[NUM_LANGUAGES];
+    int       legs[NUM_LANGUAGES];
+    long long benign[NUM_LANGUAGES];
+} FuncStreamCounters;
+
+static FuncStreamCounters g_streamCounters[MAX_FUNCTIONS];
+static int                g_numStreamCounters = 0;
+
+static void record_stream_counters( const char *funcName, int langIndex,
+                                    int legs, long long benign )
+{
+    int i;
+    if( langIndex < 0 || langIndex >= (int)NUM_LANGUAGES )
+        return;
+    for( i = 0; i < g_numStreamCounters; i++ )
+    {
+        if( strcmp(g_streamCounters[i].funcName, funcName) == 0 )
+            break;
+    }
+    if( i == g_numStreamCounters )
+    {
+        if( g_numStreamCounters >= MAX_FUNCTIONS )
+            return;
+        memset(&g_streamCounters[i], 0, sizeof(FuncStreamCounters));
+        strncpy(g_streamCounters[i].funcName, funcName,
+                sizeof(g_streamCounters[i].funcName) - 1);
+        g_numStreamCounters++;
+    }
+    g_streamCounters[i].seen[langIndex]   = 1;
+    g_streamCounters[i].legs[langIndex]   = legs;
+    g_streamCounters[i].benign[langIndex] = benign;
+}
+
+/* Index of a language by its --language= name, or -1. */
+static int lang_index_by_name( const char *name )
+{
+    unsigned int i;
+    for( i = 0; i < NUM_LANGUAGES; i++ )
+    {
+        if( strcmp(ALL_LANGUAGES[i].name, name) == 0 )
+            return (int)i;
+    }
+    return -1;
+}
+
+/* Returns the number of functions whose Java and C# counters disagree. Prints
+ * each. Silent (and 0) when either language was not exercised in this run —
+ * `--language=csharp` alone has nothing to compare against, which is a
+ * narrowed run, not a failure. */
+static int check_stream_counter_parity( void )
+{
+    int javaIdx = lang_index_by_name("java");
+    int csIdx   = lang_index_by_name("csharp");
+    int i, bad = 0, compared = 0;
+
+    if( javaIdx < 0 || csIdx < 0 )
+        return 0;
+
+    for( i = 0; i < g_numStreamCounters; i++ )
+    {
+        const FuncStreamCounters *r = &g_streamCounters[i];
+        if( !r->seen[javaIdx] || !r->seen[csIdx] )
+            continue;
+        compared++;
+        if( r->legs[javaIdx] != r->legs[csIdx]
+            || r->benign[javaIdx] != r->benign[csIdx] )
+        {
+            printf("STREAM COUNTER MISMATCH [TA_%s]: java legs=%d benign=%lld, "
+                   "csharp legs=%d benign=%lld\n",
+                   r->funcName,
+                   r->legs[javaIdx], r->benign[javaIdx],
+                   r->legs[csIdx], r->benign[csIdx]);
+            bad++;
+        }
+    }
+    if( compared > 0 )
+    {
+        printf("  Java/C# stream counter parity: %d function(s) compared, "
+               "%d mismatch(es)\n", compared, bad);
+    }
+    return bad;
+}
+
 /* ---- Constants ---- */
 
 #define CODEGEN_EPSILON  1e-6   /* float leg (TA_S_*): single-precision noise */
@@ -2986,6 +3088,9 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     ctx->streamLegs += legs;
     ctx->streamRejectArms += rejArms;
     ctx->streamBenign += benign;
+    /* Per-function, per-language, for the Java/C# equality check at the end of
+     * the run — see FuncStreamCounters. */
+    record_stream_counters(funcInfo->name, ctx->langIndex, legs, benign);
     if( fillChecked ) ctx->streamFillFunctions++;
     /* Named per function, like --fuzz-064's BENIGN line: a summary total that
      * starts moving says only that something did, not what. */
@@ -6942,6 +7047,24 @@ ErrorNumber test_codegen(const TA_History *history,
                 write_markdown_report("ta_regtest_report.md", languageFilter);
                 return TA_TEST_PASS;
             }
+        }
+
+        /* Java/C# stream counter equality — the only observer for a
+         * signed-zero-only divergence (see FuncStreamCounters). Runs before
+         * the pass banner so a mismatch cannot print underneath it. */
+        if( check_stream_counter_parity() > 0 )
+        {
+            printf("\n=============================================\n");
+            printf("FAILED: Java and C# disagree on stream leg/benign counts.\n");
+            printf("  Both render the same source, so these are the same\n"
+                   "  deterministic integers over the same inputs. A difference\n"
+                   "  means one of them computes a different value somewhere the\n"
+                   "  bitwise legs let through -- in practice a +0.0/-0.0 split,\n"
+                   "  which svXtierNe counts as benign and never fails on.\n");
+            printf("=============================================\n");
+            write_timing_report("ta_regtest_timing.jsonl");
+            write_markdown_report("ta_regtest_report.md", languageFilter);
+            return TA_CODEGEN_OUTPUT_MISMATCH;
         }
 
         printf("\n=============================================\n");
