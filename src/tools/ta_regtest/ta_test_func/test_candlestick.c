@@ -7373,6 +7373,284 @@ static void build_stalledpattern( void )
 
 }
 
+/* ---- Hard tier: CDL3LINESTRIKE ------------------------------------------- *
+ *
+ * Three candles of one colour stepping in one direction, each opening near the
+ * previous body, and a fourth of the opposite colour that swallows all three.
+ * Eight conditions over FOUR bars, with c7 a two-way alternative of five terms
+ * each.
+ *
+ *   c0,c1    the first three share a colour
+ *   c2       the 4th is the opposite colour
+ *   c3,c4    the 2nd opens within Near of the 1st body, either side
+ *   c5,c6    the 3rd opens within Near of the 2nd body, either side
+ *   c7       three-white || three-black, each of them
+ *              term0  the 3rd candle's colour -- the arm selector
+ *              term1  the 3rd close steps past the 2nd
+ *              term2  the 2nd close steps past the 1st
+ *              term3  the 4th opens past the 3rd close
+ *              term4  the 4th closes past the 1st open
+ *
+ * ONE SETTING, READ TWICE, AND FOUR INCLUSIVE BOUNDS. Near is the only setting
+ * here, at i-3 (all primer) and at i-2 (carrying the 1st candle's range), so
+ * holding HighLow(i-3) at the primer's 10 puts both on 2 exactly. c3..c6 are
+ * two bands spelled with >= and <=, so all four controls sit on their own edge
+ * and all four flips strictly outside.
+ *
+ * c2 IS WAIVED AND c7 IS WHAT FORCES IT. Take the three-white alternative: it
+ * puts open(i) above close(i-1), c0/c1 make all three the same colour so
+ * close(i-1) > close(i-2) > close(i-3) >= open(i-3), and its last term puts
+ * close(i) below open(i-3). Chain those and open(i) > close(i) -- the 4th is
+ * black, which is exactly what c2 asks against a white 3rd. Price ordering
+ * only: no threshold appears in it, so unlike CDLSTALLEDPATTERN's c0 no choice
+ * of primer makes it flippable.
+ *
+ * BOTH ARM SELECTORS ARE WAIVED for a reason worth separating from
+ * CDLBREAKAWAY's. There the selector was unflippable because it was the arm's
+ * only one. Here it is worse: col(i-1) is read by c1 and c2 as well, so moving
+ * it breaks three conditions at once and can never be the single false term
+ * whatever the rest of the layout does.
+ */
+static void cond_3linestrike( int i, int *c )
+{
+   int k3 = pb_white(i-3) ? 1 : -1, k2 = pb_white(i-2) ? 1 : -1;
+   int k1 = pb_white(i-1) ? 1 : -1, k0 = pb_white(i)   ? 1 : -1;
+   double n3 = pb_avg(TA_Near, i-3), n2 = pb_avg(TA_Near, i-2);
+   c[0] = k3 == k2;
+   c[1] = k2 == k1;
+   c[2] = k0 == -k1;
+   c[3] = pbO[i-2] >= pb_bodylo(i-3) - n3;
+   c[4] = pbO[i-2] <= pb_bodyhi(i-3) + n3;
+   c[5] = pbO[i-1] >= pb_bodylo(i-2) - n2;
+   c[6] = pbO[i-1] <= pb_bodyhi(i-2) + n2;
+   c[7] = (  pb_white(i-1) && pbC[i-1] > pbC[i-2] && pbC[i-2] > pbC[i-3] &&
+             pbO[i] > pbC[i-1] && pbC[i] < pbO[i-3] )
+       || ( !pb_white(i-1) && pbC[i-1] < pbC[i-2] && pbC[i-2] < pbC[i-3] &&
+             pbO[i] < pbC[i-1] && pbC[i] > pbO[i-3] );
+}
+static void arm_3linestrike( int i, int cond, int arm, int *a )
+{
+   if( cond != 7 ) return;
+   if( arm == 0 )
+   {
+      a[0] = pb_white(i-1);
+      a[1] = pbC[i-1] > pbC[i-2];  a[2] = pbC[i-2] > pbC[i-3];
+      a[3] = pbO[i]   > pbC[i-1];  a[4] = pbC[i]   < pbO[i-3];
+   }
+   else
+   {
+      a[0] = !pb_white(i-1);
+      a[1] = pbC[i-1] < pbC[i-2];  a[2] = pbC[i-2] < pbC[i-3];
+      a[3] = pbO[i]   < pbC[i-1];  a[4] = pbC[i]   > pbO[i-3];
+   }
+}
+
+static void build_3linestrike( void )
+{
+  pb_conditions(8);
+  pb_signs(2);
+  pb_arm(7,0,5); pb_arm(7,1,5);
+  pb_arm_model(arm_3linestrike);
+
+  pb_waive(2, "c7 forces it. Take the three-white alternative: it puts open(i) above close(i-1), and c0/c1 make all three the same colour, so close(i-1) > close(i-2) > close(i-3) >= open(i-3) and its last term puts close(i) below open(i-3). So open(i) > close(i) and the 4th candle is black, which is exactly what c2 asks of it against a white 3rd. The three-black alternative is the same derivation mirrored. Price ordering only -- no threshold is involved, so no primer changes it; a 200k-sample random search over all four bars found no case breaking it alone");
+  pb_waive_arm(7,0,0,"the arm's own colour selector, and col(i-1) is read by c1 and c2 as well -- moving it breaks those too, so it can never be the single false term. The class it selects is fired by pb_signs(2)");
+  pb_waive_arm(7,1,0,"the arm's own colour selector, and col(i-1) is read by c1 and c2 as well -- moving it breaks those too, so it can never be the single false term. The class it selects is fired by pb_signs(2)");
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(103,108,102,107);
+  pb_bar(106,111,105,110);
+  int r1=pb_bar(111,112,98,99);
+  pb_detect(r1,100,"detect three white: three rising whites each opening near the previous body, a black 4th opening above and closing below the 1st open");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(101,102,96,97);
+  pb_bar(98,99,93,94);
+  int r2=pb_bar(93,106,92,105);
+  pb_detect(r2,-100,"detect three black: the mirror, firing the other output class");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(103,108,102,107);
+  pb_bar(106,111,105,110);
+  int r3=pb_bar(111,112,98,99);
+  pb_flip(r3,0,"break c0: the 1st candle is black -- its body edges are unchanged, so only the colour test moves");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(103,108,102,107);
+  pb_bar(106,111,105,110);
+  int r4=pb_bar(111,112,98,99);
+  pb_control(r4,100,0,"restore c0: the 1st and 2nd are both white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(105,106,100,101);
+  pb_bar(104,111,103,110);
+  int r5=pb_bar(111,112,98,99);
+  pb_flip(r5,1,"break c1: the 1st and 2nd are black and the 3rd white -- two candles move, because changing one would take c0 or c2 with it");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(103,108,102,107);
+  pb_bar(106,111,105,110);
+  int r6=pb_bar(111,112,98,99);
+  pb_control(r6,100,1,"restore c1: the 2nd and 3rd are both white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(97.5,108,96,107);
+  pb_bar(106,111,105,110);
+  int r7=pb_bar(111,112,98,99);
+  pb_flip(r7,3,"break c3: 2nd opens 97.5, below the 1st body floor 100 - Near 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(98,108,97,107);
+  pb_bar(106,111,105,110);
+  int r8=pb_bar(111,112,98,99);
+  pb_control(r8,100,3,"restore c3: 2nd opens 98 == 100 - Near 2, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(106.5,108,105,107);
+  pb_bar(106,111,105,110);
+  int r9=pb_bar(111,112,98,99);
+  pb_flip(r9,4,"break c4: 2nd opens 106.5, above the 1st body ceiling 104 + Near 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(106,108,105,107);
+  pb_bar(106,111,105,110);
+  int r10=pb_bar(111,112,98,99);
+  pb_control(r10,100,4,"restore c4: 2nd opens 106 == 104 + Near 2, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(103,108,102,107);
+  pb_bar(100.5,111,99,110);
+  int r11=pb_bar(111,112,98,99);
+  pb_flip(r11,5,"break c5: 3rd opens 100.5, below the 2nd body floor 103 - Near 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(103,108,102,107);
+  pb_bar(101,111,100,110);
+  int r12=pb_bar(111,112,98,99);
+  pb_control(r12,100,5,"restore c5: 3rd opens 101 == 103 - Near 2, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(103,108,102,107);
+  pb_bar(109.5,111,108,110);
+  int r13=pb_bar(111,112,98,99);
+  pb_flip(r13,6,"break c6: 3rd opens 109.5, above the 2nd body ceiling 107 + Near 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(103,108,102,107);
+  pb_bar(109,111,108,110);
+  int r14=pb_bar(111,112,98,99);
+  pb_control(r14,100,6,"restore c6: 3rd opens 109 == 107 + Near 2, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(103,108,102,107);
+  pb_bar(106,111,105,107);
+  int r15=pb_bar(111,112,98,99);
+  pb_flip_in(r15,7,0,1,"break c7 alt0 term1: 3rd close 107 == the 2nd close, the rise is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(103,108,102,104);
+  pb_bar(106,111,105,110);
+  int r16=pb_bar(111,112,98,99);
+  pb_flip_in(r16,7,0,2,"break c7 alt0 term2: 2nd close 104 == the 1st close, the rise is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(103,108,102,107);
+  pb_bar(106,111,105,110);
+  int r17=pb_bar(110,112,98,99);
+  pb_flip_in(r17,7,0,3,"break c7 alt0 term3: 4th opens 110 == the 3rd close, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(103,108,102,107);
+  pb_bar(106,111,105,110);
+  int r18=pb_bar(111,112,99,100);
+  pb_flip_in(r18,7,0,4,"break c7 alt0 term4: 4th closes 100 == the 1st open, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(101,102,96,97);
+  pb_bar(98,99,96,97);
+  int r19=pb_bar(93,106,92,105);
+  pb_flip_in(r19,7,1,1,"break c7 alt1 term1: 3rd close 97 == the 2nd close, the fall is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(101,102,99,100);
+  pb_bar(98,99,93,94);
+  int r20=pb_bar(93,106,92,105);
+  pb_flip_in(r20,7,1,2,"break c7 alt1 term2: 2nd close 100 == the 1st close, the fall is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(101,102,96,97);
+  pb_bar(98,99,93,94);
+  int r21=pb_bar(94,106,92,105);
+  pb_flip_in(r21,7,1,3,"break c7 alt1 term3: 4th opens 94 == the 3rd close, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(101,102,96,97);
+  pb_bar(98,99,93,94);
+  int r22=pb_bar(93,106,92,104);
+  pb_flip_in(r22,7,1,4,"break c7 alt1 term4: 4th closes 104 == the 1st open, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(103,108,102,107);
+  pb_bar(106,111,105,110);
+  int r23=pb_bar(111,112,98,99);
+  pb_control(r23,100,7,"restore c7 via alt0: every term of the three-white alternative holds");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(101,102,96,97);
+  pb_bar(98,99,93,94);
+  int r24=pb_bar(93,106,92,105);
+  pb_control(r24,-100,7,"restore c7 via alt1: every term of the three-black alternative holds");
+  pb_flat(8);
+
+}
+
 static ErrorNumber test_marquee_predicate_coverage( void )
 {
    ErrorNumber e;
@@ -7417,6 +7695,7 @@ static ErrorNumber test_marquee_predicate_coverage( void )
    pb_reset(); build_abandonedbaby();       e = pb_check_mcdc_p("CDLABANDONEDBABY",     TA_CDLABANDONEDBABY,     0.3, cond_abandonedbaby);   if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_mathold();             e = pb_check_mcdc_p("CDLMATHOLD",           TA_CDLMATHOLD,           0.5, cond_mathold);         if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_stalledpattern();      e = pb_check_mcdc("CDLSTALLEDPATTERN",     TA_CDLSTALLEDPATTERN,      cond_stalledpattern);      if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_3linestrike();         e = pb_check_mcdc("CDL3LINESTRIKE",        TA_CDL3LINESTRIKE,         cond_3linestrike);         if( e != TA_TEST_PASS ) return e;
    pb_report_totals();
    return TA_TEST_PASS;
 }
