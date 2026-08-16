@@ -9,6 +9,7 @@ pub mod csharp;
 pub mod csharp_doc;
 pub mod csharp_enums;
 pub mod csharp_metadata;
+pub mod csharp_stream;
 pub mod doc_meta;
 pub mod docs_patch;
 pub mod docs_site;

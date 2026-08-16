@@ -177,6 +177,30 @@ public partial class Core
         return unstablePeriod[slot];
     }
 
+    /* The RetCode -> exception mapping for the STREAMING tier. Deliberately not
+     * a reuse of Failure(): a stream signals insufficient history in band as
+     * OutOfRangeEndIndex, which Failure() renders as
+     * ArgumentOutOfRangeException("endIdx") — meaningless to a caller whose
+     * method has no endIdx parameter.
+     *
+     * The "<NAME> open: " prefix is a cross-language contract (see
+     * docs/streaming-api-design.md) and deliberately differs from Failure()'s
+     * "TA_<NAME>: ". Do not unify them. Centralising the mapping here also
+     * means the ~520 generated reject sites are one line each instead of four,
+     * and the message prefix the stream gate greps has a single source. */
+    internal static Exception StreamFailure(string funcName, string what, RetCode retCode)
+    {
+        string where = funcName + " " + what + ": ";
+        return retCode switch
+        {
+            RetCode.OutOfRangeEndIndex => new InsufficientHistoryException(
+                where + "history shorter than lookback + 1"),
+            RetCode.InternalError => new InvalidOperationException(where + "internal error"),
+            RetCode.AllocErr => new InvalidOperationException(where + "allocation failed"),
+            _ => new ArgumentException(where + retCode),
+        };
+    }
+
     /* The RetCode -> exception mapping the generated guarded wrappers throw
      * through. Returns (rather than throws) so the call sites read
      * `throw Failure(...)` and the compiler knows the path ends. */

@@ -189,7 +189,7 @@ fn input_desc(name: &str, doc: &DocDef) -> String {
     .to_string()
 }
 
-fn output_desc(output: &Output, doc: &DocDef) -> String {
+pub(super) fn output_desc(output: &Output, doc: &DocDef) -> String {
     doc.outputs
         .iter()
         .find(|(n, _)| n == &output.name)

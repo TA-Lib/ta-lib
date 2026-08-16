@@ -68,4 +68,10 @@ public readonly struct OutRange
     /// <summary>One past the input index of the last output value
     /// (<c>BegIdx + Count</c>).</summary>
     public int EndIdx => BegIdx + Count;
+
+    /// <summary>The range that wrote nothing.</summary>
+    /// <remarks>A plain <c>Open</c> fills no output, so its
+    /// <c>FillRange</c> is this; <c>OpenAndFill</c>'s is not. Equal to
+    /// <c>default(OutRange)</c> — named so that reads say what they mean.</remarks>
+    public static OutRange Empty => default;
 }

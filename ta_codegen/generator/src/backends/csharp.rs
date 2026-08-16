@@ -5,13 +5,20 @@
 //!
 //! # Pinned decisions
 //!
-//! - **Public array surface is `double[]`, not `Span<double>`.** Three separate
-//!   mechanisms are array *reference equality*: BBANDS' scratch election
-//!   (`if (inReal == outRealUpperBand)`), the output-distinctness reject (#108),
-//!   and the `float[]`-overload comparison fold. `Span<T>` has no `==`, so
-//!   choosing spans breaks all three at once and drags Rust's `ScratchElection`
-//!   pass into C#. A span-based facade can sit on top later, where reference
-//!   identity does not apply.
+//! - **Public array surface is `double[]`, not `Span<double>`.** Note the
+//!   reason is *not* that spans lack `==`: `ReadOnlySpan<T>` has had a
+//!   ref+length `==` since .NET Core 2.1, and the three mechanisms that turn on
+//!   array reference equality — BBANDS' scratch election
+//!   (`if (inReal == outRealUpperBand)`), the output-distinctness reject
+//!   (#108), and the `float[]`-overload comparison fold — all survive a span
+//!   migration. The real reasons are that the transcribed bodies' own call
+//!   sites take `double[]`, and that binding languages consuming this assembly
+//!   are not all span-capable. Both tiers route through [`cs_series_in`] /
+//!   [`cs_series_out`], so a migration is a two-line change — but it is
+//!   API-breaking, and it would replace the reference-equality aliasing reject
+//!   (which the streaming gate pins by test) with `MemoryExtensions.Overlaps`,
+//!   a semantic change to a gated reject. Its own issue, with its own
+//!   byte-identical-hash gate, never a side effect of other work.
 //!
 //! - **Cores return `RetCode`; only the public wrapper throws.** Cross-indicator
 //!   callees return RetCode that callers *inspect* (MA, BBANDS, MAVP, STOCHRSI,
@@ -38,7 +45,7 @@
 //!   taken by address still needs the `double[1]` wrapping, because the callee
 //!   parameter it binds to is an output *array*.
 //!
-//! - **Qualified switch labels (`case MAType.Sma:`)** — the exact inverse of
+//! - **Qualified switch labels (`case MAType.SMA:`)** — the exact inverse of
 //!   `render_java_switch_label`, which strips the qualifier because qualified
 //!   labels are Java 21+. Locals are declared with initializers (as in Java), so
 //!   C# definite assignment does not additionally force `default:` arms.
@@ -97,7 +104,7 @@ pub(crate) struct CsRenderCtx<'a> {
     /// fusion). Same detector as C/Rust/Java, so the four backends fuse
     /// identical sites; `Math.FusedMultiplyAdd` is IEEE correctly-rounded.
     pub(crate) fma: Option<&'a FmaVarSets>,
-    /// `TA_MAType_SMA` → `MAType.Sma`, derived from enums.yaml (same map Java
+    /// `TA_MAType_SMA` → `MAType.SMA`, derived from enums.yaml (same map Java
     /// builds — the rendering is identical in both languages).
     pub(crate) matype_map: HashMap<String, String>,
 }
@@ -191,13 +198,29 @@ pub(crate) const RESERVED_WORDS: &[&str] = &[
     "while",
 ];
 
+/// The public surface type for a real input series. One seam, so the batch and
+/// streaming tiers cannot drift and a later span migration is a two-line change
+/// rather than a sweep over two emitters. See the module header for why the
+/// answer is `double[]` today.
+pub(crate) fn cs_series_in() -> &'static str {
+    "double[]"
+}
+
+/// The public surface type for a real output series. Separate from
+/// [`cs_series_in`] because a span migration would split them
+/// (`ReadOnlySpan<double>` in, `Span<double>` out).
+#[allow(dead_code)] // consumed by csharp_stream.rs's output signatures
+pub(crate) fn cs_series_out() -> &'static str {
+    "double[]"
+}
+
 /// C# type name for a scalar or pointer `VarType`.
 pub(crate) fn cs_type_str(var_type: &VarType) -> &'static str {
     match var_type {
         VarType::Real => "double",
         VarType::Integer | VarType::Index => "int",
         VarType::RetCodeType => "RetCode",
-        VarType::RealPointer | VarType::RealArray(_) => "double[]",
+        VarType::RealPointer | VarType::RealArray(_) => cs_series_in(),
         VarType::IntPointer | VarType::IntArray(_) => "int[]",
     }
 }
@@ -278,11 +301,17 @@ pub fn generate(
     // Public surface: OutRange-returning wrappers over the cores above.
     out.push_str(&gen_public_wrapper(func, false, enums));
     out.push_str(&gen_public_wrapper(func, true, enums));
+    // Streaming API section (only for YAML-declared streamable functions).
+    // Unlike Java there is no fragment splice: the section simply lands inside
+    // this file's `partial class Core`, before its closing brace.
+    if func.streaming {
+        out.push_str(&super::csharp_stream::generate(func, enums, registry, helpers));
+    }
     out.push_str("}\n");
     out
 }
 
-/// `MAType` + `0` → `MAType.Sma`, the qualified form the rest of the C# backend
+/// `MAType` + `0` → `MAType.SMA`, the qualified form the rest of the C# backend
 /// emits. A value with no named variant falls back to the cast, which is the same
 /// C# value — the enum is an `int` with names, so nothing is lost.
 fn csharp_enum_literal(enum_name: &str, value: i32, enums: &HashMap<String, EnumDef>) -> String {
@@ -307,7 +336,7 @@ fn csharp_enum_literal(enum_name: &str, value: i32, enums: &HashMap<String, Enum
 // Integer optional-param defaults/ranges are `f64` in the IR; the integer-valued
 // casts to `i32` for literal emission are exact, not truncating.
 #[allow(clippy::cast_possible_truncation)]
-fn emit_opt_param_validation(
+pub(crate) fn emit_opt_param_validation(
     func: &FuncDef,
     fail: &str,
     enums: &HashMap<String, EnumDef>,
@@ -388,7 +417,7 @@ fn emit_opt_param_validation(
     out
 }
 
-fn opt_param_type_str(opt: &crate::ir::OptInput) -> &str {
+pub(crate) fn opt_param_type_str(opt: &crate::ir::OptInput) -> &str {
     match &opt.param_type {
         ParamType::Real => "double",
         ParamType::Integer => "int",
@@ -855,7 +884,7 @@ fn render_forc_part(
 }
 
 /// Render hoisted block-inline helpers as C# code (temp var decl + body).
-fn render_hoisted_blocks(
+pub(crate) fn render_hoisted_blocks(
     hoisted: &[(String, VarType, Vec<Statement>)],
     indent: usize,
     ctx: &CsRenderCtx,
@@ -1421,10 +1450,10 @@ pub(crate) fn render_statement_ctx(
     CsStmt { ctx, enums, registry, helpers }.walk_stmt(stmt, indent)
 }
 
-/// Enum switch case labels are QUALIFIED (`case MAType.Sma:`) — the exact
+/// Enum switch case labels are QUALIFIED (`case MAType.SMA:`) — the exact
 /// inverse of `render_java_switch_label`, which must strip the qualifier for
 /// pre-21 JDKs. C# requires the qualified form.
-fn render_csharp_switch_label(label: &str, enums: &HashMap<String, EnumDef>) -> String {
+pub(crate) fn render_csharp_switch_label(label: &str, enums: &HashMap<String, EnumDef>) -> String {
     if let Some((enum_name, variant)) = lookup_variant(label, enums) {
         format!("{enum_name}.{}", variant.name)
     } else {
