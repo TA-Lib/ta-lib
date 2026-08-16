@@ -3740,7 +3740,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     // The fuzz input generator, appended after the server class (global
     // namespace, like the Java port's default package). Verified byte-identical
     // to fuzz_data.h at port time; the fuzz_in_hash RPC re-proves it per run.
-    s.push_str("\n");
+    s.push('\n');
     s.push_str(CSHARP_FUZZ);
 
     s
@@ -6309,39 +6309,6 @@ const CSHARP_ABSTRACT_HANDLERS: &str = r#"    static string AbsStr(string? v) {
 
 "#;
 
-#[cfg(test)]
-mod predicate_form_tests {
-    use super::{c_predicate_expr, java_predicate_expr, rust_predicate_expr, SpecialBuiltin};
-
-    /// Pin the exact per-backend form of the boolean near-zero builtins. These are
-    /// the single source shared by the indicator code path AND the eval_predicate
-    /// server handler, so any drift here is caught fast (and the runtime
-    /// cross-language predicate-parity test in ta_regtest re-verifies equivalence).
-    #[test]
-    fn predicate_forms_are_stable() {
-        let v = &["v".to_string()];
-        let vs = &["v".to_string(), "s".to_string()];
-
-        assert_eq!(c_predicate_expr(SpecialBuiltin::IsZero, v), "TA_IS_ZERO(v)");
-        assert_eq!(c_predicate_expr(SpecialBuiltin::IsZeroScaled, vs), "TA_IS_ZERO_SCALED(v, s)");
-        assert_eq!(c_predicate_expr(SpecialBuiltin::IsZeroOrNeg, v), "TA_IS_ZERO_OR_NEG(v)");
-
-        assert_eq!(rust_predicate_expr(SpecialBuiltin::IsZero, v), "(v).abs() < 1e-14");
-        assert_eq!(rust_predicate_expr(SpecialBuiltin::IsZeroScaled, vs), "((v).abs() <= 1e-14 * (s))");
-        assert_eq!(rust_predicate_expr(SpecialBuiltin::IsZeroOrNeg, v), "(v) < 1e-14");
-
-        assert_eq!(
-            java_predicate_expr(SpecialBuiltin::IsZero, v),
-            "((-0.00000000000001 < v) && (v < 0.00000000000001))"
-        );
-        assert_eq!(
-            java_predicate_expr(SpecialBuiltin::IsZeroScaled, vs),
-            "(Math.abs(v) <= 0.00000000000001 * (s))"
-        );
-        assert_eq!(java_predicate_expr(SpecialBuiltin::IsZeroOrNeg, v), "(v < 0.00000000000001)");
-    }
-}
-
 /// The per-input expanded fuzz array variable in the generated C# handler.
 ///
 /// Same mapping as the C, Rust and Java twins -- price components to their
@@ -6793,8 +6760,8 @@ fn emit_csharp_sv_func(
     // here, so the run reds either way, and it reds louder.
     s.push_str("                /* R2: aliasing cross product -- every real output x every input,\n");
     s.push_str("                   then every same-typed output pair. Each must throw. */\n");
-    for i in 0..n_out {
-        if out_is_int[i] {
+    for (i, i_is_int) in out_is_int.iter().enumerate() {
+        if *i_is_int {
             continue; // an int[] output slot cannot take a double[] input
         }
         // Several input positions can map to the same fuzz array (generic
@@ -6824,9 +6791,9 @@ fn emit_csharp_sv_func(
             );
         }
     }
-    for i in 0..n_out {
-        for j in (i + 1)..n_out {
-            if out_is_int[i] != out_is_int[j] {
+    for (i, i_is_int) in out_is_int.iter().enumerate() {
+        for (j, j_is_int) in out_is_int.iter().enumerate().skip(i + 1) {
+            if i_is_int != j_is_int {
                 continue; // different element types cannot alias
             }
             let mut aargs = String::new();
@@ -7352,3 +7319,36 @@ pub(crate) fn generate_csharp_stream_verify(
 }
 
 // ---------------------------------------------------------------------------
+
+#[cfg(test)]
+mod predicate_form_tests {
+    use super::{c_predicate_expr, java_predicate_expr, rust_predicate_expr, SpecialBuiltin};
+
+    /// Pin the exact per-backend form of the boolean near-zero builtins. These are
+    /// the single source shared by the indicator code path AND the eval_predicate
+    /// server handler, so any drift here is caught fast (and the runtime
+    /// cross-language predicate-parity test in ta_regtest re-verifies equivalence).
+    #[test]
+    fn predicate_forms_are_stable() {
+        let v = &["v".to_string()];
+        let vs = &["v".to_string(), "s".to_string()];
+
+        assert_eq!(c_predicate_expr(SpecialBuiltin::IsZero, v), "TA_IS_ZERO(v)");
+        assert_eq!(c_predicate_expr(SpecialBuiltin::IsZeroScaled, vs), "TA_IS_ZERO_SCALED(v, s)");
+        assert_eq!(c_predicate_expr(SpecialBuiltin::IsZeroOrNeg, v), "TA_IS_ZERO_OR_NEG(v)");
+
+        assert_eq!(rust_predicate_expr(SpecialBuiltin::IsZero, v), "(v).abs() < 1e-14");
+        assert_eq!(rust_predicate_expr(SpecialBuiltin::IsZeroScaled, vs), "((v).abs() <= 1e-14 * (s))");
+        assert_eq!(rust_predicate_expr(SpecialBuiltin::IsZeroOrNeg, v), "(v) < 1e-14");
+
+        assert_eq!(
+            java_predicate_expr(SpecialBuiltin::IsZero, v),
+            "((-0.00000000000001 < v) && (v < 0.00000000000001))"
+        );
+        assert_eq!(
+            java_predicate_expr(SpecialBuiltin::IsZeroScaled, vs),
+            "(Math.abs(v) <= 0.00000000000001 * (s))"
+        );
+        assert_eq!(java_predicate_expr(SpecialBuiltin::IsZeroOrNeg, v), "(v < 0.00000000000001)");
+    }
+}

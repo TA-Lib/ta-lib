@@ -492,8 +492,8 @@ public partial class Core
       /// <para>Never throws after a successful open, and allocates nothing — neither
       /// handle state nor a return value.</para>
       /// </remarks>
-      /// <param name="inClose">Close price of each bar.</param>
-      /// <param name="inVolume">Volume of each bar.</param>
+      /// <param name="inClose">This bar's close price.</param>
+      /// <param name="inVolume">This bar's volume.</param>
       /// <returns>The value at the bar just committed.</returns>
       public double Update( double inClose, double inVolume )
       {
@@ -506,11 +506,12 @@ public partial class Core
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
       /// would return — it is the same generated code, run on a copy. Never writes
       /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a throwaway copy, which for this handle's shape is cheaper than
-      /// reusing one.</para>
+      /// <para>It runs on a fresh copy of this handle, so it allocates one — proportional
+      /// to the state this indicator carries. If you peek on every tick and that
+      /// matters, hold the value <see cref="Update"/> returns instead.</para>
       /// </remarks>
-      /// <param name="inClose">Close price of each bar.</param>
-      /// <param name="inVolume">Volume of each bar.</param>
+      /// <param name="inClose">This bar's close price.</param>
+      /// <param name="inVolume">This bar's volume.</param>
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public double Peek( double inClose, double inVolume )
       {

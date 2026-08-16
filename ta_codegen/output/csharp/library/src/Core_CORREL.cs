@@ -503,8 +503,8 @@ public partial class Core
       /// <para>Never throws after a successful open, and allocates nothing — neither
       /// handle state nor a return value.</para>
       /// </remarks>
-      /// <param name="inReal0">First data series (X)</param>
-      /// <param name="inReal1">Second data series (Y)</param>
+      /// <param name="inReal0">This bar's value for <c>inReal0</c>.</param>
+      /// <param name="inReal1">This bar's value for <c>inReal1</c>.</param>
       /// <returns>The value at the bar just committed.</returns>
       public double Update( double inReal0, double inReal1 )
       {
@@ -517,12 +517,12 @@ public partial class Core
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
       /// would return — it is the same generated code, run on a copy. Never writes
       /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a scratch handle held per thread and reused, so the copy
-      /// allocates nothing after the first peek of this indicator on this thread.
-      /// That scratch is retained for the life of the thread.</para>
+      /// <para>It runs on a scratch handle held per thread and reused, so it allocates
+      /// nothing after this thread's first peek of this indicator. That scratch is
+      /// retained for the life of the thread.</para>
       /// </remarks>
-      /// <param name="inReal0">First data series (X)</param>
-      /// <param name="inReal1">Second data series (Y)</param>
+      /// <param name="inReal0">This bar's value for <c>inReal0</c>.</param>
+      /// <param name="inReal1">This bar's value for <c>inReal1</c>.</param>
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public double Peek( double inReal0, double inReal1 )
       {

@@ -758,6 +758,40 @@ fn input_desc(name: &str, doc: &DocDef) -> String {
     .to_string()
 }
 
+/// Whether any output of this function is an absolute bar index.
+///
+/// Detected from the documented prose rather than the type, because plenty of
+/// integer outputs are flags (every `CDL*` pattern) and only these carry an
+/// index basis that streaming changes the meaning of.
+fn has_absolute_index_output(func: &FuncDef) -> bool {
+    func.doc.as_ref().is_some_and(|d| {
+        d.outputs
+            .iter()
+            .any(|(_, desc)| desc.to_lowercase().contains("absolute index"))
+    })
+}
+
+/// Prose for one bar argument of `Update` / `Peek`.
+///
+/// Deliberately NOT [`input_desc`]: that describes the batch tier's *array*
+/// parameter ("Source series to average"), and reusing it on a `double`
+/// argument names the wrong thing — the caller is passing one bar, not a
+/// series. The price components get their own bar-scoped wording; anything else
+/// is described by naming the series it belongs to, which stays true for every
+/// indicator without restating the batch prose.
+fn bar_param_desc(name: &str) -> String {
+    match name {
+        "inOpen" => "This bar's open price.".to_string(),
+        "inHigh" => "This bar's high price.".to_string(),
+        "inLow" => "This bar's low price.".to_string(),
+        "inClose" => "This bar's close price.".to_string(),
+        "inVolume" => "This bar's volume.".to_string(),
+        "inOpenInterest" => "This bar's open interest.".to_string(),
+        "inPeriods" => "The period to use for this bar.".to_string(),
+        other => format!("This bar's value for <c>{other}</c>."),
+    }
+}
+
 /// Prose for one optional parameter on a stream opener. The batch tier's full
 /// default/range machinery is private to `csharp_doc`, so the opener points at
 /// the batch call rather than restating it — one place for the numbers.
@@ -810,6 +844,7 @@ fn emit_handle_class(o: &mut String, func: &FuncDef, fields: &[Field], subs: &Su
 /// [`emit_handle_class`] with additional raw member declarations (dispatch's
 /// `object? sub;`, composed/period-bank sub-handle fields). Returns whether the
 /// handle owns enough on the heap for `Peek` to reuse a scratch.
+#[allow(clippy::too_many_lines)]
 fn emit_handle_class_with_members(
     o: &mut String,
     func: &FuncDef,
@@ -849,6 +884,20 @@ fn emit_handle_class_with_members(
          built handle can be minted: to checkpoint, retain the history and re-open — the \
          result is bit-identical by contract.",
     );
+    // Absolute-index outputs need a streaming-specific caveat the batch prose
+    // cannot carry: batch describes them as an index INTO the input array, and
+    // in this tier there is no array — the bar argument is a scalar. The basis
+    // is also rebased once the bar count passes 2^30, so the value is a window
+    // position, never a durable bar id.
+    if has_absolute_index_output(func) {
+        d.para(
+            "This indicator reports absolute bar indices. In the streaming tier they \
+             count bars fed to this stream rather than positions in an array, and the \
+             basis is shifted once that count passes 2^30 — so treat an index as a \
+             position within the current window, not as an identifier you can store \
+             and compare against one read much later.",
+        );
+    }
     d.close("remarks");
     o.push_str(&d.render(3));
 
@@ -1046,8 +1095,6 @@ fn emit_update_peek_value_clone(o: &mut String, func: &FuncDef, reuse: bool) {
     let base = base_name(func);
     let vt = value_surface_type(func);
     let (sig_bars, fwd_bars) = bar_params(func);
-    let empty = DocDef::default();
-    let doc = func.doc.as_ref().unwrap_or(&empty);
     let inputs = streaming::input_array_names(func);
 
     // --- Update -------------------------------------------------------------
@@ -1060,7 +1107,7 @@ fn emit_update_peek_value_clone(o: &mut String, func: &FuncDef, reuse: bool) {
     );
     d.close("remarks");
     for input in &inputs {
-        d.param(input, &input_desc(input, doc));
+        d.param(input, &bar_param_desc(input));
     }
     d.returns("The value at the bar just committed.");
     o.push('\n');
@@ -1072,13 +1119,20 @@ fn emit_update_peek_value_clone(o: &mut String, func: &FuncDef, reuse: bool) {
     let _ = writeln!(o, "      }}");
 
     // --- Peek ---------------------------------------------------------------
+    // State what the caller can observe, never a comparative performance claim.
+    // The scratch-election predicate is Java's, shipped unchanged because no C#
+    // A/B exists to justify a different one — so the emitted docs must not
+    // assert to a .NET consumer that one arm is "cheaper", which is a
+    // conclusion measured on another runtime. The allocation itself is a fact
+    // and is worth telling them, because `Peek`-per-tick is the obvious usage.
     let alloc_note = if reuse {
-        "It runs on a scratch handle held per thread and reused, so the copy allocates \
-         nothing after the first peek of this indicator on this thread. That scratch is \
-         retained for the life of the thread."
+        "It runs on a scratch handle held per thread and reused, so it allocates nothing \
+         after this thread's first peek of this indicator. That scratch is retained for \
+         the life of the thread."
     } else {
-        "It runs on a throwaway copy, which for this handle's shape is cheaper than \
-         reusing one."
+        "It runs on a fresh copy of this handle, so it allocates one — proportional to \
+         the state this indicator carries. If you peek on every tick and that matters, \
+         hold the value <see cref=\"Update\"/> returns instead."
     };
     let mut d = XmlDoc::new();
     d.summary("Evaluate a forming bar without committing it.");
@@ -1091,7 +1145,7 @@ fn emit_update_peek_value_clone(o: &mut String, func: &FuncDef, reuse: bool) {
     d.para(alloc_note);
     d.close("remarks");
     for input in &inputs {
-        d.param(input, &input_desc(input, doc));
+        d.param(input, &bar_param_desc(input));
     }
     d.returns("What <see cref=\"Update\"/> would return for this bar.");
     o.push('\n');
@@ -2619,12 +2673,16 @@ fn emit_dispatch(
         let _ = writeln!(copy_extra, "               break;");
     }
     let _ = writeln!(copy_extra, "            default:");
-    // ArgumentException, NOT InvalidOperationException: the cross-language gate
-    // catches ArgumentException, so an IOE escapes to the server's outermost
-    // catch and surfaces as a set-mismatch — a failure naming the wrong problem.
+    // InvalidOperationException here, ArgumentException in the STEP's default
+    // arm — the two differ deliberately. The step is reachable from a caller's
+    // bad enum, so it must throw the type the gate catches and reports as a
+    // reject-parity failure. A copy constructor has no caller-supplied argument
+    // to blame: this arm is unreachable by construction (open rejects any arm
+    // without a sub-stream), so the honest type is the one for "this object is
+    // in a state that should not exist".
     let _ = writeln!(
         copy_extra,
-        "               throw new ArgumentException(\"unreachable: open rejects arms without a sub-stream\");"
+        "               throw new InvalidOperationException(\"unreachable: open rejects arms without a sub-stream\");"
     );
     let _ = writeln!(copy_extra, "            }}");
     let _ = writeln!(copy_extra, "         }}");
@@ -2658,7 +2716,7 @@ fn emit_dispatch(
     let _ = writeln!(restore_extra, "            default:");
     let _ = writeln!(
         restore_extra,
-        "               throw new ArgumentException(\"unreachable: open rejects arms without a sub-stream\");"
+        "               throw new InvalidOperationException(\"unreachable: open rejects arms without a sub-stream\");"
     );
     let _ = writeln!(restore_extra, "            }}");
     let _ = writeln!(restore_extra, "         }}");
@@ -3565,6 +3623,27 @@ fn emit_composed_open(
         // range serves a callee that is handed the same series more than once
         // (STOCHRSI feeds one RSI buffer to all three of STOCHF's price inputs,
         // exactly as the batch call does).
+        //
+        // THAT DEDUP RESTS ON AN INVARIANT WORTH STATING, because it is the one
+        // thing Java gets structurally and C# gets only by argument. Java hands
+        // each price input its own `copyOfRange` result, so two of a callee's
+        // sources can never be the same array; here they can. The fusion seam
+        // also drops the #108/#130 aliasing guard on the strength of
+        // `SubCallStep::is_fusable()`, and that predicate compares DESTINATIONS
+        // against sources and against each other — never sources against each
+        // other. So sharing one buffer across a callee's inputs is sound only
+        // while no `_OpenCore` ever writes through an input array. That holds
+        // for all 172 today. A future body that wrote into an input would break
+        // this silently, and no value gate would see it: both arms of the
+        // stream-vs-batch compare would read the same corrupted buffer.
+        //
+        // Sizing note for the same reason: `Array.Copy` throws where Java's
+        // `copyOfRange` would zero-pad a short source, and that throw is inside
+        // `_OpenCore`, so it would escape the RetCode -> `Core.StreamFailure`
+        // mapping and reach the caller without the stable "<NAME> open: "
+        // prefix. Unreachable as long as every `subLen` is bounded by the
+        // buffer it copies from, which is true at all five sites (STOCH x2,
+        // STOCHF, STOCHRSI, MACDEXT).
         let mut src_locals = String::new();
         let mut materialized: std::collections::BTreeMap<String, String> =
             std::collections::BTreeMap::new();

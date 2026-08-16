@@ -346,6 +346,11 @@ public partial class Core
    /// <para>Not serializable by design, and the constructors are internal so no
    /// partially built handle can be minted: to checkpoint, retain the history
    /// and re-open — the result is bit-identical by contract.</para>
+   /// <para>This indicator reports absolute bar indices. In the streaming tier they
+   /// count bars fed to this stream rather than positions in an array, and the
+   /// basis is shifted once that count passes 2^30 — so treat an index as a
+   /// position within the current window, not as an identifier you can store and
+   /// compare against one read much later.</para>
    /// </remarks>
    public sealed class MAXINDEX_Stream
    {
@@ -411,7 +416,7 @@ public partial class Core
       /// <para>Never throws after a successful open, and allocates nothing — neither
       /// handle state nor a return value.</para>
       /// </remarks>
-      /// <param name="inReal">Input series to scan.</param>
+      /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>The value at the bar just committed.</returns>
       public int Update( double inReal )
       {
@@ -424,10 +429,11 @@ public partial class Core
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
       /// would return — it is the same generated code, run on a copy. Never writes
       /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a throwaway copy, which for this handle's shape is cheaper than
-      /// reusing one.</para>
+      /// <para>It runs on a fresh copy of this handle, so it allocates one — proportional
+      /// to the state this indicator carries. If you peek on every tick and that
+      /// matters, hold the value <see cref="Update"/> returns instead.</para>
       /// </remarks>
-      /// <param name="inReal">Input series to scan.</param>
+      /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public int Peek( double inReal )
       {
