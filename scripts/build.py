@@ -129,6 +129,13 @@ def show_help():
                         conjunct count of the indicator it tests (no build; pure
                         text check). Catches a builder that under-declares, and
                         a conjunct added to an indicator that no case covers.
+    check-candle-windows
+                        Verify every candlestick reads each trailing total at the
+                        bar it accumulates (no build; pure text check). Catches a
+                        crossed window -- the right setting averaged over the
+                        wrong ten bars -- which MC/DC cannot see (pb_primer's
+                        bars are identical) and the differential gates see only
+                        where the data happens to straddle.
     regtest             Full pipeline: servers (cargo) + C tests + codegen verification
     fuzz-064            Bit-exact differential fuzz of the current library vs the
                         frozen released v0.6.4 (opt-in; builds ta_064_serve then
@@ -612,6 +619,11 @@ def main():
         sys.exit(subprocess.call(
             [sys.executable, os.path.join(root_dir, 'scripts',
                                           'check_mcdc_conditions.py')]))
+
+    if args.target == 'check-candle-windows':
+        sys.exit(subprocess.call(
+            [sys.executable, os.path.join(root_dir, 'scripts',
+                                          'check_candle_windows.py')]))
 
     # Targets that build language servers narrow their prerequisites to the
     # backends actually requested: `servers --language=c,rust` must not demand a
