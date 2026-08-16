@@ -508,9 +508,15 @@ static const UnstableLookup UNSTABLE_MAP[] = {
     {"MACD",         TA_FUNC_UNST_EMA},
     {"MACDEXT",      TA_FUNC_UNST_EMA},
     {"MACDFIX",      TA_FUNC_UNST_EMA},
-    /* APO/PPO default to EMA (#120) -> EMA-converging, like MACDEXT. */
+    /* APO/PPO default to EMA (#120) -> EMA-converging, like MACDEXT. PVO is
+     * PPO over volume and defaults to EMA the same way, so it belongs here for
+     * the same reason. Its absence classified it EPSILON, and the range gate
+     * that would have said so is the one post-cutover functions never reach --
+     * measured, PVO moves by whole multiples across startIdx (4.7 at 40, 25.1
+     * at 80) where a genuine EPSILON function moves by ~1e-13. */
     {"APO",          TA_FUNC_UNST_EMA},
     {"PPO",          TA_FUNC_UNST_EMA},
+    {"PVO",          TA_FUNC_UNST_EMA},
     /* EFI smooths its force series with the same EMA. */
     {"EFI",          TA_FUNC_UNST_EMA},
     /* ADXR/STOCHRSI own knobs were inert and retired (#129); they converge
@@ -1460,6 +1466,9 @@ typedef struct {
     /* sweep_one_function has its own subset gate that used to `return` with no
      * counter at all — sweep skips were invisible even in the aggregate. */
     int               sweepSkipped;
+    /* Post-cutover functions that reached the range-stability leg. Counted so
+     * "post-cutover" cannot quietly come to mean "range-unverified" again. */
+    int               postCutRangeChecked;
     int               langIndex;   /* index into ALL_LANGUAGES */
     const CodegenLanguage *lang;
     /* Ref differential sweep counters */
@@ -1573,14 +1582,25 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 
     /* Frozen-reference subset gate, applied HERE rather than on entry.
      *
-     * The seven functions added after the pinned reference tag (CMF, CMOU, HMA,
-     * NVI, PVI, PVO, VWMA) have no ta_ref_serve baseline, so everything below
-     * that diffs against it must be skipped. The FLOAT leg must not be: it
-     * compares a language's single-precision entry point against that same
-     * language's own double entry point and never touches refCp, so skipping it
-     * here left 14 shipped float entry points (7 in Java, 7 in C#) with no value
-     * verification at all — the hole this leg exists to close. Run it, then skip
-     * the reference-dependent remainder. */
+     * The functions added after the pinned reference tag have no ta_ref_serve
+     * baseline, so everything below that diffs against it must be skipped. The
+     * run names them rather than counting them, because the set only grows.
+     *
+     * Two legs must NOT be skipped, and both are here for the same reason --
+     * they compare against something other than the frozen reference, so the
+     * missing baseline is irrelevant to them:
+     *
+     *   FLOAT — compares a language's single-precision entry point against that
+     *   same language's own double entry point; never touches refCp. Skipping it
+     *   left 14 shipped float entry points (7 Java, 7 C#) with no value
+     *   verification at all.
+     *
+     *   RANGE STABILITY — codegen_range_generic calls TA_CallFunc on the
+     *   in-process library, never a server at all. Skipping it left every
+     *   post-cutover function with no startIdx-stability coverage, which is how
+     *   PVO's missing UNSTABLE_MAP row survived from #119.
+     *
+     * Run both, then skip the reference-dependent remainder. */
     if( ctx->refFuncList )
     {
         char needle[80];
@@ -1597,6 +1617,36 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                 ctx->failed++;
                 ctx->error = params.codegenError;
                 return;
+            }
+            /* The RANGE-STABILITY leg must not be skipped here either, for the
+             * same reason as the float leg above: codegen_range_generic calls
+             * TA_CallFunc on the in-process library and never touches refCp or
+             * the language server, so it needs no frozen baseline. Leaving it
+             * below this gate left every post-cutover function with no
+             * startIdx-stability coverage at all -- which is how PVO's missing
+             * UNSTABLE_MAP row survived since #119. */
+            {
+                TA_Integer postLookback = 0;
+                if( TA_GetLookback( paramHolder, &postLookback ) == TA_SUCCESS &&
+                    (int)ctx->history->nbBars > postLookback )
+                {
+                    ErrorNumber rangeErr = doRangeTestEx(
+                        codegen_range_generic,
+                        stability_class(funcInfo),
+                        get_unst_id(funcInfo->name),
+                        (void *)&params,
+                        funcInfo->nbOutput,
+                        get_integer_tolerance(funcInfo));
+                    if( rangeErr != TA_TEST_PASS )
+                    {
+                        printf("RANGE TEST FAILED (code=%d)  (TA_%s is "
+                               "post-reference)\n", rangeErr, funcInfo->name);
+                        ctx->failed++;
+                        ctx->error = rangeErr;
+                        return;
+                    }
+                    ctx->postCutRangeChecked++;
+                }
             }
             if( ctx->nbSkipNames < MAX_FUNCTIONS )
                 strncpy(ctx->skipNames[ctx->nbSkipNames++], funcInfo->name,
@@ -3639,6 +3689,7 @@ static ErrorNumber test_codegen_for_language(
     ctx.nbSkipNames    = 0;
     ctx.nbIntInputSkipNames = 0;
     ctx.sweepSkipped   = 0;
+    ctx.postCutRangeChecked = 0;
     ctx.langIndex      = langIndex;
     ctx.lang           = lang;
 
@@ -3863,6 +3914,17 @@ static ErrorNumber test_codegen_for_language(
                 printf("%s%s", ctx.skipNames[s], (s + 1 < ctx.nbSkipNames) ? "," : "");
             printf("  [sweep skipped %d; all still bitwise-gated by VARIANT]\n",
                    ctx.sweepSkipped);
+            /* The reference-independent legs still run for these, and must:
+             * a post-cutover function is not an unverified one. */
+            printf("    post-cutover range-stability verified: %d of %d\n",
+                   ctx.postCutRangeChecked, ctx.nbSkipNames);
+            if( ctx.postCutRangeChecked < ctx.nbSkipNames )
+            {
+                printf("CODEGEN FAILED: %d post-cutover function(s) skipped the "
+                       "range-stability leg, which needs no frozen baseline\n",
+                       ctx.nbSkipNames - ctx.postCutRangeChecked);
+                return TA_CODEGEN_RANGE_VACUOUS;
+            }
         }
         if( ctx.nbIntInputSkipNames > 0 )
         {
