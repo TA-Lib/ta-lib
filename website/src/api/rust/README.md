@@ -17,8 +17,7 @@ The Rust API is not yet released. Estimated release: **Q1 2027**.
 <blockquote>
 <p><a href="#direct_call">3.1 Batch Processing</a><br>
 <a href="#output_size">3.2 Output Size and Lookback</a><br>
-<a href="#retcode">3.3 Return Codes</a><br>
-<a href="#variants">3.4 Variants per Indicator</a><br></p>
+<a href="#retcode">3.3 Return Codes</a><br></p>
 </blockquote>
 
 <p><a href="#advanced">4.0 Advanced Features</a></p>
@@ -27,26 +26,25 @@ The Rust API is not yet released. Estimated release: **Q1 2027**.
 <p><a href="#abstract">4.1 Abstraction Layer</a><br>
 <a href="#numerical_stability">4.2 Numerical Stability</a><br>
 <a href="#candle_settings">4.3 Candlestick Settings</a><br>
-<a href="#input_type">4.4 Input Type</a><br>
-<a href="#multithreading">4.5 Threading</a><br></p>
+<a href="#multithreading">4.4 Threading</a><br></p>
 </blockquote>
 
 <p><a href="#docs">5.0 Documentation</a></p>
 
 ## 1.0 Introduction {#intro}
 
-The `ta-lib` crate is a native Rust port of TA-Lib — no C bindings, no `unsafe` at the call site. Every indicator is a method on a `Core` value, operates on `f64` slices, and is **bit-identical** to the reference C library over the same inputs.
+The `ta-lib` crate is a native Rust port of TA-Lib — no C bindings, no `unsafe` at the call site. Every indicator is a method on `Core`, operates on `f64` slices, and is **bit-identical** to the reference C library over the same inputs.
 
 The **Core API** provides:
 
-- The [`Core`](#direct_call) value and the builder that configures it.
+- The [`Core`](#direct_call) type and the builder that configures it.
 - The settings each `Core` carries: [unstable period](/api/unstable-period/) and [candlestick settings](/api/candle-settings/). Nothing is global.
 - Every TA function, each processing a whole array of data at once.
 - An optional [abstraction layer](#abstract) for calling those functions dynamically.
 
 To process a live feed one bar at a time instead of a whole array, see the companion [Rust Streaming API](/api/rust/stream/).
 
-There is no initialization step and nothing to shut down. Where C requires `TA_Initialize` before any call and `TA_Shutdown` at exit, Rust has `Core::new()`, and the value is dropped like any other.
+There is no initialization step and nothing to shut down. Where C requires `TA_Initialize` before any call and `TA_Shutdown` at exit, Rust has `Core::new()`, and the `Core` is dropped like any other value.
 
 ## 2.0 Add it to your project {#build}
 
@@ -70,7 +68,7 @@ As an example, let's walk through `MA`, a method to calculate a moving average.
        <span class="ta-arg-range">endIdx: usize,</span>
        <span class="ta-arg-in">inReal: &amp;[f64],</span>
        <span class="ta-arg-opt">optInTimePeriod: i32,</span>
-       <span class="ta-arg-opt">optInMAType: i32,</span>
+       <span class="ta-arg-opt">optInMAType: MAType,</span>
        <span class="ta-arg-out">outBegIdx: &amp;mut usize,</span>
        <span class="ta-arg-out">outNBElement: &amp;mut usize,</span>
        <span class="ta-arg-out">outReal: &amp;mut [f64]</span> ) -&gt; RetCode
@@ -81,7 +79,7 @@ All TA functions use the same calling pattern, divided into four groups:
 <ul>
 <li><span class="ta-arg-range">The output will be calculated only for the range specified by startIdx and endIdx. These are zero-based indices into the input slices.</span></li>
 <li><span class="ta-arg-in">One or more input slices are then specified. Typically, these are the "price" data. In this example there is only one input. All input parameter names start with "in".</span></li>
-<li><span class="ta-arg-opt">Zero or more optional inputs are then specified. In this example there are two optional inputs. These parameters give finer control specific to each function. Integer and enum parameters are i32, real parameters are f64. If you do not care about a particular optIn, just pass INTEGER_DEFAULT or REAL_DEFAULT (depending on the type) and the function substitutes its documented default.</span></li>
+<li><span class="ta-arg-opt">Zero or more optional inputs are then specified. In this example there are two optional inputs. These parameters give finer control specific to each function. Integer parameters are i32 and real parameters are f64; an enumerated choice has its own type, here MAType. If you do not care about a particular optIn, just pass INTEGER_DEFAULT or REAL_DEFAULT (depending on the type) — or MAType::DEFAULT, since a typed enum has no room for a sentinel — and the function substitutes its documented default.</span></li>
 <li><span class="ta-arg-out">One or more output slices come last. In this example there is only one output (outReal). The parameters outBegIdx and outNBElement always come just before the output slices.</span></li>
 </ul>
 
@@ -90,7 +88,7 @@ This calling pattern takes some getting used to, but it lets your app spend time
 For example, here is how to calculate a 30-day simple moving average (SMA) of daily closing prices:
 
 ```rust
-use ta_lib::{Core, RetCode};
+use ta_lib::{Core, MAType, RetCode};
 
 let core = Core::new();
 
@@ -102,7 +100,7 @@ let mut out_nb  = 0usize;
 
 <pre>let ret_code = core.MA( <span class="ta-arg-range">0</span>, <span class="ta-arg-range">399</span>,
                         <span class="ta-arg-in">&amp;close</span>,
-                        <span class="ta-arg-opt">30</span>, <span class="ta-arg-opt">0 /* SMA */</span>,
+                        <span class="ta-arg-opt">30</span>, <span class="ta-arg-opt">MAType::SMA</span>,
                         <span class="ta-arg-out">&amp;mut out_beg</span>, <span class="ta-arg-out">&amp;mut out_nb</span>, <span class="ta-arg-out">&amp;mut out</span> );
 </pre>
 
@@ -123,7 +121,7 @@ Here is another example. This time we calculate a 14-bar exponential moving aver
 
 <pre>let ret_code = core.MA( <span class="ta-arg-range">299</span>, <span class="ta-arg-range">299</span>,
                         <span class="ta-arg-in">&amp;close</span>,
-                        <span class="ta-arg-opt">14</span>, <span class="ta-arg-opt">1 /* EMA */</span>,
+                        <span class="ta-arg-opt">14</span>, <span class="ta-arg-opt">MAType::EMA</span>,
                         <span class="ta-arg-out">&amp;mut out_beg</span>, <span class="ta-arg-out">&amp;mut out_nb</span>, <span class="ta-arg-out">&amp;mut out</span> );
 </pre>
 
@@ -143,7 +141,7 @@ It is important that the output slice is large enough — the crate is `#![forbi
 |------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Input Matching   | `allocation_size = endIdx + 1;` <br> **Pros**: Easy to understand and implement. <br> **Cons**: Memory allocation unnecessarily large when requesting a small range. |
 | Range Matching   | `allocation_size = endIdx - startIdx + 1;` <br> **Pros**: Easy to implement. <br> **Cons**: Allocation slightly larger than needed. Example: with startIdx = 0, a 30-period SMA wastes 29 elements because of the lookback. |
-| Exact Allocation | `let lookback = core.MA_Lookback(30, 0);` <br> `let temp = lookback.max(startIdx);` <br> `let allocation_size = if temp > endIdx { 0 } else { endIdx - temp + 1 };` <br> **Pros**: Allocates exactly what is needed. <br> **Cons**: Slightly more complex. |
+| Exact Allocation | Derived from the function's lookback — see the example below. <br> **Pros**: Allocates exactly what is needed. <br> **Cons**: Slightly more complex, and the only one that has to handle an out-of-range parameter. |
 
 Each TA function has a matching `<NAME>_Lookback` method, taking the same optional parameters as the function itself. Example: for `SMA` it is `SMA_Lookback`.
 
@@ -154,6 +152,19 @@ let lookback = core.SMA_Lookback(30);   // 29 for a 30-period SMA
 ```
 
 A lookback method returns `usize::MAX` when a parameter is out of range. Check for that before using the value as an allocation size.
+
+Putting it together, the exact allocation for any TA function:
+
+```rust
+let lookback = core.<NAME>_Lookback(..);
+if lookback == usize::MAX {
+    return Err(RetCode::BadParam);   // an optional parameter is out of range
+}
+
+let temp = lookback.max(startIdx);
+let allocation_size = if temp > endIdx { 0 } else { endIdx - temp + 1 };
+let mut out = vec![0.0; allocation_size];
+```
 
 Too little data is a success, not an error: a range shorter than the lookback simply produces no values, and `outNBElement` is `0`. When it is `0`, ignore `outBegIdx`.
 
@@ -172,13 +183,6 @@ Every TA function returns a [`RetCode`](https://docs.rs/ta-lib). `Success` means
 
 Indexing is safe throughout: the crate is `#![forbid(unsafe_code)]`, so a violated slice-size precondition panics rather than reading or writing out of bounds. A call that returns `Success` with zero elements cannot panic.
 
-### 3.4 Variants per Indicator {#variants}
-
-| Method | Purpose |
-|--------|---------|
-| `core.SMA_Lookback(..) -> usize` | inputs consumed before the first output |
-| `core.SMA(..) -> RetCode` | guarded: validates parameters, then computes |
-
 ## 4.0 Advanced Features {#advanced}
 
 ### 4.1 Abstraction Layer {#abstract}
@@ -188,7 +192,7 @@ Indexing is safe throughout: the crate is `#![forbid(unsafe_code)]`, so a violat
 ```rust
 use ta_lib::abstract_api::{for_each_func, get_func_handle};
 
-// Look one up by name, or walk all 168.
+// Look one up by name, or walk them all (FuncId::COUNT of them).
 let id = get_func_handle("SMA").expect("unknown function");
 let info = id.info();
 
@@ -246,18 +250,16 @@ use ta_lib::{CandleSetting, CandleSettingType, Core};
 let core = Core::builder()
     .candle_setting(
         CandleSettingType::BodyLong,
-        CandleSetting { range_type: 0, avg_period: 10, factor: 1.2 },
+        CandleSetting { range_type: 0 /* real body */, avg_period: 10, factor: 1.2 },
     )
     .build()?;
 ```
 
-### 4.4 Input Type {#input_type}
+### 4.4 Threading {#multithreading}
 
-`f64` only. C also ships `TA_S_*` variants taking `float` inputs; the crate has no equivalent and needs none, since those exist to spare a conversion pass in C code that already stores prices as `float`.
+A `Core` cannot change after `build()`, so it is `Send + Sync`. Share one read-only `Core` across threads (behind an `Arc`, say) and call indicators concurrently — no locking, and no setup ordering to respect.
 
-### 4.5 Threading {#multithreading}
-
-A `Core` cannot change after `build()`, so it is `Send + Sync`. Share one read-only `Core` across threads (behind an `Arc`, say) and call indicators concurrently — no locking, and none of C's "configure once from a single thread, before going parallel" sequencing. To change a setting, build another `Core`, or derive one from an existing value with `to_builder()`.
+To change a setting, build another `Core`, or derive one from an existing `Core` with `to_builder()`.
 
 ## 5.0 Documentation {#docs}
 
