@@ -93,6 +93,18 @@ log open questions; here, stopping IS the correct output.
      pending workflow run for this PR**, until a human has looked. Do not
      attempt to resolve it in the same turn.
 
+## Where the verdict goes
+
+Report the verdict in the conversation only — that's the "agent console" the
+person driving this session is watching, and that's where a pre-merge check
+belongs. Never write that a sec-check happened, or its result, into a commit
+message, PR description/review, or a GitHub issue comment. It isn't part of
+the durable record of *what changed* or *why* — it's a gate someone watched
+pass before merging, and restating that in text other people read later is
+noise, not signal. If the same turn also produces a commit or a posted
+comment (for unrelated reasons), that commit/comment must stand on its own,
+with no mention that a sec-check ran or what it found.
+
 ## Refining this skill
 
 First version — expect to tune it against real PRs rather than treat this
