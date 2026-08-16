@@ -889,6 +889,17 @@ TA_RetCode TA_MINUS_DM_OpenInternal( struct TA_MINUS_DM_Stream **stream, const d
 
 TA_LIB_API TA_RetCode TA_MINUS_DM_Open( TA_MINUS_DM_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInTimePeriod, double *outReal )
 {
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inHigh || !inLow || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inHigh[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inLow[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_MINUS_DM_OpenInternal( stream, inHigh, inLow, 0, historyLen, optInTimePeriod, outReal );
 }
 
@@ -897,7 +908,16 @@ TA_LIB_API TA_RetCode TA_MINUS_DM_OpenAndFill( TA_MINUS_DM_Stream **stream, cons
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
    if( !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow ) return TA_BAD_PARAM;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inHigh[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inLow[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_MINUS_DM_OpenCore( stream, inHigh, inLow, 0, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
@@ -910,6 +930,7 @@ TA_RetCode TA_MINUS_DM_OpenAndFillInternal( struct TA_MINUS_DM_Stream **stream, 
 TA_LIB_API TA_RetCode TA_MINUS_DM_Update( TA_MINUS_DM_Stream *stream, double inHigh, double inLow, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) ) return TA_BAD_PARAM;
    TA_MINUS_DM_StepInternal( stream, inHigh, inLow, outReal );
    return TA_SUCCESS;
 }
@@ -919,6 +940,7 @@ TA_LIB_API TA_RetCode TA_MINUS_DM_Peek( const TA_MINUS_DM_Stream *stream, double
    struct TA_MINUS_DM_Stream scratch;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) ) return TA_BAD_PARAM;
    scratch = *stream;
    TA_MINUS_DM_StepInternal( &scratch, inHigh, inLow, outReal );
    return TA_SUCCESS;

@@ -37,7 +37,7 @@
       }
       if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 1e0;
-      } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
+      } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
          return -1;
       }
       /* Lookback is driven by the variance. */
@@ -69,7 +69,7 @@
       }
       if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 1e0;
-      } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
+      } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       /* Calculate the variance. */
@@ -128,7 +128,7 @@
       }
       if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 1e0;
-      } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
+      } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       retCode = VAR_Internal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
@@ -323,10 +323,20 @@
       }
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public double update( double inReal ) {
+         if( !Double.isFinite(inReal) )
+            throw new IllegalArgumentException("STDDEV update: BadParam");
          core.STDDEV_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -339,6 +349,8 @@
        * handle's shape is cheaper than reusing one.
        */
       public double peek( double inReal ) {
+         if( !Double.isFinite(inReal) )
+            throw new IllegalArgumentException("STDDEV peek: BadParam");
          STDDEV_Stream scratch = new STDDEV_Stream(this);
          core.STDDEV_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -405,7 +417,7 @@
       }
       if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 1e0;
-      } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
+      } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( historyLen < STDDEV_Lookback(optInTimePeriod, optInNbDev) + 1 ) {
@@ -516,6 +528,11 @@
     */
    public STDDEV_Stream STDDEV_Open( double inReal[], int optInTimePeriod, double optInNbDev )
    {
+      if( inReal.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal[taFiniteIdx]) )
+               throw new IllegalArgumentException("STDDEV open: BadParam");
+      }
       return STDDEV_OpenInternal(inReal, 0, optInTimePeriod, optInNbDev);
    }
    /**
@@ -529,6 +546,11 @@
     */
    public STDDEV_Stream STDDEV_OpenAndFill( double inReal[], int optInTimePeriod, double optInNbDev, double outReal[] )
    {
+      if( inReal.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal[taFiniteIdx]) )
+               throw new IllegalArgumentException("STDDEV openAndFill: BadParam");
+      }
       STDDEV_Stream sp = new STDDEV_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

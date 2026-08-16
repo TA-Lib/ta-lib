@@ -278,16 +278,23 @@ public partial class Core
          this.fillRange = other.fillRange;
       }
 
-      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
-      /// <para>Never throws after a successful open, and allocates nothing — neither
-      /// handle state nor a return value.</para>
+      /// <para>Allocates nothing — neither handle state nor a return value.</para>
+      /// <para>Throws <see cref="System.ArgumentException"/> if any bar value is not
+      /// finite (NaN or an infinity). That check runs before anything is written,
+      /// so the handle is left exactly as it was and the stream stays usable: skip
+      /// the bar, or re-open on a clean history. This is the one place the
+      /// streaming tier is stricter than the batch API, which computes on whatever
+      /// it is given: a handle retains its state, so a single non-finite bar would
+      /// poison every later value it produces.</para>
       /// </remarks>
       /// <param name="inReal0">This bar's value for <c>inReal0</c>.</param>
       /// <param name="inReal1">This bar's value for <c>inReal1</c>.</param>
       /// <returns>The value at the bar just committed.</returns>
       public double Update( double inReal0, double inReal1 )
       {
+         if( !double.IsFinite(inReal0) || !double.IsFinite(inReal1) ) throw Core.StreamFailure("MULT", "update", RetCode.BadParam);
          core.MULT_StreamStep(this, inReal0, inReal1);
          return cur_outReal;
       }
@@ -306,6 +313,7 @@ public partial class Core
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public double Peek( double inReal0, double inReal1 )
       {
+         if( !double.IsFinite(inReal0) || !double.IsFinite(inReal1) ) throw Core.StreamFailure("MULT", "peek", RetCode.BadParam);
          MULT_Stream scratch = new MULT_Stream(this);
          core.MULT_StreamStep(scratch, inReal0, inReal1);
          return scratch.cur_outReal;
@@ -423,6 +431,10 @@ public partial class Core
    {
       if( inReal0.IsEmpty ) throw new ArgumentException("inReal0 is empty", nameof(inReal0));
       if( inReal1.IsEmpty ) throw new ArgumentException("inReal1 is empty", nameof(inReal1));
+      foreach( double taFiniteV in inReal0 )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MULT", "open", RetCode.BadParam);
+      foreach( double taFiniteV in inReal1 )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MULT", "open", RetCode.BadParam);
       return MULT_OpenInternal(inReal0, inReal1, 0);
    }
 
@@ -453,6 +465,10 @@ public partial class Core
    {
       if( inReal0.IsEmpty ) throw new ArgumentException("inReal0 is empty", nameof(inReal0));
       if( inReal1.IsEmpty ) throw new ArgumentException("inReal1 is empty", nameof(inReal1));
+      foreach( double taFiniteV in inReal0 )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MULT", "openAndFill", RetCode.BadParam);
+      foreach( double taFiniteV in inReal1 )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MULT", "openAndFill", RetCode.BadParam);
       MULT_Stream sp = new MULT_Stream(this);
       RetCode retCode = MULT_OpenAndFillBody(sp, inReal0, inReal1, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

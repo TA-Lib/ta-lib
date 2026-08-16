@@ -1366,10 +1366,20 @@
       private static final ThreadLocal<HT_TRENDMODE_Stream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public int update( double inReal ) {
+         if( !Double.isFinite(inReal) )
+            throw new IllegalArgumentException("HT_TRENDMODE update: BadParam");
          core.HT_TRENDMODE_StreamStep(this, inReal);
          return this.cur_outInteger;
       }
@@ -1384,6 +1394,8 @@
        * the thread.
        */
       public int peek( double inReal ) {
+         if( !Double.isFinite(inReal) )
+            throw new IllegalArgumentException("HT_TRENDMODE peek: BadParam");
          HT_TRENDMODE_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new HT_TRENDMODE_Stream(this);
@@ -2313,6 +2325,11 @@
     */
    public HT_TRENDMODE_Stream HT_TRENDMODE_Open( double inReal[] )
    {
+      if( inReal.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal[taFiniteIdx]) )
+               throw new IllegalArgumentException("HT_TRENDMODE open: BadParam");
+      }
       return HT_TRENDMODE_OpenInternal(inReal, 0);
    }
    /**
@@ -2326,6 +2343,11 @@
     */
    public HT_TRENDMODE_Stream HT_TRENDMODE_OpenAndFill( double inReal[], int outInteger[] )
    {
+      if( inReal.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal[taFiniteIdx]) )
+               throw new IllegalArgumentException("HT_TRENDMODE openAndFill: BadParam");
+      }
       HT_TRENDMODE_Stream sp = new HT_TRENDMODE_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

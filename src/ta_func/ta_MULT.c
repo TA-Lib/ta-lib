@@ -203,6 +203,17 @@ TA_RetCode TA_MULT_OpenInternal( struct TA_MULT_Stream **stream, const double in
 
 TA_LIB_API TA_RetCode TA_MULT_Open( TA_MULT_Stream **stream, const double inReal0[], const double inReal1[], int historyLen, double *outReal )
 {
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal0 || !inReal1 || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inReal0[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inReal1[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_MULT_OpenInternal( stream, inReal0, inReal1, 0, historyLen, outReal );
 }
 
@@ -211,7 +222,16 @@ TA_LIB_API TA_RetCode TA_MULT_OpenAndFill( TA_MULT_Stream **stream, const double
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
    if( !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
+   if( !inReal0 || !inReal1 || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inReal0 || (const void *)outReal == (const void *)inReal1 ) return TA_BAD_PARAM;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inReal0[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inReal1[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_MULT_OpenCore( stream, inReal0, inReal1, 0, historyLen, outBegIdx, outNBElement, outReal, 1 );
 }
 
@@ -224,6 +244,7 @@ TA_RetCode TA_MULT_OpenAndFillInternal( struct TA_MULT_Stream **stream, const do
 TA_LIB_API TA_RetCode TA_MULT_Update( TA_MULT_Stream *stream, double inReal0, double inReal1, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal0 ) || !TA_IS_FINITE( inReal1 ) ) return TA_BAD_PARAM;
    TA_MULT_StepInternal( stream, inReal0, inReal1, outReal );
    return TA_SUCCESS;
 }
@@ -233,6 +254,7 @@ TA_LIB_API TA_RetCode TA_MULT_Peek( const TA_MULT_Stream *stream, double inReal0
    struct TA_MULT_Stream scratch;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal0 ) || !TA_IS_FINITE( inReal1 ) ) return TA_BAD_PARAM;
    scratch = *stream;
    TA_MULT_StepInternal( &scratch, inReal0, inReal1, outReal );
    return TA_SUCCESS;

@@ -174,8 +174,73 @@ Notes that make this precise:
   history — it only delays the first visible output: `open` requires
   `TA_XXX_Lookback() + 1` bars; values are unaffected. It is read once at
   `open`; changing it later affects only future opens, never a live stream.
-- **NaN.** Are not supported in inputs, and never produced at output.
-  Wrappers (e.g. Python) may layer their own NaN handling.
+- **Non-finite input is REJECTED, not computed on.** NaN and ±Inf are
+  unsupported in inputs across the whole library, but the two tiers enforce
+  that differently, and this is the only place they disagree about what they
+  accept. Batch does not filter: it computes on whatever it is handed and
+  reports the NaN back out. Every **public** streaming entry point checks
+  instead — `Open`/`OpenAndFill` scan the warm-up history, `Update`/`Peek`
+  check each bar — and answers `TA_BAD_PARAM` (the language's equivalent)
+  without touching the handle.
+
+  The asymmetry is the retained state. Batch is handed a series, computes and
+  forgets, so a NaN reaches the outputs depending on that bar and no others. A
+  handle carries recursive accumulators across calls, so one non-finite bar
+  poisons every value it will ever produce afterwards, long after the feed
+  recovers. Rejecting the bar and leaving the handle usable is strictly more
+  useful than accepting it and going permanently NaN.
+
+  Two consequences worth stating explicitly. The rejection is at the boundary
+  between the caller and the API **only**: the internal `OpenInternal` /
+  `OpenAndFillInternal` seams are handed slices of an already-validated buffer
+  and do not re-scan. And a real optional parameter that is NaN is rejected too,
+  which the batch range check does not do: `x < min` and `x > max` are both
+  false for NaN, so the streaming tier spells the same two comparisons inverted,
+  `!(x >= min && x <= max)`.
+
+  **What "the handle is unchanged" does and does not cover.** For the rejection
+  a caller can actually provoke — a non-finite bar or history handed to a public
+  entry point — the check runs before anything is written, so the guarantee is
+  unconditional and that is what the generated docs promise.
+
+  There is one path where it does not hold, and it is worth being precise rather
+  than silent about it. A composed function drives its sub-streams through their
+  *public* `Update`/`Peek`, so a sub-stream re-checks a value the library itself
+  computed. If such an intermediate were ever non-finite, the sub would reject
+  it, and the composed step would surface that rejection **after** the earlier
+  sub-streams in the pipeline had already advanced — a rejection from a bar the
+  caller supplied in good faith, with the handle partway through the bar. All
+  four backends now agree on that (C propagates the sub-call's return code
+  rather than continuing on an unwritten value, which was undefined behaviour
+  before it was made to propagate), and the reported error names the sub-stage.
+
+  Reaching it requires an intermediate to overflow to ±Inf, i.e. input
+  magnitudes around 1e306 and up — the input-overflow class #191 deliberately
+  leaves out of scope as a property of `double` rather than of the indicator.
+  Closing it properly means giving every function an internal, unchecked
+  per-bar entry point for composition to call, which is real work and buys
+  nothing inside the supported input range; the note is here so that whoever
+  needs it later does not have to rediscover why.
+
+  Outputs are unchanged by all of this: a successful call still never produces
+  NaN, except from the seven functions flagged `nan_inf_output` (#191), which
+  have genuine domain holes.
+
+- **Composition and `nan_inf_output`.** Because the tier assumes everything
+  inside the API is finite, a function whose *documented output domain* includes
+  NaN or ±Inf may not drive another function's sub-stream. Such a callee would
+  make the rejection above routine rather than exotic — reachable on ordinary
+  input rather than only at overflow magnitudes — so the combination is refused
+  outright.
+
+  So `streaming::reject_nonfinite_callees` refuses the combination at
+  generation time rather than shipping the silent version. Clearing such a
+  failure means either a `PRAGMA TA_ALT={STREAM,ALL_LANGUAGES}` body for the
+  callee without the domain hole, or teaching the composed emitter to carry a
+  rejection out of the step. None of the seven flagged functions (ACOS, ASIN,
+  LN, LOG10, SQRT, DIV, VWMA) is composed by anything today, so the gate is
+  dormant against the shipped corpus — `nan_inf_callee_is_refused` in
+  `tests/streaming_suite.rs` injects the flag onto MA so it can be seen firing.
 
 ta_regtest automation validates the batch API exhaustively including comparison
 against frozen references (e.g. 0.6.4). The stream tier is verified against
@@ -207,7 +272,8 @@ TA_LIB_API TA_RetCode TA_SMA_Open( TA_SMA_Stream **stream,     /* out */
                                    int            optInTimePeriod,
                                    double         *outReal );  /* out */
 
-/* update: always produces a value; cannot fail except on NULL args. */
+/* update: produces a value unless the bar is rejected -- NULL args, or a
+ * non-finite input (see the NaN note above). */
 TA_LIB_API TA_RetCode TA_SMA_Update( TA_SMA_Stream *stream,
                                      double         inReal,
                                      double        *outReal );
@@ -221,10 +287,12 @@ TA_LIB_API TA_RetCode TA_SMA_Peek( const TA_SMA_Stream *stream,
 TA_LIB_API TA_RetCode TA_SMA_Close( TA_SMA_Stream *stream );
 ```
 
-**Error model.** `Open` returns `TA_BAD_PARAM` (param out of range, or
-`historyLen < min_history` so no value exists yet) or `TA_ALLOC_ERR`;
-`*stream` is NULL on any failure. `Update`/`Peek` return `TA_BAD_PARAM` only
-on NULL arguments. `Close(NULL)` is a no-op returning `TA_SUCCESS`.
+**Error model.** `Open` returns `TA_BAD_PARAM` (param out of range, a
+non-finite value anywhere in the history, or `historyLen < min_history` so no
+value exists yet) or `TA_ALLOC_ERR`; `*stream` is NULL on any failure.
+`Update`/`Peek` return `TA_BAD_PARAM` on NULL arguments and on a non-finite bar
+value, leaving the handle untouched in the latter case. `Close(NULL)` is a
+no-op returning `TA_SUCCESS`.
 
 **Shapes.** Multi-input functions take the price scalars in batch order
 (`TA_CDLDOJI_Update(s, open, high, low, close, &outInteger)`).
@@ -239,8 +307,9 @@ let core = Core::builder().build()?;              // immutable settings (issue #
 let (mut s, _last) = core.SMA_Open(&history, 14)?; // &self method on Core; the
                                                   // handle holds its own Core
                                                   // (a cheap by-value clone)
-for &x in new_bars { let v = s.update(x); }        // &mut self, always a value
-let provisional = s.peek(forming_bar_close);       // &self: runs the same
+for &x in new_bars { let v = s.update(x)?; }       // &mut self; Err(BadParam)
+                                                  // only on a non-finite bar
+let provisional = s.peek(forming_bar_close)?;      // &self: runs the same
                                                   // transition on a reused
                                                   // scratch, never commits
 ```
@@ -254,7 +323,7 @@ Java (shipped shape — design-panel reviewed):
 ```java
 Core core = new Core();
 Core.SMA_Stream s = core.SMA_Open(history, 14);  // throws on reject; value() = last-bar value
-double v = s.update(bar);                        // one value per closed bar; never throws
+double v = s.update(bar);                        // one value per closed bar
 double p = s.peek(formingBarClose);              // forming bar, non-committing (scratch copy)
 Core.SMA_Stream t = s.copy();                    // independent stream fork
 Core.MACD_Stream m = core.MACD_Open(history, 12, 26, 9);
@@ -272,7 +341,9 @@ OutRange fr = s2.fillRange();                    // range written, on the handle
   condition, catchable separately) for `historyLen < lookback + 1`, plain
   `IllegalArgumentException` for out-of-range parameters and `OpenAndFill`
   aliasing, `IllegalStateException` for capture invariants. Messages carry the
-  stable prefix `"<NAME> open:"`. `update`/`peek` never throw post-open.
+  stable prefix `"<NAME> open:"`. Post-open, `update`/`peek` throw only
+  `IllegalArgumentException` on a non-finite bar (prefix `"<NAME> update:"` /
+  `"<NAME> peek:"`), leaving the handle untouched.
 - `value()` re-reads the last committed value(s) without recomputing (seeded by
   open, refreshed by `update`, untouched by `peek`); multi-output `update`
   caches the immutable `Value` it returns, so `value()` is allocation-free.

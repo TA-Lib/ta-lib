@@ -1461,12 +1461,15 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.HT_DCPHASE_Open(&data).expect("enough history");
-    /// let peeked = s.peek(100.9);
-    /// let updated = s.update(100.9);
+    /// let peeked = s.peek(100.9).expect("a finite bar");
+    /// let updated = s.update(100.9).expect("a finite bar");
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_HT_DCPHASE_Open")]
     pub fn HT_DCPHASE_Open(&self, inReal: &[f64], ) -> Result<(HT_DCPHASE_Stream, f64), RetCode> {
+        if inReal.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.HT_DCPHASE_OpenInternal(inReal, 0)
     }
 
@@ -1477,6 +1480,9 @@ impl Core {
     pub fn HT_DCPHASE_OpenAndFill(
         &self, inReal: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<HT_DCPHASE_Stream, RetCode> {
+        if inReal.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.HT_DCPHASE_OpenCore(inReal, 0, outBegIdx, outNBElement, outReal, 1)
     }
 
@@ -1501,12 +1507,25 @@ thread_local! {
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl HT_DCPHASE_Stream {
-    /// Commit one closed bar; always produces a value. Never allocates.
+    /// Commit one closed bar. Never allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite (NaN or ±Inf).
+    /// That check runs before anything is written, so the handle is left
+    /// exactly as it was and the stream stays usable:
+    /// skip the bar, or close and re-open on a clean history. This is the
+    /// one place the streaming tier is stricter than the batch API, which
+    /// computes on whatever it is given — a handle retains its state, so a
+    /// single non-finite bar would poison every later value it produces.
     #[doc(alias = "TA_HT_DCPHASE_Update")]
-    pub fn update(&mut self, inReal: f64) -> f64 {
+    pub fn update(&mut self, inReal: f64) -> Result<f64, RetCode> {
+        if !inReal.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut outReal: f64 = 0.0_f64;
         self.core.HT_DCPHASE_step_internal(&mut self.state, inReal, &mut outReal);
-        outReal
+        Ok(outReal)
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
@@ -1514,9 +1533,16 @@ impl HT_DCPHASE_Stream {
     /// on a scratch copy of the state). Never writes the handle, so peeks may
     /// run concurrently with each other. The copy it runs on is held per thread and reused,
     /// so only the first peek of this function on a thread allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite, exactly as
+    /// `update` rejects it.
     #[doc(alias = "TA_HT_DCPHASE_Peek")]
-    #[must_use]
-    pub fn peek(&self, inReal: f64) -> f64 {
+    pub fn peek(&self, inReal: f64) -> Result<f64, RetCode> {
+        if !inReal.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         HT_DCPHASE_PEEK_SCRATCH.with(|cell| {
             let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
             scratch.restore_from(self);

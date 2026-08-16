@@ -614,10 +614,20 @@
       private static final ThreadLocal<CDLHANGINGMAN_Stream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+         if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+            throw new IllegalArgumentException("CDLHANGINGMAN update: BadParam");
          core.CDLHANGINGMAN_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outInteger;
       }
@@ -632,6 +642,8 @@
        * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
+         if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+            throw new IllegalArgumentException("CDLHANGINGMAN peek: BadParam");
          CDLHANGINGMAN_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new CDLHANGINGMAN_Stream(this);
@@ -1030,6 +1042,20 @@
     */
    public CDLHANGINGMAN_Stream CDLHANGINGMAN_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
+      if( inOpen.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
+            if( !Double.isFinite(inOpen[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLHANGINGMAN open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
+            if( !Double.isFinite(inHigh[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLHANGINGMAN open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
+            if( !Double.isFinite(inLow[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLHANGINGMAN open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
+            if( !Double.isFinite(inClose[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLHANGINGMAN open: BadParam");
+      }
       return CDLHANGINGMAN_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -1043,6 +1069,20 @@
     */
    public CDLHANGINGMAN_Stream CDLHANGINGMAN_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
+      if( inOpen.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
+            if( !Double.isFinite(inOpen[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLHANGINGMAN openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
+            if( !Double.isFinite(inHigh[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLHANGINGMAN openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
+            if( !Double.isFinite(inLow[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLHANGINGMAN openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
+            if( !Double.isFinite(inClose[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLHANGINGMAN openAndFill: BadParam");
+      }
       CDLHANGINGMAN_Stream sp = new CDLHANGINGMAN_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

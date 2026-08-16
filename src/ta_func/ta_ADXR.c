@@ -252,22 +252,27 @@ struct TA_ADXR_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_ADXR_StepInternal( struct TA_ADXR_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
+static TA_RetCode TA_ADXR_StepInternal( struct TA_ADXR_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
 {
-   double cur_adx;
-   double cur_outReal;
+   double cur_adx = 0.0;
+   double cur_outReal = 0.0;
 
 
    /* Pipeline the new bar through the sub-streams (batch tail order). */
-   if( sp->peekMode )
-      TA_ADX_Peek( (const TA_ADX_Stream *)sp->sub0, inHigh, inLow, inClose, &cur_adx );
-   else
-      TA_ADX_Update( sp->sub0, inHigh, inLow, inClose, &cur_adx );
+   {
+      TA_RetCode subRc;
+      if( sp->peekMode )
+         subRc = TA_ADX_Peek( (const TA_ADX_Stream *)sp->sub0, inHigh, inLow, inClose, &cur_adx );
+      else
+         subRc = TA_ADX_Update( sp->sub0, inHigh, inLow, inClose, &cur_adx );
+      if( subRc != TA_SUCCESS ) return subRc;
+   }
    /* Combine map (batch tail, per bar). */
    cur_outReal = ((cur_adx + sp->lagRing_adx[sp->lagRingPos_adx]) / 2.0);
    sp->lagRing_adx[sp->lagRingPos_adx] = cur_adx;
    sp->lagRingPos_adx = (sp->lagRingPos_adx + 1) % sp->lagRingCap_adx;
    *outReal = cur_outReal;
+   return TA_SUCCESS;
 }
 
 static TA_RetCode TA_ADXR_OpenCore( struct TA_ADXR_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
@@ -424,6 +429,18 @@ TA_RetCode TA_ADXR_OpenInternal( struct TA_ADXR_Stream **stream, const double in
 
 TA_LIB_API TA_RetCode TA_ADXR_Open( TA_ADXR_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double *outReal )
 {
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inHigh[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inLow[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inClose[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_ADXR_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, outReal );
 }
 
@@ -432,7 +449,17 @@ TA_LIB_API TA_RetCode TA_ADXR_OpenAndFill( TA_ADXR_Stream **stream, const double
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
    if( !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inClose ) return TA_BAD_PARAM;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inHigh[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inLow[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inClose[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_ADXR_OpenCore( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
@@ -445,8 +472,8 @@ TA_RetCode TA_ADXR_OpenAndFillInternal( struct TA_ADXR_Stream **stream, const do
 TA_LIB_API TA_RetCode TA_ADXR_Update( TA_ADXR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_ADXR_StepInternal( stream, inHigh, inLow, inClose, outReal );
-   return TA_SUCCESS;
+   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
+   return TA_ADXR_StepInternal( stream, inHigh, inLow, inClose, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_ADXR_Peek( const TA_ADXR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
@@ -454,12 +481,12 @@ TA_LIB_API TA_RetCode TA_ADXR_Peek( const TA_ADXR_Stream *stream, double inHigh,
    struct TA_ADXR_Stream scratch;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    scratch = *stream;
    memcpy( scratch.lagRingMirror_adx, stream->lagRing_adx, sizeof(double) * (size_t)stream->lagRingCap_adx );
    scratch.lagRing_adx = scratch.lagRingMirror_adx;
    scratch.peekMode = 1;
-   TA_ADXR_StepInternal( &scratch, inHigh, inLow, inClose, outReal );
-   return TA_SUCCESS;
+   return TA_ADXR_StepInternal( &scratch, inHigh, inLow, inClose, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_ADXR_Close( TA_ADXR_Stream *stream )

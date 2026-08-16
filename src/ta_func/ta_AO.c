@@ -591,6 +591,17 @@ TA_RetCode TA_AO_OpenInternal( struct TA_AO_Stream **stream, const double inHigh
 
 TA_LIB_API TA_RetCode TA_AO_Open( TA_AO_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInFastPeriod, int optInSlowPeriod, double *outReal )
 {
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inHigh || !inLow || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inHigh[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inLow[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_AO_OpenInternal( stream, inHigh, inLow, 0, historyLen, optInFastPeriod, optInSlowPeriod, outReal );
 }
 
@@ -599,7 +610,16 @@ TA_LIB_API TA_RetCode TA_AO_OpenAndFill( TA_AO_Stream **stream, const double inH
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
    if( !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow ) return TA_BAD_PARAM;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inHigh[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inLow[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_AO_OpenCore( stream, inHigh, inLow, 0, historyLen, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
@@ -612,6 +632,7 @@ TA_RetCode TA_AO_OpenAndFillInternal( struct TA_AO_Stream **stream, const double
 TA_LIB_API TA_RetCode TA_AO_Update( TA_AO_Stream *stream, double inHigh, double inLow, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) ) return TA_BAD_PARAM;
    TA_AO_StepInternal( stream, inHigh, inLow, outReal );
    return TA_SUCCESS;
 }
@@ -621,6 +642,7 @@ TA_LIB_API TA_RetCode TA_AO_Peek( const TA_AO_Stream *stream, double inHigh, dou
    struct TA_AO_Stream scratch;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) ) return TA_BAD_PARAM;
    scratch = *stream;
    scratch.ring_trailingFastIdx_inHigh = stream->ringMirror_trailingFastIdx_inHigh;
    memcpy( scratch.ring_trailingFastIdx_inHigh, stream->ring_trailingFastIdx_inHigh, sizeof(double) * (size_t)(stream->ringCap_trailingFastIdx > 0 ? stream->ringCap_trailingFastIdx : 1) );

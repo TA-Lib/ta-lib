@@ -549,10 +549,20 @@
       private static final ThreadLocal<MA_Stream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public double update( double inReal ) {
+         if( !Double.isFinite(inReal) )
+            throw new IllegalArgumentException("MA update: BadParam");
          core.MA_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -567,6 +577,8 @@
        * the thread.
        */
       public double peek( double inReal ) {
+         if( !Double.isFinite(inReal) )
+            throw new IllegalArgumentException("MA peek: BadParam");
          MA_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new MA_Stream(this);
@@ -1012,6 +1024,11 @@
     */
    public MA_Stream MA_Open( double inReal[], int optInTimePeriod, MAType optInMAType )
    {
+      if( inReal.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal[taFiniteIdx]) )
+               throw new IllegalArgumentException("MA open: BadParam");
+      }
       return MA_OpenInternal(inReal, 0, optInTimePeriod, optInMAType);
    }
    /**
@@ -1025,6 +1042,11 @@
     */
    public MA_Stream MA_OpenAndFill( double inReal[], int optInTimePeriod, MAType optInMAType, double outReal[] )
    {
+      if( inReal.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal[taFiniteIdx]) )
+               throw new IllegalArgumentException("MA openAndFill: BadParam");
+      }
       MA_Stream sp = new MA_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

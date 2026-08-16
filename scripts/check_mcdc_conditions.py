@@ -299,6 +299,64 @@ def count_disjuncts(path):
     return out, None
 
 
+def count_arms(path):
+    """Map flattened-condition index -> list of conjunct counts, one per
+    alternative, for EVERY disjunction -- colour-gated or not.
+
+    count_disjuncts() answers which alternatives need a sole-true case, and
+    exempts the colour-gated ones because pb_signs already fires each class.
+    That axis reaches arm SELECTION and stops there. An alternative is itself a
+    conjunction, and its terms are reached by neither: a flip of the condition
+    falsifies every alternative at once and names none of their terms, so an arm
+    of eight conjuncts is satisfied by breaking any one and the other seven are
+    asked for by nothing. Declaring the sizes is what lets the run-time check
+    require a case per term, and pinning them here is what stops a builder from
+    quietly not declaring them.
+    """
+    src = strip_comments(open(path, encoding="utf-8").read())
+    m = None
+    for cand in re.finditer(r"outInteger\s*\[\s*outIdx\+\+\s*\]\s*=\s*([^;]+);", src):
+        if cand.group(1).strip().rstrip("0").strip() not in ("", "+", "-"):
+            m = cand
+            break
+    if m is None:
+        return None, "no non-zero outInteger assignment found"
+    head = src[:m.start()]
+    k = head.rfind("if(")
+    if k < 0:
+        k = head.rfind("if (")
+    if k < 0:
+        return None, "no enclosing if( found"
+    if _directly_nested(src, k):
+        return None, "assignment is guarded by nested if-statements"
+    open_paren = src.index("(", k)
+    depth, i, expr = 0, open_paren, None
+    while i < len(src):
+        if src[i] == "(":
+            depth += 1
+        elif src[i] == ")":
+            depth -= 1
+            if depth == 0:
+                expr = src[open_paren + 1:i]
+                break
+        i += 1
+    if expr is None:
+        return None, "unterminated if( expression"
+    if len(_split_top(expr, "||")) > 1:
+        return None, "top-level || present; conjunct counting does not apply"
+
+    out, idx = {}, 0
+    for conj in _split_top(expr, "&&"):
+        c = _peel(conj)
+        alts = _split_top(c, "||")
+        if len(alts) > 1:
+            out[idx] = [len(_split_top(_peel(a), "&&")) for a in alts]
+            idx += 1
+        else:
+            idx += len(_split_top(c, "&&"))
+    return out, None
+
+
 def _drop_calls(expr, fname):
     """Remove `fname( ... )` calls, parens balanced, so the multiplier is what's
     left. Needed because the call's own arguments carry digits -- CDLHARAMI's
@@ -435,7 +493,12 @@ def main():
         s = re.search(r"pb_signs\(\s*(\d+)\s*\)", m.group(1))
         dj = dict((int(a), int(b)) for a, b in
                   re.findall(r"pb_disjuncts\(\s*(\d+)\s*,\s*(\d+)\s*\)", m.group(1)))
-        declared[fn] = (int(d.group(1)), int(s.group(1)) if s else 1, dj)
+        am = {}
+        for a, b, n in re.findall(
+                r"pb_arm\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)", m.group(1)):
+            am.setdefault(int(a), {})[int(b)] = int(n)
+        am = dict((c2, [v[q] for q in sorted(v)]) for c2, v in am.items())
+        declared[fn] = (int(d.group(1)), int(s.group(1)) if s else 1, dj, am)
 
     bad = 0
     print("MC/DC declared-condition check (%d builder(s))" % len(pairs))
@@ -449,7 +512,7 @@ def main():
             print("  %-20s FAIL  cannot parse: %s" % (name, err))
             bad += 1
             continue
-        want, wantSigns, wantDisj = declared[fn]
+        want, wantSigns, wantDisj, wantArms = declared[fn]
         signs, sErr = count_signs(pat)
         if signs is None:
             print("  %-20s FAIL  cannot parse firing arm: %s" % (name, sErr))
@@ -460,14 +523,20 @@ def main():
         # for; that is already reported by count_conditions above, and a declined
         # parse must not silently read as "no alternatives to cover".
         okDisj = (disj == wantDisj) if disj is not None else (not wantDisj)
+        arms, aErr = count_arms(pat)
+        okArms = (arms == wantArms) if arms is not None else (not wantArms)
         okCond, okSigns = want == actual, wantSigns == signs
-        flag = "ok" if okCond and okSigns and okDisj else "MISMATCH"
+        flag = "ok" if okCond and okSigns and okDisj and okArms else "MISMATCH"
         print("  %-20s %-8s declared %2d, source has %2d   signs: declared %d, "
               "source has %d%s" % (name, flag, want, actual, wantSigns, signs,
               "" if not (disj or wantDisj) else
               "   disjuncts: declared %s, source has %s"
               % (wantDisj or "{}", disj if disj is not None else "declined")))
-        if not okCond or not okSigns or not okDisj:
+        if not okArms:
+            print("  %-20s          arms: declared %s, source has %s"
+                  % ("", wantArms or "{}",
+                     arms if arms is not None else "declined"))
+        if not okCond or not okSigns or not okDisj or not okArms:
             bad += 1
 
     if bad:

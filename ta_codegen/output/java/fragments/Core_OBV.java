@@ -240,10 +240,20 @@
       }
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public double update( double inReal, double inVolume ) {
+         if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
+            throw new IllegalArgumentException("OBV update: BadParam");
          core.OBV_StreamStep(this, inReal, inVolume);
          return this.cur_outReal;
       }
@@ -256,6 +266,8 @@
        * handle's shape is cheaper than reusing one.
        */
       public double peek( double inReal, double inVolume ) {
+         if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
+            throw new IllegalArgumentException("OBV peek: BadParam");
          OBV_Stream scratch = new OBV_Stream(this);
          core.OBV_StreamStep(scratch, inReal, inVolume);
          return scratch.cur_outReal;
@@ -388,6 +400,14 @@
     */
    public OBV_Stream OBV_Open( double inReal[], double inVolume[] )
    {
+      if( inReal.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal[taFiniteIdx]) )
+               throw new IllegalArgumentException("OBV open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
+            if( !Double.isFinite(inVolume[taFiniteIdx]) )
+               throw new IllegalArgumentException("OBV open: BadParam");
+      }
       return OBV_OpenInternal(inReal, inVolume, 0);
    }
    /**
@@ -401,6 +421,14 @@
     */
    public OBV_Stream OBV_OpenAndFill( double inReal[], double inVolume[], double outReal[] )
    {
+      if( inReal.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal[taFiniteIdx]) )
+               throw new IllegalArgumentException("OBV openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
+            if( !Double.isFinite(inVolume[taFiniteIdx]) )
+               throw new IllegalArgumentException("OBV openAndFill: BadParam");
+      }
       OBV_Stream sp = new OBV_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

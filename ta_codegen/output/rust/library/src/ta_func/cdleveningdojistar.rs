@@ -78,7 +78,7 @@ impl Core {
     pub fn CDLEVENINGDOJISTAR_Lookback(&self, mut optInPenetration: f64) -> usize {
         if optInPenetration == REAL_DEFAULT {
             optInPenetration = 3e-1;
-        } else if (optInPenetration < 0e0) || (optInPenetration > REAL_MAX) {
+        } else if !((optInPenetration >= 0e0) && (optInPenetration <= REAL_MAX)) {
             return usize::MAX;
         }
         #[allow(non_snake_case)]
@@ -194,7 +194,7 @@ impl Core {
         }
         if optInPenetration == REAL_DEFAULT {
             optInPenetration = 3e-1;
-        } else if (optInPenetration < 0e0) || (optInPenetration > REAL_MAX) {
+        } else if !((optInPenetration >= 0e0) && (optInPenetration <= REAL_MAX)) {
             return RetCode::BadParam;
         }
         let _assertLb = self.CDLEVENINGDOJISTAR_Lookback(optInPenetration);
@@ -744,7 +744,7 @@ impl Core {
         }
         if optInPenetration == REAL_DEFAULT {
             optInPenetration = 3e-1;
-        } else if (optInPenetration < 0e0) || (optInPenetration > REAL_MAX) {
+        } else if !((optInPenetration >= 0e0) && (optInPenetration <= REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inOpen.len();
@@ -1112,12 +1112,18 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.CDLEVENINGDOJISTAR_Open(&open, &high, &low, &close, 0.3).expect("enough history");
-    /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
-    /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
+    /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9).expect("a finite bar");
+    /// let updated = s.update(100.2, 101.4, 99.1, 100.9).expect("a finite bar");
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLEVENINGDOJISTAR_Open")]
     pub fn CDLEVENINGDOJISTAR_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInPenetration: f64) -> Result<(CDLEVENINGDOJISTAR_Stream, i32), RetCode> {
+        if inOpen.iter().any(|v| !v.is_finite())
+            || inHigh.iter().any(|v| !v.is_finite())
+            || inLow.iter().any(|v| !v.is_finite())
+            || inClose.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.CDLEVENINGDOJISTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration)
     }
 
@@ -1128,6 +1134,12 @@ impl Core {
     pub fn CDLEVENINGDOJISTAR_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInPenetration: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
     ) -> Result<CDLEVENINGDOJISTAR_Stream, RetCode> {
+        if inOpen.iter().any(|v| !v.is_finite())
+            || inHigh.iter().any(|v| !v.is_finite())
+            || inLow.iter().any(|v| !v.is_finite())
+            || inClose.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.CDLEVENINGDOJISTAR_OpenCore(inOpen, inHigh, inLow, inClose, 0, optInPenetration, outBegIdx, outNBElement, outInteger, 1)
     }
 
@@ -1152,12 +1164,25 @@ thread_local! {
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl CDLEVENINGDOJISTAR_Stream {
-    /// Commit one closed bar; always produces a value. Never allocates.
+    /// Commit one closed bar. Never allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite (NaN or ±Inf).
+    /// That check runs before anything is written, so the handle is left
+    /// exactly as it was and the stream stays usable:
+    /// skip the bar, or close and re-open on a clean history. This is the
+    /// one place the streaming tier is stricter than the batch API, which
+    /// computes on whatever it is given — a handle retains its state, so a
+    /// single non-finite bar would poison every later value it produces.
     #[doc(alias = "TA_CDLEVENINGDOJISTAR_Update")]
-    pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
+    pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> Result<i32, RetCode> {
+        if !inOpen.is_finite() || !inHigh.is_finite() || !inLow.is_finite() || !inClose.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut outInteger: i32 = 0_i32;
         self.core.CDLEVENINGDOJISTAR_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
-        outInteger
+        Ok(outInteger)
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
@@ -1165,9 +1190,16 @@ impl CDLEVENINGDOJISTAR_Stream {
     /// on a scratch copy of the state). Never writes the handle, so peeks may
     /// run concurrently with each other. The copy it runs on is held per thread and reused,
     /// so only the first peek of this function on a thread allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite, exactly as
+    /// `update` rejects it.
     #[doc(alias = "TA_CDLEVENINGDOJISTAR_Peek")]
-    #[must_use]
-    pub fn peek(&self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
+    pub fn peek(&self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> Result<i32, RetCode> {
+        if !inOpen.is_finite() || !inHigh.is_finite() || !inLow.is_finite() || !inClose.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         CDLEVENINGDOJISTAR_PEEK_SCRATCH.with(|cell| {
             let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
             scratch.restore_from(self);

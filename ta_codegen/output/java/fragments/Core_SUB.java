@@ -210,10 +210,20 @@
       }
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public double update( double inReal0, double inReal1 ) {
+         if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
+            throw new IllegalArgumentException("SUB update: BadParam");
          core.SUB_StreamStep(this, inReal0, inReal1);
          return this.cur_outReal;
       }
@@ -226,6 +236,8 @@
        * handle's shape is cheaper than reusing one.
        */
       public double peek( double inReal0, double inReal1 ) {
+         if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
+            throw new IllegalArgumentException("SUB peek: BadParam");
          SUB_Stream scratch = new SUB_Stream(this);
          core.SUB_StreamStep(scratch, inReal0, inReal1);
          return scratch.cur_outReal;
@@ -336,6 +348,14 @@
     */
    public SUB_Stream SUB_Open( double inReal0[], double inReal1[] )
    {
+      if( inReal0.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal0.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal0[taFiniteIdx]) )
+               throw new IllegalArgumentException("SUB open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal1.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal1[taFiniteIdx]) )
+               throw new IllegalArgumentException("SUB open: BadParam");
+      }
       return SUB_OpenInternal(inReal0, inReal1, 0);
    }
    /**
@@ -349,6 +369,14 @@
     */
    public SUB_Stream SUB_OpenAndFill( double inReal0[], double inReal1[], double outReal[] )
    {
+      if( inReal0.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal0.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal0[taFiniteIdx]) )
+               throw new IllegalArgumentException("SUB openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal1.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal1[taFiniteIdx]) )
+               throw new IllegalArgumentException("SUB openAndFill: BadParam");
+      }
       SUB_Stream sp = new SUB_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

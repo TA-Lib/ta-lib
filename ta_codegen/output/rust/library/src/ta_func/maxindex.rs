@@ -455,12 +455,15 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.MAXINDEX_Open(&data, 30).expect("enough history");
-    /// let peeked = s.peek(100.9);
-    /// let updated = s.update(100.9);
+    /// let peeked = s.peek(100.9).expect("a finite bar");
+    /// let updated = s.update(100.9).expect("a finite bar");
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_MAXINDEX_Open")]
     pub fn MAXINDEX_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(MAXINDEX_Stream, i32), RetCode> {
+        if inReal.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.MAXINDEX_OpenInternal(inReal, 0, optInTimePeriod)
     }
 
@@ -471,6 +474,9 @@ impl Core {
     pub fn MAXINDEX_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
     ) -> Result<MAXINDEX_Stream, RetCode> {
+        if inReal.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.MAXINDEX_OpenCore(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1)
     }
 
@@ -487,12 +493,25 @@ impl Core {
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl MAXINDEX_Stream {
-    /// Commit one closed bar; always produces a value. Never allocates.
+    /// Commit one closed bar. Never allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite (NaN or ±Inf).
+    /// That check runs before anything is written, so the handle is left
+    /// exactly as it was and the stream stays usable:
+    /// skip the bar, or close and re-open on a clean history. This is the
+    /// one place the streaming tier is stricter than the batch API, which
+    /// computes on whatever it is given — a handle retains its state, so a
+    /// single non-finite bar would poison every later value it produces.
     #[doc(alias = "TA_MAXINDEX_Update")]
-    pub fn update(&mut self, inReal: f64) -> i32 {
+    pub fn update(&mut self, inReal: f64) -> Result<i32, RetCode> {
+        if !inReal.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut outInteger: i32 = 0_i32;
         self.core.MAXINDEX_step_internal(&mut self.state, inReal, &mut outInteger);
-        outInteger
+        Ok(outInteger)
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
@@ -502,9 +521,16 @@ impl MAXINDEX_Stream {
     /// often removed outright by the optimizer, which is why nothing is
     /// reused here, but that is not a guarantee: budget for a clone of the
     /// window and prefer `update` on a `clone()` in a hot loop.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite, exactly as
+    /// `update` rejects it.
     #[doc(alias = "TA_MAXINDEX_Peek")]
-    #[must_use]
-    pub fn peek(&self, inReal: f64) -> i32 {
+    pub fn peek(&self, inReal: f64) -> Result<i32, RetCode> {
+        if !inReal.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut scratch = self.clone();
         scratch.update(inReal)
     }

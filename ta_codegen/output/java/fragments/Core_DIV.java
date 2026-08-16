@@ -217,10 +217,20 @@
       }
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public double update( double inReal0, double inReal1 ) {
+         if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
+            throw new IllegalArgumentException("DIV update: BadParam");
          core.DIV_StreamStep(this, inReal0, inReal1);
          return this.cur_outReal;
       }
@@ -233,6 +243,8 @@
        * handle's shape is cheaper than reusing one.
        */
       public double peek( double inReal0, double inReal1 ) {
+         if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
+            throw new IllegalArgumentException("DIV peek: BadParam");
          DIV_Stream scratch = new DIV_Stream(this);
          core.DIV_StreamStep(scratch, inReal0, inReal1);
          return scratch.cur_outReal;
@@ -342,6 +354,14 @@
     */
    public DIV_Stream DIV_Open( double inReal0[], double inReal1[] )
    {
+      if( inReal0.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal0.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal0[taFiniteIdx]) )
+               throw new IllegalArgumentException("DIV open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal1.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal1[taFiniteIdx]) )
+               throw new IllegalArgumentException("DIV open: BadParam");
+      }
       return DIV_OpenInternal(inReal0, inReal1, 0);
    }
    /**
@@ -355,6 +375,14 @@
     */
    public DIV_Stream DIV_OpenAndFill( double inReal0[], double inReal1[], double outReal[] )
    {
+      if( inReal0.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal0.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal0[taFiniteIdx]) )
+               throw new IllegalArgumentException("DIV openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal1.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal1[taFiniteIdx]) )
+               throw new IllegalArgumentException("DIV openAndFill: BadParam");
+      }
       DIV_Stream sp = new DIV_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

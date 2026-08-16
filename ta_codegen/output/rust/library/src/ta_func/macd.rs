@@ -781,14 +781,17 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.MACD_Open(&data, 12, 26, 9).expect("enough history");
-    /// let peeked = s.peek(100.9);
-    /// let updated = s.update(100.9);
+    /// let peeked = s.peek(100.9).expect("a finite bar");
+    /// let updated = s.update(100.9).expect("a finite bar");
     /// assert_eq!(peeked.0.to_bits(), updated.0.to_bits());
     /// assert_eq!(peeked.1.to_bits(), updated.1.to_bits());
     /// assert_eq!(peeked.2.to_bits(), updated.2.to_bits());
     /// ```
     #[doc(alias = "TA_MACD_Open")]
     pub fn MACD_Open(&self, inReal: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, optInSignalPeriod: i32) -> Result<(MACD_Stream, (f64, f64, f64)), RetCode> {
+        if inReal.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.MACD_OpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod)
     }
 
@@ -808,6 +811,9 @@ impl Core {
         if outMACDSignal.as_ptr() == outMACDHist.as_ptr() {
             return Err(RetCode::BadParam);
         }
+        if inReal.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.MACD_OpenCore(inReal, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1)
     }
 
@@ -824,14 +830,27 @@ impl Core {
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl MACD_Stream {
-    /// Commit one closed bar; always produces a value. Never allocates.
+    /// Commit one closed bar. Never allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite (NaN or ±Inf).
+    /// That check runs before anything is written, so the handle is left
+    /// exactly as it was and the stream stays usable:
+    /// skip the bar, or close and re-open on a clean history. This is the
+    /// one place the streaming tier is stricter than the batch API, which
+    /// computes on whatever it is given — a handle retains its state, so a
+    /// single non-finite bar would poison every later value it produces.
     #[doc(alias = "TA_MACD_Update")]
-    pub fn update(&mut self, inReal: f64) -> (f64, f64, f64) {
+    pub fn update(&mut self, inReal: f64) -> Result<(f64, f64, f64), RetCode> {
+        if !inReal.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut outMACD: f64 = 0.0_f64;
         let mut outMACDSignal: f64 = 0.0_f64;
         let mut outMACDHist: f64 = 0.0_f64;
         self.core.MACD_step_internal(&mut self.state, inReal, &mut outMACD, &mut outMACDSignal, &mut outMACDHist);
-        (outMACD, outMACDSignal, outMACDHist)
+        Ok((outMACD, outMACDSignal, outMACDHist))
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
@@ -839,9 +858,16 @@ impl MACD_Stream {
     /// on a scratch copy of the state). Never writes the handle, so peeks may
     /// run concurrently with each other. This handle holds only scalars, so the copy is a
     /// few machine words and `peek` never allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite, exactly as
+    /// `update` rejects it.
     #[doc(alias = "TA_MACD_Peek")]
-    #[must_use]
-    pub fn peek(&self, inReal: f64) -> (f64, f64, f64) {
+    pub fn peek(&self, inReal: f64) -> Result<(f64, f64, f64), RetCode> {
+        if !inReal.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut scratch = self.clone();
         scratch.update(inReal)
     }

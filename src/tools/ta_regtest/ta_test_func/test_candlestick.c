@@ -416,6 +416,8 @@ static const char *pbEl[PB_MAXEXP];
 static int pbEkind[PB_MAXEXP];
 static int pbEcond[PB_MAXEXP];       /* condition id for FLIP/CONTROL/SOLE, else -1 */
 static int pbEdisj[PB_MAXEXP];       /* disjunct id for SOLE, else -1 */
+static int pbEarm[PB_MAXEXP];        /* arm id for an attributed FLIP, else -1 */
+static int pbEconj[PB_MAXEXP];       /* conjunct id within that arm, else -1 */
 
 /* Conditions the pattern is DECLARED to have, and the ones deliberately not
  * given a flip case. Every declared condition must be either flipped or
@@ -452,7 +454,19 @@ static int         pbNbSigns;
  * The axis that does reach them is SOLE-TRUE: a firing case in which exactly
  * one alternative holds. That is what shows the alternative to be independently
  * sufficient, and it is the disjunction's form of the control. */
+#define PB_MAXALT 8
 static int         pbNbDisj[PB_MAXCOND];   /* alternatives per condition, 0 = plain */
+/* Conjuncts INSIDE each alternative. pb_signs and the sole-true axis both reach
+ * arm SELECTION only -- which alternative carries the decision -- and say
+ * nothing about what an alternative is made of. An arm of `colour && shadow`
+ * has its colour half covered by the class axis and its shadow half covered by
+ * nothing, and an arm of eight conjuncts has seven such halves. Declaring the
+ * sizes is what lets the completeness check ask for a case per conjunct. */
+static int         pbArmN[PB_MAXCOND][PB_MAXALT];
+static int         pbNbArm[PB_MAXCOND];
+static int         pbAwCond[PB_MAXWAIVE], pbAwArm[PB_MAXWAIVE], pbAwJ[PB_MAXWAIVE];
+static const char *pbAwWhy[PB_MAXWAIVE];
+static int         pbNaw;
 static int         pbDwCond[PB_MAXWAIVE];
 static int         pbDwK[PB_MAXWAIVE];
 static const char *pbDwWhy[PB_MAXWAIVE];
@@ -482,7 +496,7 @@ static void pb_record( int i, int v, const char *s, int kind, int cond )
 {
    if( pbNe >= PB_MAXEXP ) { pbOverflow = 1; return; }
    pbEi[pbNe]=i; pbEv[pbNe]=v; pbEl[pbNe]=s; pbEkind[pbNe]=kind; pbEcond[pbNe]=cond;
-   pbEdisj[pbNe]=-1;
+   pbEdisj[pbNe]=-1; pbEarm[pbNe]=-1; pbEconj[pbNe]=-1;
    pbNe++;
 }
 static void pb_expect( int i, int v, const char *s ) { pb_record(i, v, s, PB_LEGACY, -1); }
@@ -553,9 +567,40 @@ static void pb_waive( int cond, const char *why )
  */
 static void pb_disjuncts( int cond, int n )
 {
-   if( cond < 0 || cond >= PB_MAXCOND || n < 2 || n > PB_MAXCOND )
+   if( cond < 0 || cond >= PB_MAXCOND || n < 2 || n > PB_MAXALT )
       { pbOverflow = 1; return; }
    pbNbDisj[cond] = n;
+}
+/* pb_arm(c,k,n)        alternative k of condition c is a conjunction of n terms.
+ * pb_flip_in(i,c,k,j,s) the decision does not fire, every other condition holds,
+ *                      and within alternative k exactly term j is false -- so the
+ *                      zero is attributable to that term and not merely to the
+ *                      alternative. This is the flip an interior term can have;
+ *                      a plain pb_flip of the condition falsifies every
+ *                      alternative at once and names none of them.
+ * pb_waive_arm(c,k,j,why)
+ *                      term j cannot be broken alone. Two shapes recur: the
+ *                      arm's own selector (a colour test, already covered on the
+ *                      output-class axis) and a term entailed by its siblings. */
+static void pb_arm( int cond, int arm, int n )
+{
+   if( cond < 0 || cond >= PB_MAXCOND || arm < 0 || arm >= PB_MAXALT || n < 1 )
+      { pbOverflow = 1; return; }
+   pbArmN[cond][arm] = n;
+   if( arm + 1 > pbNbArm[cond] ) pbNbArm[cond] = arm + 1;
+}
+static void pb_flip_in( int i, int cond, int arm, int j, const char *s )
+{
+   pb_record(i, 0, s, PB_FLIP, cond);
+   if( pbNe > 0 ) { pbEarm[pbNe-1] = arm; pbEconj[pbNe-1] = j; }
+}
+static void pb_waive_arm( int cond, int arm, int j, const char *why )
+{
+   int m;
+   if( pbNaw >= PB_MAXWAIVE || !why ) { pbOverflow = 1; return; }
+   for( m = 0; m < pbNaw; m++ )
+      if( pbAwCond[m]==cond && pbAwArm[m]==arm && pbAwJ[m]==j ) { pbOverflow=1; return; }
+   pbAwCond[pbNaw]=cond; pbAwArm[pbNaw]=arm; pbAwJ[pbNaw]=j; pbAwWhy[pbNaw]=why; pbNaw++;
 }
 static void pb_sole( int i, int v, int cond, int k, const char *s )
 {
@@ -576,16 +621,36 @@ static void pb_waive_disjunct( int cond, int k, const char *why )
  * mention one, and a new argument on the entry point would make every one of
  * them say "none". Cleared by pb_reset, set inside build_<x>(), read by
  * pb_check_mcdc_finish. */
-typedef void (*PbDisjFn)( int i, int cond, int *d );
-static PbDisjFn pbDisjModel;
-static void pb_disj_model( PbDisjFn f ) { pbDisjModel = f; }
+/* The model reports each alternative's TERMS, not merely whether the
+ * alternative holds: an arm's truth is the AND of its terms, so the finer model
+ * yields the coarser one and there is only ever one function to write. */
+typedef void (*PbArmFn)( int i, int cond, int arm, int *a );
+static PbArmFn pbArmModel;
+static void pb_arm_model( PbArmFn f ) { pbArmModel = f; }
+
+/* Truth of alternative `arm`, or -1 if the model left a term unset. */
+static int pb_arm_true( int i, int cond, int arm )
+{
+   int a[PB_MAXCOND], q, n = pbArmN[cond][arm], v = 1;
+   if( n <= 0 || n > PB_MAXCOND ) return -1;
+   for( q = 0; q < n; q++ ) a[q] = -1;
+   pbArmModel(i, cond, arm, a);
+   for( q = 0; q < n; q++ )
+   {
+      if( a[q] == -1 ) return -1;
+      if( !a[q] ) v = 0;
+   }
+   return v;
+}
 
 static void pb_reset( void )
 {
    int k;
    pbCur=0; pbNe=0; pbNw=0; pbNbCond=0; pbNbSigns=1; pbOverflow=0;
-   pbNdw=0; pbDisjModel=0;
-   for( k=0; k<PB_MAXCOND; k++ ) pbNbDisj[k] = 0;
+   pbNdw=0; pbNaw=0; pbArmModel=0;
+   for( k=0; k<PB_MAXCOND; k++ )
+   { int q; pbNbDisj[k] = 0; pbNbArm[k] = 0;
+     for( q=0; q<PB_MAXALT; q++ ) pbArmN[k][q] = 0; }
 }
 
 /* HIKKAKE detection window (3 bars). dir +1 bull/-1 bear; each of p1/p2/p34/p56
@@ -804,6 +869,7 @@ typedef void (*PbCondFn)( int i, int *c );
  * the thing most likely to hollow this gate out silently. */
 static int pbTotDetect, pbTotFlip, pbTotControl, pbTotWaive, pbTotCond;
 static int pbTotSole, pbTotDisj, pbTotDisjCond, pbTotDisjWaive;
+static int pbTotArmTerm, pbTotArmFlip, pbTotArmWaive;
 static int pbTotMigrated;
 
 /* Print what the gate actually covered. A gate that does not report its own
@@ -818,6 +884,9 @@ static void pb_report_totals( void )
    printf("  MC/DC disjuncts: %d alternative(s) inside %d condition(s), "
           "%d sole-true case(s), %d waived\n",
           pbTotDisj, pbTotDisjCond, pbTotSole, pbTotDisjWaive);
+   printf("  MC/DC arm terms: %d term(s) inside those alternatives, "
+          "%d attributed flip(s), %d waived\n",
+          pbTotArmTerm, pbTotArmFlip, pbTotArmWaive);
 }
 
 /* The body shared by pb_check_mcdc and pb_check_mcdc_p -- everything past
@@ -915,16 +984,14 @@ static ErrorNumber pb_check_mcdc_finish( const char *name, TA_RetCode rc,
           * scenario rather than only the sole-true ones, is what makes them a
           * decomposition OF that condition: the flips are where OR is false,
           * and a fabricated model has to get those right too. */
-         if( pbDisjModel )
+         if( pbArmModel )
          {
             int c2;
             for( c2 = 0; c2 < pbNbCond && c2 < PB_MAXCOND; c2++ )
             {
-               int dv[PB_MAXCOND], any = 0, q, n2 = pbNbDisj[c2];
+               int any = 0, q, n2 = pbNbArm[c2];
                if( n2 <= 0 ) continue;
-               for( q = 0; q < n2; q++ ) dv[q] = 0;
-               pbDisjModel(pbEi[k], c2, dv);
-               for( q = 0; q < n2; q++ ) if( dv[q] ) any = 1;
+               for( q = 0; q < n2; q++ ) if( pb_arm_true(pbEi[k], c2, q) == 1 ) any = 1;
                if( cv[c2] != -1 && any != (cv[c2] ? 1 : 0) )
                {
                   printf("  %s MC/DC: c%d's alternatives OR to %d but the "
@@ -1008,11 +1075,11 @@ static ErrorNumber pb_check_mcdc_finish( const char *name, TA_RetCode rc,
       for( c = 0; c < pbNbCond && c < PB_MAXCOND; c++ )
       {
          if( pbNbDisj[c] <= 0 ) continue;
-         if( !pbDisjModel )
+         if( !pbArmModel )
          {
-            printf("  %s MC/DC: c%d declares %d alternative(s) but no disjunct "
+            printf("  %s MC/DC: c%d declares %d alternative(s) but no arm "
                    "model was registered -- they are unchecked\n",
-                   name, c, pbNbDisj[c]);
+                   name, c, pbNbArm[c]);
             fails++;
             continue;
          }
@@ -1040,14 +1107,112 @@ static ErrorNumber pb_check_mcdc_finish( const char *name, TA_RetCode rc,
       }
    }
 
-   /* Each sole-true case must actually be sole-true. Without this the kind is
-    * just a second control: a case tagged alt0 that happens to satisfy alt0 AND
-    * alt2 proves neither of them independently sufficient. */
-   if( pbDisjModel )
+   /* INTERIOR TERM COVERAGE. Everything above reaches arm SELECTION -- which
+    * alternative carries the decision -- and nothing inside one. A plain flip of
+    * the condition falsifies every alternative at once and names none of their
+    * terms, so an arm of eight conjuncts is satisfied by breaking any one of
+    * them and the other seven are asked for by nothing. That is not theoretical:
+    * CDLBELTHOLD's arms hold a colour test and a shadow test, and its shadow
+    * halves are covered only because unit 1 chose to write a second flip per
+    * arm; the gate would have printed the same "ok" without them. */
+   {
+      int c, a, j, w;
+      for( c = 0; c < pbNbCond && c < PB_MAXCOND; c++ )
+      {
+         if( pbNbArm[c] <= 0 ) continue;
+         for( a = 0; a < pbNbArm[c] && a < PB_MAXALT; a++ )
+         {
+            if( pbArmN[c][a] <= 0 )
+            {
+               printf("  %s MC/DC: c%d alt%d declares no term count -- its "
+                      "interior is unchecked\n", name, c, a);
+               fails++;
+               continue;
+            }
+            /* An arm of ONE term needs no attribution: the term and the arm
+             * are the same proposition, so the sole-true case (that arm alone
+             * true) and the condition's own flip (every arm false) already show
+             * the term determining the condition in both directions. Only from
+             * two terms up does "the arm is false" stop naming which one. */
+            if( pbArmN[c][a] == 1 ) continue;
+            for( j = 0; j < pbArmN[c][a]; j++ )
+            {
+               int found = 0;
+               for( k = 0; k < pbNe; k++ )
+                  if( pbEkind[k] == PB_FLIP && pbEcond[k] == c &&
+                      pbEarm[k] == a && pbEconj[k] == j ) { found = 1; break; }
+               for( w = 0; w < pbNaw && !found; w++ )
+                  if( pbAwCond[w]==c && pbAwArm[w]==a && pbAwJ[w]==j )
+                  {
+                     found = 1;
+                     printf("  %s MC/DC arm waiver c%d alt%d term%d: %s\n",
+                            name, c, a, j, pbAwWhy[w]);
+                  }
+               if( !found )
+               {
+                  printf("  %s MC/DC: c%d alt%d term %d has no attributed flip "
+                         "and no waiver -- breaking it alone is asked for by "
+                         "nothing\n", name, c, a, j);
+                  fails++;
+               }
+            }
+         }
+      }
+   }
+
+   /* An attributed flip must be attributable: exactly the named term false
+    * inside the named arm, every other term of that arm true, and every other
+    * alternative false -- otherwise the zero it asserts belongs to something
+    * else and the case proves nothing about the term on its label. */
+   if( pbArmModel )
    {
       for( k = 0; k < pbNe; k++ )
       {
-         int dv[PB_MAXCOND];
+         int a[PB_MAXCOND], q, n, nFalse = 0, firstFalse = -1, other;
+         if( pbEkind[k] != PB_FLIP || pbEarm[k] < 0 ) continue;
+         n = pbArmN[pbEcond[k]][pbEarm[k]];
+         if( n <= 0 || n > PB_MAXCOND ) continue;
+         for( q = 0; q < n; q++ ) a[q] = -1;
+         pbArmModel(pbEi[k], pbEcond[k], pbEarm[k], a);
+         for( q = 0; q < n; q++ )
+         {
+            if( a[q] == -1 )
+            {
+               printf("  %s MC/DC: arm model left c%d alt%d term%d unset (%s)\n",
+                      name, pbEcond[k], pbEarm[k], q, pbEl[k]);
+               fails++;
+            }
+            else if( !a[q] ) { nFalse++; if( firstFalse < 0 ) firstFalse = q; }
+         }
+         if( nFalse != 1 || firstFalse != pbEconj[k] )
+         {
+            printf("  %s MC/DC: flip filed as c%d alt%d term%d has %d term(s) "
+                   "false%s (%s)\n", name, pbEcond[k], pbEarm[k], pbEconj[k],
+                   nFalse, nFalse == 1 ? " -- and it is a different term" : "",
+                   pbEl[k]);
+            fails++;
+         }
+         for( other = 0; other < pbNbArm[pbEcond[k]] && other < PB_MAXALT; other++ )
+         {
+            if( other == pbEarm[k] ) continue;
+            if( pb_arm_true(pbEi[k], pbEcond[k], other) == 1 )
+            {
+               printf("  %s MC/DC: flip filed as c%d alt%d term%d leaves alt%d "
+                      "true, so the condition still holds (%s)\n",
+                      name, pbEcond[k], pbEarm[k], pbEconj[k], other, pbEl[k]);
+               fails++;
+            }
+         }
+      }
+   }
+
+   /* Each sole-true case must actually be sole-true. Without this the kind is
+    * just a second control: a case tagged alt0 that happens to satisfy alt0 AND
+    * alt2 proves neither of them independently sufficient. */
+   if( pbArmModel )
+   {
+      for( k = 0; k < pbNe; k++ )
+      {
          int n, m, nTrue = 0, firstTrue = -1;
          if( pbEkind[k] != PB_SOLE ) continue;
          n = (pbEcond[k] >= 0 && pbEcond[k] < PB_MAXCOND) ? pbNbDisj[pbEcond[k]] : 0;
@@ -1058,17 +1223,16 @@ static ErrorNumber pb_check_mcdc_finish( const char *name, TA_RetCode rc,
             fails++;
             continue;
          }
-         for( m = 0; m < n; m++ ) dv[m] = -1;
-         pbDisjModel(pbEi[k], pbEcond[k], dv);
          for( m = 0; m < n; m++ )
          {
-            if( dv[m] == -1 )
+            int t = pb_arm_true(pbEi[k], pbEcond[k], m);
+            if( t == -1 )
             {
-               printf("  %s MC/DC: disjunct model left c%d alt%d unset (%s)\n",
+               printf("  %s MC/DC: arm model left a term of c%d alt%d unset (%s)\n",
                       name, pbEcond[k], m, pbEl[k]);
                fails++;
             }
-            else if( dv[m] ) { nTrue++; if( firstTrue < 0 ) firstTrue = m; }
+            else if( t ) { nTrue++; if( firstTrue < 0 ) firstTrue = m; }
          }
          if( nTrue != 1 )
          {
@@ -1201,6 +1365,10 @@ static ErrorNumber pb_check_mcdc_finish( const char *name, TA_RetCode rc,
    pbTotWaive  += pbNw;
    pbTotSole   += nSole;
    pbTotDisjWaive += pbNdw;
+   pbTotArmWaive  += pbNaw;
+   for( k=0; k<pbNe; k++ ) if( pbEkind[k]==PB_FLIP && pbEarm[k]>=0 ) pbTotArmFlip++;
+   { int c2,a2; for( c2=0; c2<pbNbCond && c2<PB_MAXCOND; c2++ )
+        for( a2=0; a2<pbNbArm[c2] && a2<PB_MAXALT; a2++ ) pbTotArmTerm += pbArmN[c2][a2]; }
    { int c; for( c=0; c<pbNbCond && c<PB_MAXCOND; c++ )
         if( pbNbDisj[c] > 0 ) { pbTotDisj += pbNbDisj[c]; pbTotDisjCond++; } }
    pbTotMigrated++;
@@ -2403,11 +2571,24 @@ static void cond_belthold( int i, int *c )
    c[1] = (  pb_white(i) && pb_losh(i) < vs )
        || ( !pb_white(i) && pb_upsh(i) < vs );
 }
+/* Each arm is a colour selector AND a shadow test. pb_signs reaches the
+ * selectors; until these were declared, nothing reached the shadows. */
+static void arm_belthold( int i, int cond, int arm, int *a )
+{
+   double vs = pb_avg(TA_ShadowVeryShort, i);
+   if( cond != 1 ) return;
+   if( arm == 0 ) { a[0] =  pb_white(i); a[1] = pb_losh(i) < vs; }
+   else           { a[0] = !pb_white(i); a[1] = pb_upsh(i) < vs; }
+}
 
 static void build_belthold( void )
 {
   pb_conditions(2);
   pb_signs(2);
+  pb_arm(1,0,2); pb_arm(1,1,2);
+  pb_arm_model(arm_belthold);
+  pb_waive_arm(1,0,0,"the arm's own colour selector -- it is what chooses the arm, and the class it chooses is fired by pb_signs(2)");
+  pb_waive_arm(1,1,0,"the arm's own colour selector -- it is what chooses the arm, and the class it chooses is fired by pb_signs(2)");
 
   pb_flat(6);
   pb_primer(12,100,2,4);
@@ -2426,7 +2607,7 @@ static void build_belthold( void )
 
   pb_primer(12,100,2,4);
   int f1=pb_bar(100,108,99,105);           /* lower shadow 1 == avg */
-  pb_flip(f1,1,"break c1: lower shadow 1 == avg 1, the test is strict");
+  pb_flip_in(f1,1,0,1,"break c1 alt0 term1: lower shadow 1 == avg 1, the test is strict");
   pb_flat(8);
   pb_primer(12,100,2,4);
   int k1=pb_bar(100,108,99.5,105);
@@ -2444,7 +2625,7 @@ static void build_belthold( void )
 
   pb_primer(12,100,2,4);
   int f1b=pb_bar(105,106,97,100);          /* upper shadow 1 == avg */
-  pb_flip(f1b,1,"break c1 black: upper shadow 1 == avg 1, the test is strict");
+  pb_flip_in(f1b,1,1,1,"break c1 alt1 term1: upper shadow 1 == avg 1, the test is strict");
   pb_flat(8);
   pb_primer(12,100,2,4);
   int k1b=pb_bar(105,105.5,97,100);
@@ -2471,11 +2652,22 @@ static void cond_closingmarubozu( int i, int *c )
    c[1] = (  pb_white(i) && pb_upsh(i) < vs )
        || ( !pb_white(i) && pb_losh(i) < vs );
 }
+static void arm_closingmarubozu( int i, int cond, int arm, int *a )
+{
+   double vs = pb_avg(TA_ShadowVeryShort, i);
+   if( cond != 1 ) return;
+   if( arm == 0 ) { a[0] =  pb_white(i); a[1] = pb_upsh(i) < vs; }
+   else           { a[0] = !pb_white(i); a[1] = pb_losh(i) < vs; }
+}
 
 static void build_closingmarubozu( void )
 {
   pb_conditions(2);
   pb_signs(2);
+  pb_arm(1,0,2); pb_arm(1,1,2);
+  pb_arm_model(arm_closingmarubozu);
+  pb_waive_arm(1,0,0,"the arm's own colour selector -- it is what chooses the arm, and the class it chooses is fired by pb_signs(2)");
+  pb_waive_arm(1,1,0,"the arm's own colour selector -- it is what chooses the arm, and the class it chooses is fired by pb_signs(2)");
 
   pb_flat(6);
   pb_primer(12,100,2,4);
@@ -2494,7 +2686,7 @@ static void build_closingmarubozu( void )
 
   pb_primer(12,100,2,4);
   int f1=pb_bar(100,106,99,105);           /* upper shadow 1 == avg */
-  pb_flip(f1,1,"break c1: upper shadow 1 == avg 1, the test is strict");
+  pb_flip_in(f1,1,0,1,"break c1 alt0 term1: upper shadow 1 == avg 1, the test is strict");
   pb_flat(8);
   pb_primer(12,100,2,4);
   int k1=pb_bar(100,105.5,99,105);
@@ -2512,7 +2704,7 @@ static void build_closingmarubozu( void )
 
   pb_primer(12,100,2,4);
   int f1b=pb_bar(105,108,99,100);          /* lower shadow 1 == avg */
-  pb_flip(f1b,1,"break c1 black: lower shadow 1 == avg 1, the test is strict");
+  pb_flip_in(f1b,1,1,1,"break c1 alt1 term1: lower shadow 1 == avg 1, the test is strict");
   pb_flat(8);
   pb_primer(12,100,2,4);
   int k1b=pb_bar(105,108,99.5,100);
@@ -2542,17 +2734,18 @@ static void cond_longleggeddoji( int i, int *c )
  * BOTH shadows long -- so neither arm was ever the one carrying the decision and
  * either could be deleted from the pattern with the whole suite green. The two
  * sole-true cases are what close that. */
-static void disj_longleggeddoji( int i, int cond, int *d )
+static void arm_longleggeddoji( int i, int cond, int arm, int *a )
 {
    double sl = pb_avg(TA_ShadowLong, i);
-   if( cond == 1 ) { d[0] = pb_losh(i) > sl; d[1] = pb_upsh(i) > sl; }
+   if( cond == 1 ) a[0] = arm == 0 ? pb_losh(i) > sl : pb_upsh(i) > sl;
 }
 
 static void build_longleggeddoji( void )
 {
   pb_conditions(2);
   pb_disjuncts(1,2);
-  pb_disj_model(disj_longleggeddoji);
+  pb_arm(1,0,1); pb_arm(1,1,1);
+  pb_arm_model(arm_longleggeddoji);
 
   pb_flat(6);
   pb_primer(12,100,2,4);
@@ -3645,11 +3838,21 @@ static void cond_dojistar( int i, int *c )
    c[2] = (  pb_white(i-1) && pb_bodylo(i) > pb_bodyhi(i-1) )
        || ( !pb_white(i-1) && pb_bodyhi(i) < pb_bodylo(i-1) );
 }
+static void arm_dojistar( int i, int cond, int arm, int *a )
+{
+   if( cond != 2 ) return;
+   if( arm == 0 ) { a[0] =  pb_white(i-1); a[1] = pb_bodylo(i) > pb_bodyhi(i-1); }
+   else           { a[0] = !pb_white(i-1); a[1] = pb_bodyhi(i) < pb_bodylo(i-1); }
+}
 
 static void build_dojistar( void )
 {
   pb_conditions(3);
   pb_signs(2);
+  pb_arm(2,0,2); pb_arm(2,1,2);
+  pb_arm_model(arm_dojistar);
+  pb_waive_arm(2,0,0,"the arm's own colour selector -- it is what chooses the arm, and the class it chooses is fired by pb_signs(2)");
+  pb_waive_arm(2,1,0,"the arm's own colour selector -- it is what chooses the arm, and the class it chooses is fired by pb_signs(2)");
 
   pb_flat(6);
   pb_primer(12,100,2,4);
@@ -3683,7 +3886,7 @@ static void build_dojistar( void )
   pb_primer(12,100,2,4);
   pb_bar(100,106,96,105);
   int f2=pb_bar(105,105.5,104.5,105);      /* floor 105 == prior ceiling: no gap */
-  pb_flip(f2,2,"break c2: body floor 105 == prior ceiling 105, the gap test is strict");
+  pb_flip_in(f2,2,0,1,"break c2 alt0 term1: body floor 105 == prior ceiling 105, the gap test is strict");
   pb_flat(8);
   pb_primer(12,100,2,4);
   pb_bar(100,106,96,105);
@@ -3698,6 +3901,12 @@ static void build_dojistar( void )
   pb_bar(105,106,96,100);                  /* prior: BLACK, body 5, HighLow still 10 */
   int db=pb_bar(99,99.5,98.5,99);          /* doji gapping down under the floor 100 */
   pb_detect(db,100,"detect black-first: prior body 5 > 2, doji body 0 <= 1, gap down 99 < 100");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(105,106,96,100);
+  int f2b=pb_bar(100,100.5,99.5,100);      /* doji body ceiling 100 == prior floor 100 */
+  pb_flip_in(f2b,2,1,1,"break c2 alt1 term1: body ceiling 100 == prior floor 100, the gap test is strict");
   pb_flat(8);
 }
 
@@ -5080,25 +5289,36 @@ static void cond_advanceblock( int i, int *c )
  * above this makes any single alternative necessary: with D3 and D4 both live
  * in the detect, D2 could be deleted from the pattern outright and every case
  * here still passed. */
-static void disj_advanceblock( int i, int cond, int *d )
+static void arm_advanceblock( int i, int cond, int arm, int *a )
 {
    if( cond != 11 ) return;
-   d[0] = ( pb_body(i-1) < pb_body(i-2) - pb_avg(TA_Far,  i-2) &&
-            pb_body(i)   < pb_body(i-1) + pb_avg(TA_Near, i-1) );
-   d[1] = ( pb_body(i)   < pb_body(i-1) - pb_avg(TA_Far,  i-1) );
-   d[2] = ( pb_body(i)   < pb_body(i-1) &&
-            pb_body(i-1) < pb_body(i-2) &&
-            ( pb_upsh(i)   > pb_avg(TA_ShadowShort, i) ||
-              pb_upsh(i-1) > pb_avg(TA_ShadowShort, i-1) ) );
-   d[3] = ( pb_body(i)   < pb_body(i-1) &&
-            pb_upsh(i)   > pb_avg(TA_ShadowLong, i) );
+   switch( arm ) {
+   case 0:
+      a[0] = pb_body(i-1) < pb_body(i-2) - pb_avg(TA_Far,  i-2);
+      a[1] = pb_body(i)   < pb_body(i-1) + pb_avg(TA_Near, i-1);
+      break;
+   case 1:
+      a[0] = pb_body(i)   < pb_body(i-1) - pb_avg(TA_Far,  i-1);
+      break;
+   case 2:
+      a[0] = pb_body(i)   < pb_body(i-1);
+      a[1] = pb_body(i-1) < pb_body(i-2);
+      a[2] = ( pb_upsh(i)   > pb_avg(TA_ShadowShort, i) ||
+               pb_upsh(i-1) > pb_avg(TA_ShadowShort, i-1) );
+      break;
+   default:
+      a[0] = pb_body(i)   < pb_body(i-1);
+      a[1] = pb_upsh(i)   > pb_avg(TA_ShadowLong, i);
+      break;
+   }
 }
 
 static void build_advanceblock( void )
 {
   pb_conditions(12);
   pb_disjuncts(11,4);
-  pb_disj_model(disj_advanceblock);
+  pb_arm(11,0,2); pb_arm(11,1,1); pb_arm(11,2,3); pb_arm(11,3,2);
+  pb_arm_model(arm_advanceblock);
 
   pb_flat(6);
   pb_primer(12,100,2,4);
@@ -5304,6 +5524,62 @@ static void build_advanceblock( void )
   int a3=pb_bar(114,121,113,117);          /* body 3, ush 4 > ShadowLong 3; 3 is not < 8-6 */
   pb_sole(a3,-100,11,3,"c11 alt D4 alone: 3rd smaller than 2nd with a long upper shadow");
   pb_flat(8);
+
+  /* c11's alternatives are conjunctions, and a flip of c11 falsifies all four
+   * at once without naming a term inside any of them. These do: each leaves
+   * exactly one term of one alternative false, every other term of that
+   * alternative true, and the other three alternatives false -- so the zero is
+   * attributable to the term on the label. D2 is a single term and needs none:
+   * there, the term and the alternative are the same proposition. */
+  pb_primer(12,100,2,4);
+  pb_bar(100,109,99,108);
+  pb_bar(108,110,107,110);
+  int t00=pb_bar(109,111,107,111);
+  pb_flip_in(t00,11,0,0,"break c11 alt D1 term0: 2nd body 2 == 1st body 8 - Far 6, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,109,99,108);
+  pb_bar(108,110,107,109);
+  int t01=pb_bar(109,116,107,115);
+  pb_flip_in(t01,11,0,1,"break c11 alt D1 term1: 3rd body 6 exceeds 2nd body 1 + Near 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(104,114,102,110);
+  int t20=pb_bar(106,113,105,112);
+  pb_flip_in(t20,11,2,0,"break c11 alt D3 term0: 3rd body 6 == 2nd body 6, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(104,115,102,111);
+  int t21=pb_bar(107,113,105,112);
+  pb_flip_in(t21,11,2,1,"break c11 alt D3 term1: 2nd body 7 == 1st body 7, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(104,111,102,110);
+  int t22=pb_bar(106,111,105,111);
+  pb_flip_in(t22,11,2,2,"break c11 alt D3 term2: neither upper shadow clears its ShadowShort average");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(105,114,103,113);
+  int t30=pb_bar(114,131,113,122);
+  pb_flip_in(t30,11,3,0,"break c11 alt D4 term0: 3rd body 8 == 2nd body 8, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(105,114,103,113);
+  int t31=pb_bar(114,120,113,117);
+  pb_flip_in(t31,11,3,1,"break c11 alt D4 term1: upper shadow 3 == ShadowLong 3 (its own body), the test is strict");
+  pb_flat(8);
+
 }
 
 /* ---- Hard tier: CDLGAPSIDESIDEWHITE -------------------------------------- *
@@ -5357,11 +5633,13 @@ static void cond_gapsidesidewhite( int i, int *c )
    c[5] = pbO[i]     >= pbO[i-1]     - e;
    c[6] = pbO[i]     <= pbO[i-1]     + e;
 }
-static void disj_gapsidesidewhite( int i, int cond, int *d )
+static void arm_gapsidesidewhite( int i, int cond, int arm, int *a )
 {
    if( cond != 0 ) return;
-   d[0] = ( pb_bodylo(i-1) > pb_bodyhi(i-2) && pb_bodylo(i) > pb_bodyhi(i-2) );
-   d[1] = ( pb_bodyhi(i-1) < pb_bodylo(i-2) && pb_bodyhi(i) < pb_bodylo(i-2) );
+   if( arm == 0 ) { a[0] = pb_bodylo(i-1) > pb_bodyhi(i-2);
+                    a[1] = pb_bodylo(i)   > pb_bodyhi(i-2); }
+   else           { a[0] = pb_bodyhi(i-1) < pb_bodylo(i-2);
+                    a[1] = pb_bodyhi(i)   < pb_bodylo(i-2); }
 }
 
 static void build_gapsidesidewhite( void )
@@ -5369,7 +5647,8 @@ static void build_gapsidesidewhite( void )
   pb_conditions(7);
   pb_signs(2);
   pb_disjuncts(0,2);
-  pb_disj_model(disj_gapsidesidewhite);
+  pb_arm(0,0,2); pb_arm(0,1,2);
+  pb_arm_model(arm_gapsidesidewhite);
 
   pb_flat(6);
   pb_primer(12,100,2,4);
@@ -5489,6 +5768,40 @@ static void build_gapsidesidewhite( void )
   int a1=pb_bar(90,97,89,96);
   pb_sole(a1,-100,0,1,"c0 alt1 alone: both bodies gap DOWN, so the gap-up alternative cannot hold");
   pb_flat(8);
+
+  /* Both terms of an arm are gap tests, and c5/c6 hold the two opens within
+   * Equal of each other -- so the two body edges they compare move together and
+   * can only be separated by straddling the first candle's edge inside that
+   * half-point band. That coupling is why a single flip of c0 breaks both terms
+   * at once and names neither. */
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(104,117,103,110);
+  int g00=pb_bar(104.25,117,103,110.25);
+  pb_flip_in(g00,0,0,0,"break c0 alt0 term0: 2nd body floor 104 == the 1st candle's ceiling 104, the gap test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(104.25,117,103,110.25);
+  int g01=pb_bar(104,117,103,110);
+  pb_flip_in(g01,0,0,1,"break c0 alt0 term1: 3rd body floor 104 == the 1st candle's ceiling 104, the gap test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(94,97,89,100);
+  int g10=pb_bar(93.75,97,89,99.75);
+  pb_flip_in(g10,0,1,0,"break c0 alt1 term0: 2nd body ceiling 100 == the 1st candle's floor 100, the gap test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(93.75,97,89,99.75);
+  int g11=pb_bar(94,97,89,100);
+  pb_flip_in(g11,0,1,1,"break c0 alt1 term1: 3rd body ceiling 100 == the 1st candle's floor 100, the gap test is strict");
+  pb_flat(8);
+
 }
 
 /* ---- Hard tier: CDLRISEFALL3METHODS -------------------------------------- *
@@ -5930,6 +6243,1919 @@ static void build_risefall3methods( void )
 
 }
 
+/* ---- Hard tier: CDLBREAKAWAY --------------------------------------------- *
+ *
+ * A long candle, a gap, then three candles walking further in the gap's
+ * direction, and a fifth closing back INSIDE the gap. Five conditions -- and
+ * the pattern that motivated pb_arm(), because c4's two alternatives hold
+ * EIGHT conjuncts each and every one of them was reachable by nothing.
+ *
+ *   c0  color(i-4) == color(i-3)
+ *   c1  color(i-3) == color(i-1)
+ *   c2  color(i-1) == -color(i)
+ *   c3  realbody(i-4) > avg(BodyLong, i-4)
+ *   c4  alt0 (1st black) || alt1 (1st white), each of them
+ *         term0  the 1st candle's colour -- the arm selector
+ *         term1  the 2nd gaps away from the 1st
+ *         term2  the 3rd's high steps past the 2nd's
+ *         term3  the 3rd's low steps past the 2nd's
+ *         term4  the 4th's high steps past the 3rd's
+ *         term5  the 4th's low steps past the 3rd's
+ *         term6  the 5th closes past the 2nd's open
+ *         term7  the 5th closes short of the 1st's close
+ *
+ * A flip of c4 falsifies both alternatives at once and names no term in
+ * either, so twelve of these sixteen would have gone untested while the gate
+ * printed "declared 5, source has 5 -- ok". They are attributed instead, one
+ * case per term per arm, each leaving the other seven terms of its arm true
+ * and the opposite arm false.
+ *
+ * TWO TERMS PER ARM ARE WAIVED, and for the two shapes worth telling apart.
+ * term0 is the arm's own selector: it is what decides which alternative is
+ * live, and the class it decides is fired by pb_signs(2). term1 is entailed --
+ * terms 6 and 7 place close(5th) strictly between close(1st) and open(2nd),
+ * which forces open(2nd) past close(1st), and c0 makes the 1st and 2nd the
+ * same colour, so for that colour those two prices ARE the body edges the gap
+ * test compares. A price-ordering derivation, not a settings-average one.
+ *
+ * THE GEOMETRY SEPARATES THE HIGHS AND LOWS FROM THE BODIES. terms 2..5 compare
+ * highs and lows while terms 6..7 and c3 compare bodies, so the bars are cut
+ * with each high and low one unit clear of its neighbour and well outside every
+ * body. That is what lets a single high move to its boundary without dragging a
+ * body across one of the other tests -- the coupling that made CDLADVANCEBLOCK
+ * and CDLRISEFALL3METHODS need re-cut bars on three flips apiece.
+ *
+ * c0..c2 are a colour chain, so the same rule as CDLRISEFALL3METHODS applies:
+ * one link cannot be broken by moving one candle, and each flip moves two.
+ */
+static void cond_breakaway( int i, int *c )
+{
+   int k4 = pb_white(i-4) ? 1 : -1, k3 = pb_white(i-3) ? 1 : -1;
+   int k1 = pb_white(i-1) ? 1 : -1, k0 = pb_white(i)   ? 1 : -1;
+   c[0] = k4 == k3;
+   c[1] = k3 == k1;
+   c[2] = k1 == -k0;
+   c[3] = pb_body(i-4) > pb_avg(TA_BodyLong, i-4);
+   c[4] = ( k4 == -1 && pb_bodyhi(i-3) < pb_bodylo(i-4) &&
+            pbH[i-2] < pbH[i-3] && pbL[i-2] < pbL[i-3] &&
+            pbH[i-1] < pbH[i-2] && pbL[i-1] < pbL[i-2] &&
+            pbC[i] > pbO[i-3] && pbC[i] < pbC[i-4] )
+       || ( k4 ==  1 && pb_bodylo(i-3) > pb_bodyhi(i-4) &&
+            pbH[i-2] > pbH[i-3] && pbL[i-2] > pbL[i-3] &&
+            pbH[i-1] > pbH[i-2] && pbL[i-1] > pbL[i-2] &&
+            pbC[i] < pbO[i-3] && pbC[i] > pbC[i-4] );
+}
+static void arm_breakaway( int i, int cond, int arm, int *a )
+{
+   if( cond != 4 ) return;
+   if( arm == 0 )
+   {
+      a[0] = !pb_white(i-4);
+      a[1] = pb_bodyhi(i-3) < pb_bodylo(i-4);
+      a[2] = pbH[i-2] < pbH[i-3];  a[3] = pbL[i-2] < pbL[i-3];
+      a[4] = pbH[i-1] < pbH[i-2];  a[5] = pbL[i-1] < pbL[i-2];
+      a[6] = pbC[i] > pbO[i-3];    a[7] = pbC[i] < pbC[i-4];
+   }
+   else
+   {
+      a[0] = pb_white(i-4);
+      a[1] = pb_bodylo(i-3) > pb_bodyhi(i-4);
+      a[2] = pbH[i-2] > pbH[i-3];  a[3] = pbL[i-2] > pbL[i-3];
+      a[4] = pbH[i-1] > pbH[i-2];  a[5] = pbL[i-1] > pbL[i-2];
+      a[6] = pbC[i] < pbO[i-3];    a[7] = pbC[i] > pbC[i-4];
+   }
+}
+
+static void build_breakaway( void )
+{
+  pb_conditions(5);
+  pb_signs(2);
+  pb_arm(4,0,8); pb_arm(4,1,8);
+  pb_arm_model(arm_breakaway);
+  pb_waive_arm(4,0,0,"the arm's own colour selector -- it chooses the arm, and the class it chooses is fired by pb_signs(2)");
+  pb_waive_arm(4,0,1,"entailed by terms 6 and 7: they put close(5th) strictly between close(1st) and open(2nd), so open(2nd) > close(1st); c0 makes the 1st and 2nd the same colour, and for that colour those two prices ARE the body edges the gap test compares");
+  pb_waive_arm(4,1,0,"the arm's own colour selector -- it chooses the arm, and the class it chooses is fired by pb_signs(2)");
+  pb_waive_arm(4,1,1,"entailed by terms 6 and 7: they put close(5th) strictly between close(1st) and open(2nd), so open(2nd) > close(1st); c0 makes the 1st and 2nd the same colour, and for that colour those two prices ARE the body edges the gap test compares");
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(100,111,99,110);
+  pb_bar(112,120,112,114);
+  pb_bar(115,121,113,116);
+  pb_bar(117,122,114,118);
+  int b1=pb_bar(119,120,110,111);
+  pb_detect(b1,-100,"detect gap up: white 1st, 2nd gaps above it, 3rd and 4th step higher, black 5th closing back inside the gap");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,111,99,100);
+  pb_bar(98,98,90,96);
+  pb_bar(95,97,89,93);
+  pb_bar(93,96,88,91);
+  int b2=pb_bar(89,99,88,99);
+  pb_detect(b2,100,"detect gap down: the mirror, firing the other output class");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,111,99,110);
+  pb_bar(114,120,112,112);
+  pb_bar(115,121,113,116);
+  pb_bar(118,122,114,117);
+  int b3=pb_bar(112,113,110,113);
+  pb_flip(b3,0,"break c0: 1st white, 2nd black -- the 4th and 5th move with it, since one colour change would break c1 or c2 as well");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,111,99,110);
+  pb_bar(112,120,112,114);
+  pb_bar(115,121,113,116);
+  pb_bar(117,122,114,118);
+  int b4=pb_bar(119,120,110,111);
+  pb_control(b4,-100,0,"restore c0: 1st and 2nd both white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,111,99,110);
+  pb_bar(112,120,112,114);
+  pb_bar(115,121,113,116);
+  pb_bar(118,122,114,117);
+  int b5=pb_bar(110.5,111,110,111);
+  pb_flip(b5,1,"break c1: 2nd white, 4th black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,111,99,110);
+  pb_bar(112,120,112,114);
+  pb_bar(115,121,113,116);
+  pb_bar(117,122,114,118);
+  int b6=pb_bar(119,120,110,111);
+  pb_control(b6,-100,1,"restore c1: 2nd and 4th both white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,111,99,110);
+  pb_bar(112,120,112,114);
+  pb_bar(115,121,113,116);
+  pb_bar(117,122,114,118);
+  int b7=pb_bar(110.5,111,110,111);
+  pb_flip(b7,2,"break c2: 4th and 5th both white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,111,99,110);
+  pb_bar(112,120,112,114);
+  pb_bar(115,121,113,116);
+  pb_bar(117,122,114,118);
+  int b8=pb_bar(119,120,110,111);
+  pb_control(b8,-100,2,"restore c2: 4th white, 5th black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(108,111,99,110);
+  pb_bar(112,120,112,114);
+  pb_bar(115,121,113,116);
+  pb_bar(117,122,114,118);
+  int b9=pb_bar(119,120,110,111);
+  pb_flip(b9,3,"break c3: 1st body 2 == avg 2, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(107,111,99,110);
+  pb_bar(112,120,112,114);
+  pb_bar(115,121,113,116);
+  pb_bar(117,122,114,118);
+  int b10=pb_bar(119,120,110,111);
+  pb_control(b10,-100,3,"restore c3: 1st body 3 > 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,111,99,100);
+  pb_bar(98,98,90,96);
+  pb_bar(95,98,89,93);
+  pb_bar(93,96,88,91);
+  int b11=pb_bar(89,99,88,99);
+  pb_flip_in(b11,4,0,2,"break c4 alt0 term2: 3rd high 98 == the 2nd high, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,111,99,100);
+  pb_bar(98,98,90,96);
+  pb_bar(95,97,90,93);
+  pb_bar(93,96,88,91);
+  int b12=pb_bar(89,99,88,99);
+  pb_flip_in(b12,4,0,3,"break c4 alt0 term3: 3rd low 90 == the 2nd low, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,111,99,100);
+  pb_bar(98,98,90,96);
+  pb_bar(95,97,89,93);
+  pb_bar(93,97,88,91);
+  int b13=pb_bar(89,99,88,99);
+  pb_flip_in(b13,4,0,4,"break c4 alt0 term4: 4th high 97 == the 3rd high, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,111,99,100);
+  pb_bar(98,98,90,96);
+  pb_bar(95,97,89,93);
+  pb_bar(93,96,89,91);
+  int b14=pb_bar(89,99,88,99);
+  pb_flip_in(b14,4,0,5,"break c4 alt0 term5: 4th low 89 == the 3rd low, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,111,99,100);
+  pb_bar(98,98,90,96);
+  pb_bar(95,97,89,93);
+  pb_bar(93,96,88,91);
+  int b15=pb_bar(89,99,88,98);
+  pb_flip_in(b15,4,0,6,"break c4 alt0 term6: 5th closes 98 == the 2nd open, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,111,99,100);
+  pb_bar(98,98,90,96);
+  pb_bar(95,97,89,93);
+  pb_bar(93,96,88,91);
+  int b16=pb_bar(89,100,88,100);
+  pb_flip_in(b16,4,0,7,"break c4 alt0 term7: 5th closes 100 == the 1st close, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,111,99,110);
+  pb_bar(112,120,112,114);
+  pb_bar(115,120,113,116);
+  pb_bar(117,122,114,118);
+  int b17=pb_bar(119,120,110,111);
+  pb_flip_in(b17,4,1,2,"break c4 alt1 term2: 3rd high 120 == the 2nd high, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,111,99,110);
+  pb_bar(112,120,112,114);
+  pb_bar(115,121,112,116);
+  pb_bar(117,122,114,118);
+  int b18=pb_bar(119,120,110,111);
+  pb_flip_in(b18,4,1,3,"break c4 alt1 term3: 3rd low 112 == the 2nd low, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,111,99,110);
+  pb_bar(112,120,112,114);
+  pb_bar(115,121,113,116);
+  pb_bar(117,121,114,118);
+  int b19=pb_bar(119,120,110,111);
+  pb_flip_in(b19,4,1,4,"break c4 alt1 term4: 4th high 121 == the 3rd high, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,111,99,110);
+  pb_bar(112,120,112,114);
+  pb_bar(115,121,113,116);
+  pb_bar(117,122,113,118);
+  int b20=pb_bar(119,120,110,111);
+  pb_flip_in(b20,4,1,5,"break c4 alt1 term5: 4th low 113 == the 3rd low, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,111,99,110);
+  pb_bar(112,120,112,114);
+  pb_bar(115,121,113,116);
+  pb_bar(117,122,114,118);
+  int b21=pb_bar(119,120,110,112);
+  pb_flip_in(b21,4,1,6,"break c4 alt1 term6: 5th closes 112 == the 2nd open, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,111,99,110);
+  pb_bar(112,120,112,114);
+  pb_bar(115,121,113,116);
+  pb_bar(117,122,114,118);
+  int b22=pb_bar(119,120,109,110);
+  pb_flip_in(b22,4,1,7,"break c4 alt1 term7: 5th closes 110 == the 1st close, the test is strict");
+  pb_flat(8);
+
+
+  /* c4's paired controls, one per alternative: the attributed flips above all
+   * assert a zero, and a control is what shows the zero belongs to the term
+   * that moved rather than to the geometry those bars happen to sit in. */
+  pb_primer(12,100,2,4);
+  pb_bar(100,111,99,110);
+  pb_bar(112,120,112,114);
+  pb_bar(115,121,113,116);
+  pb_bar(117,122,114,118);
+  int c4w=pb_bar(119,120,110,111);
+  pb_control(c4w,-100,4,"restore c4 via alt1: every term of the gap-up alternative holds");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,111,99,100);
+  pb_bar(98,98,90,96);
+  pb_bar(95,97,89,93);
+  pb_bar(93,96,88,91);
+  int c4b=pb_bar(89,99,88,99);
+  pb_control(c4b,100,4,"restore c4 via alt0: every term of the gap-down alternative holds");
+  pb_flat(8);
+
+}
+
+/* ---- Hard tier: CDLABANDONEDBABY ----------------------------------------- *
+ *
+ * A long candle, a doji abandoned on a gap, then a candle gapping back the
+ * other way and closing deep into the first. Four conditions, and the first
+ * builder to run BOTH mechanisms at once: it registers through
+ * pb_check_mcdc_p, because it takes optInPenetration, and c3's alternatives
+ * hold five terms each, so it needs pb_arm as well.
+ *
+ *   c0  realbody(i-2) >  avg(BodyLong,  i-2)
+ *   c1  realbody(i-1) <= avg(BodyDoji,  i-1)      inclusive
+ *   c2  realbody(i)   >  avg(BodyShort, i)
+ *   c3  alt0 (bearish) || alt1 (bullish), each of them
+ *         term0  the 1st candle's colour
+ *         term1  the 3rd candle's colour
+ *         term2  the 3rd closes past close(1st) -/+ realbody(1st) * penetration
+ *         term3  the doji gaps away from the 1st
+ *         term4  the 3rd gaps back past the doji
+ *
+ * NOTHING HERE IS WAIVED, which is the difference from CDLBREAKAWAY and worth
+ * the note. There, an arm's single colour test was its selector and could not
+ * be broken without handing the decision to the other arm. Here each arm
+ * carries TWO colour tests -- the 1st candle's and the 3rd's -- so breaking
+ * either one leaves the other still holding the opposite arm false, and both
+ * are ordinary flips. An arm selector is only unflippable when it is the arm's
+ * only selector.
+ *
+ * THE PENETRATION ARM IS FUSED ON ONE SIDE AND NOT THE OTHER, the same split
+ * unit 5 found: the bullish term2 is emitted as fma(rb, pen, close) and the
+ * bearish one as close - rb * pen. The two boundary flips are written as the
+ * arithmetic -- `104.0-4.0*0.3` and `100.0+4.0*0.3` -- rather than as decimals,
+ * and the fused and two-step forms were measured equal at (4, 0.3, 104) rather
+ * than assumed, so both land ON the boundary instead of near it.
+ *
+ * The geometry keeps all three averages exact. BodyLong's window at i-2 is all
+ * primer, so it is the primer body 2. BodyDoji's at i-1 carries the first
+ * candle's HighLow, so that is held at the primer's 10 and the doji threshold
+ * is 1. BodyShort's at i carries the first two bodies, and 4 + 0 puts it on 2
+ * exactly -- which is why the 1st candle is body 4 in a HighLow of 10 rather
+ * than the longer body the pattern's name suggests.
+ */
+static void cond_abandonedbaby( int i, int *c )
+{
+   c[0] = pb_body(i-2) >  pb_avg(TA_BodyLong,  i-2);
+   c[1] = pb_body(i-1) <= pb_avg(TA_BodyDoji,  i-1);
+   c[2] = pb_body(i)   >  pb_avg(TA_BodyShort, i);
+   c[3] = (  pb_white(i-2) && !pb_white(i) &&
+             pbC[i] < pbC[i-2] - pb_body(i-2) * 0.3 &&
+             pbL[i-1] > pbH[i-2] && pbH[i] < pbL[i-1] )
+       || ( !pb_white(i-2) &&  pb_white(i) &&
+             pbC[i] > pbC[i-2] + pb_body(i-2) * 0.3 &&
+             pbH[i-1] < pbL[i-2] && pbL[i] > pbH[i-1] );
+}
+static void arm_abandonedbaby( int i, int cond, int arm, int *a )
+{
+   if( cond != 3 ) return;
+   if( arm == 0 )
+   {
+      a[0] =  pb_white(i-2);
+      a[1] = !pb_white(i);
+      a[2] = pbC[i] < pbC[i-2] - pb_body(i-2) * 0.3;
+      a[3] = pbL[i-1] > pbH[i-2];
+      a[4] = pbH[i]   < pbL[i-1];
+   }
+   else
+   {
+      a[0] = !pb_white(i-2);
+      a[1] =  pb_white(i);
+      a[2] = pbC[i] > pbC[i-2] + pb_body(i-2) * 0.3;
+      a[3] = pbH[i-1] < pbL[i-2];
+      a[4] = pbL[i]   > pbH[i-1];
+   }
+}
+
+static void build_abandonedbaby( void )
+{
+  pb_conditions(4);
+  pb_signs(2);
+  pb_arm(3,0,5); pb_arm(3,1,5);
+  pb_arm_model(arm_abandonedbaby);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,111,108,110);
+  int p1=pb_bar(106,107,99,100);
+  pb_detect(p1,-100,"detect bearish: long white, doji abandoned above it, black 3rd gapping back down and closing past the penetration line");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(94,95,93,94);
+  int p2=pb_bar(98,105,96,104);
+  pb_detect(p2,100,"detect bullish: the mirror, firing the other output class");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(102,106,96,104);
+  pb_bar(110,111,108,110);
+  int p3=pb_bar(106,107,99,100);
+  pb_flip(p3,0,"break c0: 1st body 2 == avg 2, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(101,106,96,104);
+  pb_bar(110,111,108,110);
+  int p4=pb_bar(106,107,99,100);
+  pb_control(p4,-100,0,"restore c0: 1st body 3 > 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,112,108,111.5);
+  int p5=pb_bar(106,107,99,100);
+  pb_flip(p5,1,"break c1: doji body 1.5 above the BodyDoji average 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,112,108,111);
+  int p6=pb_bar(106,107,99,100);
+  pb_control(p6,-100,1,"restore c1: doji body 1 == avg 1, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,111,108,110);
+  int p7=pb_bar(102,107,99,100);
+  pb_flip(p7,2,"break c2: 3rd body 2 == avg 2, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,111,108,110);
+  int p8=pb_bar(103,107,99,100);
+  pb_control(p8,-100,2,"restore c2: 3rd body 3 > 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(110,111,108,110);
+  int p9=pb_bar(106,107,97,98);
+  pb_flip_in(p9,3,0,0,"break c3 alt0 term0: 1st is black; the 3rd stays black, so the bullish alternative cannot take over");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,111,108,110);
+  int p10=pb_bar(99,107,98,102);
+  pb_flip_in(p10,3,0,1,"break c3 alt0 term1: 3rd is white; the 1st stays white, so the bullish alternative cannot take over");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,111,108,110);
+  int p11=pb_bar(106,107,102,104.0-4.0*0.3);
+  pb_flip_in(p11,3,0,2,"break c3 alt0 term2: 3rd closes 104 - 4*0.3 exactly, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,111,106,110);
+  int p12=pb_bar(105,105,99,100);
+  pb_flip_in(p12,3,0,3,"break c3 alt0 term3: doji low 106 == the 1st high, the gap test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,111,108,110);
+  int p13=pb_bar(106,108,99,100);
+  pb_flip_in(p13,3,0,4,"break c3 alt0 term4: 3rd high 108 == the doji low, the gap test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(94,95,93,94);
+  int p14=pb_bar(98,107,96,106);
+  pb_flip_in(p14,3,1,0,"break c3 alt1 term0: 1st is white; the 3rd stays white, so the bearish alternative cannot take over");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(94,95,93,94);
+  int p15=pb_bar(105,106,96,102);
+  pb_flip_in(p15,3,1,1,"break c3 alt1 term1: 3rd is black; the 1st stays black, so the bearish alternative cannot take over");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(94,95,93,94);
+  int p16=pb_bar(98,105,96,100.0+4.0*0.3);
+  pb_flip_in(p16,3,1,2,"break c3 alt1 term2: 3rd closes 100 + 4*0.3 exactly, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(94,96,93,94);
+  int p17=pb_bar(98,105,97,104);
+  pb_flip_in(p17,3,1,3,"break c3 alt1 term3: doji high 96 == the 1st low, the gap test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(94,95,93,94);
+  int p18=pb_bar(98,105,95,104);
+  pb_flip_in(p18,3,1,4,"break c3 alt1 term4: 3rd low 95 == the doji high, the gap test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,111,108,110);
+  int p19=pb_bar(106,107,99,100);
+  pb_control(p19,-100,3,"restore c3 via alt0: every term of the bearish alternative holds");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(94,95,93,94);
+  int p20=pb_bar(98,105,96,104);
+  pb_control(p20,100,3,"restore c3 via alt1: every term of the bullish alternative holds");
+  pb_flat(8);
+
+}
+
+/* ---- Hard tier: CDLMATHOLD ----------------------------------------------- *
+ *
+ * A long white candle, a gap, three small "reaction days" that give some of it
+ * back without giving back too much, and a white 5th closing above all of
+ * them. Sixteen conditions over five bars, a penetration parameter, and a
+ * four-deep body cascade -- the combination CDLRISEFALL3METHODS and the
+ * penetration patterns each had half of.
+ *
+ *   c0..c2   colours: 1st white, 2nd black, 5th white
+ *   c3       the 2nd gaps up off the 1st
+ *   c4,c5    the 3rd and 4th body floors stay below close(1st)
+ *   c6,c7    ...and above close(1st) - realbody(1st) * penetration
+ *   c8,c9    the 3rd's ceiling is under open(2nd), the 4th's under the 3rd's
+ *   c10      the 5th opens above close(4th)
+ *   c11      the 5th closes above every reaction-day high
+ *   c12..c15 the 1st is long; the 2nd, 3rd and 4th are short
+ *
+ * THE REACTION DAYS LIVE IN A BAND WITH BOTH EDGES DERIVED FROM THE FIRST
+ * CANDLE. c4/c6 and c5/c7 are two-sided: a body floor must sit below
+ * close(1st) and above close(1st) - realbody(1st) * penetration. Both edges
+ * move when the first candle's body moves, which is what makes c12's flip the
+ * awkward one -- dropping that body to its BodyLong boundary of 2 raises the
+ * penetration line from 106 to 111 and squeezes the band to (111, 112), so the
+ * three small bodies have to be re-cut to fit inside a one-point corridor.
+ *
+ * c8 is the other one worth reading. Its boundary puts the 3rd's ceiling
+ * exactly at open(2nd), while c4 keeps the 3rd's floor below close(1st) and
+ * c14 keeps its body under 3 -- so open(2nd) can be at most close(1st) + 3, and
+ * the 2nd candle has to be lowered from the detect's layout before the boundary
+ * is reachable at all. Two conditions bounding one bar from opposite sides, with
+ * a third bounding its size, is the shape to look for when a boundary seems
+ * unreachable.
+ *
+ * The cascade is the familiar one: BodyLong at i-4 on an all-primer window,
+ * then BodyShort at i-3, i-2 and i-1 each swallowing one more scenario body.
+ * P=2 with bodies 12, 2, 2, 2 puts the four thresholds on 2, 3, 3, 3 exactly.
+ * There is no body test on the 5th candle at all, which is why its body is free
+ * to grow whenever a flip needs its close pushed past the reaction highs.
+ */
+static void cond_mathold( int i, int *c )
+{
+   double line = pbC[i-4] - pb_body(i-4) * 0.5;
+   c[0]  = pb_white(i-4);
+   c[1]  = !pb_white(i-3);
+   c[2]  = pb_white(i);
+   c[3]  = pb_bodylo(i-3) > pb_bodyhi(i-4);
+   c[4]  = pb_bodylo(i-2) < pbC[i-4];
+   c[5]  = pb_bodylo(i-1) < pbC[i-4];
+   c[6]  = pb_bodylo(i-2) > line;
+   c[7]  = pb_bodylo(i-1) > line;
+   c[8]  = pb_bodyhi(i-2) < pbO[i-3];
+   c[9]  = pb_bodyhi(i-1) < pb_bodyhi(i-2);
+   c[10] = pbO[i] > pbC[i-1];
+   c[11] = pbC[i] > (pbH[i-3] > pbH[i-2] ? (pbH[i-3] > pbH[i-1] ? pbH[i-3] : pbH[i-1])
+                                         : (pbH[i-2] > pbH[i-1] ? pbH[i-2] : pbH[i-1]));
+   c[12] = pb_body(i-4) > pb_avg(TA_BodyLong,  i-4);
+   c[13] = pb_body(i-3) < pb_avg(TA_BodyShort, i-3);
+   c[14] = pb_body(i-2) < pb_avg(TA_BodyShort, i-2);
+   c[15] = pb_body(i-1) < pb_avg(TA_BodyShort, i-1);
+}
+
+static void build_mathold( void )
+{
+  pb_conditions(16);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m1=pb_bar(109,119,108,118);
+  pb_detect(m1,100,"detect: long white, a gap, three small reaction days holding inside the first body, white 5th closing above them all");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,99,100);
+  pb_bar(116,117,113,114);
+  pb_bar(99,100,96,97);
+  pb_bar(98,99,95,96);
+  int m2=pb_bar(97,119,96,118);
+  pb_flip(m2,0,"break c0: the 1st candle is black -- the whole layout drops with it, since close(1st) sets both the penetration line and the band the reaction days sit in");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m3=pb_bar(109,119,108,118);
+  pb_control(m3,100,0,"restore c0: the 1st candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(114,117,113,116);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m4=pb_bar(109,119,108,118);
+  pb_flip(m4,1,"break c1: the 2nd candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m5=pb_bar(109,119,108,118);
+  pb_control(m5,100,1,"restore c1: the 2nd candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m6=pb_bar(120,121,108,118);
+  pb_flip(m6,2,"break c2: the 5th candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m7=pb_bar(109,119,108,118);
+  pb_control(m7,100,2,"restore c2: the 5th candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(114,117,112,112);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m8=pb_bar(109,119,108,118);
+  pb_flip(m8,3,"break c3: 2nd body floor 112 == the 1st body ceiling 112, the gap test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m9=pb_bar(109,119,108,118);
+  pb_control(m9,100,3,"restore c3: 2nd body floor 114 > 112");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(114,115,111,112);
+  pb_bar(110,111,107,108);
+  int m10=pb_bar(109,119,108,118);
+  pb_flip(m10,4,"break c4: 3rd body floor 112 == close(1st), the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m11=pb_bar(109,119,108,118);
+  pb_control(m11,100,4,"restore c4: 3rd body floor 109 < close(1st) 112");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(118,119,113,116);
+  pb_bar(113,114,110,111);
+  pb_bar(112.5,113,111,112);
+  int m12=pb_bar(113,121,112,120);
+  pb_flip(m12,5,"break c5: 4th body floor 112 == close(1st), the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(118,119,113,116);
+  pb_bar(113,114,110,111);
+  pb_bar(112.5,113,111,111.5);
+  int m13=pb_bar(113,121,111,120);
+  pb_control(m13,100,5,"restore c5: 4th body floor 111.5 < close(1st) 112");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(108,109,105,106);
+  pb_bar(107.5,108,105,106.5);
+  int m14=pb_bar(107,119,106,118);
+  pb_flip(m14,6,"break c6: 3rd body floor 106 == the penetration line 112 - 12*0.5, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(108.5,109,105,106.5);
+  pb_bar(107.5,108,105,106.5);
+  int m15=pb_bar(107,119,106,118);
+  pb_control(m15,100,6,"restore c6: 3rd body floor 106.5 > the penetration line 106");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(108,109,105,106);
+  int m16=pb_bar(107,119,106,118);
+  pb_flip(m16,7,"break c7: 4th body floor 106 == the penetration line, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m17=pb_bar(109,119,108,118);
+  pb_control(m17,100,7,"restore c7: 4th body floor 108 > 106");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(114.5,117,112,112.5);
+  pb_bar(114.5,115,111,111.75);
+  pb_bar(110,111,107,108);
+  int m18=pb_bar(109,119,108,118);
+  pb_flip(m18,8,"break c8: 3rd body ceiling 114.5 == open(2nd), the test is strict -- the 2nd is lowered to make room, because c4 and c14 together cap open(2nd) at close(1st) + 3");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(114.5,117,112,112.5);
+  pb_bar(114,115,111,111.25);
+  pb_bar(110,111,107,108);
+  int m19=pb_bar(109,119,107,118);
+  pb_control(m19,100,8,"restore c8: 3rd body ceiling 114 < open(2nd) 114.5");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(111,112,108,109);
+  int m20=pb_bar(110,119,108,118);
+  pb_flip(m20,9,"break c9: 4th body ceiling 111 == the 3rd's, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m21=pb_bar(109,119,108,118);
+  pb_control(m21,100,9,"restore c9: 4th body ceiling 110 < the 3rd's 111");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m22=pb_bar(108,119,107,118);
+  pb_flip(m22,10,"break c10: 5th opens 108 == close(4th), the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m23=pb_bar(109,119,108,118);
+  pb_control(m23,100,10,"restore c10: 5th opens 109 > close(4th) 108");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m24=pb_bar(109,119,108,117);
+  pb_flip(m24,11,"break c11: 5th closes 117 == the highest reaction-day high, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m25=pb_bar(109,119,108,118);
+  pb_control(m25,100,11,"restore c11: 5th closes 118 > the highest reaction-day high 117");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,113,99,112);
+  pb_bar(115,117,113,114);
+  pb_bar(112.5,113,111,111.5);
+  pb_bar(112.25,113,111,111.25);
+  int m26=pb_bar(112,119,111,118);
+  pb_flip(m26,12,"break c12: 1st body 2 == avg 2, the test is strict -- the three small bodies shrink with it and the reaction band narrows to (111,112), because the penetration line rises with the shorter body");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(109,113,99,112);
+  pb_bar(115,117,113,114);
+  pb_bar(112.5,113,111,111.5);
+  pb_bar(112.25,113,111,111.25);
+  int m27=pb_bar(112,119,111,118);
+  pb_control(m27,100,12,"restore c12: 1st body 3 > avg 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(117,118,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m28=pb_bar(109,120,108,119);
+  pb_flip(m28,13,"break c13: 2nd body 3 == avg 3, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m29=pb_bar(109,119,108,118);
+  pb_control(m29,100,13,"restore c13: 2nd body 2 < avg 3");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(112,113,108,109);
+  pb_bar(110,111,107,108);
+  int m30=pb_bar(109,119,108,118);
+  pb_flip(m30,14,"break c14: 3rd body 3 == avg 3, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m31=pb_bar(109,119,108,118);
+  pb_control(m31,100,14,"restore c14: 3rd body 2 < avg 3");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,106,107);
+  int m32=pb_bar(109,119,106,118);
+  pb_flip(m32,15,"break c15: 4th body 3 == avg 3, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m33=pb_bar(109,119,108,118);
+  pb_control(m33,100,15,"restore c15: 4th body 2 < avg 3");
+  pb_flat(8);
+
+}
+
+/* ---- Hard tier: CDLSTALLEDPATTERN ---------------------------------------- *
+ *
+ * Three rising white candles where the third stalls -- small, riding the second
+ * candle's shoulder. Twelve conditions, and the densest settings coupling in
+ * the corpus: FOUR settings read at SIX places across three bars, on two window
+ * lengths and two range types.
+ *
+ *   BodyLong  at i-2 (all primer) and at i-1 (carries the 1st body)
+ *   BodyShort at i   (carries the 1st and 2nd bodies)
+ *   ShadowVeryShort at i-1, HighLow-typed, carrying the 1st candle's range
+ *   Near      at i-2 (all primer) and at i-1 (carries the 1st candle's range)
+ *
+ * The geometry has to satisfy all six at once. Holding HighLow(i-2) at the
+ * primer's 10 fixes both Near reads and the ShadowVeryShort read; the two
+ * RealBody cascades then want the two long bodies chosen so that (18 + A2)/10
+ * and (16 + A2 + A1)/10 both land exactly, which 7 and 7 do -- giving 2, 2.5
+ * and 3 for BodyLong(i-2), BodyLong(i-1) and BodyShort(i). A first body of 12,
+ * the natural choice everywhere else in this file, is not available here: it
+ * would need a HighLow above 10 and move both Near reads off their exact
+ * values.
+ *
+ * TWO CONDITIONS ARE ENTAILED UNDER THE FILE'S USUAL PRIMER AND FLIPPABLE UNDER
+ * ANOTHER, which is the same trap CDLADVANCEBLOCK's c0 carries and the reason
+ * this builder runs two primers. c8 and c9 bound open(i-1) into
+ * (open(i-2), close(i-2) + Near], so a black 1st candle needs its body under
+ * Near while c5 needs it over BodyLong -- satisfiable only when Near exceeds
+ * BodyLong, which pb_primer(12,100,2,4) does not do (both are 2). c1 is the
+ * same argument one bar along, needing BodyLong(i-1) below Near. Both flips run
+ * on hr=5, where Near is 2.4.
+ *
+ * c11 IS WAIVED, and its derivation does not depend on the primer. For a white
+ * 3rd candle realbody(i) is close(i) - open(i), so
+ *   open(i) >= close(i-1) - realbody(i) - Near
+ * cancels to close(i) >= close(i-1) - Near. c3 already puts close(i) above
+ * close(i-1), and Near cannot be negative -- it is a HighLow range times a
+ * positive factor -- so c2 and c3 entail it for every valid input. Unlike a
+ * threshold comparison, that is a settings reference the builder cannot vary:
+ * it uses only the sign of Near, not its value.
+ */
+static void cond_stalledpattern( int i, int *c )
+{
+   c[0]  = pb_white(i-2);
+   c[1]  = pb_white(i-1);
+   c[2]  = pb_white(i);
+   c[3]  = pbC[i]   > pbC[i-1];
+   c[4]  = pbC[i-1] > pbC[i-2];
+   c[5]  = pb_body(i-2) > pb_avg(TA_BodyLong, i-2);
+   c[6]  = pb_body(i-1) > pb_avg(TA_BodyLong, i-1);
+   c[7]  = pb_upsh(i-1) < pb_avg(TA_ShadowVeryShort, i-1);
+   c[8]  = pbO[i-1] > pbO[i-2];
+   c[9]  = pbO[i-1] <= pbC[i-2] + pb_avg(TA_Near, i-2);
+   c[10] = pb_body(i) < pb_avg(TA_BodyShort, i);
+   c[11] = pbO[i] >= pbC[i-1] - pb_body(i) - pb_avg(TA_Near, i-1);
+}
+
+static void build_stalledpattern( void )
+{
+  pb_conditions(12);
+
+  pb_waive(11, "for a white 3rd candle realbody(i) is close(i) - open(i), so the test reduces to close(i) >= close(i-1) - avg(Near, i-1); c3 already puts close(i) above close(i-1), and Near is a HighLow range times a positive factor and so is never negative. c2 and c3 therefore entail it for every valid input, whatever the primer -- a 200k-sample random search over all three bars found no case breaking it alone");
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(105,112.5,104,112);
+  int q1=pb_bar(111,114,110,113);
+  pb_detect(q1,-100,"detect: three rising whites, the first two long with a very short 2nd upper shadow, a small 3rd riding the 2nd's shoulder");
+  pb_flat(8);
+
+  pb_primer(12,100,2,5);
+  pb_bar(102.25,103,91,100);
+  pb_bar(102.375,106.5,102,106);
+  int q2=pb_bar(105,108,104,107);
+  pb_flip(q2,0,"break c0: the 1st candle is black -- on hr=5, where Near 2.4 clears BodyLong 2 and a black 1st candle exists at all");
+  pb_flat(8);
+
+  pb_primer(12,100,2,5);
+  pb_bar(100,103,91,102.25);
+  pb_bar(102,106.5,101,106);
+  int q3=pb_bar(105,108,104,107);
+  pb_control(q3,-100,0,"restore c0: the 1st candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,5);
+  pb_bar(100,103,91,102.25);
+  pb_bar(104.5,105,102,102.4);
+  int q4=pb_bar(101,104,100,103);
+  pb_flip(q4,1,"break c1: the 2nd candle is black -- same hr=5 layout, with a 1st body short enough that BodyLong(i-1) stays under Near");
+  pb_flat(8);
+
+  pb_primer(12,100,2,5);
+  pb_bar(100,103,91,102.25);
+  pb_bar(102,106.5,101,106);
+  int q5=pb_bar(105,108,104,107);
+  pb_control(q5,-100,1,"restore c1: the 2nd candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(105,112.5,104,112);
+  int q6=pb_bar(114,115,112,113);
+  pb_flip(q6,2,"break c2: the 3rd candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(105,112.5,104,112);
+  int q7=pb_bar(111,114,110,113);
+  pb_control(q7,-100,2,"restore c2: the 3rd candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(105,112.5,104,112);
+  int q8=pb_bar(111,114,110,112);
+  pb_flip(q8,3,"break c3: 3rd close 112 == the 2nd close, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(105,112.5,104,112);
+  int q9=pb_bar(111,114,110,113);
+  pb_control(q9,-100,3,"restore c3: 3rd close 113 > the 2nd close 112");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(104,107.5,103,107);
+  int q10=pb_bar(107,110,106,109);
+  pb_flip(q10,4,"break c4: 2nd close 107 == the 1st close, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(104,108.5,103,108);
+  int q11=pb_bar(108,111,107,110);
+  pb_control(q11,-100,4,"restore c4: 2nd close 108 > the 1st close 107");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,103,93,102);
+  pb_bar(103,110.5,102,110);
+  int q12=pb_bar(109,112,108,111);
+  pb_flip(q12,5,"break c5: 1st body 2 == avg 2, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,104,94,103);
+  pb_bar(103,110.5,102,110);
+  int q13=pb_bar(109,112,108,111);
+  pb_control(q13,-100,5,"restore c5: 1st body 3 > avg 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(105,108,104,107.5);
+  int q14=pb_bar(107,110,106,109);
+  pb_flip(q14,6,"break c6: 2nd body 2.5 == avg 2.5, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(105,108.5,104,108);
+  int q15=pb_bar(107,110,106,109);
+  pb_control(q15,-100,6,"restore c6: 2nd body 3 > avg 2.5");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(105,113,104,112);
+  int q16=pb_bar(111,114,110,113);
+  pb_flip(q16,7,"break c7: 2nd upper shadow 1 == avg 1, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(105,112.5,104,112);
+  int q17=pb_bar(111,114,110,113);
+  pb_control(q17,-100,7,"restore c7: 2nd upper shadow 0.5 < avg 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(100,112.5,99,112);
+  int q18=pb_bar(111,114,110,113);
+  pb_flip(q18,8,"break c8: 2nd opens 100 == the 1st open, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(105,112.5,104,112);
+  int q19=pb_bar(111,114,110,113);
+  pb_control(q19,-100,8,"restore c8: 2nd opens 105 > the 1st open 100");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(109.5,113.5,108,113);
+  int q20=pb_bar(113,116,112,115);
+  pb_flip(q20,9,"break c9: 2nd opens 109.5, above close(1st) 107 + Near 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(109,113.5,108,113);
+  int q21=pb_bar(113,116,112,115);
+  pb_control(q21,-100,9,"restore c9: 2nd opens 109 == close(1st) 107 + Near 2, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(105,112.5,104,112);
+  int q22=pb_bar(111,115,110,114);
+  pb_flip(q22,10,"break c10: 3rd body 3 == avg 3, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(105,112.5,104,112);
+  int q23=pb_bar(111,114,110,113);
+  pb_control(q23,-100,10,"restore c10: 3rd body 2 < avg 3");
+  pb_flat(8);
+
+}
+
+/* ---- Hard tier: CDL3LINESTRIKE ------------------------------------------- *
+ *
+ * Three candles of one colour stepping in one direction, each opening near the
+ * previous body, and a fourth of the opposite colour that swallows all three.
+ * Eight conditions over FOUR bars, with c7 a two-way alternative of five terms
+ * each.
+ *
+ *   c0,c1    the first three share a colour
+ *   c2       the 4th is the opposite colour
+ *   c3,c4    the 2nd opens within Near of the 1st body, either side
+ *   c5,c6    the 3rd opens within Near of the 2nd body, either side
+ *   c7       three-white || three-black, each of them
+ *              term0  the 3rd candle's colour -- the arm selector
+ *              term1  the 3rd close steps past the 2nd
+ *              term2  the 2nd close steps past the 1st
+ *              term3  the 4th opens past the 3rd close
+ *              term4  the 4th closes past the 1st open
+ *
+ * ONE SETTING, READ TWICE, AND FOUR INCLUSIVE BOUNDS. Near is the only setting
+ * here, at i-3 (all primer) and at i-2 (carrying the 1st candle's range), so
+ * holding HighLow(i-3) at the primer's 10 puts both on 2 exactly. c3..c6 are
+ * two bands spelled with >= and <=, so all four controls sit on their own edge
+ * and all four flips strictly outside.
+ *
+ * c2 IS WAIVED AND c7 IS WHAT FORCES IT. Take the three-white alternative: it
+ * puts open(i) above close(i-1), c0/c1 make all three the same colour so
+ * close(i-1) > close(i-2) > close(i-3) >= open(i-3), and its last term puts
+ * close(i) below open(i-3). Chain those and open(i) > close(i) -- the 4th is
+ * black, which is exactly what c2 asks against a white 3rd. Price ordering
+ * only: no threshold appears in it, so unlike CDLSTALLEDPATTERN's c0 no choice
+ * of primer makes it flippable.
+ *
+ * BOTH ARM SELECTORS ARE WAIVED for a reason worth separating from
+ * CDLBREAKAWAY's. There the selector was unflippable because it was the arm's
+ * only one. Here it is worse: col(i-1) is read by c1 and c2 as well, so moving
+ * it breaks three conditions at once and can never be the single false term
+ * whatever the rest of the layout does.
+ */
+static void cond_3linestrike( int i, int *c )
+{
+   int k3 = pb_white(i-3) ? 1 : -1, k2 = pb_white(i-2) ? 1 : -1;
+   int k1 = pb_white(i-1) ? 1 : -1, k0 = pb_white(i)   ? 1 : -1;
+   double n3 = pb_avg(TA_Near, i-3), n2 = pb_avg(TA_Near, i-2);
+   c[0] = k3 == k2;
+   c[1] = k2 == k1;
+   c[2] = k0 == -k1;
+   c[3] = pbO[i-2] >= pb_bodylo(i-3) - n3;
+   c[4] = pbO[i-2] <= pb_bodyhi(i-3) + n3;
+   c[5] = pbO[i-1] >= pb_bodylo(i-2) - n2;
+   c[6] = pbO[i-1] <= pb_bodyhi(i-2) + n2;
+   c[7] = (  pb_white(i-1) && pbC[i-1] > pbC[i-2] && pbC[i-2] > pbC[i-3] &&
+             pbO[i] > pbC[i-1] && pbC[i] < pbO[i-3] )
+       || ( !pb_white(i-1) && pbC[i-1] < pbC[i-2] && pbC[i-2] < pbC[i-3] &&
+             pbO[i] < pbC[i-1] && pbC[i] > pbO[i-3] );
+}
+static void arm_3linestrike( int i, int cond, int arm, int *a )
+{
+   if( cond != 7 ) return;
+   if( arm == 0 )
+   {
+      a[0] = pb_white(i-1);
+      a[1] = pbC[i-1] > pbC[i-2];  a[2] = pbC[i-2] > pbC[i-3];
+      a[3] = pbO[i]   > pbC[i-1];  a[4] = pbC[i]   < pbO[i-3];
+   }
+   else
+   {
+      a[0] = !pb_white(i-1);
+      a[1] = pbC[i-1] < pbC[i-2];  a[2] = pbC[i-2] < pbC[i-3];
+      a[3] = pbO[i]   < pbC[i-1];  a[4] = pbC[i]   > pbO[i-3];
+   }
+}
+
+static void build_3linestrike( void )
+{
+  pb_conditions(8);
+  pb_signs(2);
+  pb_arm(7,0,5); pb_arm(7,1,5);
+  pb_arm_model(arm_3linestrike);
+
+  pb_waive(2, "c7 forces it. Take the three-white alternative: it puts open(i) above close(i-1), and c0/c1 make all three the same colour, so close(i-1) > close(i-2) > close(i-3) >= open(i-3) and its last term puts close(i) below open(i-3). So open(i) > close(i) and the 4th candle is black, which is exactly what c2 asks of it against a white 3rd. The three-black alternative is the same derivation mirrored. Price ordering only -- no threshold is involved, so no primer changes it; a 200k-sample random search over all four bars found no case breaking it alone");
+  pb_waive_arm(7,0,0,"the arm's own colour selector, and col(i-1) is read by c1 and c2 as well -- moving it breaks those too, so it can never be the single false term. The class it selects is fired by pb_signs(2)");
+  pb_waive_arm(7,1,0,"the arm's own colour selector, and col(i-1) is read by c1 and c2 as well -- moving it breaks those too, so it can never be the single false term. The class it selects is fired by pb_signs(2)");
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(103,108,102,107);
+  pb_bar(106,111,105,110);
+  int r1=pb_bar(111,112,98,99);
+  pb_detect(r1,100,"detect three white: three rising whites each opening near the previous body, a black 4th opening above and closing below the 1st open");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(101,102,96,97);
+  pb_bar(98,99,93,94);
+  int r2=pb_bar(93,106,92,105);
+  pb_detect(r2,-100,"detect three black: the mirror, firing the other output class");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(103,108,102,107);
+  pb_bar(106,111,105,110);
+  int r3=pb_bar(111,112,98,99);
+  pb_flip(r3,0,"break c0: the 1st candle is black -- its body edges are unchanged, so only the colour test moves");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(103,108,102,107);
+  pb_bar(106,111,105,110);
+  int r4=pb_bar(111,112,98,99);
+  pb_control(r4,100,0,"restore c0: the 1st and 2nd are both white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(105,106,100,101);
+  pb_bar(104,111,103,110);
+  int r5=pb_bar(111,112,98,99);
+  pb_flip(r5,1,"break c1: the 1st and 2nd are black and the 3rd white -- two candles move, because changing one would take c0 or c2 with it");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(103,108,102,107);
+  pb_bar(106,111,105,110);
+  int r6=pb_bar(111,112,98,99);
+  pb_control(r6,100,1,"restore c1: the 2nd and 3rd are both white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(97.5,108,96,107);
+  pb_bar(106,111,105,110);
+  int r7=pb_bar(111,112,98,99);
+  pb_flip(r7,3,"break c3: 2nd opens 97.5, below the 1st body floor 100 - Near 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(98,108,97,107);
+  pb_bar(106,111,105,110);
+  int r8=pb_bar(111,112,98,99);
+  pb_control(r8,100,3,"restore c3: 2nd opens 98 == 100 - Near 2, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(106.5,108,105,107);
+  pb_bar(106,111,105,110);
+  int r9=pb_bar(111,112,98,99);
+  pb_flip(r9,4,"break c4: 2nd opens 106.5, above the 1st body ceiling 104 + Near 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(106,108,105,107);
+  pb_bar(106,111,105,110);
+  int r10=pb_bar(111,112,98,99);
+  pb_control(r10,100,4,"restore c4: 2nd opens 106 == 104 + Near 2, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(103,108,102,107);
+  pb_bar(100.5,111,99,110);
+  int r11=pb_bar(111,112,98,99);
+  pb_flip(r11,5,"break c5: 3rd opens 100.5, below the 2nd body floor 103 - Near 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(103,108,102,107);
+  pb_bar(101,111,100,110);
+  int r12=pb_bar(111,112,98,99);
+  pb_control(r12,100,5,"restore c5: 3rd opens 101 == 103 - Near 2, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(103,108,102,107);
+  pb_bar(109.5,111,108,110);
+  int r13=pb_bar(111,112,98,99);
+  pb_flip(r13,6,"break c6: 3rd opens 109.5, above the 2nd body ceiling 107 + Near 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(103,108,102,107);
+  pb_bar(109,111,108,110);
+  int r14=pb_bar(111,112,98,99);
+  pb_control(r14,100,6,"restore c6: 3rd opens 109 == 107 + Near 2, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(103,108,102,107);
+  pb_bar(106,111,105,107);
+  int r15=pb_bar(111,112,98,99);
+  pb_flip_in(r15,7,0,1,"break c7 alt0 term1: 3rd close 107 == the 2nd close, the rise is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(103,108,102,104);
+  pb_bar(106,111,105,110);
+  int r16=pb_bar(111,112,98,99);
+  pb_flip_in(r16,7,0,2,"break c7 alt0 term2: 2nd close 104 == the 1st close, the rise is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(103,108,102,107);
+  pb_bar(106,111,105,110);
+  int r17=pb_bar(110,112,98,99);
+  pb_flip_in(r17,7,0,3,"break c7 alt0 term3: 4th opens 110 == the 3rd close, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(103,108,102,107);
+  pb_bar(106,111,105,110);
+  int r18=pb_bar(111,112,99,100);
+  pb_flip_in(r18,7,0,4,"break c7 alt0 term4: 4th closes 100 == the 1st open, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(101,102,96,97);
+  pb_bar(98,99,96,97);
+  int r19=pb_bar(93,106,92,105);
+  pb_flip_in(r19,7,1,1,"break c7 alt1 term1: 3rd close 97 == the 2nd close, the fall is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(101,102,99,100);
+  pb_bar(98,99,93,94);
+  int r20=pb_bar(93,106,92,105);
+  pb_flip_in(r20,7,1,2,"break c7 alt1 term2: 2nd close 100 == the 1st close, the fall is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(101,102,96,97);
+  pb_bar(98,99,93,94);
+  int r21=pb_bar(94,106,92,105);
+  pb_flip_in(r21,7,1,3,"break c7 alt1 term3: 4th opens 94 == the 3rd close, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(101,102,96,97);
+  pb_bar(98,99,93,94);
+  int r22=pb_bar(93,106,92,104);
+  pb_flip_in(r22,7,1,4,"break c7 alt1 term4: 4th closes 104 == the 1st open, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(103,108,102,107);
+  pb_bar(106,111,105,110);
+  int r23=pb_bar(111,112,98,99);
+  pb_control(r23,100,7,"restore c7 via alt0: every term of the three-white alternative holds");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(101,102,96,97);
+  pb_bar(98,99,93,94);
+  int r24=pb_bar(93,106,92,105);
+  pb_control(r24,-100,7,"restore c7 via alt1: every term of the three-black alternative holds");
+  pb_flat(8);
+
+}
+
+/* ---- Hard tier: CDLIDENTICAL3CROWS --------------------------------------- *
+ *
+ * Three declining black candles with no lower shadow, each opening at very
+ * nearly the previous close. Twelve conditions over three bars, five settings
+ * reads, and FOUR of the twelve inclusive -- two Equal bands, each spelled as a
+ * <= and a >=, so four of the controls sit on their own edge.
+ *
+ *   c0,c2,c4   the three candles are black
+ *   c1,c3,c5   each has a lower shadow under ShadowVeryShort
+ *   c6,c7      the closes decline
+ *   c8,c9      the 2nd opens within Equal of close(1st)
+ *   c10,c11    the 3rd opens within Equal of close(2nd)
+ *
+ * NOTHING IS WAIVED HERE, which is unusual for a twelve-condition pattern and
+ * worth knowing why: the three colour tests are INDEPENDENT. Unlike
+ * CDL3LINESTRIKE, where c0..c2 compare adjacent colours and each candle sits in
+ * two of them, these each assert one candle's colour on its own. So each flips
+ * by recolouring one bar, and none is entangled with its neighbours.
+ *
+ * The geometry is the easiest in the hard tier once one thing is seen: holding
+ * HighLow at 10 on the 1st and 2nd candles puts ALL FIVE reads on exact values
+ * -- ShadowVeryShort 1 at each of the three bars, Equal 0.5 at both. The bodies
+ * are then free, because no body test exists in this pattern at all. Bars with
+ * the low ON the close (lower shadow 0) satisfy c1/c3/c5 with room to spare and
+ * leave the high as the only degree of freedom needed to hold HighLow at 10.
+ *
+ * c0's flip is the one that moves three bars rather than one. Recolouring the
+ * 1st candle moves close(1st), which is the centre of the band c8/c9 hold
+ * open(2nd) in -- so the 2nd has to follow it, and the 3rd follows the 2nd
+ * through c10/c11. The colour tests are independent of each other; they are not
+ * independent of the bands.
+ */
+static void cond_identical3crows( int i, int *c )
+{
+   c[0]  = !pb_white(i-2);
+   c[1]  = pb_losh(i-2) < pb_avg(TA_ShadowVeryShort, i-2);
+   c[2]  = !pb_white(i-1);
+   c[3]  = pb_losh(i-1) < pb_avg(TA_ShadowVeryShort, i-1);
+   c[4]  = !pb_white(i);
+   c[5]  = pb_losh(i)   < pb_avg(TA_ShadowVeryShort, i);
+   c[6]  = pbC[i-2] > pbC[i-1];
+   c[7]  = pbC[i-1] > pbC[i];
+   c[8]  = pbO[i-1] <= pbC[i-2] + pb_avg(TA_Equal, i-2);
+   c[9]  = pbO[i-1] >= pbC[i-2] - pb_avg(TA_Equal, i-2);
+   c[10] = pbO[i]   <= pbC[i-1] + pb_avg(TA_Equal, i-1);
+   c[11] = pbO[i]   >= pbC[i-1] - pb_avg(TA_Equal, i-1);
+}
+
+static void build_identical3crows( void )
+{
+  pb_conditions(12);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,109,99,99);
+  int u1=pb_bar(99,104,94,94);
+  pb_detect(u1,-100,"detect: three black candles, each with no lower shadow, declining, each opening within Equal of the previous close");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,114,104,110);
+  pb_bar(110,115,105,105);
+  int u2=pb_bar(105,110,100,100);
+  pb_flip(u2,0,"break c0: the 1st candle is white -- the other two move with it, because close(1st) is the centre of the band c8/c9 hold open(2nd) in");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,109,99,99);
+  int u3=pb_bar(99,104,94,94);
+  pb_control(u3,-100,0,"restore c0: the 1st candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,113,103,104);
+  pb_bar(104,109,99,99);
+  int u4=pb_bar(99,104,94,94);
+  pb_flip(u4,1,"break c1: 1st lower shadow 1 == avg 1, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,109,99,99);
+  int u5=pb_bar(99,104,94,94);
+  pb_control(u5,-100,1,"restore c1: 1st lower shadow 0 < avg 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(103.5,113,103,103.75);
+  int u6=pb_bar(103.5,108.5,98.5,98.5);
+  pb_flip(u6,2,"break c2: the 2nd candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,109,99,99);
+  int u7=pb_bar(99,104,94,94);
+  pb_control(u7,-100,2,"restore c2: the 2nd candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,108,98,99);
+  int u8=pb_bar(99,104,94,94);
+  pb_flip(u8,3,"break c3: 2nd lower shadow 1 == avg 1, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,109,99,99);
+  int u9=pb_bar(99,104,94,94);
+  pb_control(u9,-100,3,"restore c3: 2nd lower shadow 0 < avg 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,109,99,99);
+  int u10=pb_bar(98.5,108,98,98.75);
+  pb_flip(u10,4,"break c4: the 3rd candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,109,99,99);
+  int u11=pb_bar(99,104,94,94);
+  pb_control(u11,-100,4,"restore c4: the 3rd candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,109,99,99);
+  int u12=pb_bar(99,103,93,94);
+  pb_flip(u12,5,"break c5: 3rd lower shadow 1 == avg 1, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,109,99,99);
+  int u13=pb_bar(99,104,94,94);
+  pb_control(u13,-100,5,"restore c5: 3rd lower shadow 0 < avg 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104.5,114,104,104);
+  int u14=pb_bar(104,109,99,99);
+  pb_flip(u14,6,"break c6: 2nd close 104 == the 1st close, the decline is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104.5,114,103.5,103.5);
+  int u15=pb_bar(103.5,109,99,99);
+  pb_control(u15,-100,6,"restore c6: 2nd close 103.5 < the 1st close 104");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,109,99,99);
+  int u16=pb_bar(99.5,109,99,99);
+  pb_flip(u16,7,"break c7: 3rd close 99 == the 2nd close, the decline is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,109,99,99);
+  int u17=pb_bar(99.5,109,98.5,98.5);
+  pb_control(u17,-100,7,"restore c7: 3rd close 98.5 < the 2nd close 99");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(105,109,99,99);
+  int u18=pb_bar(99,104,94,94);
+  pb_flip(u18,8,"break c8: 2nd opens 105, above close(1st) 104 + Equal 0.5");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104.5,109,99,99);
+  int u19=pb_bar(99,104,94,94);
+  pb_control(u19,-100,8,"restore c8: 2nd opens 104.5 == 104 + Equal 0.5, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(103,109,99,99);
+  int u20=pb_bar(99,104,94,94);
+  pb_flip(u20,9,"break c9: 2nd opens 103, below close(1st) 104 - Equal 0.5");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(103.5,109,99,99);
+  int u21=pb_bar(99,104,94,94);
+  pb_control(u21,-100,9,"restore c9: 2nd opens 103.5 == 104 - Equal 0.5, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,109,99,99);
+  int u22=pb_bar(100,104,94,94);
+  pb_flip(u22,10,"break c10: 3rd opens 100, above close(2nd) 99 + Equal 0.5");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,109,99,99);
+  int u23=pb_bar(99.5,104,94,94);
+  pb_control(u23,-100,10,"restore c10: 3rd opens 99.5 == 99 + Equal 0.5, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,109,99,99);
+  int u24=pb_bar(98,104,94,94);
+  pb_flip(u24,11,"break c11: 3rd opens 98, below close(2nd) 99 - Equal 0.5");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,109,99,99);
+  int u25=pb_bar(98.5,104,94,94);
+  pb_control(u25,-100,11,"restore c11: 3rd opens 98.5 == 99 - Equal 0.5, inclusive");
+  pb_flat(8);
+
+}
+
+/* ---- Hard tier: CDLLADDERBOTTOM ------------------------------------------ *
+ *
+ * Three black candles stepping down, a fourth black one with a long upper
+ * shadow, and a white fifth that closes above that shadow. Twelve conditions
+ * over five bars and only ONE settings read -- ShadowVeryShort at i-1 -- which
+ * makes this the least settings-coupled pattern in the hard tier and the
+ * geometry correspondingly free.
+ *
+ * That one read still spans three of the five bars: its window ends at i-1, so
+ * it carries the 1st, 2nd and 3rd candles. Giving each of those a HighLow of 10
+ * puts it on 1 exactly, and every flip that moves one of those bodies keeps
+ * that HighLow so the threshold does not drift underneath it.
+ *
+ * c8 IS THE ONE READ THAT POINTS THE OTHER WAY. Everywhere else in this file a
+ * ShadowVeryShort test asks for a shadow UNDER the average; here the 4th
+ * candle's upper shadow must EXCEED it. The boundary is the same equality and
+ * the flip sits on it, but the control is above rather than below -- worth
+ * checking the direction before copying a shadow scenario from another builder.
+ *
+ * c1's flip is the only one that re-cuts the whole ladder. A white 2nd candle
+ * needs open(2nd) below close(2nd), while c4 puts open(2nd) above open(3rd) and
+ * c5 puts close(2nd) below close(1st) -- so the four prices have to interleave
+ * as open(3rd) < open(2nd) < close(2nd) < close(1st), which the detect's layout
+ * does not leave room for. Widening the 1st candle and dropping the 3rd is what
+ * makes the gap. c0 and c2, the other two colour tests, each move one bar: the
+ * outer two are not squeezed from both sides the way the middle one is.
+ */
+static void cond_ladderbottom( int i, int *c )
+{
+   c[0]  = !pb_white(i-4);
+   c[1]  = !pb_white(i-3);
+   c[2]  = !pb_white(i-2);
+   c[3]  = pbO[i-4] > pbO[i-3];
+   c[4]  = pbO[i-3] > pbO[i-2];
+   c[5]  = pbC[i-4] > pbC[i-3];
+   c[6]  = pbC[i-3] > pbC[i-2];
+   c[7]  = !pb_white(i-1);
+   c[8]  = pb_upsh(i-1) > pb_avg(TA_ShadowVeryShort, i-1);
+   c[9]  = pb_white(i);
+   c[10] = pbO[i] > pbO[i-1];
+   c[11] = pbC[i] > pbH[i-1];
+}
+
+static void build_ladderbottom( void )
+{
+  pb_conditions(12);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v1=pb_bar(113,117,112,116);
+  pb_detect(v1,100,"detect: three black candles with descending opens and closes, a black 4th with a long upper shadow, a white 5th closing above that shadow");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(119,121,111,120);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v2=pb_bar(113,117,112,116);
+  pb_flip(v2,0,"break c0: the 1st candle is white -- its open still leads the 2nd's, so only the colour test moves");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v3=pb_bar(113,117,112,116);
+  pb_control(v3,100,0,"restore c0: the 1st candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(125,126,116,120);
+  pb_bar(115,119,109,118);
+  pb_bar(114,115,105,110);
+  pb_bar(108,110,103,104);
+  int v4=pb_bar(109,113,108,112);
+  pb_flip(v4,1,"break c1: the 2nd candle is white -- the whole ladder is re-cut, because a white 2nd needs open(2nd) below close(2nd) while c4 puts it above open(3rd) and c5 puts close(2nd) below close(1st)");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(125,126,116,120);
+  pb_bar(118,119,109,115);
+  pb_bar(114,115,105,110);
+  pb_bar(108,110,103,104);
+  int v5=pb_bar(109,113,108,112);
+  pb_control(v5,100,1,"restore c1: the 2nd candle is black, same layout");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(110,113,103,112);
+  pb_bar(112,114,107,108);
+  int v6=pb_bar(113,117,112,116);
+  pb_flip(v6,2,"break c2: the 3rd candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v7=pb_bar(113,117,112,116);
+  pb_control(v7,100,2,"restore c2: the 3rd candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(118,119,109,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v8=pb_bar(113,117,112,116);
+  pb_flip(v8,3,"break c3: 1st opens 118 == the 2nd open, the descent is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(119,120,110,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v9=pb_bar(113,117,112,116);
+  pb_control(v9,100,3,"restore c3: 1st opens 119 > the 2nd open 118");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(116,117,107,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v10=pb_bar(113,117,112,116);
+  pb_flip(v10,4,"break c4: 2nd opens 116 == the 3rd open, the descent is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v11=pb_bar(113,117,112,116);
+  pb_control(v11,100,4,"restore c4: 2nd opens 118 > the 3rd open 116");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,113);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v12=pb_bar(113,117,112,116);
+  pb_flip(v12,5,"break c5: 1st closes 113 == the 2nd close, the descent is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,114);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v13=pb_bar(113,117,112,116);
+  pb_control(v13,100,5,"restore c5: 1st closes 114 > the 2nd close 113");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,111);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v14=pb_bar(113,117,112,116);
+  pb_flip(v14,6,"break c6: 2nd closes 111 == the 3rd close, the descent is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v15=pb_bar(113,117,112,116);
+  pb_control(v15,100,6,"restore c6: 2nd closes 113 > the 3rd close 111");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(108,114,107,112);
+  int v16=pb_bar(113,117,112,116);
+  pb_flip(v16,7,"break c7: the 4th candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v17=pb_bar(113,117,112,116);
+  pb_control(v17,100,7,"restore c7: the 4th candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,113,107,108);
+  int v18=pb_bar(113,117,112,116);
+  pb_flip(v18,8,"break c8: 4th upper shadow 1 == avg 1, and this test is strict in the OTHER direction -- the shadow must exceed the average, not fall under it");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v19=pb_bar(113,117,112,116);
+  pb_control(v19,100,8,"restore c8: 4th upper shadow 2 > avg 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v20=pb_bar(117,118,114,115);
+  pb_flip(v20,9,"break c9: the 5th candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v21=pb_bar(113,117,112,116);
+  pb_control(v21,100,9,"restore c9: the 5th candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v22=pb_bar(112,117,111,116);
+  pb_flip(v22,10,"break c10: 5th opens 112 == the 4th open, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v23=pb_bar(113,117,112,116);
+  pb_control(v23,100,10,"restore c10: 5th opens 113 > the 4th open 112");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v24=pb_bar(113,115,112,114);
+  pb_flip(v24,11,"break c11: 5th closes 114 == the 4th high, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v25=pb_bar(113,117,112,116);
+  pb_control(v25,100,11,"restore c11: 5th closes 116 > the 4th high 114");
+  pb_flat(8);
+
+}
+
 static ErrorNumber test_marquee_predicate_coverage( void )
 {
    ErrorNumber e;
@@ -5970,6 +8196,13 @@ static ErrorNumber test_marquee_predicate_coverage( void )
    pb_reset(); build_advanceblock();        e = pb_check_mcdc("CDLADVANCEBLOCK",        TA_CDLADVANCEBLOCK,        cond_advanceblock);        if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_gapsidesidewhite();    e = pb_check_mcdc("CDLGAPSIDESIDEWHITE",    TA_CDLGAPSIDESIDEWHITE,    cond_gapsidesidewhite);    if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_risefall3methods();    e = pb_check_mcdc("CDLRISEFALL3METHODS",    TA_CDLRISEFALL3METHODS,    cond_risefall3methods);    if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_breakaway();           e = pb_check_mcdc("CDLBREAKAWAY",           TA_CDLBREAKAWAY,           cond_breakaway);           if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_abandonedbaby();       e = pb_check_mcdc_p("CDLABANDONEDBABY",     TA_CDLABANDONEDBABY,     0.3, cond_abandonedbaby);   if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_mathold();             e = pb_check_mcdc_p("CDLMATHOLD",           TA_CDLMATHOLD,           0.5, cond_mathold);         if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_stalledpattern();      e = pb_check_mcdc("CDLSTALLEDPATTERN",     TA_CDLSTALLEDPATTERN,      cond_stalledpattern);      if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_3linestrike();         e = pb_check_mcdc("CDL3LINESTRIKE",        TA_CDL3LINESTRIKE,         cond_3linestrike);         if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_identical3crows();     e = pb_check_mcdc("CDLIDENTICAL3CROWS",   TA_CDLIDENTICAL3CROWS,     cond_identical3crows);     if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_ladderbottom();        e = pb_check_mcdc("CDLLADDERBOTTOM",       TA_CDLLADDERBOTTOM,        cond_ladderbottom);        if( e != TA_TEST_PASS ) return e;
    pb_report_totals();
    return TA_TEST_PASS;
 }

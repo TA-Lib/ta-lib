@@ -1088,6 +1088,54 @@ fn fresh_value_expr(func: &FuncDef, handle_var: &str) -> String {
     }
 }
 
+/// The per-bar finite-input rejection for `Update`/`Peek`: one `double.IsFinite`
+/// per scalar bar input, before the handle is touched.
+///
+/// The streaming tier's half of the boundary contract (see
+/// `docs/streaming-api-design.md`). Batch does not filter — it computes on
+/// whatever it is handed. A handle cannot do that, because its state is
+/// retained: one non-finite bar poisons every recursive accumulator in it for
+/// the rest of its life, long after the feed recovers.
+///
+/// Routed through `Core.StreamFailure` so the message prefix and the exception
+/// type match the open rejections exactly.
+fn finite_bar_check(func: &FuncDef, indent: &str, what: &str) -> String {
+    let bars = streaming::input_array_names(func);
+    if bars.is_empty() {
+        return String::new();
+    }
+    let n = base_name(func);
+    let conds: Vec<String> = bars.iter().map(|b| format!("!double.IsFinite({b})")).collect();
+    format!(
+        "{indent}if( {} ) throw Core.StreamFailure(\"{n}\", \"{what}\", RetCode.BadParam);\n",
+        conds.join(" || ")
+    )
+}
+
+/// The warm-up-history finite-input rejection for the PUBLIC `Open` /
+/// `OpenAndFill`, emitted at those entry points ONLY.
+///
+/// `OpenInternal` / `OpenAndFillInternal` are the composition seams: a composed
+/// open hands its sub-streams slices of the very span validated here, so a scan
+/// there would re-walk validated data once per sub-call, and would apply the
+/// caller-boundary contract to library-computed intermediates.
+fn finite_history_check(func: &FuncDef, indent: &str, what: &str) -> String {
+    let inputs = streaming::input_array_names(func);
+    if inputs.is_empty() {
+        return String::new();
+    }
+    let n = base_name(func);
+    let mut out = String::new();
+    for i in &inputs {
+        let _ = writeln!(
+            out,
+            "{indent}foreach( double taFiniteV in {i} )\n\
+             {indent}   if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure(\"{n}\", \"{what}\", RetCode.BadParam);"
+        );
+    }
+    out
+}
+
 fn emit_update_peek_value_clone(o: &mut String, func: &FuncDef, reuse: bool) {
     let class = stream_class_name(func);
     let base = base_name(func);
@@ -1097,11 +1145,18 @@ fn emit_update_peek_value_clone(o: &mut String, func: &FuncDef, reuse: bool) {
 
     // --- Update -------------------------------------------------------------
     let mut d = XmlDoc::new();
-    d.summary("Commit one closed bar; always produces the new current value.");
+    d.summary("Commit one closed bar, returning the new current value.");
     d.open("remarks");
     d.para(
-        "Never throws after a successful open, and allocates nothing — neither handle \
-         state nor a return value.",
+        "Allocates nothing — neither handle state nor a return value.",
+    );
+    d.para(
+        "Throws <see cref=\"System.ArgumentException\"/> if any bar value is not finite \
+         (NaN or an infinity). That check runs before anything is written, so the handle \
+         is left exactly as it was and the stream stays usable: skip the bar, or re-open \
+         on a clean history. This is the one place the streaming tier is stricter than \
+         the batch API, which computes on whatever it is given: a handle retains its \
+         state, so a single non-finite bar would poison every later value it produces.",
     );
     d.close("remarks");
     for input in &inputs {
@@ -1112,6 +1167,7 @@ fn emit_update_peek_value_clone(o: &mut String, func: &FuncDef, reuse: bool) {
     o.push_str(&d.render(6));
     let _ = writeln!(o, "      public {vt} Update( {sig_bars} )");
     let _ = writeln!(o, "      {{");
+    o.push_str(&finite_bar_check(func, "         ", "update"));
     let _ = writeln!(o, "         core.{base}_StreamStep(this, {fwd_bars});");
     let _ = writeln!(o, "         return {};", fresh_value_expr(func, ""));
     let _ = writeln!(o, "      }}");
@@ -1150,6 +1206,9 @@ fn emit_update_peek_value_clone(o: &mut String, func: &FuncDef, reuse: bool) {
     o.push_str(&d.render(6));
     let _ = writeln!(o, "      public {vt} Peek( {sig_bars} )");
     let _ = writeln!(o, "      {{");
+    // Ahead of the scratch copy, not left to the step: a rejected bar must not
+    // pay for a handle copy.
+    o.push_str(&finite_bar_check(func, "         ", "peek"));
     if reuse {
         // Per thread, not per handle: `Peek` must not write the handle (two
         // threads may peek the same one), and a thread-static keeps the reuse
@@ -2329,6 +2388,7 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef) {
             "      if( {input}.IsEmpty ) throw new ArgumentException(\"{input} is empty\", nameof({input}));"
         );
     }
+    o.push_str(&finite_history_check(func, "      ", "open"));
     let _ = writeln!(
         o,
         "      return {base}_OpenInternal({}, 0{opt_fwd_str});",
@@ -2425,6 +2485,7 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef) {
             "      if( {input}.IsEmpty ) throw new ArgumentException(\"{input} is empty\", nameof({input}));"
         );
     }
+    o.push_str(&finite_history_check(func, "      ", "openAndFill"));
     let _ = writeln!(o, "      {class} sp = new {class}(this);");
     let _ = writeln!(
         o,

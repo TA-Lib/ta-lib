@@ -509,10 +509,20 @@
       public record Value(double realUpperBand, double realMiddleBand, double realLowerBand) { }
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public Value update( double inHigh, double inLow, double inClose ) {
+         if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+            throw new IllegalArgumentException("ACCBANDS update: BadParam");
          core.ACCBANDS_StreamStep(this, inHigh, inLow, inClose);
          this.cachedValue = new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
          return this.cachedValue;
@@ -528,6 +538,8 @@
        * the thread.
        */
       public Value peek( double inHigh, double inLow, double inClose ) {
+         if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+            throw new IllegalArgumentException("ACCBANDS peek: BadParam");
          ACCBANDS_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new ACCBANDS_Stream(this);
@@ -813,6 +825,17 @@
     */
    public ACCBANDS_Stream ACCBANDS_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
    {
+      if( inHigh.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
+            if( !Double.isFinite(inHigh[taFiniteIdx]) )
+               throw new IllegalArgumentException("ACCBANDS open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
+            if( !Double.isFinite(inLow[taFiniteIdx]) )
+               throw new IllegalArgumentException("ACCBANDS open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
+            if( !Double.isFinite(inClose[taFiniteIdx]) )
+               throw new IllegalArgumentException("ACCBANDS open: BadParam");
+      }
       return ACCBANDS_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**
@@ -826,6 +849,17 @@
     */
    public ACCBANDS_Stream ACCBANDS_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
    {
+      if( inHigh.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
+            if( !Double.isFinite(inHigh[taFiniteIdx]) )
+               throw new IllegalArgumentException("ACCBANDS openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
+            if( !Double.isFinite(inLow[taFiniteIdx]) )
+               throw new IllegalArgumentException("ACCBANDS openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
+            if( !Double.isFinite(inClose[taFiniteIdx]) )
+               throw new IllegalArgumentException("ACCBANDS openAndFill: BadParam");
+      }
       ACCBANDS_Stream sp = new ACCBANDS_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

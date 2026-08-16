@@ -525,7 +525,7 @@ impl MAVP_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MAVP_step_internal(&self, sp: &mut MAVP_StreamState, inReal: f64, inPeriods: f64, outReal: &mut f64) {
+    fn MAVP_step_internal(&self, sp: &mut MAVP_StreamState, inReal: f64, inPeriods: f64, outReal: &mut f64) -> Result<(), RetCode> {
         let mut cp: i32 = inPeriods as i32;
         if cp < sp.optInMinPeriod {
             cp = sp.optInMinPeriod;
@@ -534,11 +534,12 @@ impl Core {
         }
         let slot: usize = (cp - sp.optInMinPeriod) as usize;
         for (bankIdx, sub) in sp.bank.iter_mut().enumerate() {
-            let subValue = sub.update(inReal);
+            let subValue = sub.update(inReal)?;
             if bankIdx == slot {
                 (*outReal) = subValue;
             }
         }
+        Ok(())
     }
 
     /// Internal startIdx-anchored open behind [`Core::MAVP_Open`] (composition seam).
@@ -611,12 +612,16 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.MAVP_Open(&data, &periods, 2, 30, MAType::SMA).expect("enough history");
-    /// let peeked = s.peek(100.9, 14.0);
-    /// let updated = s.update(100.9, 14.0);
+    /// let peeked = s.peek(100.9, 14.0).expect("a finite bar");
+    /// let updated = s.update(100.9, 14.0).expect("a finite bar");
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_MAVP_Open")]
     pub fn MAVP_Open(&self, inReal: &[f64], inPeriods: &[f64], optInMinPeriod: i32, optInMaxPeriod: i32, optInMAType: MAType) -> Result<(MAVP_Stream, f64), RetCode> {
+        if inReal.iter().any(|v| !v.is_finite())
+            || inPeriods.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.MAVP_OpenInternal(inReal, inPeriods, 0, optInMinPeriod, optInMaxPeriod, optInMAType)
     }
 
@@ -632,6 +637,10 @@ impl Core {
         }
         if inReal.len() > MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
+        }
+        if inReal.iter().any(|v| !v.is_finite())
+            || inPeriods.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
         }
         if ((optInMinPeriod) as i32) == (i32::MIN) {
             optInMinPeriod = 2;
@@ -675,7 +684,7 @@ impl Core {
         let mut t: usize = lookbackTotal + 1;
         while t < historyLen {
             for (bankIdx, sub) in bank.iter_mut().enumerate() {
-                scratch[bankIdx] = sub.update(inReal[t]);
+                scratch[bankIdx] = sub.update(inReal[t])?;
             }
             cp = inPeriods[t] as i32;
             if cp < optInMinPeriod {
@@ -705,12 +714,25 @@ thread_local! {
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl MAVP_Stream {
-    /// Commit one closed bar; always produces a value. Never allocates.
+    /// Commit one closed bar. Never allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite (NaN or ±Inf).
+    /// That check runs before anything is written, so the handle is left
+    /// exactly as it was and the stream stays usable:
+    /// skip the bar, or close and re-open on a clean history. This is the
+    /// one place the streaming tier is stricter than the batch API, which
+    /// computes on whatever it is given — a handle retains its state, so a
+    /// single non-finite bar would poison every later value it produces.
     #[doc(alias = "TA_MAVP_Update")]
-    pub fn update(&mut self, inReal: f64, inPeriods: f64) -> f64 {
+    pub fn update(&mut self, inReal: f64, inPeriods: f64) -> Result<f64, RetCode> {
+        if !inReal.is_finite() || !inPeriods.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut outReal: f64 = 0.0_f64;
-        self.core.MAVP_step_internal(&mut self.state, inReal, inPeriods, &mut outReal);
-        outReal
+        self.core.MAVP_step_internal(&mut self.state, inReal, inPeriods, &mut outReal)?;
+        Ok(outReal)
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
@@ -718,9 +740,16 @@ impl MAVP_Stream {
     /// on a scratch copy of the state). Never writes the handle, so peeks may
     /// run concurrently with each other. The copy it runs on is held per thread and reused,
     /// so only the first peek of this function on a thread allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite, exactly as
+    /// `update` rejects it.
     #[doc(alias = "TA_MAVP_Peek")]
-    #[must_use]
-    pub fn peek(&self, inReal: f64, inPeriods: f64) -> f64 {
+    pub fn peek(&self, inReal: f64, inPeriods: f64) -> Result<f64, RetCode> {
+        if !inReal.is_finite() || !inPeriods.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         MAVP_PEEK_SCRATCH.with(|cell| {
             let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
             scratch.restore_from(self);

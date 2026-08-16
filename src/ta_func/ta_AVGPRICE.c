@@ -212,6 +212,19 @@ TA_RetCode TA_AVGPRICE_OpenInternal( struct TA_AVGPRICE_Stream **stream, const d
 
 TA_LIB_API TA_RetCode TA_AVGPRICE_Open( TA_AVGPRICE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, double *outReal )
 {
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inOpen[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inHigh[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inLow[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inClose[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_AVGPRICE_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outReal );
 }
 
@@ -220,7 +233,18 @@ TA_LIB_API TA_RetCode TA_AVGPRICE_OpenAndFill( TA_AVGPRICE_Stream **stream, cons
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
    if( !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inOpen || (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inClose ) return TA_BAD_PARAM;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inOpen[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inHigh[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inLow[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inClose[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_AVGPRICE_OpenCore( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outBegIdx, outNBElement, outReal, 1 );
 }
 
@@ -233,6 +257,7 @@ TA_RetCode TA_AVGPRICE_OpenAndFillInternal( struct TA_AVGPRICE_Stream **stream, 
 TA_LIB_API TA_RetCode TA_AVGPRICE_Update( TA_AVGPRICE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    TA_AVGPRICE_StepInternal( stream, inOpen, inHigh, inLow, inClose, outReal );
    return TA_SUCCESS;
 }
@@ -242,6 +267,7 @@ TA_LIB_API TA_RetCode TA_AVGPRICE_Peek( const TA_AVGPRICE_Stream *stream, double
    struct TA_AVGPRICE_Stream scratch;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    scratch = *stream;
    TA_AVGPRICE_StepInternal( &scratch, inOpen, inHigh, inLow, inClose, outReal );
    return TA_SUCCESS;

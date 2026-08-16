@@ -28,7 +28,7 @@
    {
       if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 5e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return -1;
       }
       int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
@@ -64,7 +64,7 @@
       }
       if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 5e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       /* Identify the minimum number of price bar needed
@@ -156,7 +156,7 @@
       }
       if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 5e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       lookbackTotal = CDLDARKCLOUDCOVER_Lookback(optInPenetration);
@@ -418,10 +418,20 @@
       private static final ThreadLocal<CDLDARKCLOUDCOVER_Stream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+         if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+            throw new IllegalArgumentException("CDLDARKCLOUDCOVER update: BadParam");
          core.CDLDARKCLOUDCOVER_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outInteger;
       }
@@ -436,6 +446,8 @@
        * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
+         if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+            throw new IllegalArgumentException("CDLDARKCLOUDCOVER peek: BadParam");
          CDLDARKCLOUDCOVER_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new CDLDARKCLOUDCOVER_Stream(this);
@@ -518,7 +530,7 @@
       }
       if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 5e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
@@ -688,6 +700,20 @@
     */
    public CDLDARKCLOUDCOVER_Stream CDLDARKCLOUDCOVER_Open( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration )
    {
+      if( inOpen.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
+            if( !Double.isFinite(inOpen[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLDARKCLOUDCOVER open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
+            if( !Double.isFinite(inHigh[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLDARKCLOUDCOVER open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
+            if( !Double.isFinite(inLow[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLDARKCLOUDCOVER open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
+            if( !Double.isFinite(inClose[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLDARKCLOUDCOVER open: BadParam");
+      }
       return CDLDARKCLOUDCOVER_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
    }
    /**
@@ -701,6 +727,20 @@
     */
    public CDLDARKCLOUDCOVER_Stream CDLDARKCLOUDCOVER_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, int outInteger[] )
    {
+      if( inOpen.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
+            if( !Double.isFinite(inOpen[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLDARKCLOUDCOVER openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
+            if( !Double.isFinite(inHigh[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLDARKCLOUDCOVER openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
+            if( !Double.isFinite(inLow[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLDARKCLOUDCOVER openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
+            if( !Double.isFinite(inClose[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLDARKCLOUDCOVER openAndFill: BadParam");
+      }
       CDLDARKCLOUDCOVER_Stream sp = new CDLDARKCLOUDCOVER_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

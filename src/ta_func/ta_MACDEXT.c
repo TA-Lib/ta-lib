@@ -490,34 +490,47 @@ struct TA_MACDEXT_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_MACDEXT_StepInternal( struct TA_MACDEXT_Stream *sp, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist )
+static TA_RetCode TA_MACDEXT_StepInternal( struct TA_MACDEXT_Stream *sp, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist )
 {
-   double cur_slowMABuffer;
-   double cur_fastMABuffer;
-   double cur_outMACDSignal;
-   double cur_outMACDHist;
+   double cur_slowMABuffer = 0.0;
+   double cur_fastMABuffer = 0.0;
+   double cur_outMACDSignal = 0.0;
+   double cur_outMACDHist = 0.0;
 
 
    /* Pipeline the new bar through the sub-streams (batch tail order). */
-   if( sp->peekMode )
-      TA_MA_Peek( (const TA_MA_Stream *)sp->sub0, inReal, &cur_slowMABuffer );
-   else
-      TA_MA_Update( sp->sub0, inReal, &cur_slowMABuffer );
-   if( sp->peekMode )
-      TA_MA_Peek( (const TA_MA_Stream *)sp->sub1, inReal, &cur_fastMABuffer );
-   else
-      TA_MA_Update( sp->sub1, inReal, &cur_fastMABuffer );
+   {
+      TA_RetCode subRc;
+      if( sp->peekMode )
+         subRc = TA_MA_Peek( (const TA_MA_Stream *)sp->sub0, inReal, &cur_slowMABuffer );
+      else
+         subRc = TA_MA_Update( sp->sub0, inReal, &cur_slowMABuffer );
+      if( subRc != TA_SUCCESS ) return subRc;
+   }
+   {
+      TA_RetCode subRc;
+      if( sp->peekMode )
+         subRc = TA_MA_Peek( (const TA_MA_Stream *)sp->sub1, inReal, &cur_fastMABuffer );
+      else
+         subRc = TA_MA_Update( sp->sub1, inReal, &cur_fastMABuffer );
+      if( subRc != TA_SUCCESS ) return subRc;
+   }
    /* Combine map (batch tail, per bar). */
    cur_fastMABuffer = cur_fastMABuffer - cur_slowMABuffer;
-   if( sp->peekMode )
-      TA_MA_Peek( (const TA_MA_Stream *)sp->sub2, cur_fastMABuffer, &cur_outMACDSignal );
-   else
-      TA_MA_Update( sp->sub2, cur_fastMABuffer, &cur_outMACDSignal );
+   {
+      TA_RetCode subRc;
+      if( sp->peekMode )
+         subRc = TA_MA_Peek( (const TA_MA_Stream *)sp->sub2, cur_fastMABuffer, &cur_outMACDSignal );
+      else
+         subRc = TA_MA_Update( sp->sub2, cur_fastMABuffer, &cur_outMACDSignal );
+      if( subRc != TA_SUCCESS ) return subRc;
+   }
    /* Combine map (batch tail, per bar). */
    cur_outMACDHist = cur_fastMABuffer - cur_outMACDSignal;
    *outMACD = cur_fastMABuffer;
    *outMACDSignal = cur_outMACDSignal;
    *outMACDHist = cur_outMACDHist;
+   return TA_SUCCESS;
 }
 
 static TA_RetCode TA_MACDEXT_OpenCore( struct TA_MACDEXT_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, TA_MAType optInFastMAType, int optInSlowPeriod, TA_MAType optInSlowMAType, int optInSignalPeriod, TA_MAType optInSignalMAType, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[], int outStride )
@@ -813,6 +826,16 @@ TA_RetCode TA_MACDEXT_OpenInternal( struct TA_MACDEXT_Stream **stream, const dou
 
 TA_LIB_API TA_RetCode TA_MACDEXT_Open( TA_MACDEXT_Stream **stream, const double inReal[], int historyLen, int optInFastPeriod, TA_MAType optInFastMAType, int optInSlowPeriod, TA_MAType optInSlowMAType, int optInSignalPeriod, TA_MAType optInSignalMAType, double *outMACD, double *outMACDSignal, double *outMACDHist )
 {
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inReal[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_MACDEXT_OpenInternal( stream, inReal, 0, historyLen, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outMACD, outMACDSignal, outMACDHist );
 }
 
@@ -821,7 +844,15 @@ TA_LIB_API TA_RetCode TA_MACDEXT_OpenAndFill( TA_MACDEXT_Stream **stream, const 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
    if( !outBegIdx || !outNBElement || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;
+   if( !inReal || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outMACD == (const void *)inReal || (const void *)outMACDSignal == (const void *)inReal || (const void *)outMACDHist == (const void *)inReal || (const void *)outMACD == (const void *)outMACDSignal || (const void *)outMACD == (const void *)outMACDHist || (const void *)outMACDSignal == (const void *)outMACDHist ) return TA_BAD_PARAM;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inReal[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_MACDEXT_OpenCore( stream, inReal, 0, historyLen, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1 );
 }
 
@@ -834,8 +865,8 @@ TA_RetCode TA_MACDEXT_OpenAndFillInternal( struct TA_MACDEXT_Stream **stream, co
 TA_LIB_API TA_RetCode TA_MACDEXT_Update( TA_MACDEXT_Stream *stream, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist )
 {
    if( !stream || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;
-   TA_MACDEXT_StepInternal( stream, inReal, outMACD, outMACDSignal, outMACDHist );
-   return TA_SUCCESS;
+   if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
+   return TA_MACDEXT_StepInternal( stream, inReal, outMACD, outMACDSignal, outMACDHist );
 }
 
 TA_LIB_API TA_RetCode TA_MACDEXT_Peek( const TA_MACDEXT_Stream *stream, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist )
@@ -843,10 +874,10 @@ TA_LIB_API TA_RetCode TA_MACDEXT_Peek( const TA_MACDEXT_Stream *stream, double i
    struct TA_MACDEXT_Stream scratch;
 
    if( !stream || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
    scratch.peekMode = 1;
-   TA_MACDEXT_StepInternal( &scratch, inReal, outMACD, outMACDSignal, outMACDHist );
-   return TA_SUCCESS;
+   return TA_MACDEXT_StepInternal( &scratch, inReal, outMACD, outMACDSignal, outMACDHist );
 }
 
 TA_LIB_API TA_RetCode TA_MACDEXT_Close( TA_MACDEXT_Stream *stream )

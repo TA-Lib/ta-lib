@@ -75,12 +75,12 @@ public partial class Core
    {
       if( optInAcceleration == TA_REAL_DEFAULT ) {
          optInAcceleration = 2e-2;
-      } else if( optInAcceleration < 0e0 || optInAcceleration > TA_REAL_MAX ) {
+      } else if( !(optInAcceleration >= 0e0 && optInAcceleration <= TA_REAL_MAX) ) {
          return -1;
       }
       if( optInMaximum == TA_REAL_DEFAULT ) {
          optInMaximum = 2e-1;
-      } else if( optInMaximum < 0e0 || optInMaximum > TA_REAL_MAX ) {
+      } else if( !(optInMaximum >= 0e0 && optInMaximum <= TA_REAL_MAX) ) {
          return -1;
       }
       /* SAR always sacrify one price bar to establish the
@@ -122,12 +122,12 @@ public partial class Core
       }
       if( optInAcceleration == TA_REAL_DEFAULT ) {
          optInAcceleration = 2e-2;
-      } else if( optInAcceleration < 0e0 || optInAcceleration > TA_REAL_MAX ) {
+      } else if( !(optInAcceleration >= 0e0 && optInAcceleration <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInMaximum == TA_REAL_DEFAULT ) {
          optInMaximum = 2e-1;
-      } else if( optInMaximum < 0e0 || optInMaximum > TA_REAL_MAX ) {
+      } else if( !(optInMaximum >= 0e0 && optInMaximum <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( (outReal.Overlaps(inHigh) && outReal != inHigh) || (outReal.Overlaps(inLow) && outReal != inLow) ) {
@@ -382,12 +382,12 @@ public partial class Core
       }
       if( optInAcceleration == TA_REAL_DEFAULT ) {
          optInAcceleration = 2e-2;
-      } else if( optInAcceleration < 0e0 || optInAcceleration > TA_REAL_MAX ) {
+      } else if( !(optInAcceleration >= 0e0 && optInAcceleration <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInMaximum == TA_REAL_DEFAULT ) {
          optInMaximum = 2e-1;
-      } else if( optInMaximum < 0e0 || optInMaximum > TA_REAL_MAX ) {
+      } else if( !(optInMaximum >= 0e0 && optInMaximum <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( startIdx < 1 ) {
@@ -703,16 +703,23 @@ public partial class Core
          this.fillRange = other.fillRange;
       }
 
-      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
-      /// <para>Never throws after a successful open, and allocates nothing — neither
-      /// handle state nor a return value.</para>
+      /// <para>Allocates nothing — neither handle state nor a return value.</para>
+      /// <para>Throws <see cref="System.ArgumentException"/> if any bar value is not
+      /// finite (NaN or an infinity). That check runs before anything is written,
+      /// so the handle is left exactly as it was and the stream stays usable: skip
+      /// the bar, or re-open on a clean history. This is the one place the
+      /// streaming tier is stricter than the batch API, which computes on whatever
+      /// it is given: a handle retains its state, so a single non-finite bar would
+      /// poison every later value it produces.</para>
       /// </remarks>
       /// <param name="inHigh">This bar's high price.</param>
       /// <param name="inLow">This bar's low price.</param>
       /// <returns>The value at the bar just committed.</returns>
       public double Update( double inHigh, double inLow )
       {
+         if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("SAR", "update", RetCode.BadParam);
          core.SAR_StreamStep(this, inHigh, inLow);
          return cur_outReal;
       }
@@ -731,6 +738,7 @@ public partial class Core
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public double Peek( double inHigh, double inLow )
       {
+         if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("SAR", "peek", RetCode.BadParam);
          SAR_Stream scratch = new SAR_Stream(this);
          core.SAR_StreamStep(scratch, inHigh, inLow);
          return scratch.cur_outReal;
@@ -898,12 +906,12 @@ public partial class Core
       }
       if( optInAcceleration == TA_REAL_DEFAULT ) {
          optInAcceleration = 2e-2;
-      } else if( optInAcceleration < 0e0 || optInAcceleration > TA_REAL_MAX ) {
+      } else if( !(optInAcceleration >= 0e0 && optInAcceleration <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInMaximum == TA_REAL_DEFAULT ) {
          optInMaximum = 2e-1;
-      } else if( optInMaximum < 0e0 || optInMaximum > TA_REAL_MAX ) {
+      } else if( !(optInMaximum >= 0e0 && optInMaximum <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       /* > 0 indicates long. == 0 indicates short */
@@ -1200,6 +1208,10 @@ public partial class Core
    {
       if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
       if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      foreach( double taFiniteV in inHigh )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("SAR", "open", RetCode.BadParam);
+      foreach( double taFiniteV in inLow )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("SAR", "open", RetCode.BadParam);
       return SAR_OpenInternal(inHigh, inLow, 0, optInAcceleration, optInMaximum);
    }
 
@@ -1234,6 +1246,10 @@ public partial class Core
    {
       if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
       if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      foreach( double taFiniteV in inHigh )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("SAR", "openAndFill", RetCode.BadParam);
+      foreach( double taFiniteV in inLow )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("SAR", "openAndFill", RetCode.BadParam);
       SAR_Stream sp = new SAR_Stream(this);
       RetCode retCode = SAR_OpenAndFillBody(sp, inHigh, inLow, optInAcceleration, optInMaximum, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

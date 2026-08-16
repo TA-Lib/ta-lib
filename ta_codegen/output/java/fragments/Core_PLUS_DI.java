@@ -766,10 +766,20 @@
       }
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public double update( double inHigh, double inLow, double inClose ) {
+         if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+            throw new IllegalArgumentException("PLUS_DI update: BadParam");
          core.PLUS_DI_StreamStep(this, inHigh, inLow, inClose);
          return this.cur_outReal;
       }
@@ -782,6 +792,8 @@
        * handle's shape is cheaper than reusing one.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
+         if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+            throw new IllegalArgumentException("PLUS_DI peek: BadParam");
          PLUS_DI_Stream scratch = new PLUS_DI_Stream(this);
          core.PLUS_DI_StreamStep(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
@@ -1407,6 +1419,17 @@
     */
    public PLUS_DI_Stream PLUS_DI_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
    {
+      if( inHigh.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
+            if( !Double.isFinite(inHigh[taFiniteIdx]) )
+               throw new IllegalArgumentException("PLUS_DI open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
+            if( !Double.isFinite(inLow[taFiniteIdx]) )
+               throw new IllegalArgumentException("PLUS_DI open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
+            if( !Double.isFinite(inClose[taFiniteIdx]) )
+               throw new IllegalArgumentException("PLUS_DI open: BadParam");
+      }
       return PLUS_DI_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**
@@ -1420,6 +1443,17 @@
     */
    public PLUS_DI_Stream PLUS_DI_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
    {
+      if( inHigh.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
+            if( !Double.isFinite(inHigh[taFiniteIdx]) )
+               throw new IllegalArgumentException("PLUS_DI openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
+            if( !Double.isFinite(inLow[taFiniteIdx]) )
+               throw new IllegalArgumentException("PLUS_DI openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
+            if( !Double.isFinite(inClose[taFiniteIdx]) )
+               throw new IllegalArgumentException("PLUS_DI openAndFill: BadParam");
+      }
       PLUS_DI_Stream sp = new PLUS_DI_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

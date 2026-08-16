@@ -588,6 +588,19 @@ TA_RetCode TA_ADOSC_OpenInternal( struct TA_ADOSC_Stream **stream, const double 
 
 TA_LIB_API TA_RetCode TA_ADOSC_Open( TA_ADOSC_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int historyLen, int optInFastPeriod, int optInSlowPeriod, double *outReal )
 {
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inHigh || !inLow || !inClose || !inVolume || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inHigh[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inLow[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inClose[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inVolume[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_ADOSC_OpenInternal( stream, inHigh, inLow, inClose, inVolume, 0, historyLen, optInFastPeriod, optInSlowPeriod, outReal );
 }
 
@@ -596,7 +609,18 @@ TA_LIB_API TA_RetCode TA_ADOSC_OpenAndFill( TA_ADOSC_Stream **stream, const doub
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
    if( !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inClose || !inVolume || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inClose || (const void *)outReal == (const void *)inVolume ) return TA_BAD_PARAM;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inHigh[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inLow[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inClose[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inVolume[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_ADOSC_OpenCore( stream, inHigh, inLow, inClose, inVolume, 0, historyLen, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
@@ -609,6 +633,7 @@ TA_RetCode TA_ADOSC_OpenAndFillInternal( struct TA_ADOSC_Stream **stream, const 
 TA_LIB_API TA_RetCode TA_ADOSC_Update( TA_ADOSC_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
    TA_ADOSC_StepInternal( stream, inHigh, inLow, inClose, inVolume, outReal );
    return TA_SUCCESS;
 }
@@ -618,6 +643,7 @@ TA_LIB_API TA_RetCode TA_ADOSC_Peek( const TA_ADOSC_Stream *stream, double inHig
    struct TA_ADOSC_Stream scratch;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
    scratch = *stream;
    TA_ADOSC_StepInternal( &scratch, inHigh, inLow, inClose, inVolume, outReal );
    return TA_SUCCESS;

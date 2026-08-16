@@ -552,10 +552,20 @@
       private static final ThreadLocal<BETA_Stream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public double update( double inReal0, double inReal1 ) {
+         if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
+            throw new IllegalArgumentException("BETA update: BadParam");
          core.BETA_StreamStep(this, inReal0, inReal1);
          return this.cur_outReal;
       }
@@ -570,6 +580,8 @@
        * the thread.
        */
       public double peek( double inReal0, double inReal1 ) {
+         if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
+            throw new IllegalArgumentException("BETA peek: BadParam");
          BETA_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new BETA_Stream(this);
@@ -913,6 +925,14 @@
     */
    public BETA_Stream BETA_Open( double inReal0[], double inReal1[], int optInTimePeriod )
    {
+      if( inReal0.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal0.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal0[taFiniteIdx]) )
+               throw new IllegalArgumentException("BETA open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal1.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal1[taFiniteIdx]) )
+               throw new IllegalArgumentException("BETA open: BadParam");
+      }
       return BETA_OpenInternal(inReal0, inReal1, 0, optInTimePeriod);
    }
    /**
@@ -926,6 +946,14 @@
     */
    public BETA_Stream BETA_OpenAndFill( double inReal0[], double inReal1[], int optInTimePeriod, double outReal[] )
    {
+      if( inReal0.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal0.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal0[taFiniteIdx]) )
+               throw new IllegalArgumentException("BETA openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal1.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal1[taFiniteIdx]) )
+               throw new IllegalArgumentException("BETA openAndFill: BadParam");
+      }
       BETA_Stream sp = new BETA_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

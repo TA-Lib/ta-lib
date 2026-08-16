@@ -200,6 +200,11 @@ pub struct IdentityPath {
 pub struct CalleeSig {
     /// The callee is YAML `stream`-flagged (its public stream API exists).
     pub streaming: bool,
+    /// The callee is YAML `nan_inf_output`-flagged: a *successful* call of it can
+    /// return NaN or ±Inf (#191 — the seven domain holes: ACOS, ASIN, LN, LOG10,
+    /// SQRT, DIV, VWMA). Such a function may not be composed into another
+    /// function's stream; see [`reject_nonfinite_callees`].
+    pub nan_inf_output: bool,
     /// Number of input ARRAYS (price components expanded).
     pub n_inputs: usize,
     /// Number of optional parameters.
@@ -227,6 +232,7 @@ pub trait CalleeLookup {
 pub fn callee_sig_of(f: &FuncDef) -> CalleeSig {
     CalleeSig {
         streaming: f.streaming,
+        nan_inf_output: f.flags.iter().any(|fl| fl == "nan_inf_output"),
         n_inputs: input_array_names(f).len(),
         n_opts: f.optional_inputs.len(),
         n_outputs: f.outputs.len(),
@@ -3365,12 +3371,84 @@ pub fn emits_open_and_fill_internal(func: &FuncDef, lookup: &dyn CalleeLookup) -
         )
 }
 
+/// Every function this plan drives a sub-stream of, in plan order. Empty for the
+/// self-contained tiers (loop, dual-mode), which call nothing.
+fn plan_callees<'p>(plan: &'p StreamPlan) -> Vec<&'p str> {
+    match plan {
+        StreamPlan::Loop(_) | StreamPlan::DualMode(_) => Vec::new(),
+        StreamPlan::Dispatch(dp) => dp
+            .arms
+            .iter()
+            .filter(|a| a.supported && !a.callee.is_empty())
+            .map(|a| a.callee.as_str())
+            .collect(),
+        StreamPlan::Composed(cp) => cp.subs.iter().map(|s| s.callee.as_str()).collect(),
+        StreamPlan::PeriodBank(pb) => vec![pb.callee.as_str()],
+    }
+}
+
+/// Refuse to compose a stream out of a function that can *return* a non-finite
+/// value (`nan_inf_output`, #191).
+///
+/// The streaming tier verifies finiteness at the boundary between the caller and
+/// the API, and assumes it everywhere inside — a sub-stream is handed values the
+/// library itself computed, so it is not re-checked. A `nan_inf_output` callee
+/// breaks that assumption from the inside: its NaN would reach the next
+/// sub-stream's `Update`, which rejects it, and the composed step discards
+/// sub-call return codes (it has nowhere to put them). The bar would be silently
+/// dropped for that sub-stream alone, leaving it permanently out of step with
+/// batch — a divergence no value gate can see, because the inputs are finite and
+/// the failure is in the state.
+///
+/// So the condition is refused at generation time instead. Clearing it means
+/// either a `PRAGMA TA_ALT` stream body for the callee that closes its domain
+/// hole, or teaching the composed emitter to carry a rejection out of the step —
+/// both real work, and both better than shipping the silent version.
+///
+/// Today no composition names any of the seven, so this gate is dormant by
+/// construction; `nan_inf_callee_is_refused` in `tests/streaming_suite.rs` is what
+/// keeps it from being dormant *and* broken.
+fn reject_nonfinite_callees(
+    func: &FuncDef,
+    plan: &StreamPlan,
+    lookup: &dyn CalleeLookup,
+) -> Result<(), String> {
+    for callee in plan_callees(plan) {
+        if lookup.callee(callee).is_some_and(|c| c.nan_inf_output) {
+            return Err(format!(
+                "{}: streams by composing {}, which is `nan_inf_output` — a function \
+                 that can return NaN or +/-Inf may not drive a sub-stream. The streaming \
+                 tier checks finiteness only at the caller boundary, so a non-finite \
+                 value produced INSIDE it would be rejected by the next sub-stream's \
+                 Update and silently drop that bar's state advance. Give {} a \
+                 `PRAGMA TA_ALT={{STREAM,ALL_LANGUAGES}}` body without the domain hole, \
+                 or drop `streaming` from {}.",
+                func.name, callee, callee, func.name
+            ));
+        }
+    }
+    Ok(())
+}
+
 /// Validate that a `streaming: true` function is still analyzable. Any
 /// failure is a generation-time error (the maintenance-coupling gate from
 /// the proposal): a batch rewrite that breaks stream analyzability fails
 /// HERE, not at release. The tier is derived, never declared.
-#[allow(clippy::too_many_lines)]
 pub fn validate_streamable<'a>(
+    func: &'a FuncDef,
+    lookup: &dyn CalleeLookup,
+) -> Result<StreamPlan<'a>, String> {
+    let plan = derive_stream_plan(func, lookup)?;
+    reject_nonfinite_callees(func, &plan, lookup)?;
+    Ok(plan)
+}
+
+/// [`validate_streamable`] without the composition gate: the tier derivation
+/// proper. Split out only so the gate has one place to sit — the derivation has
+/// five `return Ok(...)` points and wrapping them individually would be five
+/// chances to miss one.
+#[allow(clippy::too_many_lines)]
+fn derive_stream_plan<'a>(
     func: &'a FuncDef,
     lookup: &dyn CalleeLookup,
 ) -> Result<StreamPlan<'a>, String> {

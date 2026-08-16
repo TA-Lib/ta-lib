@@ -459,10 +459,20 @@
       }
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public double update( double inReal ) {
+         if( !Double.isFinite(inReal) )
+            throw new IllegalArgumentException("MIN update: BadParam");
          core.MIN_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -475,6 +485,8 @@
        * handle's shape is cheaper than reusing one.
        */
       public double peek( double inReal ) {
+         if( !Double.isFinite(inReal) )
+            throw new IllegalArgumentException("MIN peek: BadParam");
          MIN_Stream scratch = new MIN_Stream(this);
          core.MIN_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -697,6 +709,11 @@
     */
    public MIN_Stream MIN_Open( double inReal[], int optInTimePeriod )
    {
+      if( inReal.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal[taFiniteIdx]) )
+               throw new IllegalArgumentException("MIN open: BadParam");
+      }
       return MIN_OpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
@@ -710,6 +727,11 @@
     */
    public MIN_Stream MIN_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
+      if( inReal.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal[taFiniteIdx]) )
+               throw new IllegalArgumentException("MIN openAndFill: BadParam");
+      }
       MIN_Stream sp = new MIN_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

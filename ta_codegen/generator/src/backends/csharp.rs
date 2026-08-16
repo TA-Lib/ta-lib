@@ -406,10 +406,13 @@ pub(crate) fn emit_opt_param_validation(
                     // Every declared bound is checked (see backends::c).
                     if let Some((min, max)) = opt.range {
                         out.push_str(&format!(
-                            " else if( {name} < {lo} || {name} > {hi} ) {{\n         return {fail};\n      }}",
-                            name = opt.name,
-                            lo = super::common::real_bound_literal(min, "TA_"),
-                            hi = super::common::real_bound_literal(max, "TA_")
+                            " else if( {cond} ) {{\n         return {fail};\n      }}",
+                            cond = super::common::real_range_reject(
+                                &opt.name,
+                                &super::common::real_bound_literal(min, "TA_"),
+                                &super::common::real_bound_literal(max, "TA_"),
+                                false
+                            )
                         ));
                     }
                     out.push('\n');

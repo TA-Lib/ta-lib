@@ -213,10 +213,20 @@
       }
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public double update( double inReal ) {
+         if( !Double.isFinite(inReal) )
+            throw new IllegalArgumentException("ASIN update: BadParam");
          core.ASIN_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -229,6 +239,8 @@
        * handle's shape is cheaper than reusing one.
        */
       public double peek( double inReal ) {
+         if( !Double.isFinite(inReal) )
+            throw new IllegalArgumentException("ASIN peek: BadParam");
          ASIN_Stream scratch = new ASIN_Stream(this);
          core.ASIN_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -338,6 +350,11 @@
     */
    public ASIN_Stream ASIN_Open( double inReal[] )
    {
+      if( inReal.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal[taFiniteIdx]) )
+               throw new IllegalArgumentException("ASIN open: BadParam");
+      }
       return ASIN_OpenInternal(inReal, 0);
    }
    /**
@@ -351,6 +368,11 @@
     */
    public ASIN_Stream ASIN_OpenAndFill( double inReal[], double outReal[] )
    {
+      if( inReal.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal[taFiniteIdx]) )
+               throw new IllegalArgumentException("ASIN openAndFill: BadParam");
+      }
       ASIN_Stream sp = new ASIN_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

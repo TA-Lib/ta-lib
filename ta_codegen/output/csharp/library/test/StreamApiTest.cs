@@ -561,6 +561,229 @@ public static class StreamApiTest
         Check(true, $"all {emitted.Length} handle types are sealed, constructor-free and complete");
     }
 
+    /* Non-finite counters, incremented AT the assertion rather than derived
+       from the loop, so deleting the assertions inside shows up here. */
+    private static int _nfOpen;
+    private static int _nfBar;
+    private static int _nfState;
+
+    /* The MESSAGE is checked, not just the type. InsufficientHistoryException
+       derives from ArgumentException, so asserting the base type alone would let
+       "rejected because the history was too short" pass as "rejected the
+       non-finite value" -- and every probe here deliberately supplies enough
+       history, so the confusion would surface only the day a lookback grew. */
+    private static void ThrowsBadParam(string what, Action body)
+    {
+        _checks++;
+        try
+        {
+            body();
+            _failures++;
+            Console.WriteLine("  FAIL: " + what + " (no exception thrown)");
+        }
+        catch (ArgumentException e) when (e.Message.EndsWith(": BadParam", StringComparison.Ordinal))
+        {
+            /* expected */
+        }
+        catch (Exception e)
+        {
+            _failures++;
+            Console.WriteLine("  FAIL: " + what + " (threw " + e.GetType().FullName + ": " + e.Message + ")");
+        }
+    }
+
+    private static void OpenMustReject(string what, Action body)
+    {
+        ThrowsBadParam(what + ": open must reject a non-finite history", body);
+        _nfOpen++;
+    }
+
+    private static void BarMustReject(string what, Action body)
+    {
+        ThrowsBadParam(what + ": Update/Peek must reject a non-finite bar", body);
+        _nfBar++;
+    }
+
+    private static void StateMustHold(string what, double a, double b)
+    {
+        Check(Bits(a) == Bits(b), what + ": a rejected bar must not move the handle");
+        _nfState++;
+    }
+
+    /// <summary>The streaming tier rejects a non-finite input where the batch API
+    /// computes on it.</summary>
+    /// <remarks>
+    /// <para>The one place the two tiers disagree about what they accept, and it is
+    /// deliberate: a handle RETAINS state, so a single NaN bar would poison every
+    /// later value it produces, long after the feed recovers. Rejecting it and
+    /// leaving the handle untouched is strictly more useful.</para>
+    /// <para>Coverage is by stream TIER, not by function count. The check is emitted
+    /// from one place, but into the entry points of five different tiers: SMA is
+    /// the loop tier, MINUS_DI dual-mode, MA the dispatch tier (including its
+    /// identity arm, which never reaches a sub-stream at all), MAVP the
+    /// period-bank tier, BBANDS and STOCH composed. CDLDOJI adds an integer output
+    /// over four price inputs.</para>
+    /// <para>The handle-unchanged property is verified against a control stream, not
+    /// by inspection: a rejection that half-advanced the state would pass every
+    /// "it threw" assertion and fail only here.</para>
+    /// </remarks>
+    private static void NonFiniteInputsAreRejected()
+    {
+        var core = new Core();
+        const int warm = 60;
+        double[] closes = Closes(warm + 2);
+        double[] highs = new double[warm + 2];
+        double[] lows = new double[warm + 2];
+        double[] opens = new double[warm + 2];
+        double[] periods = new double[warm + 2];
+        for (int i = 0; i < closes.Length; i++)
+        {
+            highs[i] = closes[i] + 1.5;
+            lows[i] = closes[i] - 1.5;
+            opens[i] = closes[i] - 0.4;
+            periods[i] = 5.0 + (i % 11);
+        }
+
+        double[] bad = { double.NaN, double.PositiveInfinity, double.NegativeInfinity };
+
+        foreach (double v in bad)
+        {
+            /* --- Open / OpenAndFill: one poisoned bar in one series. ------- */
+            var c = closes[..warm].ToArray();
+            var h = highs[..warm].ToArray();
+            var l = lows[..warm].ToArray();
+            var o = opens[..warm].ToArray();
+            var p = periods[..warm].ToArray();
+
+            double savedC = c[warm - 1];
+            c[warm - 1] = v;
+            OpenMustReject("SMA", () => core.SMA_Open(c, 14));
+            OpenMustReject("SMA.OpenAndFill", () => core.SMA_OpenAndFill(c, 14, new double[warm]));
+            OpenMustReject("MA", () => core.MA_Open(c, 14, MAType.EMA));
+            OpenMustReject("BBANDS", () => core.BBANDS_Open(c, 20, 2.0, 2.0, MAType.SMA));
+            OpenMustReject("MAVP", () => core.MAVP_Open(c, p, 2, 30, MAType.SMA));
+            c[warm - 1] = savedC;
+
+            /* The period series is an input like any other, and the one that
+               reaches an int conversion. */
+            double savedP = p[0];
+            p[0] = v;
+            OpenMustReject("MAVP.periods", () => core.MAVP_Open(c, p, 2, 30, MAType.SMA));
+            /* OpenAndFill on the DISPATCH and PERIOD-BANK tiers. Both hand-roll
+               their own fill entry point rather than sharing the one every
+               loop-tier function uses, so a probe covering only SMA cannot see
+               them. MA at period 1 is the dispatch IDENTITY arm, which copies the
+               bar straight into the caller's span without touching a sub-stream
+               -- the one fill path no sub-stream's own scan can cover. */
+            OpenMustReject("MAVP.OpenAndFill",
+                () => core.MAVP_OpenAndFill(c, p, 2, 30, MAType.SMA, new double[warm]));
+            p[0] = savedP;
+
+            double savedC2 = c[warm - 1];
+            c[warm - 1] = v;
+            OpenMustReject("MA.OpenAndFill(identity)",
+                () => core.MA_OpenAndFill(c, 1, MAType.SMA, new double[warm]));
+            c[warm - 1] = savedC2;
+
+            /* One price series at a time, so a check reading only the first
+               input cannot pass. */
+            double savedH = h[warm - 1];
+            h[warm - 1] = v;
+            OpenMustReject("MINUS_DI.high", () => core.MINUS_DI_Open(h, l, c, 14));
+            OpenMustReject("STOCH.high",
+                () => core.STOCH_Open(h, l, c, 5, 3, MAType.SMA, 3, MAType.SMA));
+            OpenMustReject("CDLDOJI.high", () => core.CDLDOJI_Open(o, h, l, c));
+            h[warm - 1] = savedH;
+
+            double savedL = l[0];
+            l[0] = v;
+            OpenMustReject("MINUS_DI.low", () => core.MINUS_DI_Open(h, l, c, 14));
+            l[0] = savedL;
+
+            /* --- Update / Peek, and the handle-unchanged property. --------- */
+            var sa = core.SMA_Open(c, 14);
+            var sb = core.SMA_Open(c, 14);
+            BarMustReject("SMA.Update", () => sa.Update(v));
+            BarMustReject("SMA.Peek", () => sa.Peek(v));
+            StateMustHold("SMA", sa.Update(closes[warm]), sb.Update(closes[warm]));
+
+            var da = core.MINUS_DI_Open(h, l, c, 14);
+            var db = core.MINUS_DI_Open(h, l, c, 14);
+            BarMustReject("MINUS_DI.Update(high)", () => da.Update(v, lows[warm], closes[warm]));
+            BarMustReject("MINUS_DI.Update(low)", () => da.Update(highs[warm], v, closes[warm]));
+            BarMustReject("MINUS_DI.Update(close)", () => da.Update(highs[warm], lows[warm], v));
+            BarMustReject("MINUS_DI.Peek", () => da.Peek(v, lows[warm], closes[warm]));
+            StateMustHold("MINUS_DI",
+                da.Update(highs[warm], lows[warm], closes[warm]),
+                db.Update(highs[warm], lows[warm], closes[warm]));
+
+            var ma = core.MA_Open(c, 14, MAType.EMA);
+            var mb = core.MA_Open(c, 14, MAType.EMA);
+            BarMustReject("MA.Update", () => ma.Update(v));
+            BarMustReject("MA.Peek", () => ma.Peek(v));
+            StateMustHold("MA", ma.Update(closes[warm]), mb.Update(closes[warm]));
+
+            /* Period 1 is the dispatch identity arm: it copies the bar to the
+               output and never reaches a sub-stream, so a check delegated to the
+               sub would miss it. */
+            var mi = core.MA_Open(c, 1, MAType.SMA);
+            BarMustReject("MA(identity).Update", () => mi.Update(v));
+            BarMustReject("MA(identity).Peek", () => mi.Peek(v));
+
+            var va = core.MAVP_Open(c, p, 2, 30, MAType.SMA);
+            var vb = core.MAVP_Open(c, p, 2, 30, MAType.SMA);
+            BarMustReject("MAVP.Update(real)", () => va.Update(v, p[0]));
+            BarMustReject("MAVP.Update(period)", () => va.Update(closes[warm], v));
+            BarMustReject("MAVP.Peek(period)", () => va.Peek(closes[warm], v));
+            StateMustHold("MAVP", va.Update(closes[warm], p[0]), vb.Update(closes[warm], p[0]));
+
+            var ba = core.BBANDS_Open(c, 20, 2.0, 2.0, MAType.SMA);
+            var bb = core.BBANDS_Open(c, 20, 2.0, 2.0, MAType.SMA);
+            BarMustReject("BBANDS.Update", () => ba.Update(v));
+            BarMustReject("BBANDS.Peek", () => ba.Peek(v));
+            var bav = ba.Update(closes[warm]);
+            var bbv = bb.Update(closes[warm]);
+            StateMustHold("BBANDS.upper", bav.RealUpperBand, bbv.RealUpperBand);
+            StateMustHold("BBANDS.lower", bav.RealLowerBand, bbv.RealLowerBand);
+
+            var ka = core.STOCH_Open(h, l, c, 5, 3, MAType.SMA, 3, MAType.SMA);
+            var kb = core.STOCH_Open(h, l, c, 5, 3, MAType.SMA, 3, MAType.SMA);
+            BarMustReject("STOCH.Update", () => ka.Update(v, lows[warm], closes[warm]));
+            BarMustReject("STOCH.Peek", () => ka.Peek(highs[warm], v, closes[warm]));
+            var kav = ka.Update(highs[warm], lows[warm], closes[warm]);
+            var kbv = kb.Update(highs[warm], lows[warm], closes[warm]);
+            StateMustHold("STOCH.slowK", kav.SlowK, kbv.SlowK);
+            StateMustHold("STOCH.slowD", kav.SlowD, kbv.SlowD);
+
+            var ja = core.CDLDOJI_Open(o, h, l, c);
+            var jb = core.CDLDOJI_Open(o, h, l, c);
+            BarMustReject("CDLDOJI.Update(open)",
+                () => ja.Update(v, highs[warm], lows[warm], closes[warm]));
+            BarMustReject("CDLDOJI.Peek(close)",
+                () => ja.Peek(opens[warm], highs[warm], lows[warm], v));
+            Check(ja.Update(opens[warm], highs[warm], lows[warm], closes[warm])
+                    == jb.Update(opens[warm], highs[warm], lows[warm], closes[warm]),
+                  "CDLDOJI: a rejected bar must not move the handle");
+            _nfState++;
+        }
+
+        /* A NaN real PARAMETER. Not redundant with the range check: `x < min` and
+           `x > max` are both false for NaN, so a plain range test admits it —
+           which is why the streaming tier spells the same two comparisons
+           inverted. An infinity is already outside every declared bound. */
+        double[] cp = closes[..warm].ToArray();
+        OpenMustReject("BBANDS(nbDevUp=NaN)",
+            () => core.BBANDS_Open(cp, 20, double.NaN, 2.0, MAType.SMA));
+        OpenMustReject("BBANDS(nbDevDn=NaN)",
+            () => core.BBANDS_Open(cp, 20, 2.0, double.NaN, MAType.SMA));
+
+        /* Non-vacuity. Literal floors: one derived from the loop above moves with
+           it and would let the assertions inside be deleted. */
+        Check(_nfOpen >= 38 && _nfBar >= 57 && _nfState >= 27,
+              $"the non-finite gate ran fewer checks than it was written with "
+              + $"({_nfOpen}/{_nfBar}/{_nfState})");
+    }
+
     public static int Run()
     {
         StreamMatchesBatch();
@@ -575,6 +798,7 @@ public static class StreamApiTest
         UpdateDoesNotAllocate();
         MultiOutputValueIsAStruct();
         CatalogueAgreesWithTheEmittedSurface();
+        NonFiniteInputsAreRejected();
 
         if (_failures == 0)
         {

@@ -62,11 +62,11 @@ TA_LIB_API int TA_MAMA_Lookback( double optInFastLimit, double optInSlowLimit )
 {
    if( optInFastLimit == TA_REAL_DEFAULT )
       optInFastLimit = 0.5;
-   else if( optInFastLimit < 1e-2 || optInFastLimit > 9.9e-1 )
+   else if( !(optInFastLimit >= 1e-2 && optInFastLimit <= 9.9e-1) )
       return -1;
    if( optInSlowLimit == TA_REAL_DEFAULT )
       optInSlowLimit = 0.05;
-   else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 )
+   else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) )
       return -1;
    /* The two parameters are not a factor to determine
     * the lookback, but are still requested for
@@ -172,11 +172,11 @@ TA_LIB_API TA_RetCode TA_MAMA( int    startIdx,
       return TA_BAD_PARAM;
    if( optInFastLimit == TA_REAL_DEFAULT )
       optInFastLimit = 0.5;
-   else if( optInFastLimit < 1e-2 || optInFastLimit > 9.9e-1 )
+   else if( !(optInFastLimit >= 1e-2 && optInFastLimit <= 9.9e-1) )
       return TA_BAD_PARAM;
    if( optInSlowLimit == TA_REAL_DEFAULT )
       optInSlowLimit = 0.05;
-   else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 )
+   else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) )
       return TA_BAD_PARAM;
    if( !outMAMA )
       return TA_BAD_PARAM;
@@ -593,11 +593,11 @@ TA_RetCode TA_S_MAMA( int    startIdx,
       return TA_BAD_PARAM;
    if( optInFastLimit == TA_REAL_DEFAULT )
       optInFastLimit = 0.5;
-   else if( optInFastLimit < 1e-2 || optInFastLimit > 9.9e-1 )
+   else if( !(optInFastLimit >= 1e-2 && optInFastLimit <= 9.9e-1) )
       return TA_BAD_PARAM;
    if( optInSlowLimit == TA_REAL_DEFAULT )
       optInSlowLimit = 0.05;
-   else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 )
+   else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) )
       return TA_BAD_PARAM;
    if( !outMAMA )
       return TA_BAD_PARAM;
@@ -1164,11 +1164,11 @@ static TA_RetCode TA_MAMA_OpenCore( struct TA_MAMA_Stream **stream, const double
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( optInFastLimit == TA_REAL_DEFAULT )
       optInFastLimit = 0.5;
-   else if( optInFastLimit < 1e-2 || optInFastLimit > 9.9e-1 )
+   else if( !(optInFastLimit >= 1e-2 && optInFastLimit <= 9.9e-1) )
       return TA_BAD_PARAM;
    if( optInSlowLimit == TA_REAL_DEFAULT )
       optInSlowLimit = 0.05;
-   else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 )
+   else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) )
       return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
@@ -1656,6 +1656,16 @@ TA_RetCode TA_MAMA_OpenInternal( struct TA_MAMA_Stream **stream, const double in
 
 TA_LIB_API TA_RetCode TA_MAMA_Open( TA_MAMA_Stream **stream, const double inReal[], int historyLen, double optInFastLimit, double optInSlowLimit, double *outMAMA, double *outFAMA )
 {
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outMAMA ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inReal[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_MAMA_OpenInternal( stream, inReal, 0, historyLen, optInFastLimit, optInSlowLimit, outMAMA, outFAMA );
 }
 
@@ -1664,7 +1674,15 @@ TA_LIB_API TA_RetCode TA_MAMA_OpenAndFill( TA_MAMA_Stream **stream, const double
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
    if( !outBegIdx || !outNBElement || !outMAMA ) return TA_BAD_PARAM;
+   if( !inReal || !outMAMA ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outMAMA == (const void *)inReal || (const void *)outFAMA == (const void *)inReal || (const void *)outMAMA == (const void *)outFAMA ) return TA_BAD_PARAM;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inReal[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_MAMA_OpenCore( stream, inReal, 0, historyLen, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1 );
 }
 
@@ -1677,6 +1695,7 @@ TA_RetCode TA_MAMA_OpenAndFillInternal( struct TA_MAMA_Stream **stream, const do
 TA_LIB_API TA_RetCode TA_MAMA_Update( TA_MAMA_Stream *stream, double inReal, double *outMAMA, double *outFAMA )
 {
    if( !stream || !outMAMA ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    TA_MAMA_StepInternal( stream, inReal, outMAMA, outFAMA );
    return TA_SUCCESS;
 }
@@ -1686,6 +1705,7 @@ TA_LIB_API TA_RetCode TA_MAMA_Peek( const TA_MAMA_Stream *stream, double inReal,
    struct TA_MAMA_Stream scratch;
 
    if( !stream || !outMAMA ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
    scratch.ring_trailingWMAIdx_inReal = stream->ringMirror_trailingWMAIdx_inReal;
    memcpy( scratch.ring_trailingWMAIdx_inReal, stream->ring_trailingWMAIdx_inReal, sizeof(double) * (size_t)(stream->ringCap_trailingWMAIdx > 0 ? stream->ringCap_trailingWMAIdx : 1) );

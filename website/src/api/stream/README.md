@@ -85,9 +85,15 @@ TA_MACD_Update( s, close, &macd, &signal, &hist );
 
 | Call | Returns |
 |------|---------|
-| `TA_<NAME>_Open` / `TA_<NAME>_OpenAndFill` | `TA_BAD_PARAM` (bad param, or `historyLen` too small) or `TA_ALLOC_ERR`; `*stream` is NULL on failure. `OpenAndFill` also requires non-NULL, non-overlapping output arguments. |
-| `TA_<NAME>_Update` / `TA_<NAME>_Peek` | `TA_BAD_PARAM` only on NULL arguments |
+| `TA_<NAME>_Open` / `TA_<NAME>_OpenAndFill` | `TA_BAD_PARAM` (bad param, a non-finite value anywhere in the history, or `historyLen` too small) or `TA_ALLOC_ERR`; `*stream` is NULL on failure. `OpenAndFill` also requires non-NULL, non-overlapping output arguments. |
+| `TA_<NAME>_Update` / `TA_<NAME>_Peek` | `TA_BAD_PARAM` on NULL arguments, and on a non-finite bar value — in which case the handle is left exactly as it was |
 | `TA_<NAME>_Close`  | `TA_SUCCESS`; `TA_<NAME>_Close(NULL)` is a no-op |
+
+**Non-finite input is rejected.** NaN and ±Inf are not supported as inputs anywhere in TA-Lib, but the streaming tier is the one that *enforces* it: every public streaming entry point checks, and rejects without touching the handle. The batch API does not filter — it computes on whatever it is given.
+
+The difference is the retained state. Batch computes and forgets, so a NaN reaches the outputs depending on that bar and no others; a stream handle carries state forward, so a single non-finite bar would poison every value it produces afterwards, long after the feed recovers. Rejecting the bar and leaving the handle usable is more useful than accepting it and going permanently NaN.
+
+This covers the warm-up history at open, every bar value at update/peek, and a real optional parameter that is NaN — which the batch range check lets through, since `x < min` and `x > max` are both false for NaN.
 
 ## Discovering streamable functions
 

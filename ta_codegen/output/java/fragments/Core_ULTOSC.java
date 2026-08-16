@@ -740,10 +740,20 @@
       private static final ThreadLocal<ULTOSC_Stream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public double update( double inHigh, double inLow, double inClose ) {
+         if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+            throw new IllegalArgumentException("ULTOSC update: BadParam");
          core.ULTOSC_StreamStep(this, inHigh, inLow, inClose);
          return this.cur_outReal;
       }
@@ -758,6 +768,8 @@
        * the thread.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
+         if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+            throw new IllegalArgumentException("ULTOSC peek: BadParam");
          ULTOSC_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new ULTOSC_Stream(this);
@@ -1177,6 +1189,17 @@
     */
    public ULTOSC_Stream ULTOSC_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
    {
+      if( inHigh.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
+            if( !Double.isFinite(inHigh[taFiniteIdx]) )
+               throw new IllegalArgumentException("ULTOSC open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
+            if( !Double.isFinite(inLow[taFiniteIdx]) )
+               throw new IllegalArgumentException("ULTOSC open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
+            if( !Double.isFinite(inClose[taFiniteIdx]) )
+               throw new IllegalArgumentException("ULTOSC open: BadParam");
+      }
       return ULTOSC_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
    }
    /**
@@ -1190,6 +1213,17 @@
     */
    public ULTOSC_Stream ULTOSC_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, double outReal[] )
    {
+      if( inHigh.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
+            if( !Double.isFinite(inHigh[taFiniteIdx]) )
+               throw new IllegalArgumentException("ULTOSC openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
+            if( !Double.isFinite(inLow[taFiniteIdx]) )
+               throw new IllegalArgumentException("ULTOSC openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
+            if( !Double.isFinite(inClose[taFiniteIdx]) )
+               throw new IllegalArgumentException("ULTOSC openAndFill: BadParam");
+      }
       ULTOSC_Stream sp = new ULTOSC_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

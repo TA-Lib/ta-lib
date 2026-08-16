@@ -471,10 +471,20 @@
       public record Value(double aroonDown, double aroonUp) { }
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public Value update( double inHigh, double inLow ) {
+         if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
+            throw new IllegalArgumentException("AROON update: BadParam");
          core.AROON_StreamStep(this, inHigh, inLow);
          this.cachedValue = new Value(this.cur_outAroonDown, this.cur_outAroonUp);
          return this.cachedValue;
@@ -490,6 +500,8 @@
        * the thread.
        */
       public Value peek( double inHigh, double inLow ) {
+         if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
+            throw new IllegalArgumentException("AROON peek: BadParam");
          AROON_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new AROON_Stream(this);
@@ -772,6 +784,14 @@
     */
    public AROON_Stream AROON_Open( double inHigh[], double inLow[], int optInTimePeriod )
    {
+      if( inHigh.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
+            if( !Double.isFinite(inHigh[taFiniteIdx]) )
+               throw new IllegalArgumentException("AROON open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
+            if( !Double.isFinite(inLow[taFiniteIdx]) )
+               throw new IllegalArgumentException("AROON open: BadParam");
+      }
       return AROON_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
    /**
@@ -785,6 +805,14 @@
     */
    public AROON_Stream AROON_OpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outAroonDown[], double outAroonUp[] )
    {
+      if( inHigh.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
+            if( !Double.isFinite(inHigh[taFiniteIdx]) )
+               throw new IllegalArgumentException("AROON openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
+            if( !Double.isFinite(inLow[taFiniteIdx]) )
+               throw new IllegalArgumentException("AROON openAndFill: BadParam");
+      }
       AROON_Stream sp = new AROON_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -652,10 +652,20 @@
       public record Value(double macd, double macdSignal, double macdHist) { }
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public Value update( double inReal ) {
+         if( !Double.isFinite(inReal) )
+            throw new IllegalArgumentException("MACDEXT update: BadParam");
          core.MACDEXT_StreamStep(this, inReal);
          this.cachedValue = new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
          return this.cachedValue;
@@ -671,6 +681,8 @@
        * the thread.
        */
       public Value peek( double inReal ) {
+         if( !Double.isFinite(inReal) )
+            throw new IllegalArgumentException("MACDEXT peek: BadParam");
          MACDEXT_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new MACDEXT_Stream(this);
@@ -950,6 +962,11 @@
     */
    public MACDEXT_Stream MACDEXT_Open( double inReal[], int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
    {
+      if( inReal.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal[taFiniteIdx]) )
+               throw new IllegalArgumentException("MACDEXT open: BadParam");
+      }
       return MACDEXT_OpenInternal(inReal, 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
    }
    /**
@@ -963,6 +980,11 @@
     */
    public MACDEXT_Stream MACDEXT_OpenAndFill( double inReal[], int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, double outMACD[], double outMACDSignal[], double outMACDHist[] )
    {
+      if( inReal.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal[taFiniteIdx]) )
+               throw new IllegalArgumentException("MACDEXT openAndFill: BadParam");
+      }
       MACDEXT_Stream sp = new MACDEXT_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

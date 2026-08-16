@@ -434,10 +434,20 @@
       private static final ThreadLocal<VWMA_Stream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public double update( double inReal, double inVolume ) {
+         if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
+            throw new IllegalArgumentException("VWMA update: BadParam");
          core.VWMA_StreamStep(this, inReal, inVolume);
          return this.cur_outReal;
       }
@@ -452,6 +462,8 @@
        * the thread.
        */
       public double peek( double inReal, double inVolume ) {
+         if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
+            throw new IllegalArgumentException("VWMA peek: BadParam");
          VWMA_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new VWMA_Stream(this);
@@ -712,6 +724,14 @@
     */
    public VWMA_Stream VWMA_Open( double inReal[], double inVolume[], int optInTimePeriod )
    {
+      if( inReal.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal[taFiniteIdx]) )
+               throw new IllegalArgumentException("VWMA open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
+            if( !Double.isFinite(inVolume[taFiniteIdx]) )
+               throw new IllegalArgumentException("VWMA open: BadParam");
+      }
       return VWMA_OpenInternal(inReal, inVolume, 0, optInTimePeriod);
    }
    /**
@@ -725,6 +745,14 @@
     */
    public VWMA_Stream VWMA_OpenAndFill( double inReal[], double inVolume[], int optInTimePeriod, double outReal[] )
    {
+      if( inReal.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal[taFiniteIdx]) )
+               throw new IllegalArgumentException("VWMA openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
+            if( !Double.isFinite(inVolume[taFiniteIdx]) )
+               throw new IllegalArgumentException("VWMA openAndFill: BadParam");
+      }
       VWMA_Stream sp = new VWMA_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

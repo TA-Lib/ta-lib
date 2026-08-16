@@ -717,12 +717,17 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.WILLR_Open(&high, &low, &close, 14).expect("enough history");
-    /// let peeked = s.peek(101.4, 99.1, 100.9);
-    /// let updated = s.update(101.4, 99.1, 100.9);
+    /// let peeked = s.peek(101.4, 99.1, 100.9).expect("a finite bar");
+    /// let updated = s.update(101.4, 99.1, 100.9).expect("a finite bar");
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_WILLR_Open")]
     pub fn WILLR_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32) -> Result<(WILLR_Stream, f64), RetCode> {
+        if inHigh.iter().any(|v| !v.is_finite())
+            || inLow.iter().any(|v| !v.is_finite())
+            || inClose.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.WILLR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod)
     }
 
@@ -733,6 +738,11 @@ impl Core {
     pub fn WILLR_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<WILLR_Stream, RetCode> {
+        if inHigh.iter().any(|v| !v.is_finite())
+            || inLow.iter().any(|v| !v.is_finite())
+            || inClose.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.WILLR_OpenCore(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
@@ -757,12 +767,25 @@ thread_local! {
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl WILLR_Stream {
-    /// Commit one closed bar; always produces a value. Never allocates.
+    /// Commit one closed bar. Never allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite (NaN or ±Inf).
+    /// That check runs before anything is written, so the handle is left
+    /// exactly as it was and the stream stays usable:
+    /// skip the bar, or close and re-open on a clean history. This is the
+    /// one place the streaming tier is stricter than the batch API, which
+    /// computes on whatever it is given — a handle retains its state, so a
+    /// single non-finite bar would poison every later value it produces.
     #[doc(alias = "TA_WILLR_Update")]
-    pub fn update(&mut self, inHigh: f64, inLow: f64, inClose: f64) -> f64 {
+    pub fn update(&mut self, inHigh: f64, inLow: f64, inClose: f64) -> Result<f64, RetCode> {
+        if !inHigh.is_finite() || !inLow.is_finite() || !inClose.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut outReal: f64 = 0.0_f64;
         self.core.WILLR_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outReal);
-        outReal
+        Ok(outReal)
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
@@ -770,9 +793,16 @@ impl WILLR_Stream {
     /// on a scratch copy of the state). Never writes the handle, so peeks may
     /// run concurrently with each other. The copy it runs on is held per thread and reused,
     /// so only the first peek of this function on a thread allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite, exactly as
+    /// `update` rejects it.
     #[doc(alias = "TA_WILLR_Peek")]
-    #[must_use]
-    pub fn peek(&self, inHigh: f64, inLow: f64, inClose: f64) -> f64 {
+    pub fn peek(&self, inHigh: f64, inLow: f64, inClose: f64) -> Result<f64, RetCode> {
+        if !inHigh.is_finite() || !inLow.is_finite() || !inClose.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         WILLR_PEEK_SCRATCH.with(|cell| {
             let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
             scratch.restore_from(self);

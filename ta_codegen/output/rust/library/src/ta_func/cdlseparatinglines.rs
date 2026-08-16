@@ -1076,12 +1076,18 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.CDLSEPARATINGLINES_Open(&open, &high, &low, &close).expect("enough history");
-    /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
-    /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
+    /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9).expect("a finite bar");
+    /// let updated = s.update(100.2, 101.4, 99.1, 100.9).expect("a finite bar");
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLSEPARATINGLINES_Open")]
     pub fn CDLSEPARATINGLINES_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLSEPARATINGLINES_Stream, i32), RetCode> {
+        if inOpen.iter().any(|v| !v.is_finite())
+            || inHigh.iter().any(|v| !v.is_finite())
+            || inLow.iter().any(|v| !v.is_finite())
+            || inClose.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.CDLSEPARATINGLINES_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
@@ -1092,6 +1098,12 @@ impl Core {
     pub fn CDLSEPARATINGLINES_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
     ) -> Result<CDLSEPARATINGLINES_Stream, RetCode> {
+        if inOpen.iter().any(|v| !v.is_finite())
+            || inHigh.iter().any(|v| !v.is_finite())
+            || inLow.iter().any(|v| !v.is_finite())
+            || inClose.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.CDLSEPARATINGLINES_OpenCore(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1)
     }
 
@@ -1116,12 +1128,25 @@ thread_local! {
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl CDLSEPARATINGLINES_Stream {
-    /// Commit one closed bar; always produces a value. Never allocates.
+    /// Commit one closed bar. Never allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite (NaN or ±Inf).
+    /// That check runs before anything is written, so the handle is left
+    /// exactly as it was and the stream stays usable:
+    /// skip the bar, or close and re-open on a clean history. This is the
+    /// one place the streaming tier is stricter than the batch API, which
+    /// computes on whatever it is given — a handle retains its state, so a
+    /// single non-finite bar would poison every later value it produces.
     #[doc(alias = "TA_CDLSEPARATINGLINES_Update")]
-    pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
+    pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> Result<i32, RetCode> {
+        if !inOpen.is_finite() || !inHigh.is_finite() || !inLow.is_finite() || !inClose.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut outInteger: i32 = 0_i32;
         self.core.CDLSEPARATINGLINES_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
-        outInteger
+        Ok(outInteger)
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
@@ -1129,9 +1154,16 @@ impl CDLSEPARATINGLINES_Stream {
     /// on a scratch copy of the state). Never writes the handle, so peeks may
     /// run concurrently with each other. The copy it runs on is held per thread and reused,
     /// so only the first peek of this function on a thread allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite, exactly as
+    /// `update` rejects it.
     #[doc(alias = "TA_CDLSEPARATINGLINES_Peek")]
-    #[must_use]
-    pub fn peek(&self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
+    pub fn peek(&self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> Result<i32, RetCode> {
+        if !inOpen.is_finite() || !inHigh.is_finite() || !inLow.is_finite() || !inClose.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         CDLSEPARATINGLINES_PEEK_SCRATCH.with(|cell| {
             let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
             scratch.restore_from(self);

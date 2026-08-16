@@ -185,6 +185,16 @@ TA_RetCode TA_CEIL_OpenInternal( struct TA_CEIL_Stream **stream, const double in
 
 TA_LIB_API TA_RetCode TA_CEIL_Open( TA_CEIL_Stream **stream, const double inReal[], int historyLen, double *outReal )
 {
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inReal[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_CEIL_OpenInternal( stream, inReal, 0, historyLen, outReal );
 }
 
@@ -193,7 +203,15 @@ TA_LIB_API TA_RetCode TA_CEIL_OpenAndFill( TA_CEIL_Stream **stream, const double
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
    if( !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inReal[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_CEIL_OpenCore( stream, inReal, 0, historyLen, outBegIdx, outNBElement, outReal, 1 );
 }
 
@@ -206,6 +224,7 @@ TA_RetCode TA_CEIL_OpenAndFillInternal( struct TA_CEIL_Stream **stream, const do
 TA_LIB_API TA_RetCode TA_CEIL_Update( TA_CEIL_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    TA_CEIL_StepInternal( stream, inReal, outReal );
    return TA_SUCCESS;
 }
@@ -215,6 +234,7 @@ TA_LIB_API TA_RetCode TA_CEIL_Peek( const TA_CEIL_Stream *stream, double inReal,
    struct TA_CEIL_Stream scratch;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
    TA_CEIL_StepInternal( &scratch, inReal, outReal );
    return TA_SUCCESS;

@@ -763,16 +763,23 @@ public partial class Core
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
       [ThreadStatic] private static MAVP_Stream? peekScratch;
 
-      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
-      /// <para>Never throws after a successful open, and allocates nothing — neither
-      /// handle state nor a return value.</para>
+      /// <para>Allocates nothing — neither handle state nor a return value.</para>
+      /// <para>Throws <see cref="System.ArgumentException"/> if any bar value is not
+      /// finite (NaN or an infinity). That check runs before anything is written,
+      /// so the handle is left exactly as it was and the stream stays usable: skip
+      /// the bar, or re-open on a clean history. This is the one place the
+      /// streaming tier is stricter than the batch API, which computes on whatever
+      /// it is given: a handle retains its state, so a single non-finite bar would
+      /// poison every later value it produces.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <param name="inPeriods">The period to use for this bar.</param>
       /// <returns>The value at the bar just committed.</returns>
       public double Update( double inReal, double inPeriods )
       {
+         if( !double.IsFinite(inReal) || !double.IsFinite(inPeriods) ) throw Core.StreamFailure("MAVP", "update", RetCode.BadParam);
          core.MAVP_StreamStep(this, inReal, inPeriods);
          return cur_outReal;
       }
@@ -791,6 +798,7 @@ public partial class Core
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public double Peek( double inReal, double inPeriods )
       {
+         if( !double.IsFinite(inReal) || !double.IsFinite(inPeriods) ) throw Core.StreamFailure("MAVP", "peek", RetCode.BadParam);
          MAVP_Stream? scratch = peekScratch;
          if( scratch is null ) {
             scratch = new MAVP_Stream(this);
@@ -1008,6 +1016,10 @@ public partial class Core
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       if( inPeriods.IsEmpty ) throw new ArgumentException("inPeriods is empty", nameof(inPeriods));
+      foreach( double taFiniteV in inReal )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MAVP", "open", RetCode.BadParam);
+      foreach( double taFiniteV in inPeriods )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MAVP", "open", RetCode.BadParam);
       return MAVP_OpenInternal(inReal, inPeriods, 0, optInMinPeriod, optInMaxPeriod, optInMAType);
    }
 
@@ -1044,6 +1056,10 @@ public partial class Core
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       if( inPeriods.IsEmpty ) throw new ArgumentException("inPeriods is empty", nameof(inPeriods));
+      foreach( double taFiniteV in inReal )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MAVP", "openAndFill", RetCode.BadParam);
+      foreach( double taFiniteV in inPeriods )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MAVP", "openAndFill", RetCode.BadParam);
       MAVP_Stream sp = new MAVP_Stream(this);
       RetCode retCode = MAVP_OpenAndFillBody(sp, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

@@ -386,10 +386,20 @@
       private static final ThreadLocal<PVO_Stream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public double update( double inVolume ) {
+         if( !Double.isFinite(inVolume) )
+            throw new IllegalArgumentException("PVO update: BadParam");
          core.PVO_StreamStep(this, inVolume);
          return this.cur_outReal;
       }
@@ -404,6 +414,8 @@
        * the thread.
        */
       public double peek( double inVolume ) {
+         if( !Double.isFinite(inVolume) )
+            throw new IllegalArgumentException("PVO peek: BadParam");
          PVO_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new PVO_Stream(this);
@@ -599,6 +611,11 @@
     */
    public PVO_Stream PVO_Open( double inVolume[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
+      if( inVolume.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
+            if( !Double.isFinite(inVolume[taFiniteIdx]) )
+               throw new IllegalArgumentException("PVO open: BadParam");
+      }
       return PVO_OpenInternal(inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType);
    }
    /**
@@ -612,6 +629,11 @@
     */
    public PVO_Stream PVO_OpenAndFill( double inVolume[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, double outReal[] )
    {
+      if( inVolume.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
+            if( !Double.isFinite(inVolume[taFiniteIdx]) )
+               throw new IllegalArgumentException("PVO openAndFill: BadParam");
+      }
       PVO_Stream sp = new PVO_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

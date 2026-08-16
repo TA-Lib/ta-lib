@@ -622,12 +622,16 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.AO_Open(&high, &low, 5, 34).expect("enough history");
-    /// let peeked = s.peek(101.4, 99.1);
-    /// let updated = s.update(101.4, 99.1);
+    /// let peeked = s.peek(101.4, 99.1).expect("a finite bar");
+    /// let updated = s.update(101.4, 99.1).expect("a finite bar");
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_AO_Open")]
     pub fn AO_Open(&self, inHigh: &[f64], inLow: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32) -> Result<(AO_Stream, f64), RetCode> {
+        if inHigh.iter().any(|v| !v.is_finite())
+            || inLow.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.AO_OpenInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod)
     }
 
@@ -638,6 +642,10 @@ impl Core {
     pub fn AO_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<AO_Stream, RetCode> {
+        if inHigh.iter().any(|v| !v.is_finite())
+            || inLow.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.AO_OpenCore(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
@@ -662,12 +670,25 @@ thread_local! {
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl AO_Stream {
-    /// Commit one closed bar; always produces a value. Never allocates.
+    /// Commit one closed bar. Never allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite (NaN or ±Inf).
+    /// That check runs before anything is written, so the handle is left
+    /// exactly as it was and the stream stays usable:
+    /// skip the bar, or close and re-open on a clean history. This is the
+    /// one place the streaming tier is stricter than the batch API, which
+    /// computes on whatever it is given — a handle retains its state, so a
+    /// single non-finite bar would poison every later value it produces.
     #[doc(alias = "TA_AO_Update")]
-    pub fn update(&mut self, inHigh: f64, inLow: f64) -> f64 {
+    pub fn update(&mut self, inHigh: f64, inLow: f64) -> Result<f64, RetCode> {
+        if !inHigh.is_finite() || !inLow.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut outReal: f64 = 0.0_f64;
         self.core.AO_step_internal(&mut self.state, inHigh, inLow, &mut outReal);
-        outReal
+        Ok(outReal)
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
@@ -675,9 +696,16 @@ impl AO_Stream {
     /// on a scratch copy of the state). Never writes the handle, so peeks may
     /// run concurrently with each other. The copy it runs on is held per thread and reused,
     /// so only the first peek of this function on a thread allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite, exactly as
+    /// `update` rejects it.
     #[doc(alias = "TA_AO_Peek")]
-    #[must_use]
-    pub fn peek(&self, inHigh: f64, inLow: f64) -> f64 {
+    pub fn peek(&self, inHigh: f64, inLow: f64) -> Result<f64, RetCode> {
+        if !inHigh.is_finite() || !inLow.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         AO_PEEK_SCRATCH.with(|cell| {
             let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
             scratch.restore_from(self);

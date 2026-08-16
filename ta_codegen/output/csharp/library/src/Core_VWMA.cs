@@ -491,16 +491,23 @@ public partial class Core
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
       [ThreadStatic] private static VWMA_Stream? peekScratch;
 
-      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
-      /// <para>Never throws after a successful open, and allocates nothing — neither
-      /// handle state nor a return value.</para>
+      /// <para>Allocates nothing — neither handle state nor a return value.</para>
+      /// <para>Throws <see cref="System.ArgumentException"/> if any bar value is not
+      /// finite (NaN or an infinity). That check runs before anything is written,
+      /// so the handle is left exactly as it was and the stream stays usable: skip
+      /// the bar, or re-open on a clean history. This is the one place the
+      /// streaming tier is stricter than the batch API, which computes on whatever
+      /// it is given: a handle retains its state, so a single non-finite bar would
+      /// poison every later value it produces.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <param name="inVolume">This bar's volume.</param>
       /// <returns>The value at the bar just committed.</returns>
       public double Update( double inReal, double inVolume )
       {
+         if( !double.IsFinite(inReal) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("VWMA", "update", RetCode.BadParam);
          core.VWMA_StreamStep(this, inReal, inVolume);
          return cur_outReal;
       }
@@ -519,6 +526,7 @@ public partial class Core
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public double Peek( double inReal, double inVolume )
       {
+         if( !double.IsFinite(inReal) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("VWMA", "peek", RetCode.BadParam);
          VWMA_Stream? scratch = peekScratch;
          if( scratch is null ) {
             scratch = new VWMA_Stream(this);
@@ -786,6 +794,10 @@ public partial class Core
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
+      foreach( double taFiniteV in inReal )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("VWMA", "open", RetCode.BadParam);
+      foreach( double taFiniteV in inVolume )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("VWMA", "open", RetCode.BadParam);
       return VWMA_OpenInternal(inReal, inVolume, 0, optInTimePeriod);
    }
 
@@ -819,6 +831,10 @@ public partial class Core
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
+      foreach( double taFiniteV in inReal )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("VWMA", "openAndFill", RetCode.BadParam);
+      foreach( double taFiniteV in inVolume )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("VWMA", "openAndFill", RetCode.BadParam);
       VWMA_Stream sp = new VWMA_Stream(this);
       RetCode retCode = VWMA_OpenAndFillBody(sp, inReal, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

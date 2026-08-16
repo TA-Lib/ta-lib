@@ -94,6 +94,9 @@ static long long g_d2Vectors = 0;
 static long long g_d2NonDefault = 0;
 static long long g_d2Sentinel = 0;
 static long long g_d2Reject = 0;
+/* Non-finite parameter probes; see d2_nonfinite_params. */
+static long long g_d2NonFinite = 0;
+static long long g_d2NonFiniteFuncs = 0;
 /* Self-checks, mirroring --xlang-hash's oorNotRejected / sentNotDefault. Both
  * classes assert only "C and the server agree" on their own; if C stopped
  * rejecting, or stopped substituting, the two tiers would be wrong TOGETHER and
@@ -164,6 +167,7 @@ void test_abstract_set_server(CodegenPipe *cp, const char *lang)
    /* Per-server, so the summary line reports the server it names rather than a
       running total across every server tested so far. */
    g_d2Vectors = g_d2NonDefault = g_d2Sentinel = g_d2Reject = 0;
+   g_d2NonFinite = g_d2NonFiniteFuncs = 0;
    g_d2OorNotRejected = g_d2SentNotDefault = 0;
    if( cp )
    {
@@ -1511,6 +1515,101 @@ static ErrorNumber d2_drive( const char *funcName, const TA_FuncHandle *handle,
 }
 
 /* The whole sweep for one function. */
+/* Every REAL optional parameter of every function, at NaN, +Inf and -Inf: the
+ * guarded call and the lookback must both reject it.
+ *
+ * Systematic by construction -- driven off the declared parameter domains, so a
+ * new function or a new real parameter is covered the day it lands, with no
+ * list to maintain here.
+ *
+ * Why this is not folded into d2_param_vectors' out-of-range class, which would
+ * have compared C against every language server for free: that class ships its
+ * vector over JSON as `%.17g`, and NaN has no JSON number form (the same wall
+ * the candle `factor` hit in #215, which is why it goes as hex bits). Carrying
+ * non-finite parameters cross-language needs that transport in the abstract RPC
+ * and in all four server parsers. So this leg is C-only, and deliberately does
+ * NOT depend on a server pipe -- it runs in a bare ./ta_regtest, which is what
+ * the autotools dist nightly executes.
+ *
+ * Two properties, both worth having:
+ *   NaN   -- the one a range check does NOT catch. `x < min` and `x > max` are
+ *            both false for NaN, so the obvious spelling accepts it; the emitted
+ *            form is inverted, `!(x >= min && x <= max)`, precisely for this.
+ *   +/-Inf -- already rejected, because every declared bound is finite (+/-3e37
+ *            at the widest). Asserted anyway: it pins that property against a
+ *            future parameter given an unbounded domain, where the inverted
+ *            spelling alone would no longer be enough.
+ */
+static ErrorNumber d2_nonfinite_params( const char *funcName, const TA_FuncHandle *handle,
+                                        const TA_FuncInfo *funcInfo,
+                                        TA_ParamHolder *paramHolder, int size )
+{
+    if( funcInfo->nbOptInput == 0 || funcInfo->nbOptInput > D2_MAX_OPT )
+        return TA_TEST_PASS;
+
+    static const double bad[3] = { (double)NAN, (double)INFINITY, -(double)INFINITY };
+    static const char  *badName[3] = { "NaN", "+Inf", "-Inf" };
+
+    double base[D2_MAX_OPT], vec[D2_MAX_OPT];
+    const TA_OptInputParameterInfo *oi;
+    unsigned int k, j;
+    int probed = 0;
+
+    for( k = 0; k < funcInfo->nbOptInput; k++ )
+    {
+        TA_GetOptInputParameterInfo(handle, k, &oi);
+        base[k] = oi->defaultValue;
+    }
+
+    for( k = 0; k < funcInfo->nbOptInput; k++ )
+    {
+        TA_GetOptInputParameterInfo(handle, k, &oi);
+        /* Integer and choice-list slots cannot hold a non-finite value. */
+        if( oi->type != TA_OptInput_RealRange && oi->type != TA_OptInput_RealList )
+            continue;
+
+        for( int b = 0; b < 3; b++ )
+        {
+            TA_RetCode rc;
+            TA_Integer beg = 0, nb = 0, lookback = -1;
+
+            for( j = 0; j < funcInfo->nbOptInput; j++ ) vec[j] = base[j];
+            vec[k] = bad[b];
+
+            d2_set_opts(paramHolder, handle, funcInfo, vec);
+            rc = TA_CallFunc(paramHolder, 0, size - 1, &beg, &nb);
+            if( rc != TA_BAD_PARAM )
+            {
+                printf("  ABSTRACT ERROR [%s]: %s in real parameter '%s' was ACCEPTED "
+                       "(rc=%d) -- a range test of the form `x < min || x > max` is "
+                       "FALSE for NaN and lets it through\n",
+                       funcName, badName[b], oi->paramName, (int)rc);
+                return TA_ABSTRACT_CALL_MISMATCH;
+            }
+            g_d2NonFinite++;
+            probed++;
+
+            /* The lookback validates the same parameters and must agree. A
+             * lookback that accepted what the call rejects would hand a caller a
+             * buffer size for a call that cannot run. */
+            if( TA_GetLookback(paramHolder, &lookback) == TA_SUCCESS && lookback >= 0 )
+            {
+                printf("  ABSTRACT ERROR [%s]: the CALL rejected %s in '%s' but the "
+                       "LOOKBACK accepted it (returned %d)\n",
+                       funcName, badName[b], oi->paramName, lookback);
+                return TA_ABSTRACT_CALL_MISMATCH;
+            }
+            g_d2NonFinite++;
+        }
+    }
+
+    if( probed > 0 ) g_d2NonFiniteFuncs++;
+
+    /* Leave the holder as the caller had it. */
+    d2_set_opts(paramHolder, handle, funcInfo, base);
+    return TA_TEST_PASS;
+}
+
 static ErrorNumber d2_param_vectors( const char *funcName, const TA_FuncHandle *handle,
                                      const TA_FuncInfo *funcInfo,
                                      TA_ParamHolder *paramHolder,
@@ -1712,6 +1811,22 @@ ErrorNumber test_abstract( void )
       }
    }
    } /* end crefChecksum scope */
+
+   printf( "  Non-finite parameter contract: %lld probe(s) over %lld function(s) "
+           "— every real optional parameter at NaN, +Inf and -Inf, call and lookback\n",
+           g_d2NonFinite, g_d2NonFiniteFuncs );
+   /* Literal floors. 24 real parameters x 3 values x 2 assertions (call and
+    * lookback) = 144, across the 14 functions that declare one. Derived counts
+    * would move with the corpus and let the sweep go quiet unnoticed; these fail
+    * loudly if a parameter stops being probed. Raise them when a real parameter
+    * is added -- that is the point. */
+   if( g_d2NonFinite < 144 || g_d2NonFiniteFuncs < 14 )
+   {
+      printf( "  Failed: the non-finite parameter sweep probed %lld value(s) over "
+              "%lld function(s); it was written with 144 over 14\n",
+              g_d2NonFinite, g_d2NonFiniteFuncs );
+      return TA_ABSTRACT_CALL_MISMATCH;
+   }
 
    if( g_abstractPipe )
    {
@@ -2229,6 +2344,14 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
       {
          srvErr = d2_param_vectors( funcName, handle, funcInfo, paramHolder,
                                     input, size, relaxValues );
+         if( srvErr != TA_TEST_PASS )
+         {
+            TA_ParamHolderFree( paramHolder );
+            return srvErr;
+         }
+
+         /* C-only, so unlike the sweep above it runs with no server pipe. */
+         srvErr = d2_nonfinite_params( funcName, handle, funcInfo, paramHolder, size );
          if( srvErr != TA_TEST_PASS )
          {
             TA_ParamHolderFree( paramHolder );

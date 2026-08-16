@@ -701,10 +701,20 @@
       public record Value(double fastK, double fastD) { }
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public Value update( double inHigh, double inLow, double inClose ) {
+         if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+            throw new IllegalArgumentException("STOCHF update: BadParam");
          core.STOCHF_StreamStep(this, inHigh, inLow, inClose);
          this.cachedValue = new Value(this.cur_outFastK, this.cur_outFastD);
          return this.cachedValue;
@@ -720,6 +730,8 @@
        * the thread.
        */
       public Value peek( double inHigh, double inLow, double inClose ) {
+         if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+            throw new IllegalArgumentException("STOCHF peek: BadParam");
          STOCHF_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new STOCHF_Stream(this);
@@ -1144,6 +1156,17 @@
     */
    public STOCHF_Stream STOCHF_Open( double inHigh[], double inLow[], double inClose[], int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
+      if( inHigh.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
+            if( !Double.isFinite(inHigh[taFiniteIdx]) )
+               throw new IllegalArgumentException("STOCHF open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
+            if( !Double.isFinite(inLow[taFiniteIdx]) )
+               throw new IllegalArgumentException("STOCHF open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
+            if( !Double.isFinite(inClose[taFiniteIdx]) )
+               throw new IllegalArgumentException("STOCHF open: BadParam");
+      }
       return STOCHF_OpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
    }
    /**
@@ -1157,6 +1180,17 @@
     */
    public STOCHF_Stream STOCHF_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, double outFastK[], double outFastD[] )
    {
+      if( inHigh.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
+            if( !Double.isFinite(inHigh[taFiniteIdx]) )
+               throw new IllegalArgumentException("STOCHF openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
+            if( !Double.isFinite(inLow[taFiniteIdx]) )
+               throw new IllegalArgumentException("STOCHF openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
+            if( !Double.isFinite(inClose[taFiniteIdx]) )
+               throw new IllegalArgumentException("STOCHF openAndFill: BadParam");
+      }
       STOCHF_Stream sp = new STOCHF_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

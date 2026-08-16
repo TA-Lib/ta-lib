@@ -278,12 +278,16 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.DIV_Open(&data0, &data1).expect("enough history");
-    /// let peeked = s.peek(100.9, 101.3);
-    /// let updated = s.update(100.9, 101.3);
+    /// let peeked = s.peek(100.9, 101.3).expect("a finite bar");
+    /// let updated = s.update(100.9, 101.3).expect("a finite bar");
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_DIV_Open")]
     pub fn DIV_Open(&self, inReal0: &[f64], inReal1: &[f64], ) -> Result<(DIV_Stream, f64), RetCode> {
+        if inReal0.iter().any(|v| !v.is_finite())
+            || inReal1.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.DIV_OpenInternal(inReal0, inReal1, 0)
     }
 
@@ -294,6 +298,10 @@ impl Core {
     pub fn DIV_OpenAndFill(
         &self, inReal0: &[f64], inReal1: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<DIV_Stream, RetCode> {
+        if inReal0.iter().any(|v| !v.is_finite())
+            || inReal1.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.DIV_OpenCore(inReal0, inReal1, 0, outBegIdx, outNBElement, outReal, 1)
     }
 
@@ -310,12 +318,25 @@ impl Core {
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl DIV_Stream {
-    /// Commit one closed bar; always produces a value. Never allocates.
+    /// Commit one closed bar. Never allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite (NaN or ±Inf).
+    /// That check runs before anything is written, so the handle is left
+    /// exactly as it was and the stream stays usable:
+    /// skip the bar, or close and re-open on a clean history. This is the
+    /// one place the streaming tier is stricter than the batch API, which
+    /// computes on whatever it is given — a handle retains its state, so a
+    /// single non-finite bar would poison every later value it produces.
     #[doc(alias = "TA_DIV_Update")]
-    pub fn update(&mut self, inReal0: f64, inReal1: f64) -> f64 {
+    pub fn update(&mut self, inReal0: f64, inReal1: f64) -> Result<f64, RetCode> {
+        if !inReal0.is_finite() || !inReal1.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut outReal: f64 = 0.0_f64;
         self.core.DIV_step_internal(&mut self.state, inReal0, inReal1, &mut outReal);
-        outReal
+        Ok(outReal)
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
@@ -323,9 +344,16 @@ impl DIV_Stream {
     /// on a scratch copy of the state). Never writes the handle, so peeks may
     /// run concurrently with each other. This handle holds only scalars, so the copy is a
     /// few machine words and `peek` never allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite, exactly as
+    /// `update` rejects it.
     #[doc(alias = "TA_DIV_Peek")]
-    #[must_use]
-    pub fn peek(&self, inReal0: f64, inReal1: f64) -> f64 {
+    pub fn peek(&self, inReal0: f64, inReal1: f64) -> Result<f64, RetCode> {
+        if !inReal0.is_finite() || !inReal1.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut scratch = self.clone();
         scratch.update(inReal0, inReal1)
     }

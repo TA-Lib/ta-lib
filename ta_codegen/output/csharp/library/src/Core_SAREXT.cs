@@ -90,42 +90,42 @@ public partial class Core
    {
       if( optInStartValue == TA_REAL_DEFAULT ) {
          optInStartValue = 0e0;
-      } else if( optInStartValue < TA_REAL_MIN || optInStartValue > TA_REAL_MAX ) {
+      } else if( !(optInStartValue >= TA_REAL_MIN && optInStartValue <= TA_REAL_MAX) ) {
          return -1;
       }
       if( optInOffsetOnReverse == TA_REAL_DEFAULT ) {
          optInOffsetOnReverse = 0e0;
-      } else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > TA_REAL_MAX ) {
+      } else if( !(optInOffsetOnReverse >= 0e0 && optInOffsetOnReverse <= TA_REAL_MAX) ) {
          return -1;
       }
       if( optInAccelerationInitLong == TA_REAL_DEFAULT ) {
          optInAccelerationInitLong = 2e-2;
-      } else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > TA_REAL_MAX ) {
+      } else if( !(optInAccelerationInitLong >= 0e0 && optInAccelerationInitLong <= TA_REAL_MAX) ) {
          return -1;
       }
       if( optInAccelerationLong == TA_REAL_DEFAULT ) {
          optInAccelerationLong = 2e-2;
-      } else if( optInAccelerationLong < 0e0 || optInAccelerationLong > TA_REAL_MAX ) {
+      } else if( !(optInAccelerationLong >= 0e0 && optInAccelerationLong <= TA_REAL_MAX) ) {
          return -1;
       }
       if( optInAccelerationMaxLong == TA_REAL_DEFAULT ) {
          optInAccelerationMaxLong = 2e-1;
-      } else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > TA_REAL_MAX ) {
+      } else if( !(optInAccelerationMaxLong >= 0e0 && optInAccelerationMaxLong <= TA_REAL_MAX) ) {
          return -1;
       }
       if( optInAccelerationInitShort == TA_REAL_DEFAULT ) {
          optInAccelerationInitShort = 2e-2;
-      } else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > TA_REAL_MAX ) {
+      } else if( !(optInAccelerationInitShort >= 0e0 && optInAccelerationInitShort <= TA_REAL_MAX) ) {
          return -1;
       }
       if( optInAccelerationShort == TA_REAL_DEFAULT ) {
          optInAccelerationShort = 2e-2;
-      } else if( optInAccelerationShort < 0e0 || optInAccelerationShort > TA_REAL_MAX ) {
+      } else if( !(optInAccelerationShort >= 0e0 && optInAccelerationShort <= TA_REAL_MAX) ) {
          return -1;
       }
       if( optInAccelerationMaxShort == TA_REAL_DEFAULT ) {
          optInAccelerationMaxShort = 2e-1;
-      } else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > TA_REAL_MAX ) {
+      } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= TA_REAL_MAX) ) {
          return -1;
       }
       /* SAR always sacrifices one price bar to establish the
@@ -174,42 +174,42 @@ public partial class Core
       }
       if( optInStartValue == TA_REAL_DEFAULT ) {
          optInStartValue = 0e0;
-      } else if( optInStartValue < TA_REAL_MIN || optInStartValue > TA_REAL_MAX ) {
+      } else if( !(optInStartValue >= TA_REAL_MIN && optInStartValue <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInOffsetOnReverse == TA_REAL_DEFAULT ) {
          optInOffsetOnReverse = 0e0;
-      } else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > TA_REAL_MAX ) {
+      } else if( !(optInOffsetOnReverse >= 0e0 && optInOffsetOnReverse <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationInitLong == TA_REAL_DEFAULT ) {
          optInAccelerationInitLong = 2e-2;
-      } else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > TA_REAL_MAX ) {
+      } else if( !(optInAccelerationInitLong >= 0e0 && optInAccelerationInitLong <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationLong == TA_REAL_DEFAULT ) {
          optInAccelerationLong = 2e-2;
-      } else if( optInAccelerationLong < 0e0 || optInAccelerationLong > TA_REAL_MAX ) {
+      } else if( !(optInAccelerationLong >= 0e0 && optInAccelerationLong <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationMaxLong == TA_REAL_DEFAULT ) {
          optInAccelerationMaxLong = 2e-1;
-      } else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > TA_REAL_MAX ) {
+      } else if( !(optInAccelerationMaxLong >= 0e0 && optInAccelerationMaxLong <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationInitShort == TA_REAL_DEFAULT ) {
          optInAccelerationInitShort = 2e-2;
-      } else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > TA_REAL_MAX ) {
+      } else if( !(optInAccelerationInitShort >= 0e0 && optInAccelerationInitShort <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationShort == TA_REAL_DEFAULT ) {
          optInAccelerationShort = 2e-2;
-      } else if( optInAccelerationShort < 0e0 || optInAccelerationShort > TA_REAL_MAX ) {
+      } else if( !(optInAccelerationShort >= 0e0 && optInAccelerationShort <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationMaxShort == TA_REAL_DEFAULT ) {
          optInAccelerationMaxShort = 2e-1;
-      } else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > TA_REAL_MAX ) {
+      } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( (outReal.Overlaps(inHigh) && outReal != inHigh) || (outReal.Overlaps(inLow) && outReal != inLow) ) {
@@ -528,42 +528,42 @@ public partial class Core
       }
       if( optInStartValue == TA_REAL_DEFAULT ) {
          optInStartValue = 0e0;
-      } else if( optInStartValue < TA_REAL_MIN || optInStartValue > TA_REAL_MAX ) {
+      } else if( !(optInStartValue >= TA_REAL_MIN && optInStartValue <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInOffsetOnReverse == TA_REAL_DEFAULT ) {
          optInOffsetOnReverse = 0e0;
-      } else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > TA_REAL_MAX ) {
+      } else if( !(optInOffsetOnReverse >= 0e0 && optInOffsetOnReverse <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationInitLong == TA_REAL_DEFAULT ) {
          optInAccelerationInitLong = 2e-2;
-      } else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > TA_REAL_MAX ) {
+      } else if( !(optInAccelerationInitLong >= 0e0 && optInAccelerationInitLong <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationLong == TA_REAL_DEFAULT ) {
          optInAccelerationLong = 2e-2;
-      } else if( optInAccelerationLong < 0e0 || optInAccelerationLong > TA_REAL_MAX ) {
+      } else if( !(optInAccelerationLong >= 0e0 && optInAccelerationLong <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationMaxLong == TA_REAL_DEFAULT ) {
          optInAccelerationMaxLong = 2e-1;
-      } else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > TA_REAL_MAX ) {
+      } else if( !(optInAccelerationMaxLong >= 0e0 && optInAccelerationMaxLong <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationInitShort == TA_REAL_DEFAULT ) {
          optInAccelerationInitShort = 2e-2;
-      } else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > TA_REAL_MAX ) {
+      } else if( !(optInAccelerationInitShort >= 0e0 && optInAccelerationInitShort <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationShort == TA_REAL_DEFAULT ) {
          optInAccelerationShort = 2e-2;
-      } else if( optInAccelerationShort < 0e0 || optInAccelerationShort > TA_REAL_MAX ) {
+      } else if( !(optInAccelerationShort >= 0e0 && optInAccelerationShort <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationMaxShort == TA_REAL_DEFAULT ) {
          optInAccelerationMaxShort = 2e-1;
-      } else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > TA_REAL_MAX ) {
+      } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( startIdx < 1 ) {
@@ -966,16 +966,23 @@ public partial class Core
          this.fillRange = other.fillRange;
       }
 
-      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
-      /// <para>Never throws after a successful open, and allocates nothing — neither
-      /// handle state nor a return value.</para>
+      /// <para>Allocates nothing — neither handle state nor a return value.</para>
+      /// <para>Throws <see cref="System.ArgumentException"/> if any bar value is not
+      /// finite (NaN or an infinity). That check runs before anything is written,
+      /// so the handle is left exactly as it was and the stream stays usable: skip
+      /// the bar, or re-open on a clean history. This is the one place the
+      /// streaming tier is stricter than the batch API, which computes on whatever
+      /// it is given: a handle retains its state, so a single non-finite bar would
+      /// poison every later value it produces.</para>
       /// </remarks>
       /// <param name="inHigh">This bar's high price.</param>
       /// <param name="inLow">This bar's low price.</param>
       /// <returns>The value at the bar just committed.</returns>
       public double Update( double inHigh, double inLow )
       {
+         if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("SAREXT", "update", RetCode.BadParam);
          core.SAREXT_StreamStep(this, inHigh, inLow);
          return cur_outReal;
       }
@@ -994,6 +1001,7 @@ public partial class Core
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public double Peek( double inHigh, double inLow )
       {
+         if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("SAREXT", "peek", RetCode.BadParam);
          SAREXT_Stream scratch = new SAREXT_Stream(this);
          core.SAREXT_StreamStep(scratch, inHigh, inLow);
          return scratch.cur_outReal;
@@ -1168,42 +1176,42 @@ public partial class Core
       }
       if( optInStartValue == TA_REAL_DEFAULT ) {
          optInStartValue = 0e0;
-      } else if( optInStartValue < TA_REAL_MIN || optInStartValue > TA_REAL_MAX ) {
+      } else if( !(optInStartValue >= TA_REAL_MIN && optInStartValue <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInOffsetOnReverse == TA_REAL_DEFAULT ) {
          optInOffsetOnReverse = 0e0;
-      } else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > TA_REAL_MAX ) {
+      } else if( !(optInOffsetOnReverse >= 0e0 && optInOffsetOnReverse <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationInitLong == TA_REAL_DEFAULT ) {
          optInAccelerationInitLong = 2e-2;
-      } else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > TA_REAL_MAX ) {
+      } else if( !(optInAccelerationInitLong >= 0e0 && optInAccelerationInitLong <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationLong == TA_REAL_DEFAULT ) {
          optInAccelerationLong = 2e-2;
-      } else if( optInAccelerationLong < 0e0 || optInAccelerationLong > TA_REAL_MAX ) {
+      } else if( !(optInAccelerationLong >= 0e0 && optInAccelerationLong <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationMaxLong == TA_REAL_DEFAULT ) {
          optInAccelerationMaxLong = 2e-1;
-      } else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > TA_REAL_MAX ) {
+      } else if( !(optInAccelerationMaxLong >= 0e0 && optInAccelerationMaxLong <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationInitShort == TA_REAL_DEFAULT ) {
          optInAccelerationInitShort = 2e-2;
-      } else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > TA_REAL_MAX ) {
+      } else if( !(optInAccelerationInitShort >= 0e0 && optInAccelerationInitShort <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationShort == TA_REAL_DEFAULT ) {
          optInAccelerationShort = 2e-2;
-      } else if( optInAccelerationShort < 0e0 || optInAccelerationShort > TA_REAL_MAX ) {
+      } else if( !(optInAccelerationShort >= 0e0 && optInAccelerationShort <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationMaxShort == TA_REAL_DEFAULT ) {
          optInAccelerationMaxShort = 2e-1;
-      } else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > TA_REAL_MAX ) {
+      } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       /* > 0 indicates long. == 0 indicates short */
@@ -1576,6 +1584,10 @@ public partial class Core
    {
       if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
       if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      foreach( double taFiniteV in inHigh )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("SAREXT", "open", RetCode.BadParam);
+      foreach( double taFiniteV in inLow )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("SAREXT", "open", RetCode.BadParam);
       return SAREXT_OpenInternal(inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
    }
 
@@ -1622,6 +1634,10 @@ public partial class Core
    {
       if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
       if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      foreach( double taFiniteV in inHigh )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("SAREXT", "openAndFill", RetCode.BadParam);
+      foreach( double taFiniteV in inLow )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("SAREXT", "openAndFill", RetCode.BadParam);
       SAREXT_Stream sp = new SAREXT_Stream(this);
       RetCode retCode = SAREXT_OpenAndFillBody(sp, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

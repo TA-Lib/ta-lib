@@ -20,6 +20,12 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   same bar — verified per function, per bar, in all four languages. `OpenAndFill`
   opens a stream and fills the whole history's output in one pass, for callers
   who want both. Available for every indicator that has one.
+
+  One place the streaming API is deliberately stricter than the batch one: a
+  non-finite input (NaN or an infinity) is **rejected** rather than computed on,
+  at open and at every bar, and the handle is left unchanged so the stream stays
+  usable. A stream carries state forward, so one bad bar from a feed would
+  otherwise poison every value it produces afterwards.
 - (#81) Microsoft VCPKG support. Thanks @greenTableWork !
 - (#78) CMake can now opt out of building the static or the shared library (both built by default). Thanks @BwL1289 !
 - (#75) More docs for DEMA, TEMA, T3, MFI, ULTOSC, KAMA and TRIX. Thanks @nehemiah888 !
@@ -54,6 +60,13 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - ~10%: ATR and NATR
 
 ### Changed
+- A NaN passed as a real optional parameter (`optInNbDevUp`, `optInPenetration`,
+  `optInVFactor`, ...) is now rejected with `TA_BAD_PARAM` instead of being computed
+  on. Every such parameter already declared a valid range, but the range test could
+  not see NaN: `x < min` and `x > max` are both false for it, so it slipped through
+  and the call returned success with NaN output. The corresponding `_Lookback` now
+  rejects it too. Infinities were already rejected and still are. Only NaN behaves
+  differently than before, and only for parameters — input series are unchanged.
 - (#202) VAR no longer returns a tiny negative variance on a flat stretch, where the
   calculation cancels to either side of zero; it returns 0. `sqrt(VAR(...))` was NaN
   there. STDDEV is unaffected — it already reported 0 for those bars.

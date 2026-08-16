@@ -84,11 +84,11 @@ TA_LIB_API int TA_BBANDS_Lookback( int optInTimePeriod, double optInNbDevUp, dou
       return -1;
    if( optInNbDevUp == TA_REAL_DEFAULT )
       optInNbDevUp = 2;
-   else if( optInNbDevUp < TA_REAL_MIN || optInNbDevUp > TA_REAL_MAX )
+   else if( !(optInNbDevUp >= TA_REAL_MIN && optInNbDevUp <= TA_REAL_MAX) )
       return -1;
    if( optInNbDevDn == TA_REAL_DEFAULT )
       optInNbDevDn = 2;
-   else if( optInNbDevDn < TA_REAL_MIN || optInNbDevDn > TA_REAL_MAX )
+   else if( !(optInNbDevDn >= TA_REAL_MIN && optInNbDevDn <= TA_REAL_MAX) )
       return -1;
    if( (int)optInMAType == TA_INTEGER_DEFAULT || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
@@ -147,11 +147,11 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
       return TA_BAD_PARAM;
    if( optInNbDevUp == TA_REAL_DEFAULT )
       optInNbDevUp = 2;
-   else if( optInNbDevUp < TA_REAL_MIN || optInNbDevUp > TA_REAL_MAX )
+   else if( !(optInNbDevUp >= TA_REAL_MIN && optInNbDevUp <= TA_REAL_MAX) )
       return TA_BAD_PARAM;
    if( optInNbDevDn == TA_REAL_DEFAULT )
       optInNbDevDn = 2;
-   else if( optInNbDevDn < TA_REAL_MIN || optInNbDevDn > TA_REAL_MAX )
+   else if( !(optInNbDevDn >= TA_REAL_MIN && optInNbDevDn <= TA_REAL_MAX) )
       return TA_BAD_PARAM;
    if( (int)optInMAType == TA_INTEGER_DEFAULT || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
@@ -446,11 +446,11 @@ TA_RetCode TA_S_BBANDS( int    startIdx,
       return TA_BAD_PARAM;
    if( optInNbDevUp == TA_REAL_DEFAULT )
       optInNbDevUp = 2;
-   else if( optInNbDevUp < TA_REAL_MIN || optInNbDevUp > TA_REAL_MAX )
+   else if( !(optInNbDevUp >= TA_REAL_MIN && optInNbDevUp <= TA_REAL_MAX) )
       return TA_BAD_PARAM;
    if( optInNbDevDn == TA_REAL_DEFAULT )
       optInNbDevDn = 2;
-   else if( optInNbDevDn < TA_REAL_MIN || optInNbDevDn > TA_REAL_MAX )
+   else if( !(optInNbDevDn >= TA_REAL_MIN && optInNbDevDn <= TA_REAL_MAX) )
       return TA_BAD_PARAM;
    if( (int)optInMAType == TA_INTEGER_DEFAULT || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
@@ -686,25 +686,33 @@ struct TA_BBANDS_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_BBANDS_StepInternal( struct TA_BBANDS_Stream *sp, double inReal, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
+static TA_RetCode TA_BBANDS_StepInternal( struct TA_BBANDS_Stream *sp, double inReal, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
 {
    double tempReal;
    double tempReal2;
-   double cur_tempBuffer1;
-   double cur_tempBuffer2;
-   double cur_outRealUpperBand;
-   double cur_outRealLowerBand;
+   double cur_tempBuffer1 = 0.0;
+   double cur_tempBuffer2 = 0.0;
+   double cur_outRealUpperBand = 0.0;
+   double cur_outRealLowerBand = 0.0;
 
 
    /* Pipeline the new bar through the sub-streams (batch tail order). */
-   if( sp->peekMode )
-      TA_MA_Peek( (const TA_MA_Stream *)sp->sub0, inReal, &cur_tempBuffer1 );
-   else
-      TA_MA_Update( sp->sub0, inReal, &cur_tempBuffer1 );
-   if( sp->peekMode )
-      TA_STDDEV_Peek( (const TA_STDDEV_Stream *)sp->sub1, inReal, &cur_tempBuffer2 );
-   else
-      TA_STDDEV_Update( sp->sub1, inReal, &cur_tempBuffer2 );
+   {
+      TA_RetCode subRc;
+      if( sp->peekMode )
+         subRc = TA_MA_Peek( (const TA_MA_Stream *)sp->sub0, inReal, &cur_tempBuffer1 );
+      else
+         subRc = TA_MA_Update( sp->sub0, inReal, &cur_tempBuffer1 );
+      if( subRc != TA_SUCCESS ) return subRc;
+   }
+   {
+      TA_RetCode subRc;
+      if( sp->peekMode )
+         subRc = TA_STDDEV_Peek( (const TA_STDDEV_Stream *)sp->sub1, inReal, &cur_tempBuffer2 );
+      else
+         subRc = TA_STDDEV_Update( sp->sub1, inReal, &cur_tempBuffer2 );
+      if( subRc != TA_SUCCESS ) return subRc;
+   }
    /* Combine map (batch tail, per bar). */
    if( sp->optInNbDevUp == sp->optInNbDevDn )
    {
@@ -721,6 +729,7 @@ static void TA_BBANDS_StepInternal( struct TA_BBANDS_Stream *sp, double inReal, 
    *outRealUpperBand = cur_outRealUpperBand;
    *outRealMiddleBand = cur_tempBuffer1;
    *outRealLowerBand = cur_outRealLowerBand;
+   return TA_SUCCESS;
 }
 
 static TA_RetCode TA_BBANDS_OpenCore( struct TA_BBANDS_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[], int outStride )
@@ -748,11 +757,11 @@ static TA_RetCode TA_BBANDS_OpenCore( struct TA_BBANDS_Stream **stream, const do
       return TA_BAD_PARAM;
    if( optInNbDevUp == TA_REAL_DEFAULT )
       optInNbDevUp = 2;
-   else if( optInNbDevUp < TA_REAL_MIN || optInNbDevUp > TA_REAL_MAX )
+   else if( !(optInNbDevUp >= TA_REAL_MIN && optInNbDevUp <= TA_REAL_MAX) )
       return TA_BAD_PARAM;
    if( optInNbDevDn == TA_REAL_DEFAULT )
       optInNbDevDn = 2;
-   else if( optInNbDevDn < TA_REAL_MIN || optInNbDevDn > TA_REAL_MAX )
+   else if( !(optInNbDevDn >= TA_REAL_MIN && optInNbDevDn <= TA_REAL_MAX) )
       return TA_BAD_PARAM;
    if( (int)optInMAType == TA_INTEGER_DEFAULT || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
@@ -942,6 +951,16 @@ TA_RetCode TA_BBANDS_OpenInternal( struct TA_BBANDS_Stream **stream, const doubl
 
 TA_LIB_API TA_RetCode TA_BBANDS_Open( TA_BBANDS_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, TA_MAType optInMAType, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
 {
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inReal[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_BBANDS_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
 }
 
@@ -950,7 +969,15 @@ TA_LIB_API TA_RetCode TA_BBANDS_OpenAndFill( TA_BBANDS_Stream **stream, const do
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
    if( !outBegIdx || !outNBElement || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
+   if( !inReal || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outRealUpperBand == (const void *)inReal || (const void *)outRealMiddleBand == (const void *)inReal || (const void *)outRealLowerBand == (const void *)inReal || (const void *)outRealUpperBand == (const void *)outRealMiddleBand || (const void *)outRealUpperBand == (const void *)outRealLowerBand || (const void *)outRealMiddleBand == (const void *)outRealLowerBand ) return TA_BAD_PARAM;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inReal[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_BBANDS_OpenCore( stream, inReal, 0, historyLen, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1 );
 }
 
@@ -963,8 +990,8 @@ TA_RetCode TA_BBANDS_OpenAndFillInternal( struct TA_BBANDS_Stream **stream, cons
 TA_LIB_API TA_RetCode TA_BBANDS_Update( TA_BBANDS_Stream *stream, double inReal, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
 {
    if( !stream || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
-   TA_BBANDS_StepInternal( stream, inReal, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
-   return TA_SUCCESS;
+   if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
+   return TA_BBANDS_StepInternal( stream, inReal, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
 }
 
 TA_LIB_API TA_RetCode TA_BBANDS_Peek( const TA_BBANDS_Stream *stream, double inReal, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
@@ -972,10 +999,10 @@ TA_LIB_API TA_RetCode TA_BBANDS_Peek( const TA_BBANDS_Stream *stream, double inR
    struct TA_BBANDS_Stream scratch;
 
    if( !stream || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
    scratch.peekMode = 1;
-   TA_BBANDS_StepInternal( &scratch, inReal, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
-   return TA_SUCCESS;
+   return TA_BBANDS_StepInternal( &scratch, inReal, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
 }
 
 TA_LIB_API TA_RetCode TA_BBANDS_Close( TA_BBANDS_Stream *stream )

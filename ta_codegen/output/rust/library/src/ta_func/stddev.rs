@@ -86,7 +86,7 @@ impl Core {
         }
         if optInNbDev == REAL_DEFAULT {
             optInNbDev = 1e0;
-        } else if (optInNbDev < REAL_MIN) || (optInNbDev > REAL_MAX) {
+        } else if !((optInNbDev >= REAL_MIN) && (optInNbDev <= REAL_MAX)) {
             return usize::MAX;
         }
         // Lookback is driven by the variance.
@@ -185,7 +185,7 @@ impl Core {
         }
         if optInNbDev == REAL_DEFAULT {
             optInNbDev = 1e0;
-        } else if (optInNbDev < REAL_MIN) || (optInNbDev > REAL_MAX) {
+        } else if !((optInNbDev >= REAL_MIN) && (optInNbDev <= REAL_MAX)) {
             return RetCode::BadParam;
         }
         let _assertLb = self.STDDEV_Lookback(optInTimePeriod, optInNbDev);
@@ -282,12 +282,12 @@ impl STDDEV_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn STDDEV_step_internal(&self, sp: &mut STDDEV_StreamState, inReal: f64, outReal: &mut f64) {
+    fn STDDEV_step_internal(&self, sp: &mut STDDEV_StreamState, inReal: f64, outReal: &mut f64) -> Result<(), RetCode> {
         let mut tempReal: f64 = 0.0_f64;
         let mut cur_outReal: f64 = 0.0_f64;
 
         // Pipeline the new bar through the sub-streams (batch tail order).
-        cur_outReal = sp.sub0.update(inReal);
+        cur_outReal = sp.sub0.update(inReal)?;
         // Combine map (batch tail, per bar).
         if sp.optInNbDev != 1.0 {
             tempReal = cur_outReal;
@@ -305,6 +305,7 @@ impl Core {
             }
         }
         (*outReal) = cur_outReal;
+        Ok(())
     }
 
     /// The single whole-history transcription behind [`Core::STDDEV_OpenInternal`]
@@ -325,7 +326,7 @@ impl Core {
         }
         if optInNbDev == REAL_DEFAULT {
             optInNbDev = 1e0;
-        } else if (optInNbDev < REAL_MIN) || (optInNbDev > REAL_MAX) {
+        } else if !((optInNbDev >= REAL_MIN) && (optInNbDev <= REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
@@ -419,12 +420,15 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.STDDEV_Open(&data, 5, 1.0).expect("enough history");
-    /// let peeked = s.peek(100.9);
-    /// let updated = s.update(100.9);
+    /// let peeked = s.peek(100.9).expect("a finite bar");
+    /// let updated = s.update(100.9).expect("a finite bar");
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_STDDEV_Open")]
     pub fn STDDEV_Open(&self, inReal: &[f64], optInTimePeriod: i32, optInNbDev: f64) -> Result<(STDDEV_Stream, f64), RetCode> {
+        if inReal.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.STDDEV_OpenInternal(inReal, 0, optInTimePeriod, optInNbDev)
     }
 
@@ -435,6 +439,9 @@ impl Core {
     pub fn STDDEV_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInNbDev: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<STDDEV_Stream, RetCode> {
+        if inReal.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.STDDEV_OpenCore(inReal, 0, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1)
     }
 
@@ -451,12 +458,25 @@ impl Core {
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl STDDEV_Stream {
-    /// Commit one closed bar; always produces a value. Never allocates.
+    /// Commit one closed bar. Never allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite (NaN or ±Inf).
+    /// That check runs before anything is written, so the handle is left
+    /// exactly as it was and the stream stays usable:
+    /// skip the bar, or close and re-open on a clean history. This is the
+    /// one place the streaming tier is stricter than the batch API, which
+    /// computes on whatever it is given — a handle retains its state, so a
+    /// single non-finite bar would poison every later value it produces.
     #[doc(alias = "TA_STDDEV_Update")]
-    pub fn update(&mut self, inReal: f64) -> f64 {
+    pub fn update(&mut self, inReal: f64) -> Result<f64, RetCode> {
+        if !inReal.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut outReal: f64 = 0.0_f64;
-        self.core.STDDEV_step_internal(&mut self.state, inReal, &mut outReal);
-        outReal
+        self.core.STDDEV_step_internal(&mut self.state, inReal, &mut outReal)?;
+        Ok(outReal)
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
@@ -466,9 +486,16 @@ impl STDDEV_Stream {
     /// often removed outright by the optimizer, which is why nothing is
     /// reused here, but that is not a guarantee: budget for a clone of the
     /// window and prefer `update` on a `clone()` in a hot loop.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite, exactly as
+    /// `update` rejects it.
     #[doc(alias = "TA_STDDEV_Peek")]
-    #[must_use]
-    pub fn peek(&self, inReal: f64) -> f64 {
+    pub fn peek(&self, inReal: f64) -> Result<f64, RetCode> {
+        if !inReal.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut scratch = self.clone();
         scratch.update(inReal)
     }

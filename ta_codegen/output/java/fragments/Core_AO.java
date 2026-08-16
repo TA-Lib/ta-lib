@@ -500,10 +500,20 @@
       private static final ThreadLocal<AO_Stream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public double update( double inHigh, double inLow ) {
+         if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
+            throw new IllegalArgumentException("AO update: BadParam");
          core.AO_StreamStep(this, inHigh, inLow);
          return this.cur_outReal;
       }
@@ -518,6 +528,8 @@
        * the thread.
        */
       public double peek( double inHigh, double inLow ) {
+         if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
+            throw new IllegalArgumentException("AO peek: BadParam");
          AO_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new AO_Stream(this);
@@ -808,6 +820,14 @@
     */
    public AO_Stream AO_Open( double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod )
    {
+      if( inHigh.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
+            if( !Double.isFinite(inHigh[taFiniteIdx]) )
+               throw new IllegalArgumentException("AO open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
+            if( !Double.isFinite(inLow[taFiniteIdx]) )
+               throw new IllegalArgumentException("AO open: BadParam");
+      }
       return AO_OpenInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod);
    }
    /**
@@ -821,6 +841,14 @@
     */
    public AO_Stream AO_OpenAndFill( double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod, double outReal[] )
    {
+      if( inHigh.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
+            if( !Double.isFinite(inHigh[taFiniteIdx]) )
+               throw new IllegalArgumentException("AO openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
+            if( !Double.isFinite(inLow[taFiniteIdx]) )
+               throw new IllegalArgumentException("AO openAndFill: BadParam");
+      }
       AO_Stream sp = new AO_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

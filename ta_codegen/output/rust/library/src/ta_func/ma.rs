@@ -388,47 +388,48 @@ impl MA_Sub {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MA_step_internal(&self, sp: &mut MA_StreamState, inReal: f64, outReal: &mut f64) {
+    fn MA_step_internal(&self, sp: &mut MA_StreamState, inReal: f64, outReal: &mut f64) -> Result<(), RetCode> {
         if sp.optInTimePeriod == 1 || sp.optInMAType == MAType::DISABLED {
             (*outReal) = inReal;
-            return;
+            return Ok(());
         }
         match &mut sp.sub {
             MA_Sub::Identity => {
                 (*outReal) = inReal;
             }
             MA_Sub::SMA(sub) => {
-                (*outReal) = sub.update(inReal);
+                (*outReal) = sub.update(inReal)?;
             }
             MA_Sub::EMA(sub) => {
-                (*outReal) = sub.update(inReal);
+                (*outReal) = sub.update(inReal)?;
             }
             MA_Sub::WMA(sub) => {
-                (*outReal) = sub.update(inReal);
+                (*outReal) = sub.update(inReal)?;
             }
             MA_Sub::DEMA(sub) => {
-                (*outReal) = sub.update(inReal);
+                (*outReal) = sub.update(inReal)?;
             }
             MA_Sub::TEMA(sub) => {
-                (*outReal) = sub.update(inReal);
+                (*outReal) = sub.update(inReal)?;
             }
             MA_Sub::TRIMA(sub) => {
-                (*outReal) = sub.update(inReal);
+                (*outReal) = sub.update(inReal)?;
             }
             MA_Sub::KAMA(sub) => {
-                (*outReal) = sub.update(inReal);
+                (*outReal) = sub.update(inReal)?;
             }
             MA_Sub::MAMA(sub) => {
-                let subValue = sub.update(inReal);
+                let subValue = sub.update(inReal)?;
                 (*outReal) = subValue.0;
             }
             MA_Sub::T3(sub) => {
-                (*outReal) = sub.update(inReal);
+                (*outReal) = sub.update(inReal)?;
             }
             MA_Sub::HMA(sub) => {
-                (*outReal) = sub.update(inReal);
+                (*outReal) = sub.update(inReal)?;
             }
         }
+        Ok(())
     }
 
     /// Internal startIdx-anchored open behind [`Core::MA_Open`] (composition seam).
@@ -518,12 +519,15 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.MA_Open(&data, 30, MAType::SMA).expect("enough history");
-    /// let peeked = s.peek(100.9);
-    /// let updated = s.update(100.9);
+    /// let peeked = s.peek(100.9).expect("a finite bar");
+    /// let updated = s.update(100.9).expect("a finite bar");
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_MA_Open")]
     pub fn MA_Open(&self, inReal: &[f64], optInTimePeriod: i32, optInMAType: MAType) -> Result<(MA_Stream, f64), RetCode> {
+        if inReal.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.MA_OpenInternal(inReal, 0, optInTimePeriod, optInMAType)
     }
 
@@ -539,6 +543,9 @@ impl Core {
         }
         if inReal.len() > MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
+        }
+        if inReal.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
@@ -682,12 +689,25 @@ impl Core {
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl MA_Stream {
-    /// Commit one closed bar; always produces a value. Never allocates.
+    /// Commit one closed bar. Never allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite (NaN or ±Inf).
+    /// That check runs before anything is written, so the handle is left
+    /// exactly as it was and the stream stays usable:
+    /// skip the bar, or close and re-open on a clean history. This is the
+    /// one place the streaming tier is stricter than the batch API, which
+    /// computes on whatever it is given — a handle retains its state, so a
+    /// single non-finite bar would poison every later value it produces.
     #[doc(alias = "TA_MA_Update")]
-    pub fn update(&mut self, inReal: f64) -> f64 {
+    pub fn update(&mut self, inReal: f64) -> Result<f64, RetCode> {
+        if !inReal.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut outReal: f64 = 0.0_f64;
-        self.core.MA_step_internal(&mut self.state, inReal, &mut outReal);
-        outReal
+        self.core.MA_step_internal(&mut self.state, inReal, &mut outReal)?;
+        Ok(outReal)
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
@@ -697,9 +717,16 @@ impl MA_Stream {
     /// often removed outright by the optimizer, which is why nothing is
     /// reused here, but that is not a guarantee: budget for a clone of the
     /// window and prefer `update` on a `clone()` in a hot loop.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite, exactly as
+    /// `update` rejects it.
     #[doc(alias = "TA_MA_Peek")]
-    #[must_use]
-    pub fn peek(&self, inReal: f64) -> f64 {
+    pub fn peek(&self, inReal: f64) -> Result<f64, RetCode> {
+        if !inReal.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut scratch = self.clone();
         scratch.update(inReal)
     }

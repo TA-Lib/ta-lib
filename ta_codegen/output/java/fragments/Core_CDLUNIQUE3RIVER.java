@@ -477,10 +477,20 @@
       private static final ThreadLocal<CDLUNIQUE3RIVER_Stream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+         if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+            throw new IllegalArgumentException("CDLUNIQUE3RIVER update: BadParam");
          core.CDLUNIQUE3RIVER_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outInteger;
       }
@@ -495,6 +505,8 @@
        * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
+         if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+            throw new IllegalArgumentException("CDLUNIQUE3RIVER peek: BadParam");
          CDLUNIQUE3RIVER_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new CDLUNIQUE3RIVER_Stream(this);
@@ -801,6 +813,20 @@
     */
    public CDLUNIQUE3RIVER_Stream CDLUNIQUE3RIVER_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
+      if( inOpen.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
+            if( !Double.isFinite(inOpen[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLUNIQUE3RIVER open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
+            if( !Double.isFinite(inHigh[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLUNIQUE3RIVER open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
+            if( !Double.isFinite(inLow[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLUNIQUE3RIVER open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
+            if( !Double.isFinite(inClose[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLUNIQUE3RIVER open: BadParam");
+      }
       return CDLUNIQUE3RIVER_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -814,6 +840,20 @@
     */
    public CDLUNIQUE3RIVER_Stream CDLUNIQUE3RIVER_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
+      if( inOpen.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
+            if( !Double.isFinite(inOpen[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLUNIQUE3RIVER openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
+            if( !Double.isFinite(inHigh[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLUNIQUE3RIVER openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
+            if( !Double.isFinite(inLow[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLUNIQUE3RIVER openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
+            if( !Double.isFinite(inClose[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLUNIQUE3RIVER openAndFill: BadParam");
+      }
       CDLUNIQUE3RIVER_Stream sp = new CDLUNIQUE3RIVER_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

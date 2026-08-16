@@ -510,6 +510,19 @@ TA_RetCode TA_CDLTASUKIGAP_OpenInternal( struct TA_CDLTASUKIGAP_Stream **stream,
 
 TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_Open( TA_CDLTASUKIGAP_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger )
 {
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inOpen[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inHigh[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inLow[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inClose[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_CDLTASUKIGAP_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outInteger );
 }
 
@@ -518,7 +531,18 @@ TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_OpenAndFill( TA_CDLTASUKIGAP_Stream **stre
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
    if( !outBegIdx || !outNBElement || !outInteger ) return TA_BAD_PARAM;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inOpen[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inHigh[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inLow[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inClose[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_CDLTASUKIGAP_OpenCore( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outBegIdx, outNBElement, outInteger, 1 );
 }
 
@@ -531,6 +555,7 @@ TA_RetCode TA_CDLTASUKIGAP_OpenAndFillInternal( struct TA_CDLTASUKIGAP_Stream **
 TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_Update( TA_CDLTASUKIGAP_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    TA_CDLTASUKIGAP_StepInternal( stream, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
@@ -540,6 +565,7 @@ TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_Peek( const TA_CDLTASUKIGAP_Stream *stream
    struct TA_CDLTASUKIGAP_Stream scratch;
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    scratch = *stream;
    scratch.ring_NearTrailingIdx_inOpen = stream->ringMirror_NearTrailingIdx_inOpen;
    memcpy( scratch.ring_NearTrailingIdx_inOpen, stream->ring_NearTrailingIdx_inOpen, sizeof(double) * (size_t)(stream->ringCap_NearTrailingIdx > 0 ? stream->ringCap_NearTrailingIdx : 1) );

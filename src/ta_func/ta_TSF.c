@@ -471,6 +471,16 @@ TA_RetCode TA_TSF_OpenInternal( struct TA_TSF_Stream **stream, const double inRe
 
 TA_LIB_API TA_RetCode TA_TSF_Open( TA_TSF_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal )
 {
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inReal[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_TSF_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, outReal );
 }
 
@@ -479,7 +489,15 @@ TA_LIB_API TA_RetCode TA_TSF_OpenAndFill( TA_TSF_Stream **stream, const double i
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
    if( !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inReal[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_TSF_OpenCore( stream, inReal, 0, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
@@ -492,6 +510,7 @@ TA_RetCode TA_TSF_OpenAndFillInternal( struct TA_TSF_Stream **stream, const doub
 TA_LIB_API TA_RetCode TA_TSF_Update( TA_TSF_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    TA_TSF_StepInternal( stream, inReal, outReal );
    return TA_SUCCESS;
 }
@@ -501,6 +520,7 @@ TA_LIB_API TA_RetCode TA_TSF_Peek( const TA_TSF_Stream *stream, double inReal, d
    struct TA_TSF_Stream scratch;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
    scratch.ring_trailingIdx_inReal = stream->ringMirror_trailingIdx_inReal;
    memcpy( scratch.ring_trailingIdx_inReal, stream->ring_trailingIdx_inReal, sizeof(double) * (size_t)(stream->ringCap_trailingIdx > 0 ? stream->ringCap_trailingIdx : 1) );

@@ -725,15 +725,22 @@ public partial class Core
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
       [ThreadStatic] private static MACDEXT_Stream? peekScratch;
 
-      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
-      /// <para>Never throws after a successful open, and allocates nothing — neither
-      /// handle state nor a return value.</para>
+      /// <para>Allocates nothing — neither handle state nor a return value.</para>
+      /// <para>Throws <see cref="System.ArgumentException"/> if any bar value is not
+      /// finite (NaN or an infinity). That check runs before anything is written,
+      /// so the handle is left exactly as it was and the stream stays usable: skip
+      /// the bar, or re-open on a clean history. This is the one place the
+      /// streaming tier is stricter than the batch API, which computes on whatever
+      /// it is given: a handle retains its state, so a single non-finite bar would
+      /// poison every later value it produces.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>The value at the bar just committed.</returns>
       public MACDEXT_Value Update( double inReal )
       {
+         if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MACDEXT", "update", RetCode.BadParam);
          core.MACDEXT_StreamStep(this, inReal);
          return new MACDEXT_Value(cur_outMACD, cur_outMACDSignal, cur_outMACDHist);
       }
@@ -751,6 +758,7 @@ public partial class Core
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public MACDEXT_Value Peek( double inReal )
       {
+         if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MACDEXT", "peek", RetCode.BadParam);
          MACDEXT_Stream? scratch = peekScratch;
          if( scratch is null ) {
             scratch = new MACDEXT_Stream(this);
@@ -1052,6 +1060,8 @@ public partial class Core
    public MACDEXT_Stream MACDEXT_Open( ReadOnlySpan<double> inReal, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      foreach( double taFiniteV in inReal )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MACDEXT", "open", RetCode.BadParam);
       return MACDEXT_OpenInternal(inReal, 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
    }
 
@@ -1096,6 +1106,8 @@ public partial class Core
    public MACDEXT_Stream MACDEXT_OpenAndFill( ReadOnlySpan<double> inReal, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      foreach( double taFiniteV in inReal )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MACDEXT", "openAndFill", RetCode.BadParam);
       MACDEXT_Stream sp = new MACDEXT_Stream(this);
       RetCode retCode = MACDEXT_OpenAndFillBody(sp, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

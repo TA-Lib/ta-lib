@@ -95,42 +95,42 @@ impl Core {
     pub fn SAREXT_Lookback(&self, mut optInStartValue: f64, mut optInOffsetOnReverse: f64, mut optInAccelerationInitLong: f64, mut optInAccelerationLong: f64, mut optInAccelerationMaxLong: f64, mut optInAccelerationInitShort: f64, mut optInAccelerationShort: f64, mut optInAccelerationMaxShort: f64) -> usize {
         if optInStartValue == REAL_DEFAULT {
             optInStartValue = 0e0;
-        } else if (optInStartValue < REAL_MIN) || (optInStartValue > REAL_MAX) {
+        } else if !((optInStartValue >= REAL_MIN) && (optInStartValue <= REAL_MAX)) {
             return usize::MAX;
         }
         if optInOffsetOnReverse == REAL_DEFAULT {
             optInOffsetOnReverse = 0e0;
-        } else if (optInOffsetOnReverse < 0e0) || (optInOffsetOnReverse > REAL_MAX) {
+        } else if !((optInOffsetOnReverse >= 0e0) && (optInOffsetOnReverse <= REAL_MAX)) {
             return usize::MAX;
         }
         if optInAccelerationInitLong == REAL_DEFAULT {
             optInAccelerationInitLong = 2e-2;
-        } else if (optInAccelerationInitLong < 0e0) || (optInAccelerationInitLong > REAL_MAX) {
+        } else if !((optInAccelerationInitLong >= 0e0) && (optInAccelerationInitLong <= REAL_MAX)) {
             return usize::MAX;
         }
         if optInAccelerationLong == REAL_DEFAULT {
             optInAccelerationLong = 2e-2;
-        } else if (optInAccelerationLong < 0e0) || (optInAccelerationLong > REAL_MAX) {
+        } else if !((optInAccelerationLong >= 0e0) && (optInAccelerationLong <= REAL_MAX)) {
             return usize::MAX;
         }
         if optInAccelerationMaxLong == REAL_DEFAULT {
             optInAccelerationMaxLong = 2e-1;
-        } else if (optInAccelerationMaxLong < 0e0) || (optInAccelerationMaxLong > REAL_MAX) {
+        } else if !((optInAccelerationMaxLong >= 0e0) && (optInAccelerationMaxLong <= REAL_MAX)) {
             return usize::MAX;
         }
         if optInAccelerationInitShort == REAL_DEFAULT {
             optInAccelerationInitShort = 2e-2;
-        } else if (optInAccelerationInitShort < 0e0) || (optInAccelerationInitShort > REAL_MAX) {
+        } else if !((optInAccelerationInitShort >= 0e0) && (optInAccelerationInitShort <= REAL_MAX)) {
             return usize::MAX;
         }
         if optInAccelerationShort == REAL_DEFAULT {
             optInAccelerationShort = 2e-2;
-        } else if (optInAccelerationShort < 0e0) || (optInAccelerationShort > REAL_MAX) {
+        } else if !((optInAccelerationShort >= 0e0) && (optInAccelerationShort <= REAL_MAX)) {
             return usize::MAX;
         }
         if optInAccelerationMaxShort == REAL_DEFAULT {
             optInAccelerationMaxShort = 2e-1;
-        } else if (optInAccelerationMaxShort < 0e0) || (optInAccelerationMaxShort > REAL_MAX) {
+        } else if !((optInAccelerationMaxShort >= 0e0) && (optInAccelerationMaxShort <= REAL_MAX)) {
             return usize::MAX;
         }
         // SAR always sacrifices one price bar to establish the
@@ -287,42 +287,42 @@ impl Core {
         }
         if optInStartValue == REAL_DEFAULT {
             optInStartValue = 0e0;
-        } else if (optInStartValue < REAL_MIN) || (optInStartValue > REAL_MAX) {
+        } else if !((optInStartValue >= REAL_MIN) && (optInStartValue <= REAL_MAX)) {
             return RetCode::BadParam;
         }
         if optInOffsetOnReverse == REAL_DEFAULT {
             optInOffsetOnReverse = 0e0;
-        } else if (optInOffsetOnReverse < 0e0) || (optInOffsetOnReverse > REAL_MAX) {
+        } else if !((optInOffsetOnReverse >= 0e0) && (optInOffsetOnReverse <= REAL_MAX)) {
             return RetCode::BadParam;
         }
         if optInAccelerationInitLong == REAL_DEFAULT {
             optInAccelerationInitLong = 2e-2;
-        } else if (optInAccelerationInitLong < 0e0) || (optInAccelerationInitLong > REAL_MAX) {
+        } else if !((optInAccelerationInitLong >= 0e0) && (optInAccelerationInitLong <= REAL_MAX)) {
             return RetCode::BadParam;
         }
         if optInAccelerationLong == REAL_DEFAULT {
             optInAccelerationLong = 2e-2;
-        } else if (optInAccelerationLong < 0e0) || (optInAccelerationLong > REAL_MAX) {
+        } else if !((optInAccelerationLong >= 0e0) && (optInAccelerationLong <= REAL_MAX)) {
             return RetCode::BadParam;
         }
         if optInAccelerationMaxLong == REAL_DEFAULT {
             optInAccelerationMaxLong = 2e-1;
-        } else if (optInAccelerationMaxLong < 0e0) || (optInAccelerationMaxLong > REAL_MAX) {
+        } else if !((optInAccelerationMaxLong >= 0e0) && (optInAccelerationMaxLong <= REAL_MAX)) {
             return RetCode::BadParam;
         }
         if optInAccelerationInitShort == REAL_DEFAULT {
             optInAccelerationInitShort = 2e-2;
-        } else if (optInAccelerationInitShort < 0e0) || (optInAccelerationInitShort > REAL_MAX) {
+        } else if !((optInAccelerationInitShort >= 0e0) && (optInAccelerationInitShort <= REAL_MAX)) {
             return RetCode::BadParam;
         }
         if optInAccelerationShort == REAL_DEFAULT {
             optInAccelerationShort = 2e-2;
-        } else if (optInAccelerationShort < 0e0) || (optInAccelerationShort > REAL_MAX) {
+        } else if !((optInAccelerationShort >= 0e0) && (optInAccelerationShort <= REAL_MAX)) {
             return RetCode::BadParam;
         }
         if optInAccelerationMaxShort == REAL_DEFAULT {
             optInAccelerationMaxShort = 2e-1;
-        } else if (optInAccelerationMaxShort < 0e0) || (optInAccelerationMaxShort > REAL_MAX) {
+        } else if !((optInAccelerationMaxShort >= 0e0) && (optInAccelerationMaxShort <= REAL_MAX)) {
             return RetCode::BadParam;
         }
         let _assertLb = self.SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
@@ -816,42 +816,42 @@ impl Core {
         }
         if optInStartValue == REAL_DEFAULT {
             optInStartValue = 0e0;
-        } else if (optInStartValue < REAL_MIN) || (optInStartValue > REAL_MAX) {
+        } else if !((optInStartValue >= REAL_MIN) && (optInStartValue <= REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
         if optInOffsetOnReverse == REAL_DEFAULT {
             optInOffsetOnReverse = 0e0;
-        } else if (optInOffsetOnReverse < 0e0) || (optInOffsetOnReverse > REAL_MAX) {
+        } else if !((optInOffsetOnReverse >= 0e0) && (optInOffsetOnReverse <= REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
         if optInAccelerationInitLong == REAL_DEFAULT {
             optInAccelerationInitLong = 2e-2;
-        } else if (optInAccelerationInitLong < 0e0) || (optInAccelerationInitLong > REAL_MAX) {
+        } else if !((optInAccelerationInitLong >= 0e0) && (optInAccelerationInitLong <= REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
         if optInAccelerationLong == REAL_DEFAULT {
             optInAccelerationLong = 2e-2;
-        } else if (optInAccelerationLong < 0e0) || (optInAccelerationLong > REAL_MAX) {
+        } else if !((optInAccelerationLong >= 0e0) && (optInAccelerationLong <= REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
         if optInAccelerationMaxLong == REAL_DEFAULT {
             optInAccelerationMaxLong = 2e-1;
-        } else if (optInAccelerationMaxLong < 0e0) || (optInAccelerationMaxLong > REAL_MAX) {
+        } else if !((optInAccelerationMaxLong >= 0e0) && (optInAccelerationMaxLong <= REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
         if optInAccelerationInitShort == REAL_DEFAULT {
             optInAccelerationInitShort = 2e-2;
-        } else if (optInAccelerationInitShort < 0e0) || (optInAccelerationInitShort > REAL_MAX) {
+        } else if !((optInAccelerationInitShort >= 0e0) && (optInAccelerationInitShort <= REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
         if optInAccelerationShort == REAL_DEFAULT {
             optInAccelerationShort = 2e-2;
-        } else if (optInAccelerationShort < 0e0) || (optInAccelerationShort > REAL_MAX) {
+        } else if !((optInAccelerationShort >= 0e0) && (optInAccelerationShort <= REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
         if optInAccelerationMaxShort == REAL_DEFAULT {
             optInAccelerationMaxShort = 2e-1;
-        } else if (optInAccelerationMaxShort < 0e0) || (optInAccelerationMaxShort > REAL_MAX) {
+        } else if !((optInAccelerationMaxShort >= 0e0) && (optInAccelerationMaxShort <= REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inHigh.len();
@@ -1181,12 +1181,16 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.SAREXT_Open(&high, &low, 0.0, 0.0, 0.02, 0.02, 0.2, 0.02, 0.02, 0.2).expect("enough history");
-    /// let peeked = s.peek(101.4, 99.1);
-    /// let updated = s.update(101.4, 99.1);
+    /// let peeked = s.peek(101.4, 99.1).expect("a finite bar");
+    /// let updated = s.update(101.4, 99.1).expect("a finite bar");
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_SAREXT_Open")]
     pub fn SAREXT_Open(&self, inHigh: &[f64], inLow: &[f64], optInStartValue: f64, optInOffsetOnReverse: f64, optInAccelerationInitLong: f64, optInAccelerationLong: f64, optInAccelerationMaxLong: f64, optInAccelerationInitShort: f64, optInAccelerationShort: f64, optInAccelerationMaxShort: f64) -> Result<(SAREXT_Stream, f64), RetCode> {
+        if inHigh.iter().any(|v| !v.is_finite())
+            || inLow.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.SAREXT_OpenInternal(inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort)
     }
 
@@ -1197,6 +1201,10 @@ impl Core {
     pub fn SAREXT_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], mut optInStartValue: f64, mut optInOffsetOnReverse: f64, mut optInAccelerationInitLong: f64, mut optInAccelerationLong: f64, mut optInAccelerationMaxLong: f64, mut optInAccelerationInitShort: f64, mut optInAccelerationShort: f64, mut optInAccelerationMaxShort: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<SAREXT_Stream, RetCode> {
+        if inHigh.iter().any(|v| !v.is_finite())
+            || inLow.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.SAREXT_OpenCore(inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal, 1)
     }
 
@@ -1213,12 +1221,25 @@ impl Core {
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl SAREXT_Stream {
-    /// Commit one closed bar; always produces a value. Never allocates.
+    /// Commit one closed bar. Never allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite (NaN or ±Inf).
+    /// That check runs before anything is written, so the handle is left
+    /// exactly as it was and the stream stays usable:
+    /// skip the bar, or close and re-open on a clean history. This is the
+    /// one place the streaming tier is stricter than the batch API, which
+    /// computes on whatever it is given — a handle retains its state, so a
+    /// single non-finite bar would poison every later value it produces.
     #[doc(alias = "TA_SAREXT_Update")]
-    pub fn update(&mut self, inHigh: f64, inLow: f64) -> f64 {
+    pub fn update(&mut self, inHigh: f64, inLow: f64) -> Result<f64, RetCode> {
+        if !inHigh.is_finite() || !inLow.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut outReal: f64 = 0.0_f64;
         self.core.SAREXT_step_internal(&mut self.state, inHigh, inLow, &mut outReal);
-        outReal
+        Ok(outReal)
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
@@ -1226,9 +1247,16 @@ impl SAREXT_Stream {
     /// on a scratch copy of the state). Never writes the handle, so peeks may
     /// run concurrently with each other. This handle holds only scalars, so the copy is a
     /// few machine words and `peek` never allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite, exactly as
+    /// `update` rejects it.
     #[doc(alias = "TA_SAREXT_Peek")]
-    #[must_use]
-    pub fn peek(&self, inHigh: f64, inLow: f64) -> f64 {
+    pub fn peek(&self, inHigh: f64, inLow: f64) -> Result<f64, RetCode> {
+        if !inHigh.is_finite() || !inLow.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut scratch = self.clone();
         scratch.update(inHigh, inLow)
     }

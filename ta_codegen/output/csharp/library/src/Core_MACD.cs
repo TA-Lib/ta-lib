@@ -701,15 +701,22 @@ public partial class Core
          this.fillRange = other.fillRange;
       }
 
-      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
-      /// <para>Never throws after a successful open, and allocates nothing — neither
-      /// handle state nor a return value.</para>
+      /// <para>Allocates nothing — neither handle state nor a return value.</para>
+      /// <para>Throws <see cref="System.ArgumentException"/> if any bar value is not
+      /// finite (NaN or an infinity). That check runs before anything is written,
+      /// so the handle is left exactly as it was and the stream stays usable: skip
+      /// the bar, or re-open on a clean history. This is the one place the
+      /// streaming tier is stricter than the batch API, which computes on whatever
+      /// it is given: a handle retains its state, so a single non-finite bar would
+      /// poison every later value it produces.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>The value at the bar just committed.</returns>
       public MACD_Value Update( double inReal )
       {
+         if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MACD", "update", RetCode.BadParam);
          core.MACD_StreamStep(this, inReal);
          return new MACD_Value(cur_outMACD, cur_outMACDSignal, cur_outMACDHist);
       }
@@ -727,6 +734,7 @@ public partial class Core
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public MACD_Value Peek( double inReal )
       {
+         if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MACD", "peek", RetCode.BadParam);
          MACD_Stream scratch = new MACD_Stream(this);
          core.MACD_StreamStep(scratch, inReal);
          return new MACD_Value(scratch.cur_outMACD, scratch.cur_outMACDSignal, scratch.cur_outMACDHist);
@@ -1046,6 +1054,8 @@ public partial class Core
    public MACD_Stream MACD_Open( ReadOnlySpan<double> inReal, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      foreach( double taFiniteV in inReal )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MACD", "open", RetCode.BadParam);
       return MACD_OpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
    }
 
@@ -1084,6 +1094,8 @@ public partial class Core
    public MACD_Stream MACD_OpenAndFill( ReadOnlySpan<double> inReal, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      foreach( double taFiniteV in inReal )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MACD", "openAndFill", RetCode.BadParam);
       MACD_Stream sp = new MACD_Stream(this);
       RetCode retCode = MACD_OpenAndFillBody(sp, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

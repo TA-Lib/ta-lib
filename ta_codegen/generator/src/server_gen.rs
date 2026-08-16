@@ -5338,8 +5338,12 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str("                    for t in p..svN {\n");
     let t_args = bar_args("", "t");
     let _ = writeln!(s, "                        if t % 7 == 0 {{");
-    let _ = writeln!(s, "                            let pk = st.peek({t_args});");
-    let _ = writeln!(s, "                            let up = st.update({t_args});");
+    // `update`/`peek` are fallible since the streaming tier rejects non-finite
+    // bars. The fuzz corpus is finite everywhere, so a rejection here is a
+    // defect, not an expected outcome — it fails the leg rather than panicking
+    // the server, and names the bar in the diagnostic.
+    let _ = writeln!(s, "                            let Ok(pk) = st.peek({t_args}) else {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"peekRejected\\\":{{}}\", t); }} break; }};");
+    let _ = writeln!(s, "                            let Ok(up) = st.update({t_args}) else {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"updateRejected\\\":{{}}\", t); }} break; }};");
     let pk_parts = destructure("pk");
     let up_parts = destructure("up");
     for (i, (pk, up)) in pk_parts.iter().zip(up_parts.iter()).enumerate() {
@@ -5357,7 +5361,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         }
     }
     s.push_str("                        } else {\n");
-    let _ = writeln!(s, "                            let up = st.update({t_args});");
+    let _ = writeln!(s, "                            let Ok(up) = st.update({t_args}) else {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"updateRejected\\\":{{}}\", t); }} break; }};");
     for (i, up) in up_parts.iter().enumerate() {
         if out_is_int[i] {
             let _ = writeln!(s, "                            if {up} != b{i}[t - beg] {{ all_ok = false; if diag.is_empty() {{ diag = format!(\",\\\"badBar\\\":{{}},\\\"badOut\\\":{i},\\\"batchv\\\":\\\"{{}}\\\",\\\"streamv\\\":\\\"{{}}\\\"\", t, b{i}[t - beg], {up}); }} }}");
