@@ -441,6 +441,16 @@ TA_RetCode TA_MAXINDEX_OpenInternal( struct TA_MAXINDEX_Stream **stream, const d
 
 TA_LIB_API TA_RetCode TA_MAXINDEX_Open( TA_MAXINDEX_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outInteger )
 {
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outInteger ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inReal[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_MAXINDEX_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, outInteger );
 }
 
@@ -449,7 +459,15 @@ TA_LIB_API TA_RetCode TA_MAXINDEX_OpenAndFill( TA_MAXINDEX_Stream **stream, cons
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
    if( !outBegIdx || !outNBElement || !outInteger ) return TA_BAD_PARAM;
+   if( !inReal || !outInteger ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outInteger == (const void *)inReal ) return TA_BAD_PARAM;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inReal[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_MAXINDEX_OpenCore( stream, inReal, 0, historyLen, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1 );
 }
 
@@ -462,6 +480,7 @@ TA_RetCode TA_MAXINDEX_OpenAndFillInternal( struct TA_MAXINDEX_Stream **stream, 
 TA_LIB_API TA_RetCode TA_MAXINDEX_Update( TA_MAXINDEX_Stream *stream, double inReal, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    TA_MAXINDEX_StepInternal( stream, inReal, outInteger );
    return TA_SUCCESS;
 }
@@ -471,6 +490,7 @@ TA_LIB_API TA_RetCode TA_MAXINDEX_Peek( const TA_MAXINDEX_Stream *stream, double
    struct TA_MAXINDEX_Stream scratch;
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
    scratch.x_inReal = stream->xMirror_inReal;
    memcpy( scratch.x_inReal, stream->x_inReal, sizeof(double) * (size_t)stream->xPhys );

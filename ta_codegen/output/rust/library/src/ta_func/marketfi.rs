@@ -361,12 +361,17 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.MARKETFI_Open(&high, &low, &volume).expect("enough history");
-    /// let peeked = s.peek(101.4, 99.1, 12_345.0);
-    /// let updated = s.update(101.4, 99.1, 12_345.0);
+    /// let peeked = s.peek(101.4, 99.1, 12_345.0).expect("a finite bar");
+    /// let updated = s.update(101.4, 99.1, 12_345.0).expect("a finite bar");
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_MARKETFI_Open")]
     pub fn MARKETFI_Open(&self, inHigh: &[f64], inLow: &[f64], inVolume: &[f64], ) -> Result<(MARKETFI_Stream, f64), RetCode> {
+        if inHigh.iter().any(|v| !v.is_finite())
+            || inLow.iter().any(|v| !v.is_finite())
+            || inVolume.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.MARKETFI_OpenInternal(inHigh, inLow, inVolume, 0)
     }
 
@@ -377,6 +382,11 @@ impl Core {
     pub fn MARKETFI_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], inVolume: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<MARKETFI_Stream, RetCode> {
+        if inHigh.iter().any(|v| !v.is_finite())
+            || inLow.iter().any(|v| !v.is_finite())
+            || inVolume.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.MARKETFI_OpenCore(inHigh, inLow, inVolume, 0, outBegIdx, outNBElement, outReal, 1)
     }
 
@@ -393,12 +403,25 @@ impl Core {
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl MARKETFI_Stream {
-    /// Commit one closed bar; always produces a value. Never allocates.
+    /// Commit one closed bar. Never allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite (NaN or ±Inf).
+    /// That check runs before anything is written, so the handle is left
+    /// exactly as it was and the stream stays usable:
+    /// skip the bar, or close and re-open on a clean history. This is the
+    /// one place the streaming tier is stricter than the batch API, which
+    /// computes on whatever it is given — a handle retains its state, so a
+    /// single non-finite bar would poison every later value it produces.
     #[doc(alias = "TA_MARKETFI_Update")]
-    pub fn update(&mut self, inHigh: f64, inLow: f64, inVolume: f64) -> f64 {
+    pub fn update(&mut self, inHigh: f64, inLow: f64, inVolume: f64) -> Result<f64, RetCode> {
+        if !inHigh.is_finite() || !inLow.is_finite() || !inVolume.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut outReal: f64 = 0.0_f64;
         self.core.MARKETFI_step_internal(&mut self.state, inHigh, inLow, inVolume, &mut outReal);
-        outReal
+        Ok(outReal)
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
@@ -406,9 +429,16 @@ impl MARKETFI_Stream {
     /// on a scratch copy of the state). Never writes the handle, so peeks may
     /// run concurrently with each other. This handle holds only scalars, so the copy is a
     /// few machine words and `peek` never allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite, exactly as
+    /// `update` rejects it.
     #[doc(alias = "TA_MARKETFI_Peek")]
-    #[must_use]
-    pub fn peek(&self, inHigh: f64, inLow: f64, inVolume: f64) -> f64 {
+    pub fn peek(&self, inHigh: f64, inLow: f64, inVolume: f64) -> Result<f64, RetCode> {
+        if !inHigh.is_finite() || !inLow.is_finite() || !inVolume.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut scratch = self.clone();
         scratch.update(inHigh, inLow, inVolume)
     }

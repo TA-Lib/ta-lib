@@ -968,12 +968,12 @@ impl Core {
         }
         if optInFastLimit == REAL_DEFAULT {
             optInFastLimit = 5e-1;
-        } else if (optInFastLimit < 1e-2) || (optInFastLimit > 9.9e-1) {
+        } else if !((optInFastLimit >= 1e-2) && (optInFastLimit <= 9.9e-1)) {
             return Err(RetCode::BadParam);
         }
         if optInSlowLimit == REAL_DEFAULT {
             optInSlowLimit = 5e-2;
-        } else if (optInSlowLimit < 1e-2) || (optInSlowLimit > 9.9e-1) {
+        } else if !((optInSlowLimit >= 1e-2) && (optInSlowLimit <= 9.9e-1)) {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
@@ -1436,13 +1436,16 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.MAMA_Open(&data, 0.5, 0.05).expect("enough history");
-    /// let peeked = s.peek(100.9);
-    /// let updated = s.update(100.9);
+    /// let peeked = s.peek(100.9).expect("a finite bar");
+    /// let updated = s.update(100.9).expect("a finite bar");
     /// assert_eq!(peeked.0.to_bits(), updated.0.to_bits());
     /// assert_eq!(peeked.1.to_bits(), updated.1.to_bits());
     /// ```
     #[doc(alias = "TA_MAMA_Open")]
     pub fn MAMA_Open(&self, inReal: &[f64], optInFastLimit: f64, optInSlowLimit: f64) -> Result<(MAMA_Stream, (f64, f64)), RetCode> {
+        if inReal.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.MAMA_OpenInternal(inReal, 0, optInFastLimit, optInSlowLimit)
     }
 
@@ -1454,6 +1457,9 @@ impl Core {
         &self, inReal: &[f64], mut optInFastLimit: f64, mut optInSlowLimit: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMAMA: &mut [f64], outFAMA: &mut [f64],
     ) -> Result<MAMA_Stream, RetCode> {
         if outMAMA.as_ptr() == outFAMA.as_ptr() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
         self.MAMA_OpenCore(inReal, 0, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1)
@@ -1472,13 +1478,26 @@ impl Core {
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl MAMA_Stream {
-    /// Commit one closed bar; always produces a value. Never allocates.
+    /// Commit one closed bar. Never allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite (NaN or ±Inf).
+    /// That check runs before anything is written, so the handle is left
+    /// exactly as it was and the stream stays usable:
+    /// skip the bar, or close and re-open on a clean history. This is the
+    /// one place the streaming tier is stricter than the batch API, which
+    /// computes on whatever it is given — a handle retains its state, so a
+    /// single non-finite bar would poison every later value it produces.
     #[doc(alias = "TA_MAMA_Update")]
-    pub fn update(&mut self, inReal: f64) -> (f64, f64) {
+    pub fn update(&mut self, inReal: f64) -> Result<(f64, f64), RetCode> {
+        if !inReal.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut outMAMA: f64 = 0.0_f64;
         let mut outFAMA: f64 = 0.0_f64;
         self.core.MAMA_step_internal(&mut self.state, inReal, &mut outMAMA, &mut outFAMA);
-        (outMAMA, outFAMA)
+        Ok((outMAMA, outFAMA))
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
@@ -1488,9 +1507,16 @@ impl MAMA_Stream {
     /// often removed outright by the optimizer, which is why nothing is
     /// reused here, but that is not a guarantee: budget for a clone of the
     /// window and prefer `update` on a `clone()` in a hot loop.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite, exactly as
+    /// `update` rejects it.
     #[doc(alias = "TA_MAMA_Peek")]
-    #[must_use]
-    pub fn peek(&self, inReal: f64) -> (f64, f64) {
+    pub fn peek(&self, inReal: f64) -> Result<(f64, f64), RetCode> {
+        if !inReal.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut scratch = self.clone();
         scratch.update(inReal)
     }

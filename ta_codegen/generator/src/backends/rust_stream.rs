@@ -40,7 +40,7 @@ use super::rust_doc::{series_def, unit_domain, CLOSE_SERIES, UNIT_SERIES, VOLUME
 use super::rust_lang::{
     build_matype_map, collect_for_loop_vars, collect_sentinel_vars, collect_signed_int_vars,
     collect_var_types, emit_circbuf_prolog_rust, expr_is_untyped_integer, CircBufTier,
-    gen_opt_param_validation_with, render_expr, render_hoisted_blocks, render_statement,
+    render_expr, render_hoisted_blocks, render_statement,
     RustRenderCtx,
 };
 use crate::helper_registry::hoist_block_helpers;
@@ -512,7 +512,7 @@ fn emit_loop(
     emit_open_and_fill_internal_wrapper(o, func);
     let _ = writeln!(o, "}}\n");
 
-    emit_update_and_peek(o, func, shape);
+    emit_update_and_peek(o, func, shape, false);
     emit_trait_pin(o, func);
 }
 
@@ -577,6 +577,7 @@ fn emit_open_and_fill_wrapper(
         }
     }
     let _ = enums;
+    o.push_str(&finite_history_check(func, "        "));
     let ins: Vec<String> = streaming::input_array_names(func);
     let opt_names: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
     let mut args = ins.join(", ");
@@ -947,6 +948,49 @@ fn build_step_ctx(func: &FuncDef, models: &[&StreamModel], typing: &Typing) -> R
     ctx
 }
 
+/// The per-bar finite-input rejection for `update`/`peek`: one `is_finite` per
+/// scalar bar input, before the handle is touched.
+///
+/// The streaming tier's half of the boundary contract (see
+/// `docs/streaming-api-design.md`). Batch does not filter — it computes on
+/// whatever it is handed. A handle cannot do that, because its state is
+/// retained: one non-finite bar poisons every recursive accumulator in it for
+/// the rest of its life, long after the feed recovers.
+fn finite_bar_check(func: &FuncDef, indent: &str) -> String {
+    let bars = streaming::input_array_names(func);
+    if bars.is_empty() {
+        return String::new();
+    }
+    let conds: Vec<String> = bars.iter().map(|b| format!("!{b}.is_finite()")).collect();
+    format!(
+        "{indent}if {} {{\n{indent}    return Err(RetCode::BadParam);\n{indent}}}\n",
+        conds.join(" || ")
+    )
+}
+
+/// The warm-up-history finite-input rejection for the PUBLIC `Open` /
+/// `OpenAndFill`, emitted at those entry points ONLY.
+///
+/// `OpenInternal` / `OpenAndFillInternal` are the composition seams: a composed
+/// open hands its sub-streams slices of the very buffer validated here, so a scan
+/// there would re-walk validated data once per sub-call — on the tier #192 just
+/// made single-pass — and would apply the caller-boundary contract to
+/// library-computed intermediates, which is not what it means.
+fn finite_history_check(func: &FuncDef, indent: &str) -> String {
+    let inputs = streaming::input_array_names(func);
+    if inputs.is_empty() {
+        return String::new();
+    }
+    let conds: Vec<String> = inputs
+        .iter()
+        .map(|i| format!("{i}.iter().any(|v| !v.is_finite())"))
+        .collect();
+    format!(
+        "{indent}if {} {{\n{indent}    return Err(RetCode::BadParam);\n{indent}}}\n",
+        conds.join(&format!("\n{indent}    || "))
+    )
+}
+
 /// `fn <NAME>_step_internal(&self, sp: &mut State, <bars>, <&mut outs>)`.
 #[allow(clippy::too_many_arguments)]
 fn emit_step(
@@ -959,15 +1003,15 @@ fn emit_step(
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
 ) {
-    emit_step_sig(o, func);
+    emit_step_sig(o, func, false);
     let ctx = build_step_ctx(func, &[model], typing);
     emit_step_body(o, func, model, typing, &ctx, enums, registry, helpers, counter, 8);
-    let _ = writeln!(o, "    }}\n");
+    emit_step_end(o, false);
 }
 
 /// The step signature line, shared by every tier (dispatch/period-bank steps
 /// hand-roll their bodies but keep the identical surface).
-fn emit_step_sig(o: &mut String, func: &FuncDef) {
+fn emit_step_sig(o: &mut String, func: &FuncDef, fallible: bool) {
     let sn = snake(func);
     let state = state_type_name(func);
     let mut params = String::new();
@@ -977,7 +1021,25 @@ fn emit_step_sig(o: &mut String, func: &FuncDef) {
     for out in &func.outputs {
         let _ = write!(params, ", {}: &mut {}", out.name, out_rust_type(func, &out.name));
     }
-    let _ = writeln!(o, "    fn {sn}_step_internal(&self, sp: &mut {state}{params}) {{");
+    // Fallible only on the tiers that drive a sub-stream, whose `update` is now
+    // itself fallible. The self-contained tiers keep `-> ()`: they cannot fail,
+    // and their bodies are rendered from IR that carries bare `return`
+    // statements (the period-1 identity arm), which a `Result` return would not
+    // typecheck.
+    let ret = if fallible { " -> Result<(), RetCode>" } else { "" };
+    let _ = writeln!(
+        o,
+        "    fn {sn}_step_internal(&self, sp: &mut {state}{params}){ret} {{"
+    );
+}
+
+/// Close a step body: the `Ok(())` a fallible step's return type needs, then the
+/// brace.
+fn emit_step_end(o: &mut String, fallible: bool) {
+    if fallible {
+        let _ = writeln!(o, "        Ok(())");
+    }
+    let _ = writeln!(o, "    }}\n");
 }
 
 /// One model's per-bar step body at a given indent: temp decls, the extrema
@@ -1364,6 +1426,13 @@ fn emit_open_validation_head(o: &mut String, func: &FuncDef, mode: OutMode, enum
         "        if {first}.len() > MAX_INDEX + 1 {{\n            return Err(RetCode::OutOfRangeEndIndex);\n        }}"
     );
     if mode == OutMode::Fill {
+        // `Fill` is a PUBLIC entry point, so the caller's history is scanned
+        // here. This is the only scan site the two hand-rolled tiers (dispatch
+        // and period-bank) reach — they build their own `OpenAndFill` instead of
+        // going through `emit_open_and_fill_wrapper`, so leaving it to that
+        // wrapper alone left `MA_OpenAndFill` and `MAVP_OpenAndFill` unchecked
+        // in Rust while C, Java and C# rejected the identical call.
+        o.push_str(&finite_history_check(func, "        "));
         // Output mutual-distinctness (#108) — same guard the batch emits. FILL
         // ONLY: the scalar path's sinks are its own locals, so it has no hazard.
         let outs: Vec<&str> = func.outputs.iter().map(|out| out.name.as_str()).collect();
@@ -1378,11 +1447,12 @@ fn emit_open_validation_head(o: &mut String, func: &FuncDef, mode: OutMode, enum
         }
     }
     for p in &func.optional_inputs {
-        o.push_str(&gen_opt_param_validation_with(
+        o.push_str(&super::rust_lang::gen_opt_param_validation_ex(
             p,
             "        ",
             "return Err(RetCode::BadParam);",
             enums,
+            super::common::RealRangeTest::RejectNonFinite,
         ));
     }
 }
@@ -1890,6 +1960,7 @@ fn emit_open_wrapper(o: &mut String, func: &FuncDef, enums: &HashMap<String, Enu
         "    pub fn {sn}_Open(&self, {sig_inputs}{}) -> Result<({handle}, {vt}), RetCode> {{",
         sig_opts.trim_start_matches(", ")
     );
+    o.push_str(&finite_history_check(func, "        "));
     let _ = writeln!(
         o,
         "        self.{sn}_OpenInternal({fwd_inputs}0{fwd_opts})"
@@ -1963,8 +2034,14 @@ fn stream_doctest(
         "let (mut s, _last) = core.{sn}_Open({}).expect(\"enough history\");",
         args.join(", ")
     ));
-    lines.push(format!("let peeked = s.peek({});", bar_args.join(", ")));
-    lines.push(format!("let updated = s.update({});", bar_args.join(", ")));
+    lines.push(format!(
+        "let peeked = s.peek({}).expect(\"a finite bar\");",
+        bar_args.join(", ")
+    ));
+    lines.push(format!(
+        "let updated = s.update({}).expect(\"a finite bar\");",
+        bar_args.join(", ")
+    ));
     // peek == update, bit-for-bit (it is the same code on a throwaway clone).
     let n_outs = func.outputs.len();
     let int_out = func
@@ -1993,7 +2070,8 @@ fn stream_doctest(
     Some(lines)
 }
 
-fn emit_update_and_peek(o: &mut String, func: &FuncDef, shape: StateShape) {
+#[allow(clippy::too_many_lines)]
+fn emit_update_and_peek(o: &mut String, func: &FuncDef, shape: StateShape, step_fallible: bool) {
     let sn = snake(func);
     let n = func.name.to_uppercase();
     let handle = stream_type_name(func);
@@ -2022,6 +2100,9 @@ fn emit_update_and_peek(o: &mut String, func: &FuncDef, shape: StateShape) {
     }
     let ret = open_value_tuple_names(func);
     let reuse = shape.scratch_pays();
+    // The sub-stream tiers' steps are fallible (their sub `update` is); the
+    // self-contained ones cannot fail and return `()`.
+    let step_try = if step_fallible { "?" } else { "" };
 
     // A state whose copy really allocates gets a reused thread-local scratch: one
     // allocation per thread per function for the whole life of the program,
@@ -2052,16 +2133,30 @@ fn emit_update_and_peek(o: &mut String, func: &FuncDef, shape: StateShape) {
     );
     let _ = writeln!(
         o,
-        "    /// Commit one closed bar; always produces a value. Never allocates."
+        "    /// Commit one closed bar. Never allocates.\n\
+         \x20   ///\n\
+         \x20   /// # Errors\n\
+         \x20   ///\n\
+         \x20   /// [`RetCode::BadParam`] if any bar value is not finite (NaN or ±Inf).\n\
+         \x20   /// That check runs before anything is written, so the handle is left\n\
+         \x20   /// exactly as it was and the stream stays usable:\n\
+         \x20   /// skip the bar, or close and re-open on a clean history. This is the\n\
+         \x20   /// one place the streaming tier is stricter than the batch API, which\n\
+         \x20   /// computes on whatever it is given — a handle retains its state, so a\n\
+         \x20   /// single non-finite bar would poison every later value it produces."
     );
     let _ = writeln!(o, "    #[doc(alias = \"TA_{n}_Update\")]");
-    let _ = writeln!(o, "    pub fn update(&mut self, {sig_bars}) -> {vt} {{");
+    let _ = writeln!(
+        o,
+        "    pub fn update(&mut self, {sig_bars}) -> Result<{vt}, RetCode> {{"
+    );
+    o.push_str(&finite_bar_check(func, "        "));
     o.push_str(&out_decls);
     let _ = writeln!(
         o,
-        "        self.core.{sn}_step_internal(&mut self.state, {fwd_bars}{out_refs});"
+        "        self.core.{sn}_step_internal(&mut self.state, {fwd_bars}{out_refs}){step_try};"
     );
-    let _ = writeln!(o, "        {ret}");
+    let _ = writeln!(o, "        Ok({ret})");
     let _ = writeln!(o, "    }}\n");
     let alloc_note = if reuse {
         "The copy it runs on is held per thread and reused,\n    /// so only the first peek of this function on a thread allocates."
@@ -2079,11 +2174,18 @@ fn emit_update_and_peek(o: &mut String, func: &FuncDef, shape: StateShape) {
         "    /// Evaluate a forming bar without committing — bit-identical to what the\n\
          \x20   /// next `update` with the same bar would return (it is the same code, run\n\
          \x20   /// on a scratch copy of the state). Never writes the handle, so peeks may\n\
-         \x20   /// run concurrently with each other. {alloc_note}"
+         \x20   /// run concurrently with each other. {alloc_note}\n\
+         \x20   ///\n\
+         \x20   /// # Errors\n\
+         \x20   ///\n\
+         \x20   /// [`RetCode::BadParam`] if any bar value is not finite, exactly as\n\
+         \x20   /// `update` rejects it."
     );
     let _ = writeln!(o, "    #[doc(alias = \"TA_{n}_Peek\")]");
-    let _ = writeln!(o, "    #[must_use]");
-    let _ = writeln!(o, "    pub fn peek(&self, {sig_bars}) -> {vt} {{");
+    let _ = writeln!(o, "    pub fn peek(&self, {sig_bars}) -> Result<{vt}, RetCode> {{");
+    // Ahead of the scratch copy, not left to the `update` below: a rejected bar
+    // must not pay for a handle clone.
+    o.push_str(&finite_bar_check(func, "        "));
     if reuse {
         // `update` on the copy, not the transition on a bare state — so the
         // transition keeps the single call site it has always had. Reached
@@ -2282,7 +2384,7 @@ fn emit_dual_mode(
         .filter(|p| p.param_type == ParamType::Real)
         .map(|p| p.name.clone())
         .collect();
-    emit_step_sig(o, func);
+    emit_step_sig(o, func, false);
     let ctx = build_step_ctx(func, &[ma, mb], &typing);
     // Identity (HMA period 1) short-circuits ahead of the predicate, as it does
     // in the batch and in Open: it is a property of the function, not of a mode.
@@ -2294,7 +2396,7 @@ fn emit_dual_mode(
     let _ = writeln!(o, "        }} else {{");
     emit_step_body(o, func, mb, &typing, &ctx, enums, registry, helpers, counter, 12);
     let _ = writeln!(o, "        }}");
-    let _ = writeln!(o, "    }}\n");
+    emit_step_end(o, false);
 
     emit_dual_open(o, func, dmp, &typing, &union_scalars, enums, registry, helpers, counter);
     emit_open_internal_wrapper(o, func, ma);
@@ -2303,7 +2405,7 @@ fn emit_dual_mode(
     emit_open_and_fill_internal_wrapper(o, func);
     let _ = writeln!(o, "}}\n");
 
-    emit_update_and_peek(o, func, shape);
+    emit_update_and_peek(o, func, shape, false);
     emit_trait_pin(o, func);
 }
 
@@ -2529,7 +2631,7 @@ fn emit_dispatch(
     let _ = writeln!(o, "{IMPL_ALLOW}impl Core {{");
 
     // --- step ---------------------------------------------------------------
-    emit_step_sig(o, func);
+    emit_step_sig(o, func, true);
     if let Some(idp) = &dp.identity {
         let cond = params_on_state(func, &idp.condition);
         let cond = render_expr(&cond, &ctx, &[], registry, helpers);
@@ -2537,7 +2639,10 @@ fn emit_dispatch(
         for (out, inp) in &idp.pairs {
             let _ = writeln!(o, "            (*{out}) = {inp};");
         }
-        let _ = writeln!(o, "            return;");
+        // The step is fallible on this tier (its arms drive sub-streams), so the
+        // identity short-circuit returns the unit success rather than a bare
+        // `return`.
+        let _ = writeln!(o, "            return Ok(());");
         let _ = writeln!(o, "        }}");
     }
     let _ = writeln!(o, "        match &mut sp.sub {{");
@@ -2559,9 +2664,9 @@ fn emit_dispatch(
             let streaming::OutSlot::Forward(k) = arm.out_map[0] else {
                 panic!("single-output arm cannot discard its only slot");
             };
-            let _ = writeln!(o, "                (*{}) = sub.update({bar_args});", outputs[k]);
+            let _ = writeln!(o, "                (*{}) = sub.update({bar_args})?;", outputs[k]);
         } else {
-            let _ = writeln!(o, "                let subValue = sub.update({bar_args});");
+            let _ = writeln!(o, "                let subValue = sub.update({bar_args})?;");
             for (i, slot) in arm.out_map.iter().enumerate() {
                 if let streaming::OutSlot::Forward(k) = slot {
                     let _ = writeln!(o, "                (*{}) = subValue.{i};", outputs[*k]);
@@ -2571,7 +2676,7 @@ fn emit_dispatch(
         let _ = writeln!(o, "            }}");
     }
     let _ = writeln!(o, "        }}");
-    let _ = writeln!(o, "    }}\n");
+    emit_step_end(o, true);
 
     // --- open bodies --------------------------------------------------------
     // One body emitter, three modes. The scalar open warms the handle and hands
@@ -2760,7 +2865,7 @@ fn emit_dispatch(
     }
     let _ = writeln!(o, "}}\n");
 
-    emit_update_and_peek(o, func, shape);
+    emit_update_and_peek(o, func, shape, true);
     emit_trait_pin(o, func);
 }
 
@@ -2841,7 +2946,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "{IMPL_ALLOW}impl Core {{");
 
     // --- step: advance ALL slots, output the clamped-period slot ------------
-    emit_step_sig(o, func);
+    emit_step_sig(o, func, true);
     let _ = writeln!(o, "        let mut cp: i32 = {period} as i32;");
     let _ = writeln!(o, "        if cp < sp.{min} {{");
     let _ = writeln!(o, "            cp = sp.{min};");
@@ -2850,12 +2955,12 @@ fn emit_period_bank(
     let _ = writeln!(o, "        }}");
     let _ = writeln!(o, "        let slot: usize = (cp - sp.{min}) as usize;");
     let _ = writeln!(o, "        for (bankIdx, sub) in sp.bank.iter_mut().enumerate() {{");
-    let _ = writeln!(o, "            let subValue = sub.update({price});");
+    let _ = writeln!(o, "            let subValue = sub.update({price})?;");
     let _ = writeln!(o, "            if bankIdx == slot {{");
     let _ = writeln!(o, "                (*{out}) = subValue;");
     let _ = writeln!(o, "            }}");
     let _ = writeln!(o, "        }}");
-    let _ = writeln!(o, "    }}\n");
+    emit_step_end(o, true);
 
     // --- open_internal ------------------------------------------------------
     emit_open_sig(o, func, OutMode::Scalar);
@@ -2929,7 +3034,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "        let mut t: usize = lookbackTotal + 1;");
     let _ = writeln!(o, "        while t < historyLen {{");
     let _ = writeln!(o, "            for (bankIdx, sub) in bank.iter_mut().enumerate() {{");
-    let _ = writeln!(o, "                scratch[bankIdx] = sub.update({price}[t]);");
+    let _ = writeln!(o, "                scratch[bankIdx] = sub.update({price}[t])?;");
     let _ = writeln!(o, "            }}");
     let _ = writeln!(o, "            cp = {period}[t] as i32;");
     let _ = writeln!(o, "            if cp < {min} {{\n                cp = {min};\n            }} else if cp > {max} {{\n                cp = {max};\n            }}");
@@ -2943,7 +3048,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "    }}\n");
     let _ = writeln!(o, "}}\n");
 
-    emit_update_and_peek(o, func, shape);
+    emit_update_and_peek(o, func, shape, true);
     emit_trait_pin(o, func);
 }
 
@@ -3185,7 +3290,7 @@ fn emit_composed_step(
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
 ) {
-    emit_step_sig(o, func);
+    emit_step_sig(o, func, true);
     let cur_scalars = composed_cur_scalars(cp, inputs, outputs);
     let ctx = composed_step_ctx(func, cp, typing, &cur_scalars);
 
@@ -3257,10 +3362,10 @@ fn emit_composed_step(
                 let arg_str = args.join(", ");
                 if sub.dsts.len() == 1 {
                     let d = &sub.dsts[0];
-                    let _ = writeln!(o, "        cur_{d} = sp.sub{sub_idx}.update({arg_str});");
+                    let _ = writeln!(o, "        cur_{d} = sp.sub{sub_idx}.update({arg_str})?;");
                 } else {
                     let _ = writeln!(o, "        {{");
-                    let _ = writeln!(o, "            let _sub_out = sp.sub{sub_idx}.update({arg_str});");
+                    let _ = writeln!(o, "            let _sub_out = sp.sub{sub_idx}.update({arg_str})?;");
                     for (k, d) in sub.dsts.iter().enumerate() {
                         let _ = writeln!(o, "            cur_{d} = _sub_out.{k};");
                     }
@@ -3305,7 +3410,7 @@ fn emit_composed_step(
             cur.get(out).expect("analyzer gated output")
         );
     }
-    let _ = writeln!(o, "    }}\n");
+    emit_step_end(o, true);
 }
 
 /// Anchor rendering for a sub-open's startIdx: `max(0, a - b)`-form anchors
@@ -3811,6 +3916,6 @@ fn emit_composed(
     emit_open_and_fill_internal_wrapper(o, func);
     let _ = writeln!(o, "}}\n");
 
-    emit_update_and_peek(o, func, shape);
+    emit_update_and_peek(o, func, shape, true);
     emit_trait_pin(o, func);
 }

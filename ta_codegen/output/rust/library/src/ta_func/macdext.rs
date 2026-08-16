@@ -459,23 +459,24 @@ impl MACDEXT_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn MACDEXT_step_internal(&self, sp: &mut MACDEXT_StreamState, inReal: f64, outMACD: &mut f64, outMACDSignal: &mut f64, outMACDHist: &mut f64) {
+    fn MACDEXT_step_internal(&self, sp: &mut MACDEXT_StreamState, inReal: f64, outMACD: &mut f64, outMACDSignal: &mut f64, outMACDHist: &mut f64) -> Result<(), RetCode> {
         let mut cur_slowMABuffer: f64 = 0.0_f64;
         let mut cur_fastMABuffer: f64 = 0.0_f64;
         let mut cur_outMACDSignal: f64 = 0.0_f64;
         let mut cur_outMACDHist: f64 = 0.0_f64;
 
         // Pipeline the new bar through the sub-streams (batch tail order).
-        cur_slowMABuffer = sp.sub0.update(inReal);
-        cur_fastMABuffer = sp.sub1.update(inReal);
+        cur_slowMABuffer = sp.sub0.update(inReal)?;
+        cur_fastMABuffer = sp.sub1.update(inReal)?;
         // Combine map (batch tail, per bar).
         cur_fastMABuffer = cur_fastMABuffer - cur_slowMABuffer;
-        cur_outMACDSignal = sp.sub2.update(cur_fastMABuffer);
+        cur_outMACDSignal = sp.sub2.update(cur_fastMABuffer)?;
         // Combine map (batch tail, per bar).
         cur_outMACDHist = cur_fastMABuffer - cur_outMACDSignal;
         (*outMACD) = cur_fastMABuffer;
         (*outMACDSignal) = cur_outMACDSignal;
         (*outMACDHist) = cur_outMACDHist;
+        Ok(())
     }
 
     /// The single whole-history transcription behind [`Core::MACDEXT_OpenInternal`]
@@ -705,14 +706,17 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.MACDEXT_Open(&data, 12, MAType::SMA, 26, MAType::SMA, 9, MAType::SMA).expect("enough history");
-    /// let peeked = s.peek(100.9);
-    /// let updated = s.update(100.9);
+    /// let peeked = s.peek(100.9).expect("a finite bar");
+    /// let updated = s.update(100.9).expect("a finite bar");
     /// assert_eq!(peeked.0.to_bits(), updated.0.to_bits());
     /// assert_eq!(peeked.1.to_bits(), updated.1.to_bits());
     /// assert_eq!(peeked.2.to_bits(), updated.2.to_bits());
     /// ```
     #[doc(alias = "TA_MACDEXT_Open")]
     pub fn MACDEXT_Open(&self, inReal: &[f64], optInFastPeriod: i32, optInFastMAType: MAType, optInSlowPeriod: i32, optInSlowMAType: MAType, optInSignalPeriod: i32, optInSignalMAType: MAType) -> Result<(MACDEXT_Stream, (f64, f64, f64)), RetCode> {
+        if inReal.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.MACDEXT_OpenInternal(inReal, 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType)
     }
 
@@ -730,6 +734,9 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         if outMACDSignal.as_ptr() == outMACDHist.as_ptr() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
         self.MACDEXT_OpenCore(inReal, 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1)
@@ -756,14 +763,27 @@ thread_local! {
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl MACDEXT_Stream {
-    /// Commit one closed bar; always produces a value. Never allocates.
+    /// Commit one closed bar. Never allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite (NaN or ±Inf).
+    /// That check runs before anything is written, so the handle is left
+    /// exactly as it was and the stream stays usable:
+    /// skip the bar, or close and re-open on a clean history. This is the
+    /// one place the streaming tier is stricter than the batch API, which
+    /// computes on whatever it is given — a handle retains its state, so a
+    /// single non-finite bar would poison every later value it produces.
     #[doc(alias = "TA_MACDEXT_Update")]
-    pub fn update(&mut self, inReal: f64) -> (f64, f64, f64) {
+    pub fn update(&mut self, inReal: f64) -> Result<(f64, f64, f64), RetCode> {
+        if !inReal.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut outMACD: f64 = 0.0_f64;
         let mut outMACDSignal: f64 = 0.0_f64;
         let mut outMACDHist: f64 = 0.0_f64;
-        self.core.MACDEXT_step_internal(&mut self.state, inReal, &mut outMACD, &mut outMACDSignal, &mut outMACDHist);
-        (outMACD, outMACDSignal, outMACDHist)
+        self.core.MACDEXT_step_internal(&mut self.state, inReal, &mut outMACD, &mut outMACDSignal, &mut outMACDHist)?;
+        Ok((outMACD, outMACDSignal, outMACDHist))
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
@@ -771,9 +791,16 @@ impl MACDEXT_Stream {
     /// on a scratch copy of the state). Never writes the handle, so peeks may
     /// run concurrently with each other. The copy it runs on is held per thread and reused,
     /// so only the first peek of this function on a thread allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite, exactly as
+    /// `update` rejects it.
     #[doc(alias = "TA_MACDEXT_Peek")]
-    #[must_use]
-    pub fn peek(&self, inReal: f64) -> (f64, f64, f64) {
+    pub fn peek(&self, inReal: f64) -> Result<(f64, f64, f64), RetCode> {
+        if !inReal.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         MACDEXT_PEEK_SCRATCH.with(|cell| {
             let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
             scratch.restore_from(self);

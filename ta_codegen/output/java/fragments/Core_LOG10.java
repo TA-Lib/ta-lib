@@ -209,10 +209,20 @@
       }
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public double update( double inReal ) {
+         if( !Double.isFinite(inReal) )
+            throw new IllegalArgumentException("LOG10 update: BadParam");
          core.LOG10_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -225,6 +235,8 @@
        * handle's shape is cheaper than reusing one.
        */
       public double peek( double inReal ) {
+         if( !Double.isFinite(inReal) )
+            throw new IllegalArgumentException("LOG10 peek: BadParam");
          LOG10_Stream scratch = new LOG10_Stream(this);
          core.LOG10_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -334,6 +346,11 @@
     */
    public LOG10_Stream LOG10_Open( double inReal[] )
    {
+      if( inReal.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal[taFiniteIdx]) )
+               throw new IllegalArgumentException("LOG10 open: BadParam");
+      }
       return LOG10_OpenInternal(inReal, 0);
    }
    /**
@@ -347,6 +364,11 @@
     */
    public LOG10_Stream LOG10_OpenAndFill( double inReal[], double outReal[] )
    {
+      if( inReal.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal[taFiniteIdx]) )
+               throw new IllegalArgumentException("LOG10 openAndFill: BadParam");
+      }
       LOG10_Stream sp = new LOG10_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

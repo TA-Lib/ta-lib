@@ -787,6 +787,17 @@ TA_RetCode TA_MAVP_OpenInternal( struct TA_MAVP_Stream **stream, const double in
 
 TA_LIB_API TA_RetCode TA_MAVP_Open( TA_MAVP_Stream **stream, const double inReal[], const double inPeriods[], int historyLen, int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType, double *outReal )
 {
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !inPeriods || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inReal[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inPeriods[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_MAVP_OpenInternal( stream, inReal, inPeriods, 0, historyLen, optInMinPeriod, optInMaxPeriod, optInMAType, outReal );
 }
 
@@ -802,6 +813,12 @@ TA_LIB_API TA_RetCode TA_MAVP_OpenAndFill( TA_MAVP_Stream **stream, const double
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inReal || (const void *)outReal == (const void *)inPeriods ) return TA_BAD_PARAM;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inReal[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inPeriods[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    if( (int)optInMinPeriod == TA_INTEGER_DEFAULT )
       optInMinPeriod = 2;
    else if( (int)optInMinPeriod < 1 || (int)optInMinPeriod > 100000 )
@@ -868,6 +885,7 @@ TA_LIB_API TA_RetCode TA_MAVP_Update( TA_MAVP_Stream *stream, double inReal, dou
 {
    int k, cp;
    if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) || !TA_IS_FINITE( inPeriods ) ) return TA_BAD_PARAM;
    for( k = 0; k < stream->nBank; k++ )
       TA_MA_Update( stream->bank[k], inReal, &stream->scratch[k] );
    cp = (int)inPeriods;
@@ -881,6 +899,7 @@ TA_LIB_API TA_RetCode TA_MAVP_Peek( const TA_MAVP_Stream *stream, double inReal,
 {
    int cp;
    if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) || !TA_IS_FINITE( inPeriods ) ) return TA_BAD_PARAM;
    cp = (int)inPeriods;
    if( cp < stream->optInMinPeriod ) cp = stream->optInMinPeriod;
    else if( cp > stream->optInMaxPeriod ) cp = stream->optInMaxPeriod;

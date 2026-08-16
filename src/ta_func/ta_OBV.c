@@ -254,6 +254,17 @@ TA_RetCode TA_OBV_OpenInternal( struct TA_OBV_Stream **stream, const double inRe
 
 TA_LIB_API TA_RetCode TA_OBV_Open( TA_OBV_Stream **stream, const double inReal[], const double inVolume[], int historyLen, double *outReal )
 {
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !inVolume || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inReal[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inVolume[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_OBV_OpenInternal( stream, inReal, inVolume, 0, historyLen, outReal );
 }
 
@@ -262,7 +273,16 @@ TA_LIB_API TA_RetCode TA_OBV_OpenAndFill( TA_OBV_Stream **stream, const double i
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
    if( !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
+   if( !inReal || !inVolume || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inReal || (const void *)outReal == (const void *)inVolume ) return TA_BAD_PARAM;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inReal[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inVolume[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_OBV_OpenCore( stream, inReal, inVolume, 0, historyLen, outBegIdx, outNBElement, outReal, 1 );
 }
 
@@ -275,6 +295,7 @@ TA_RetCode TA_OBV_OpenAndFillInternal( struct TA_OBV_Stream **stream, const doub
 TA_LIB_API TA_RetCode TA_OBV_Update( TA_OBV_Stream *stream, double inReal, double inVolume, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
    TA_OBV_StepInternal( stream, inReal, inVolume, outReal );
    return TA_SUCCESS;
 }
@@ -284,6 +305,7 @@ TA_LIB_API TA_RetCode TA_OBV_Peek( const TA_OBV_Stream *stream, double inReal, d
    struct TA_OBV_Stream scratch;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
    scratch = *stream;
    TA_OBV_StepInternal( &scratch, inReal, inVolume, outReal );
    return TA_SUCCESS;

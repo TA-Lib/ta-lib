@@ -470,10 +470,20 @@
       private static final ThreadLocal<CDL3LINESTRIKE_Stream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+         if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+            throw new IllegalArgumentException("CDL3LINESTRIKE update: BadParam");
          core.CDL3LINESTRIKE_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outInteger;
       }
@@ -488,6 +498,8 @@
        * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
+         if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+            throw new IllegalArgumentException("CDL3LINESTRIKE peek: BadParam");
          CDL3LINESTRIKE_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new CDL3LINESTRIKE_Stream(this);
@@ -788,6 +800,20 @@
     */
    public CDL3LINESTRIKE_Stream CDL3LINESTRIKE_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
+      if( inOpen.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
+            if( !Double.isFinite(inOpen[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDL3LINESTRIKE open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
+            if( !Double.isFinite(inHigh[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDL3LINESTRIKE open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
+            if( !Double.isFinite(inLow[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDL3LINESTRIKE open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
+            if( !Double.isFinite(inClose[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDL3LINESTRIKE open: BadParam");
+      }
       return CDL3LINESTRIKE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -801,6 +827,20 @@
     */
    public CDL3LINESTRIKE_Stream CDL3LINESTRIKE_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
+      if( inOpen.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
+            if( !Double.isFinite(inOpen[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDL3LINESTRIKE openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
+            if( !Double.isFinite(inHigh[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDL3LINESTRIKE openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
+            if( !Double.isFinite(inLow[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDL3LINESTRIKE openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
+            if( !Double.isFinite(inClose[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDL3LINESTRIKE openAndFill: BadParam");
+      }
       CDL3LINESTRIKE_Stream sp = new CDL3LINESTRIKE_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

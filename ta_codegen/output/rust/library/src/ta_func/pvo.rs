@@ -318,14 +318,14 @@ impl PVO_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn PVO_step_internal(&self, sp: &mut PVO_StreamState, inVolume: f64, outReal: &mut f64) {
+    fn PVO_step_internal(&self, sp: &mut PVO_StreamState, inVolume: f64, outReal: &mut f64) -> Result<(), RetCode> {
         let mut tempReal: f64 = 0.0_f64;
         let mut cur_tempBuffer: f64 = 0.0_f64;
         let mut cur_outReal: f64 = 0.0_f64;
 
         // Pipeline the new bar through the sub-streams (batch tail order).
-        cur_tempBuffer = sp.sub0.update(inVolume);
-        cur_outReal = sp.sub1.update(inVolume);
+        cur_tempBuffer = sp.sub0.update(inVolume)?;
+        cur_outReal = sp.sub1.update(inVolume)?;
         // Combine map (batch tail, per bar).
         tempReal = cur_outReal;
         if !((tempReal).abs() < 1e-14) {
@@ -334,6 +334,7 @@ impl Core {
             cur_outReal = 0.0;
         }
         (*outReal) = cur_outReal;
+        Ok(())
     }
 
     /// The single whole-history transcription behind [`Core::PVO_OpenInternal`]
@@ -465,12 +466,15 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.PVO_Open(&volume, 12, 26, MAType::EMA).expect("enough history");
-    /// let peeked = s.peek(12_345.0);
-    /// let updated = s.update(12_345.0);
+    /// let peeked = s.peek(12_345.0).expect("a finite bar");
+    /// let updated = s.update(12_345.0).expect("a finite bar");
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_PVO_Open")]
     pub fn PVO_Open(&self, inVolume: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, optInMAType: MAType) -> Result<(PVO_Stream, f64), RetCode> {
+        if inVolume.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.PVO_OpenInternal(inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType)
     }
 
@@ -481,6 +485,9 @@ impl Core {
     pub fn PVO_OpenAndFill(
         &self, inVolume: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<PVO_Stream, RetCode> {
+        if inVolume.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.PVO_OpenCore(inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1)
     }
 
@@ -505,12 +512,25 @@ thread_local! {
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl PVO_Stream {
-    /// Commit one closed bar; always produces a value. Never allocates.
+    /// Commit one closed bar. Never allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite (NaN or ±Inf).
+    /// That check runs before anything is written, so the handle is left
+    /// exactly as it was and the stream stays usable:
+    /// skip the bar, or close and re-open on a clean history. This is the
+    /// one place the streaming tier is stricter than the batch API, which
+    /// computes on whatever it is given — a handle retains its state, so a
+    /// single non-finite bar would poison every later value it produces.
     #[doc(alias = "TA_PVO_Update")]
-    pub fn update(&mut self, inVolume: f64) -> f64 {
+    pub fn update(&mut self, inVolume: f64) -> Result<f64, RetCode> {
+        if !inVolume.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut outReal: f64 = 0.0_f64;
-        self.core.PVO_step_internal(&mut self.state, inVolume, &mut outReal);
-        outReal
+        self.core.PVO_step_internal(&mut self.state, inVolume, &mut outReal)?;
+        Ok(outReal)
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
@@ -518,9 +538,16 @@ impl PVO_Stream {
     /// on a scratch copy of the state). Never writes the handle, so peeks may
     /// run concurrently with each other. The copy it runs on is held per thread and reused,
     /// so only the first peek of this function on a thread allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite, exactly as
+    /// `update` rejects it.
     #[doc(alias = "TA_PVO_Peek")]
-    #[must_use]
-    pub fn peek(&self, inVolume: f64) -> f64 {
+    pub fn peek(&self, inVolume: f64) -> Result<f64, RetCode> {
+        if !inVolume.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         PVO_PEEK_SCRATCH.with(|cell| {
             let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
             scratch.restore_from(self);

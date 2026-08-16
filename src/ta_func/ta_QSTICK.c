@@ -423,6 +423,17 @@ TA_RetCode TA_QSTICK_OpenInternal( struct TA_QSTICK_Stream **stream, const doubl
 
 TA_LIB_API TA_RetCode TA_QSTICK_Open( TA_QSTICK_Stream **stream, const double inOpen[], const double inClose[], int historyLen, int optInTimePeriod, double *outReal )
 {
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inOpen || !inClose || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inOpen[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inClose[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_QSTICK_OpenInternal( stream, inOpen, inClose, 0, historyLen, optInTimePeriod, outReal );
 }
 
@@ -431,7 +442,16 @@ TA_LIB_API TA_RetCode TA_QSTICK_OpenAndFill( TA_QSTICK_Stream **stream, const do
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
    if( !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
+   if( !inOpen || !inClose || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inOpen || (const void *)outReal == (const void *)inClose ) return TA_BAD_PARAM;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inOpen[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inClose[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_QSTICK_OpenCore( stream, inOpen, inClose, 0, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
@@ -444,6 +464,7 @@ TA_RetCode TA_QSTICK_OpenAndFillInternal( struct TA_QSTICK_Stream **stream, cons
 TA_LIB_API TA_RetCode TA_QSTICK_Update( TA_QSTICK_Stream *stream, double inOpen, double inClose, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    TA_QSTICK_StepInternal( stream, inOpen, inClose, outReal );
    return TA_SUCCESS;
 }
@@ -453,6 +474,7 @@ TA_LIB_API TA_RetCode TA_QSTICK_Peek( const TA_QSTICK_Stream *stream, double inO
    struct TA_QSTICK_Stream scratch;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    scratch = *stream;
    scratch.ring_trailingIdx_inOpen = stream->ringMirror_trailingIdx_inOpen;
    memcpy( scratch.ring_trailingIdx_inOpen, stream->ring_trailingIdx_inOpen, sizeof(double) * (size_t)(stream->ringCap_trailingIdx > 0 ? stream->ringCap_trailingIdx : 1) );

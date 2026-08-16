@@ -302,10 +302,20 @@
       }
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public double update( double inClose, double inVolume ) {
+         if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
+            throw new IllegalArgumentException("PVI update: BadParam");
          core.PVI_StreamStep(this, inClose, inVolume);
          return this.cur_outReal;
       }
@@ -318,6 +328,8 @@
        * handle's shape is cheaper than reusing one.
        */
       public double peek( double inClose, double inVolume ) {
+         if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
+            throw new IllegalArgumentException("PVI peek: BadParam");
          PVI_Stream scratch = new PVI_Stream(this);
          core.PVI_StreamStep(scratch, inClose, inVolume);
          return scratch.cur_outReal;
@@ -498,6 +510,14 @@
     */
    public PVI_Stream PVI_Open( double inClose[], double inVolume[] )
    {
+      if( inClose.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
+            if( !Double.isFinite(inClose[taFiniteIdx]) )
+               throw new IllegalArgumentException("PVI open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
+            if( !Double.isFinite(inVolume[taFiniteIdx]) )
+               throw new IllegalArgumentException("PVI open: BadParam");
+      }
       return PVI_OpenInternal(inClose, inVolume, 0);
    }
    /**
@@ -511,6 +531,14 @@
     */
    public PVI_Stream PVI_OpenAndFill( double inClose[], double inVolume[], double outReal[] )
    {
+      if( inClose.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
+            if( !Double.isFinite(inClose[taFiniteIdx]) )
+               throw new IllegalArgumentException("PVI openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
+            if( !Double.isFinite(inVolume[taFiniteIdx]) )
+               throw new IllegalArgumentException("PVI openAndFill: BadParam");
+      }
       PVI_Stream sp = new PVI_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

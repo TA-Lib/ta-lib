@@ -63,7 +63,7 @@ use crate::streaming::{self, StreamModel, StreamPlan};
 use super::fma::{self, FmaVarSets};
 use super::java::{
     build_matype_map, collect_address_of_vars, collect_double_address_of_vars, collect_matype_vars,
-    emit_opt_param_validation, java_type_str, render_expr, render_hoisted_blocks,
+    java_type_str, render_expr, render_hoisted_blocks,
     render_statement_ctx, JavaRenderCtx, JAVA_CANDLE_FNS,
 };
 use crate::helper_registry::hoist_block_helpers;
@@ -881,6 +881,62 @@ fn fresh_value_expr(func: &FuncDef, handle_var: &str) -> String {
     }
 }
 
+/// The per-bar finite-input rejection for `update`/`peek`: one `Double.isFinite`
+/// per scalar bar input, before the handle is touched.
+///
+/// The streaming tier's half of the boundary contract (see
+/// `docs/streaming-api-design.md`). Batch does not filter — it computes on
+/// whatever it is handed. A handle cannot do that, because its state is
+/// retained: one non-finite bar poisons every recursive accumulator in it for
+/// the rest of its life, long after the feed recovers.
+///
+/// `IllegalArgumentException` carrying the same `"<NAME> <what>: "` prefix the
+/// open rejections use, so one catch clause covers the whole tier.
+fn finite_bar_check(func: &FuncDef, indent: &str, what: &str) -> String {
+    let bars = streaming::input_array_names(func);
+    if bars.is_empty() {
+        return String::new();
+    }
+    let n = base_name(func);
+    let conds: Vec<String> = bars.iter().map(|b| format!("!Double.isFinite({b})")).collect();
+    format!(
+        "{indent}if( {} )\n{indent}   throw new IllegalArgumentException(\"{n} {what}: BadParam\");\n",
+        conds.join(" || ")
+    )
+}
+
+/// The warm-up-history finite-input rejection for the PUBLIC `Open` /
+/// `OpenAndFill`, emitted at those entry points ONLY.
+///
+/// `OpenInternal` / `OpenAndFillInternal` are the composition seams: a composed
+/// open hands its sub-streams slices of the very array validated here, so a scan
+/// there would re-walk validated data once per sub-call, and would apply the
+/// caller-boundary contract to library-computed intermediates.
+fn finite_history_check(func: &FuncDef, indent: &str, what: &str) -> String {
+    let inputs = streaming::input_array_names(func);
+    if inputs.is_empty() {
+        return String::new();
+    }
+    let n = base_name(func);
+    // Guarded on the first input's length because the scan dereferences EVERY
+    // input array, while the open body short-circuits on `historyLen < 1`
+    // before it touches the later ones. Without this, an empty first input plus
+    // a null later one would throw NullPointerException where it used to throw
+    // IllegalArgumentException. Deliberately NOT a copy of the body's
+    // equal-length rule -- one rule, one place; this only restores the order.
+    let mut out = format!("{indent}if( {}.length >= 1 ) {{\n", inputs[0]);
+    for i in &inputs {
+        let _ = writeln!(
+            out,
+            "{indent}   for( int taFiniteIdx = 0; taFiniteIdx < {i}.length; taFiniteIdx++ )\n\
+             {indent}      if( !Double.isFinite({i}[taFiniteIdx]) )\n\
+             {indent}         throw new IllegalArgumentException(\"{n} {what}: BadParam\");"
+        );
+    }
+    let _ = writeln!(out, "{indent}}}");
+    out
+}
+
 fn emit_update_peek_value_copy(o: &mut String, func: &FuncDef, reuse: bool) {
     let class = stream_class_name(func);
     let base = base_name(func);
@@ -894,11 +950,20 @@ fn emit_update_peek_value_copy(o: &mut String, func: &FuncDef, reuse: bool) {
     let _ = writeln!(
         o,
         "\n      /**\n\
-         \x20      * Commit one closed bar; always produces the new current value.\n\
-         \x20      * Never throws after a successful open; never allocates handle state.\n\
+         \x20      * Commit one closed bar, returning the new current value.\n\
+         \x20      * Never allocates handle state.\n\
+         \x20      * <p>Throws {{@link IllegalArgumentException}} if any bar value is not\n\
+         \x20      * finite (NaN or an infinity). That check runs before anything is\n\
+         \x20      * written, so the handle is left exactly as it was —\n\
+         \x20      * the stream stays usable, so skip the bar or re-open on a clean\n\
+         \x20      * history. This is the one place the streaming tier is stricter than\n\
+         \x20      * the batch API, which computes on whatever it is given: a handle\n\
+         \x20      * retains its state, so a single non-finite bar would poison every\n\
+         \x20      * later value it produces.\n\
          \x20      */"
     );
     let _ = writeln!(o, "      public {vt} update( {sig_bars} ) {{");
+    o.push_str(&finite_bar_check(func, "         ", "update"));
     let _ = writeln!(o, "         core.{base}_StreamStep(this, {fwd_bars});");
     if has_value_class(func) {
         let _ = writeln!(o, "         this.cachedValue = {};", fresh_value_expr(func, "this"));
@@ -927,6 +992,9 @@ fn emit_update_peek_value_copy(o: &mut String, func: &FuncDef, reuse: bool) {
          \x20      */"
     );
     let _ = writeln!(o, "      public {vt} peek( {sig_bars} ) {{");
+    // Ahead of the scratch copy, not left to the step: a rejected bar must not
+    // pay for a handle copy.
+    o.push_str(&finite_bar_check(func, "         ", "peek"));
     if reuse {
         // Per thread, not per handle: `peek` must not write the handle (two
         // threads may peek the same one), and a static ThreadLocal keeps the
@@ -1364,7 +1432,7 @@ fn emit_open_validation(o: &mut String, func: &FuncDef, mode: OutMode, enums: &H
     let _ = writeln!(o, "      if( historyLen > MAX_INDEX + 1 ) {{");
     let _ = writeln!(o, "         return RetCode.OutOfRangeEndIndex;");
     let _ = writeln!(o, "      }}");
-    o.push_str(&emit_opt_param_validation(func, "RetCode.BadParam", enums));
+    o.push_str(&super::java::emit_opt_param_validation_ex(func, "RetCode.BadParam", enums, super::common::RealRangeTest::RejectNonFinite));
     if mode == OutMode::Fill {
         // FILL ONLY (the wrapper owns it once merged): OpenAndFill writes outputs then reads the
         // input tail to seed rings — the batch tier's in==out allowance is
@@ -1872,6 +1940,7 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef) {
         "   public {class} {base}_Open( {}{opt_sig_str} )\n   {{",
         in_sig.join(", ")
     );
+    o.push_str(&finite_history_check(func, "      ", "open"));
     let _ = writeln!(
         o,
         "      return {base}_OpenInternal({}, 0{opt_fwd_str});",
@@ -1912,6 +1981,7 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef) {
         "   public {class} {base}_OpenAndFill( {} )\n   {{",
         fill_sig.join(", ")
     );
+    o.push_str(&finite_history_check(func, "      ", "openAndFill"));
     let _ = writeln!(o, "      {class} sp = new {class}(this);");
     let _ = writeln!(o, "      MInteger outBegIdx = new MInteger();");
     let _ = writeln!(o, "      MInteger outNBElement = new MInteger();");

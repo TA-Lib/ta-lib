@@ -563,6 +563,19 @@ pub(crate) fn emit_opt_param_validation(
     fail: &str,
     enums: &HashMap<String, EnumDef>,
 ) -> String {
+    emit_opt_param_validation_ex(func, fail, enums, super::common::RealRangeTest::Legacy)
+}
+
+/// [`emit_opt_param_validation`] with the real-range test spelled explicitly. The
+/// streaming tier passes [`RealRangeTest::RejectNonFinite`]; everything else keeps
+/// the batch spelling.
+#[allow(clippy::cast_possible_truncation)]
+pub(crate) fn emit_opt_param_validation_ex(
+    func: &FuncDef,
+    fail: &str,
+    enums: &HashMap<String, EnumDef>,
+    real_range: super::common::RealRangeTest,
+) -> String {
     let mut out = String::new();
     for opt in &func.optional_inputs {
         match &opt.param_type {
@@ -601,10 +614,12 @@ pub(crate) fn emit_opt_param_validation(
                     // and it is what keeps an infinity out of the computation.
                     if let Some((min, max)) = opt.range {
                         out.push_str(&format!(
-                            "   else if( {name} < {lo} || {name} > {hi} )\n      return {fail};\n",
-                            name = opt.name,
-                            lo = super::common::real_bound_literal(min, "TA_"),
-                            hi = super::common::real_bound_literal(max, "TA_")
+                            "   else if( {cond} )\n      return {fail};\n",
+                            cond = real_range.reject_cond(
+                                &opt.name,
+                                &super::common::real_bound_literal(min, "TA_"),
+                                &super::common::real_bound_literal(max, "TA_")
+                            )
                         ));
                     }
                 }

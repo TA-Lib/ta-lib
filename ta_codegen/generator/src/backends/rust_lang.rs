@@ -1427,6 +1427,19 @@ pub(crate) fn gen_opt_param_validation_with(
     err_return: &str,
     enums: &HashMap<String, EnumDef>,
 ) -> String {
+    gen_opt_param_validation_ex(opt, pad, err_return, enums, super::common::RealRangeTest::Legacy)
+}
+
+/// [`gen_opt_param_validation_with`] with the real-range test spelled explicitly.
+/// The streaming tier passes [`RealRangeTest::RejectNonFinite`].
+#[allow(clippy::float_cmp)] // an enum default is an exact integer, not a measurement
+pub(crate) fn gen_opt_param_validation_ex(
+    opt: &OptInput,
+    pad: &str,
+    err_return: &str,
+    enums: &HashMap<String, EnumDef>,
+    real_range: super::common::RealRangeTest,
+) -> String {
     let mut out = String::new();
     let name = &opt.name;
 
@@ -1483,9 +1496,13 @@ pub(crate) fn gen_opt_param_validation_with(
                 // Every declared bound is checked (see backends::c).
                 if let Some((lo, hi)) = opt.range {
                     out.push_str(&format!(
-                        "{pad}}} else if ({name} < {lo}) || ({name} > {hi}) {{\n",
-                        lo = super::common::real_bound_literal(lo, ""),
-                        hi = super::common::real_bound_literal(hi, "")
+                        "{pad}}} else if {cond} {{\n",
+                        cond = real_range.reject_cond_styled(
+                            name,
+                            &super::common::real_bound_literal(lo, ""),
+                            &super::common::real_bound_literal(hi, ""),
+                            true
+                        )
                     ));
                     out.push_str(&format!("{pad}    {err_return}\n"));
                 }

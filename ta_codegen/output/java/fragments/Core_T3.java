@@ -571,10 +571,20 @@
       }
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public double update( double inReal ) {
+         if( !Double.isFinite(inReal) )
+            throw new IllegalArgumentException("T3 update: BadParam");
          core.T3_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -587,6 +597,8 @@
        * handle's shape is cheaper than reusing one.
        */
       public double peek( double inReal ) {
+         if( !Double.isFinite(inReal) )
+            throw new IllegalArgumentException("T3 peek: BadParam");
          T3_Stream scratch = new T3_Stream(this);
          core.T3_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -657,7 +669,7 @@
       }
       if( optInVFactor == REAL_DEFAULT ) {
          optInVFactor = 7e-1;
-      } else if( optInVFactor < 0e0 || optInVFactor > 1e0 ) {
+      } else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) ) {
          return RetCode.BadParam;
       }
       if( optInTimePeriod == 1 ) {
@@ -885,6 +897,11 @@
     */
    public T3_Stream T3_Open( double inReal[], int optInTimePeriod, double optInVFactor )
    {
+      if( inReal.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal[taFiniteIdx]) )
+               throw new IllegalArgumentException("T3 open: BadParam");
+      }
       return T3_OpenInternal(inReal, 0, optInTimePeriod, optInVFactor);
    }
    /**
@@ -898,6 +915,11 @@
     */
    public T3_Stream T3_OpenAndFill( double inReal[], int optInTimePeriod, double optInVFactor, double outReal[] )
    {
+      if( inReal.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal[taFiniteIdx]) )
+               throw new IllegalArgumentException("T3 openAndFill: BadParam");
+      }
       T3_Stream sp = new T3_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -554,10 +554,20 @@
       }
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public double update( double inHigh, double inLow ) {
+         if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
+            throw new IllegalArgumentException("MINUS_DM update: BadParam");
          core.MINUS_DM_StreamStep(this, inHigh, inLow);
          return this.cur_outReal;
       }
@@ -570,6 +580,8 @@
        * handle's shape is cheaper than reusing one.
        */
       public double peek( double inHigh, double inLow ) {
+         if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
+            throw new IllegalArgumentException("MINUS_DM peek: BadParam");
          MINUS_DM_Stream scratch = new MINUS_DM_Stream(this);
          core.MINUS_DM_StreamStep(scratch, inHigh, inLow);
          return scratch.cur_outReal;
@@ -1012,6 +1024,14 @@
     */
    public MINUS_DM_Stream MINUS_DM_Open( double inHigh[], double inLow[], int optInTimePeriod )
    {
+      if( inHigh.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
+            if( !Double.isFinite(inHigh[taFiniteIdx]) )
+               throw new IllegalArgumentException("MINUS_DM open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
+            if( !Double.isFinite(inLow[taFiniteIdx]) )
+               throw new IllegalArgumentException("MINUS_DM open: BadParam");
+      }
       return MINUS_DM_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
    /**
@@ -1025,6 +1045,14 @@
     */
    public MINUS_DM_Stream MINUS_DM_OpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outReal[] )
    {
+      if( inHigh.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
+            if( !Double.isFinite(inHigh[taFiniteIdx]) )
+               throw new IllegalArgumentException("MINUS_DM openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
+            if( !Double.isFinite(inLow[taFiniteIdx]) )
+               throw new IllegalArgumentException("MINUS_DM openAndFill: BadParam");
+      }
       MINUS_DM_Stream sp = new MINUS_DM_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

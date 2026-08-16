@@ -675,6 +675,7 @@ fn dispatch_hard_errors_when_flagged_callee_arm_loses_shape() {
         fn callee(&self, name: &str) -> Option<streaming::CalleeSig> {
             (name == "sma").then_some(streaming::CalleeSig {
                 streaming: true,
+                nan_inf_output: false,
                 n_inputs: 1,
                 n_opts: 1,
                 n_outputs: 1,
@@ -890,6 +891,7 @@ fn composed_hard_errors_when_subcall_callee_lacks_stream() {
         fn callee(&self, name: &str) -> Option<streaming::CalleeSig> {
             (name == "ma").then_some(streaming::CalleeSig {
                 streaming: false,
+                nan_inf_output: false,
                 n_inputs: 1,
                 n_opts: 2,
                 n_outputs: 1,
@@ -1376,4 +1378,89 @@ fn composed_sub_call_destination_funcs() {
          (ADXR is the case where the intermediate is LARGER). State the reason for the new \
          function here; the existing ones hold for four different reasons:{why}"
     );
+}
+
+/// A [`CalleeLookup`] that reports ONE callee as `nan_inf_output`, leaving the
+/// rest of the real corpus exactly as it is.
+struct FlagOneCallee<'a> {
+    inner: &'a ta_codegen_lib::registry::Registry,
+    flagged: &'a str,
+}
+
+impl streaming::CalleeLookup for FlagOneCallee<'_> {
+    fn callee(&self, name: &str) -> Option<streaming::CalleeSig> {
+        let mut sig = self.inner.callee(name)?;
+        if name == self.flagged {
+            sig.nan_inf_output = true;
+        }
+        Some(sig)
+    }
+}
+
+/// A function that can return NaN or ±Inf (`nan_inf_output`, #191) may not drive
+/// another function's sub-stream: the streaming tier checks finiteness only at
+/// the caller boundary, and the composed step has nowhere to put a sub-stream's
+/// rejection, so the bar's state advance would be dropped silently.
+///
+/// None of the seven flagged functions (ACOS, ASIN, LN, LOG10, SQRT, DIV, VWMA)
+/// is composed by anything today, so the gate is dormant against the shipped
+/// corpus — which is exactly why it needs a test that can see it fire. The
+/// flag is injected rather than written to `ma.yaml`, so the corpus is untouched.
+#[test]
+fn nan_inf_callee_is_refused() {
+    let reg = lookup();
+    let bbands = load("bbands"); // composes MA (sub0) and STDDEV (sub1)
+    let sma = load("sma"); // loop tier: composes nothing
+
+    // Control: as shipped, MA is finite-output and BBANDS composes it happily.
+    assert!(
+        streaming::validate_streamable(&bbands, &reg).is_ok(),
+        "BBANDS must derive a plan against the unmodified corpus, or the probe below \
+         proves nothing"
+    );
+
+    let flagged = FlagOneCallee { inner: &reg, flagged: "ma" };
+    let err = streaming::validate_streamable(&bbands, &flagged)
+        .expect_err("BBANDS composes MA, so a nan_inf_output MA must be refused");
+    assert!(
+        err.contains("nan_inf_output")
+            && err.contains("composing ma,")
+            && err.contains("BBANDS"),
+        "the refusal must name the flag, the callee and the composing function: {err}"
+    );
+    // `contains("ma")` would be satisfied by the fixed prose ("...MAy not drive
+    // a sub-stream"), i.e. by a message that named the wrong callee entirely.
+    // Anchoring on "composing ma," is what makes the callee half discriminating.
+
+    // ...and only the composing functions: SMA calls nothing, so flagging MA
+    // must not disturb it. Without this the gate could pass by rejecting
+    // everything.
+    assert!(
+        streaming::validate_streamable(&sma, &flagged).is_ok(),
+        "SMA composes no sub-stream; flagging MA must not touch it"
+    );
+
+    // `plan_callees` has a separate arm per tier, and one arm being right says
+    // nothing about the others. BBANDS above is Composed; MAVP is the
+    // PERIOD-BANK arm (its bank of MA sub-streams) and MA itself is the
+    // DISPATCH arm (its per-MAType sub-streams).
+    let mavp = load("mavp");
+    let err = streaming::validate_streamable(&mavp, &flagged)
+        .expect_err("MAVP banks MA sub-streams, so a nan_inf_output MA must be refused");
+    assert!(
+        err.contains("nan_inf_output") && err.contains("composing ma,") && err.contains("MAVP"),
+        "the period-bank arm must name the flag, the callee and the function: {err}"
+    );
+
+    let ma = load("ma");
+    let flagged_sma = FlagOneCallee { inner: &reg, flagged: "sma" };
+    let err = streaming::validate_streamable(&ma, &flagged_sma)
+        .expect_err("MA dispatches to SMA, so a nan_inf_output SMA must be refused");
+    assert!(
+        err.contains("nan_inf_output") && err.contains("composing sma,") && err.contains("MA"),
+        "the dispatch arm must name the flag, the callee and the function: {err}"
+    );
+    // Control for both: unflagged, they derive plans as usual.
+    assert!(streaming::validate_streamable(&mavp, &reg).is_ok(), "MAVP plans normally");
+    assert!(streaming::validate_streamable(&ma, &reg).is_ok(), "MA plans normally");
 }

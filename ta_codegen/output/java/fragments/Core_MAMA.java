@@ -1191,10 +1191,20 @@
       public record Value(double mama, double fama) { }
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public Value update( double inReal ) {
+         if( !Double.isFinite(inReal) )
+            throw new IllegalArgumentException("MAMA update: BadParam");
          core.MAMA_StreamStep(this, inReal);
          this.cachedValue = new Value(this.cur_outMAMA, this.cur_outFAMA);
          return this.cachedValue;
@@ -1210,6 +1220,8 @@
        * the thread.
        */
       public Value peek( double inReal ) {
+         if( !Double.isFinite(inReal) )
+            throw new IllegalArgumentException("MAMA peek: BadParam");
          MAMA_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new MAMA_Stream(this);
@@ -1492,12 +1504,12 @@
       }
       if( optInFastLimit == REAL_DEFAULT ) {
          optInFastLimit = 5e-1;
-      } else if( optInFastLimit < 1e-2 || optInFastLimit > 9.9e-1 ) {
+      } else if( !(optInFastLimit >= 1e-2 && optInFastLimit <= 9.9e-1) ) {
          return RetCode.BadParam;
       }
       if( optInSlowLimit == REAL_DEFAULT ) {
          optInSlowLimit = 5e-2;
-      } else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 ) {
+      } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
          return RetCode.BadParam;
       }
       a = 0.0962;
@@ -1939,6 +1951,11 @@
     */
    public MAMA_Stream MAMA_Open( double inReal[], double optInFastLimit, double optInSlowLimit )
    {
+      if( inReal.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal[taFiniteIdx]) )
+               throw new IllegalArgumentException("MAMA open: BadParam");
+      }
       return MAMA_OpenInternal(inReal, 0, optInFastLimit, optInSlowLimit);
    }
    /**
@@ -1952,6 +1969,11 @@
     */
    public MAMA_Stream MAMA_OpenAndFill( double inReal[], double optInFastLimit, double optInSlowLimit, double outMAMA[], double outFAMA[] )
    {
+      if( inReal.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal[taFiniteIdx]) )
+               throw new IllegalArgumentException("MAMA openAndFill: BadParam");
+      }
       MAMA_Stream sp = new MAMA_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -625,15 +625,22 @@ public partial class Core
          this.fillRange = other.fillRange;
       }
 
-      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
-      /// <para>Never throws after a successful open, and allocates nothing — neither
-      /// handle state nor a return value.</para>
+      /// <para>Allocates nothing — neither handle state nor a return value.</para>
+      /// <para>Throws <see cref="System.ArgumentException"/> if any bar value is not
+      /// finite (NaN or an infinity). That check runs before anything is written,
+      /// so the handle is left exactly as it was and the stream stays usable: skip
+      /// the bar, or re-open on a clean history. This is the one place the
+      /// streaming tier is stricter than the batch API, which computes on whatever
+      /// it is given: a handle retains its state, so a single non-finite bar would
+      /// poison every later value it produces.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>The value at the bar just committed.</returns>
       public double Update( double inReal )
       {
+         if( !double.IsFinite(inReal) ) throw Core.StreamFailure("T3", "update", RetCode.BadParam);
          core.T3_StreamStep(this, inReal);
          return cur_outReal;
       }
@@ -651,6 +658,7 @@ public partial class Core
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public double Peek( double inReal )
       {
+         if( !double.IsFinite(inReal) ) throw Core.StreamFailure("T3", "peek", RetCode.BadParam);
          T3_Stream scratch = new T3_Stream(this);
          core.T3_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -723,7 +731,7 @@ public partial class Core
       }
       if( optInVFactor == TA_REAL_DEFAULT ) {
          optInVFactor = 7e-1;
-      } else if( optInVFactor < 0e0 || optInVFactor > 1e0 ) {
+      } else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) ) {
          return RetCode.BadParam;
       }
       if( optInTimePeriod == 1 ) {
@@ -955,6 +963,8 @@ public partial class Core
    public T3_Stream T3_Open( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInVFactor )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      foreach( double taFiniteV in inReal )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("T3", "open", RetCode.BadParam);
       return T3_OpenInternal(inReal, 0, optInTimePeriod, optInVFactor);
    }
 
@@ -987,6 +997,8 @@ public partial class Core
    public T3_Stream T3_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInVFactor, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      foreach( double taFiniteV in inReal )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("T3", "openAndFill", RetCode.BadParam);
       T3_Stream sp = new T3_Stream(this);
       RetCode retCode = T3_OpenAndFillBody(sp, inReal, optInTimePeriod, optInVFactor, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

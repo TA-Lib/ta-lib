@@ -850,15 +850,22 @@ public partial class Core
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
       [ThreadStatic] private static BBANDS_Stream? peekScratch;
 
-      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
-      /// <para>Never throws after a successful open, and allocates nothing — neither
-      /// handle state nor a return value.</para>
+      /// <para>Allocates nothing — neither handle state nor a return value.</para>
+      /// <para>Throws <see cref="System.ArgumentException"/> if any bar value is not
+      /// finite (NaN or an infinity). That check runs before anything is written,
+      /// so the handle is left exactly as it was and the stream stays usable: skip
+      /// the bar, or re-open on a clean history. This is the one place the
+      /// streaming tier is stricter than the batch API, which computes on whatever
+      /// it is given: a handle retains its state, so a single non-finite bar would
+      /// poison every later value it produces.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>The value at the bar just committed.</returns>
       public BBANDS_Value Update( double inReal )
       {
+         if( !double.IsFinite(inReal) ) throw Core.StreamFailure("BBANDS", "update", RetCode.BadParam);
          core.BBANDS_StreamStep(this, inReal);
          return new BBANDS_Value(cur_outRealUpperBand, cur_outRealMiddleBand, cur_outRealLowerBand);
       }
@@ -876,6 +883,7 @@ public partial class Core
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public BBANDS_Value Peek( double inReal )
       {
+         if( !double.IsFinite(inReal) ) throw Core.StreamFailure("BBANDS", "peek", RetCode.BadParam);
          BBANDS_Stream? scratch = peekScratch;
          if( scratch is null ) {
             scratch = new BBANDS_Stream(this);
@@ -957,12 +965,12 @@ public partial class Core
       }
       if( optInNbDevUp == TA_REAL_DEFAULT ) {
          optInNbDevUp = 2e0;
-      } else if( optInNbDevUp < TA_REAL_MIN || optInNbDevUp > TA_REAL_MAX ) {
+      } else if( !(optInNbDevUp >= TA_REAL_MIN && optInNbDevUp <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInNbDevDn == TA_REAL_DEFAULT ) {
          optInNbDevDn = 2e0;
-      } else if( optInNbDevDn < TA_REAL_MIN || optInNbDevDn > TA_REAL_MAX ) {
+      } else if( !(optInNbDevDn >= TA_REAL_MIN && optInNbDevDn <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
@@ -1120,6 +1128,8 @@ public partial class Core
    public BBANDS_Stream BBANDS_Open( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      foreach( double taFiniteV in inReal )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("BBANDS", "open", RetCode.BadParam);
       return BBANDS_OpenInternal(inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
    }
 
@@ -1160,6 +1170,8 @@ public partial class Core
    public BBANDS_Stream BBANDS_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, Span<double> outRealUpperBand, Span<double> outRealMiddleBand, Span<double> outRealLowerBand )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      foreach( double taFiniteV in inReal )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("BBANDS", "openAndFill", RetCode.BadParam);
       BBANDS_Stream sp = new BBANDS_Stream(this);
       RetCode retCode = BBANDS_OpenAndFillBody(sp, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out int outBegIdx, out int outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

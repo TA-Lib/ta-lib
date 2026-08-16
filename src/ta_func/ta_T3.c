@@ -478,7 +478,7 @@ static TA_RetCode TA_T3_OpenCore( struct TA_T3_Stream **stream, const double inR
       return TA_BAD_PARAM;
    if( optInVFactor == TA_REAL_DEFAULT )
       optInVFactor = 0.7;
-   else if( optInVFactor < 0e0 || optInVFactor > 1e0 )
+   else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) )
       return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
@@ -698,6 +698,16 @@ TA_RetCode TA_T3_OpenInternal( struct TA_T3_Stream **stream, const double inReal
 
 TA_LIB_API TA_RetCode TA_T3_Open( TA_T3_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInVFactor, double *outReal )
 {
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inReal[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_T3_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, optInVFactor, outReal );
 }
 
@@ -706,7 +716,15 @@ TA_LIB_API TA_RetCode TA_T3_OpenAndFill( TA_T3_Stream **stream, const double inR
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
    if( !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inReal[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_T3_OpenCore( stream, inReal, 0, historyLen, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal, 1 );
 }
 
@@ -719,6 +737,7 @@ TA_RetCode TA_T3_OpenAndFillInternal( struct TA_T3_Stream **stream, const double
 TA_LIB_API TA_RetCode TA_T3_Update( TA_T3_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    TA_T3_StepInternal( stream, inReal, outReal );
    return TA_SUCCESS;
 }
@@ -728,6 +747,7 @@ TA_LIB_API TA_RetCode TA_T3_Peek( const TA_T3_Stream *stream, double inReal, dou
    struct TA_T3_Stream scratch;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
    TA_T3_StepInternal( &scratch, inReal, outReal );
    return TA_SUCCESS;

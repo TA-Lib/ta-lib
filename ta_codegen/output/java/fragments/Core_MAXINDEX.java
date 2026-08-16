@@ -362,10 +362,20 @@
       }
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public int update( double inReal ) {
+         if( !Double.isFinite(inReal) )
+            throw new IllegalArgumentException("MAXINDEX update: BadParam");
          core.MAXINDEX_StreamStep(this, inReal);
          return this.cur_outInteger;
       }
@@ -378,6 +388,8 @@
        * handle's shape is cheaper than reusing one.
        */
       public int peek( double inReal ) {
+         if( !Double.isFinite(inReal) )
+            throw new IllegalArgumentException("MAXINDEX peek: BadParam");
          MAXINDEX_Stream scratch = new MAXINDEX_Stream(this);
          core.MAXINDEX_StreamStep(scratch, inReal);
          return scratch.cur_outInteger;
@@ -592,6 +604,11 @@
     */
    public MAXINDEX_Stream MAXINDEX_Open( double inReal[], int optInTimePeriod )
    {
+      if( inReal.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal[taFiniteIdx]) )
+               throw new IllegalArgumentException("MAXINDEX open: BadParam");
+      }
       return MAXINDEX_OpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
@@ -605,6 +622,11 @@
     */
    public MAXINDEX_Stream MAXINDEX_OpenAndFill( double inReal[], int optInTimePeriod, int outInteger[] )
    {
+      if( inReal.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal[taFiniteIdx]) )
+               throw new IllegalArgumentException("MAXINDEX openAndFill: BadParam");
+      }
       MAXINDEX_Stream sp = new MAXINDEX_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -548,6 +548,17 @@ TA_RetCode TA_CORREL_OpenInternal( struct TA_CORREL_Stream **stream, const doubl
 
 TA_LIB_API TA_RetCode TA_CORREL_Open( TA_CORREL_Stream **stream, const double inReal0[], const double inReal1[], int historyLen, int optInTimePeriod, double *outReal )
 {
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal0 || !inReal1 || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inReal0[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inReal1[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_CORREL_OpenInternal( stream, inReal0, inReal1, 0, historyLen, optInTimePeriod, outReal );
 }
 
@@ -556,7 +567,16 @@ TA_LIB_API TA_RetCode TA_CORREL_OpenAndFill( TA_CORREL_Stream **stream, const do
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
    if( !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
+   if( !inReal0 || !inReal1 || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inReal0 || (const void *)outReal == (const void *)inReal1 ) return TA_BAD_PARAM;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inReal0[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inReal1[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_CORREL_OpenCore( stream, inReal0, inReal1, 0, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
@@ -569,6 +589,7 @@ TA_RetCode TA_CORREL_OpenAndFillInternal( struct TA_CORREL_Stream **stream, cons
 TA_LIB_API TA_RetCode TA_CORREL_Update( TA_CORREL_Stream *stream, double inReal0, double inReal1, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal0 ) || !TA_IS_FINITE( inReal1 ) ) return TA_BAD_PARAM;
    TA_CORREL_StepInternal( stream, inReal0, inReal1, outReal );
    return TA_SUCCESS;
 }
@@ -578,6 +599,7 @@ TA_LIB_API TA_RetCode TA_CORREL_Peek( const TA_CORREL_Stream *stream, double inR
    struct TA_CORREL_Stream scratch;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal0 ) || !TA_IS_FINITE( inReal1 ) ) return TA_BAD_PARAM;
    scratch = *stream;
    scratch.ring_trailingIdx_inReal0 = stream->ringMirror_trailingIdx_inReal0;
    memcpy( scratch.ring_trailingIdx_inReal0, stream->ring_trailingIdx_inReal0, sizeof(double) * (size_t)(stream->ringCap_trailingIdx > 0 ? stream->ringCap_trailingIdx : 1) );

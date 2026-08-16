@@ -36,13 +36,13 @@ double[] history = /* ...your closing prices... */;
 Core.SMA_Stream s = core.SMA_Open(history, 30);  // Value starts at the last history bar
 
 // Each time a bar closes:
-double v = s.Update(newClose);                   // always a value; never throws after open
+double v = s.Update(newClose);                   // throws only on a non-finite bar
 
 // Intra-bar, on the not-yet-closed bar (repeat as the price ticks):
 double provisional = s.Peek(formingClose);       // state left unchanged
 ```
 
-`Open` returns the handle directly; its `Value` starts at the last history bar's value. After a successful `Open`, `Update` and `Peek` never throw.
+`Open` returns the handle directly; its `Value` starts at the last history bar's value. After a successful `Open`, the only thing `Update` and `Peek` reject is a **non-finite bar**, and they leave the handle exactly as it was.
 
 ## Rules
 
@@ -91,13 +91,24 @@ These are record structs, so `==` is .NET's `double` equality: `NaN` equals `NaN
 
 ## Error model
 
-`Open` and `OpenAndFill` throw; `Update`, `Peek`, `Value` and `Clone()` never do after a successful open.
+`Open` and `OpenAndFill` throw. After a successful open the only thing `Update` and `Peek` reject is a non-finite bar; `Value` and `Clone()` never throw.
 
 | Condition | Exception |
 |---|---|
 | Fewer than `lookback + 1` history bars | `InsufficientHistoryException` |
 | An optional parameter outside its documented range | `ArgumentException` |
 | An output array aliasing an input or another output | `ArgumentException` |
+| A non-finite value in the history, a bar, or a real parameter | `ArgumentException` |
+
+One narrow exception to "the handle is unchanged": a *composed* indicator drives its sub-stages through their own public update, so a value the library computed internally is re-checked there. If such an intermediate overflowed to an infinity, the rejection would surface after earlier sub-stages had advanced, and would name the sub-stage. It needs input magnitudes around 1e306 and up — the overflow class TA-Lib already treats as out of scope — but the guarantee is stated for the caller-supplied case, which is the one you can provoke.
+
+
+**Non-finite input is rejected.** NaN and ±Inf are not supported as inputs anywhere in TA-Lib, but the streaming tier is the one that *enforces* it: every public streaming entry point checks, and rejects without touching the handle. The batch API does not filter — it computes on whatever it is given.
+
+The difference is the retained state. Batch computes and forgets, so a NaN reaches the outputs depending on that bar and no others; a stream handle carries state forward, so a single non-finite bar would poison every value it produces afterwards, long after the feed recovers. Rejecting the bar and leaving the handle usable is more useful than accepting it and going permanently NaN.
+
+This covers the warm-up history at open, every bar value at update/peek, and a real optional parameter that is NaN — which the batch range check lets through, since `x < min` and `x > max` are both false for NaN.
+
 
 `InsufficientHistoryException` derives from `ArgumentException`, so you can catch it specifically — it is the one routine, data-dependent rejection — or catch every open failure uniformly. Messages carry a stable `"<NAME> open: "` prefix, and it is always the *called* function's name: `core.MA_Open(...)` rejecting reports `MA open:`, never the name of whatever moving average it delegates to.
 

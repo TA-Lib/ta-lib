@@ -417,15 +417,22 @@ public partial class Core
          this.fillRange = other.fillRange;
       }
 
-      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
-      /// <para>Never throws after a successful open, and allocates nothing — neither
-      /// handle state nor a return value.</para>
+      /// <para>Allocates nothing — neither handle state nor a return value.</para>
+      /// <para>Throws <see cref="System.ArgumentException"/> if any bar value is not
+      /// finite (NaN or an infinity). That check runs before anything is written,
+      /// so the handle is left exactly as it was and the stream stays usable: skip
+      /// the bar, or re-open on a clean history. This is the one place the
+      /// streaming tier is stricter than the batch API, which computes on whatever
+      /// it is given: a handle retains its state, so a single non-finite bar would
+      /// poison every later value it produces.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>The value at the bar just committed.</returns>
       public int Update( double inReal )
       {
+         if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MAXINDEX", "update", RetCode.BadParam);
          core.MAXINDEX_StreamStep(this, inReal);
          return cur_outInteger;
       }
@@ -443,6 +450,7 @@ public partial class Core
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public int Peek( double inReal )
       {
+         if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MAXINDEX", "peek", RetCode.BadParam);
          MAXINDEX_Stream scratch = new MAXINDEX_Stream(this);
          core.MAXINDEX_StreamStep(scratch, inReal);
          return scratch.cur_outInteger;
@@ -659,6 +667,8 @@ public partial class Core
    public MAXINDEX_Stream MAXINDEX_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      foreach( double taFiniteV in inReal )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MAXINDEX", "open", RetCode.BadParam);
       return MAXINDEX_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -689,6 +699,8 @@ public partial class Core
    public MAXINDEX_Stream MAXINDEX_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<int> outInteger )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      foreach( double taFiniteV in inReal )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MAXINDEX", "openAndFill", RetCode.BadParam);
       MAXINDEX_Stream sp = new MAXINDEX_Stream(this);
       RetCode retCode = MAXINDEX_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

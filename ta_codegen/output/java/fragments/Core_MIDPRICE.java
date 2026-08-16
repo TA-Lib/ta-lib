@@ -567,10 +567,20 @@
       private static final ThreadLocal<MIDPRICE_Stream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public double update( double inHigh, double inLow ) {
+         if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
+            throw new IllegalArgumentException("MIDPRICE update: BadParam");
          core.MIDPRICE_StreamStep(this, inHigh, inLow);
          return this.cur_outReal;
       }
@@ -585,6 +595,8 @@
        * the thread.
        */
       public double peek( double inHigh, double inLow ) {
+         if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
+            throw new IllegalArgumentException("MIDPRICE peek: BadParam");
          MIDPRICE_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new MIDPRICE_Stream(this);
@@ -872,6 +884,14 @@
     */
    public MIDPRICE_Stream MIDPRICE_Open( double inHigh[], double inLow[], int optInTimePeriod )
    {
+      if( inHigh.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
+            if( !Double.isFinite(inHigh[taFiniteIdx]) )
+               throw new IllegalArgumentException("MIDPRICE open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
+            if( !Double.isFinite(inLow[taFiniteIdx]) )
+               throw new IllegalArgumentException("MIDPRICE open: BadParam");
+      }
       return MIDPRICE_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
    /**
@@ -885,6 +905,14 @@
     */
    public MIDPRICE_Stream MIDPRICE_OpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outReal[] )
    {
+      if( inHigh.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
+            if( !Double.isFinite(inHigh[taFiniteIdx]) )
+               throw new IllegalArgumentException("MIDPRICE openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
+            if( !Double.isFinite(inLow[taFiniteIdx]) )
+               throw new IllegalArgumentException("MIDPRICE openAndFill: BadParam");
+      }
       MIDPRICE_Stream sp = new MIDPRICE_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -336,6 +336,17 @@ TA_RetCode TA_NVI_OpenInternal( struct TA_NVI_Stream **stream, const double inCl
 
 TA_LIB_API TA_RetCode TA_NVI_Open( TA_NVI_Stream **stream, const double inClose[], const double inVolume[], int historyLen, double *outReal )
 {
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inClose || !inVolume || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inClose[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inVolume[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_NVI_OpenInternal( stream, inClose, inVolume, 0, historyLen, outReal );
 }
 
@@ -344,7 +355,16 @@ TA_LIB_API TA_RetCode TA_NVI_OpenAndFill( TA_NVI_Stream **stream, const double i
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
    if( !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
+   if( !inClose || !inVolume || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inClose || (const void *)outReal == (const void *)inVolume ) return TA_BAD_PARAM;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inClose[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inVolume[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_NVI_OpenCore( stream, inClose, inVolume, 0, historyLen, outBegIdx, outNBElement, outReal, 1 );
 }
 
@@ -357,6 +377,7 @@ TA_RetCode TA_NVI_OpenAndFillInternal( struct TA_NVI_Stream **stream, const doub
 TA_LIB_API TA_RetCode TA_NVI_Update( TA_NVI_Stream *stream, double inClose, double inVolume, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inClose ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
    TA_NVI_StepInternal( stream, inClose, inVolume, outReal );
    return TA_SUCCESS;
 }
@@ -366,6 +387,7 @@ TA_LIB_API TA_RetCode TA_NVI_Peek( const TA_NVI_Stream *stream, double inClose, 
    struct TA_NVI_Stream scratch;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inClose ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
    scratch = *stream;
    TA_NVI_StepInternal( &scratch, inClose, inVolume, outReal );
    return TA_SUCCESS;

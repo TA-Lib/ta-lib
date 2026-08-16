@@ -252,24 +252,33 @@ struct TA_APO_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_APO_StepInternal( struct TA_APO_Stream *sp, double inReal, double *outReal )
+static TA_RetCode TA_APO_StepInternal( struct TA_APO_Stream *sp, double inReal, double *outReal )
 {
-   double cur_tempBuffer;
-   double cur_outReal;
+   double cur_tempBuffer = 0.0;
+   double cur_outReal = 0.0;
 
 
    /* Pipeline the new bar through the sub-streams (batch tail order). */
-   if( sp->peekMode )
-      TA_MA_Peek( (const TA_MA_Stream *)sp->sub0, inReal, &cur_tempBuffer );
-   else
-      TA_MA_Update( sp->sub0, inReal, &cur_tempBuffer );
-   if( sp->peekMode )
-      TA_MA_Peek( (const TA_MA_Stream *)sp->sub1, inReal, &cur_outReal );
-   else
-      TA_MA_Update( sp->sub1, inReal, &cur_outReal );
+   {
+      TA_RetCode subRc;
+      if( sp->peekMode )
+         subRc = TA_MA_Peek( (const TA_MA_Stream *)sp->sub0, inReal, &cur_tempBuffer );
+      else
+         subRc = TA_MA_Update( sp->sub0, inReal, &cur_tempBuffer );
+      if( subRc != TA_SUCCESS ) return subRc;
+   }
+   {
+      TA_RetCode subRc;
+      if( sp->peekMode )
+         subRc = TA_MA_Peek( (const TA_MA_Stream *)sp->sub1, inReal, &cur_outReal );
+      else
+         subRc = TA_MA_Update( sp->sub1, inReal, &cur_outReal );
+      if( subRc != TA_SUCCESS ) return subRc;
+   }
    /* Combine map (batch tail, per bar). */
    cur_outReal = cur_tempBuffer - cur_outReal;
    *outReal = cur_outReal;
+   return TA_SUCCESS;
 }
 
 static TA_RetCode TA_APO_OpenCore( struct TA_APO_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
@@ -428,6 +437,16 @@ TA_RetCode TA_APO_OpenInternal( struct TA_APO_Stream **stream, const double inRe
 
 TA_LIB_API TA_RetCode TA_APO_Open( TA_APO_Stream **stream, const double inReal[], int historyLen, int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, double *outReal )
 {
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inReal[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_APO_OpenInternal( stream, inReal, 0, historyLen, optInFastPeriod, optInSlowPeriod, optInMAType, outReal );
 }
 
@@ -436,7 +455,15 @@ TA_LIB_API TA_RetCode TA_APO_OpenAndFill( TA_APO_Stream **stream, const double i
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
    if( !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
+   if( !inReal || !outReal ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inReal[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_APO_OpenCore( stream, inReal, 0, historyLen, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1 );
 }
 
@@ -449,8 +476,8 @@ TA_RetCode TA_APO_OpenAndFillInternal( struct TA_APO_Stream **stream, const doub
 TA_LIB_API TA_RetCode TA_APO_Update( TA_APO_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
-   TA_APO_StepInternal( stream, inReal, outReal );
-   return TA_SUCCESS;
+   if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
+   return TA_APO_StepInternal( stream, inReal, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_APO_Peek( const TA_APO_Stream *stream, double inReal, double *outReal )
@@ -458,10 +485,10 @@ TA_LIB_API TA_RetCode TA_APO_Peek( const TA_APO_Stream *stream, double inReal, d
    struct TA_APO_Stream scratch;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
    scratch.peekMode = 1;
-   TA_APO_StepInternal( &scratch, inReal, outReal );
-   return TA_SUCCESS;
+   return TA_APO_StepInternal( &scratch, inReal, outReal );
 }
 
 TA_LIB_API TA_RetCode TA_APO_Close( TA_APO_Stream *stream )

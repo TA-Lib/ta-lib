@@ -1429,6 +1429,16 @@ TA_RetCode TA_HT_PHASOR_OpenInternal( struct TA_HT_PHASOR_Stream **stream, const
 
 TA_LIB_API TA_RetCode TA_HT_PHASOR_Open( TA_HT_PHASOR_Stream **stream, const double inReal[], int historyLen, double *outInPhase, double *outQuadrature )
 {
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outInPhase || !outQuadrature ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inReal[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_HT_PHASOR_OpenInternal( stream, inReal, 0, historyLen, outInPhase, outQuadrature );
 }
 
@@ -1437,7 +1447,15 @@ TA_LIB_API TA_RetCode TA_HT_PHASOR_OpenAndFill( TA_HT_PHASOR_Stream **stream, co
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
    if( !outBegIdx || !outNBElement || !outInPhase || !outQuadrature ) return TA_BAD_PARAM;
+   if( !inReal || !outInPhase || !outQuadrature ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outInPhase == (const void *)inReal || (const void *)outQuadrature == (const void *)inReal || (const void *)outInPhase == (const void *)outQuadrature ) return TA_BAD_PARAM;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inReal[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_HT_PHASOR_OpenCore( stream, inReal, 0, historyLen, outBegIdx, outNBElement, outInPhase, outQuadrature, 1 );
 }
 
@@ -1450,6 +1468,7 @@ TA_RetCode TA_HT_PHASOR_OpenAndFillInternal( struct TA_HT_PHASOR_Stream **stream
 TA_LIB_API TA_RetCode TA_HT_PHASOR_Update( TA_HT_PHASOR_Stream *stream, double inReal, double *outInPhase, double *outQuadrature )
 {
    if( !stream || !outInPhase || !outQuadrature ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    TA_HT_PHASOR_StepInternal( stream, inReal, outInPhase, outQuadrature );
    return TA_SUCCESS;
 }
@@ -1459,6 +1478,7 @@ TA_LIB_API TA_RetCode TA_HT_PHASOR_Peek( const TA_HT_PHASOR_Stream *stream, doub
    struct TA_HT_PHASOR_Stream scratch;
 
    if( !stream || !outInPhase || !outQuadrature ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    scratch = *stream;
    scratch.ring_trailingWMAIdx_inReal = stream->ringMirror_trailingWMAIdx_inReal;
    memcpy( scratch.ring_trailingWMAIdx_inReal, stream->ring_trailingWMAIdx_inReal, sizeof(double) * (size_t)(stream->ringCap_trailingWMAIdx > 0 ? stream->ringCap_trailingWMAIdx : 1) );

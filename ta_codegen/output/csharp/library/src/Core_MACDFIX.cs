@@ -606,15 +606,22 @@ public partial class Core
          this.fillRange = other.fillRange;
       }
 
-      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
-      /// <para>Never throws after a successful open, and allocates nothing — neither
-      /// handle state nor a return value.</para>
+      /// <para>Allocates nothing — neither handle state nor a return value.</para>
+      /// <para>Throws <see cref="System.ArgumentException"/> if any bar value is not
+      /// finite (NaN or an infinity). That check runs before anything is written,
+      /// so the handle is left exactly as it was and the stream stays usable: skip
+      /// the bar, or re-open on a clean history. This is the one place the
+      /// streaming tier is stricter than the batch API, which computes on whatever
+      /// it is given: a handle retains its state, so a single non-finite bar would
+      /// poison every later value it produces.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>The value at the bar just committed.</returns>
       public MACDFIX_Value Update( double inReal )
       {
+         if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MACDFIX", "update", RetCode.BadParam);
          core.MACDFIX_StreamStep(this, inReal);
          return new MACDFIX_Value(cur_outMACD, cur_outMACDSignal, cur_outMACDHist);
       }
@@ -632,6 +639,7 @@ public partial class Core
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public MACDFIX_Value Peek( double inReal )
       {
+         if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MACDFIX", "peek", RetCode.BadParam);
          MACDFIX_Stream scratch = new MACDFIX_Stream(this);
          core.MACDFIX_StreamStep(scratch, inReal);
          return new MACDFIX_Value(scratch.cur_outMACD, scratch.cur_outMACDSignal, scratch.cur_outMACDHist);
@@ -922,6 +930,8 @@ public partial class Core
    public MACDFIX_Stream MACDFIX_Open( ReadOnlySpan<double> inReal, int optInSignalPeriod )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      foreach( double taFiniteV in inReal )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MACDFIX", "open", RetCode.BadParam);
       return MACDFIX_OpenInternal(inReal, 0, optInSignalPeriod);
    }
 
@@ -956,6 +966,8 @@ public partial class Core
    public MACDFIX_Stream MACDFIX_OpenAndFill( ReadOnlySpan<double> inReal, int optInSignalPeriod, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      foreach( double taFiniteV in inReal )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MACDFIX", "openAndFill", RetCode.BadParam);
       MACDFIX_Stream sp = new MACDFIX_Stream(this);
       RetCode retCode = MACDFIX_OpenAndFillBody(sp, inReal, optInSignalPeriod, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

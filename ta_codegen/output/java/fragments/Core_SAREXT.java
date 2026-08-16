@@ -905,10 +905,20 @@
       }
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public double update( double inHigh, double inLow ) {
+         if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
+            throw new IllegalArgumentException("SAREXT update: BadParam");
          core.SAREXT_StreamStep(this, inHigh, inLow);
          return this.cur_outReal;
       }
@@ -921,6 +931,8 @@
        * handle's shape is cheaper than reusing one.
        */
       public double peek( double inHigh, double inLow ) {
+         if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
+            throw new IllegalArgumentException("SAREXT peek: BadParam");
          SAREXT_Stream scratch = new SAREXT_Stream(this);
          core.SAREXT_StreamStep(scratch, inHigh, inLow);
          return scratch.cur_outReal;
@@ -1093,42 +1105,42 @@
       }
       if( optInStartValue == REAL_DEFAULT ) {
          optInStartValue = 0e0;
-      } else if( optInStartValue < REAL_MIN || optInStartValue > REAL_MAX ) {
+      } else if( !(optInStartValue >= REAL_MIN && optInStartValue <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInOffsetOnReverse == REAL_DEFAULT ) {
          optInOffsetOnReverse = 0e0;
-      } else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > REAL_MAX ) {
+      } else if( !(optInOffsetOnReverse >= 0e0 && optInOffsetOnReverse <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationInitLong == REAL_DEFAULT ) {
          optInAccelerationInitLong = 2e-2;
-      } else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > REAL_MAX ) {
+      } else if( !(optInAccelerationInitLong >= 0e0 && optInAccelerationInitLong <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationLong == REAL_DEFAULT ) {
          optInAccelerationLong = 2e-2;
-      } else if( optInAccelerationLong < 0e0 || optInAccelerationLong > REAL_MAX ) {
+      } else if( !(optInAccelerationLong >= 0e0 && optInAccelerationLong <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationMaxLong == REAL_DEFAULT ) {
          optInAccelerationMaxLong = 2e-1;
-      } else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > REAL_MAX ) {
+      } else if( !(optInAccelerationMaxLong >= 0e0 && optInAccelerationMaxLong <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationInitShort == REAL_DEFAULT ) {
          optInAccelerationInitShort = 2e-2;
-      } else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > REAL_MAX ) {
+      } else if( !(optInAccelerationInitShort >= 0e0 && optInAccelerationInitShort <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationShort == REAL_DEFAULT ) {
          optInAccelerationShort = 2e-2;
-      } else if( optInAccelerationShort < 0e0 || optInAccelerationShort > REAL_MAX ) {
+      } else if( !(optInAccelerationShort >= 0e0 && optInAccelerationShort <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationMaxShort == REAL_DEFAULT ) {
          optInAccelerationMaxShort = 2e-1;
-      } else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > REAL_MAX ) {
+      } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       /* > 0 indicates long. == 0 indicates short */
@@ -1483,6 +1495,14 @@
     */
    public SAREXT_Stream SAREXT_Open( double inHigh[], double inLow[], double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
    {
+      if( inHigh.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
+            if( !Double.isFinite(inHigh[taFiniteIdx]) )
+               throw new IllegalArgumentException("SAREXT open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
+            if( !Double.isFinite(inLow[taFiniteIdx]) )
+               throw new IllegalArgumentException("SAREXT open: BadParam");
+      }
       return SAREXT_OpenInternal(inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
    }
    /**
@@ -1496,6 +1516,14 @@
     */
    public SAREXT_Stream SAREXT_OpenAndFill( double inHigh[], double inLow[], double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, double outReal[] )
    {
+      if( inHigh.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
+            if( !Double.isFinite(inHigh[taFiniteIdx]) )
+               throw new IllegalArgumentException("SAREXT openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
+            if( !Double.isFinite(inLow[taFiniteIdx]) )
+               throw new IllegalArgumentException("SAREXT openAndFill: BadParam");
+      }
       SAREXT_Stream sp = new SAREXT_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

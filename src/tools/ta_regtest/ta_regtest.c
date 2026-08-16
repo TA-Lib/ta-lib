@@ -724,6 +724,8 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_rolling_extremum,
             "MIN,MAX,MINMAX,MIDPOINT,MIDPRICE,WILLR,ROLLING,BLOCKSCAN" );
    DO_TEST( test_func_legacy,    "LEGACY,064,FROZEN" );
+   DO_TEST( test_func_stream_finite,
+            "SMA,MINUS_DI,MA,MAVP,BBANDS,STOCH,CDLDOJI,STREAM,FINITE" );
 
    return TA_TEST_PASS; /* All tests succeeded. */
 }

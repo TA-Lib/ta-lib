@@ -432,16 +432,23 @@ public partial class Core
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
       [ThreadStatic] private static QSTICK_Stream? peekScratch;
 
-      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
-      /// <para>Never throws after a successful open, and allocates nothing — neither
-      /// handle state nor a return value.</para>
+      /// <para>Allocates nothing — neither handle state nor a return value.</para>
+      /// <para>Throws <see cref="System.ArgumentException"/> if any bar value is not
+      /// finite (NaN or an infinity). That check runs before anything is written,
+      /// so the handle is left exactly as it was and the stream stays usable: skip
+      /// the bar, or re-open on a clean history. This is the one place the
+      /// streaming tier is stricter than the batch API, which computes on whatever
+      /// it is given: a handle retains its state, so a single non-finite bar would
+      /// poison every later value it produces.</para>
       /// </remarks>
       /// <param name="inOpen">This bar's open price.</param>
       /// <param name="inClose">This bar's close price.</param>
       /// <returns>The value at the bar just committed.</returns>
       public double Update( double inOpen, double inClose )
       {
+         if( !double.IsFinite(inOpen) || !double.IsFinite(inClose) ) throw Core.StreamFailure("QSTICK", "update", RetCode.BadParam);
          core.QSTICK_StreamStep(this, inOpen, inClose);
          return cur_outReal;
       }
@@ -460,6 +467,7 @@ public partial class Core
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public double Peek( double inOpen, double inClose )
       {
+         if( !double.IsFinite(inOpen) || !double.IsFinite(inClose) ) throw Core.StreamFailure("QSTICK", "peek", RetCode.BadParam);
          QSTICK_Stream? scratch = peekScratch;
          if( scratch is null ) {
             scratch = new QSTICK_Stream(this);
@@ -676,6 +684,10 @@ public partial class Core
    {
       if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
       if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      foreach( double taFiniteV in inOpen )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("QSTICK", "open", RetCode.BadParam);
+      foreach( double taFiniteV in inClose )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("QSTICK", "open", RetCode.BadParam);
       return QSTICK_OpenInternal(inOpen, inClose, 0, optInTimePeriod);
    }
 
@@ -708,6 +720,10 @@ public partial class Core
    {
       if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
       if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      foreach( double taFiniteV in inOpen )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("QSTICK", "openAndFill", RetCode.BadParam);
+      foreach( double taFiniteV in inClose )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("QSTICK", "openAndFill", RetCode.BadParam);
       QSTICK_Stream sp = new QSTICK_Stream(this);
       RetCode retCode = QSTICK_OpenAndFillBody(sp, inOpen, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

@@ -443,10 +443,20 @@
       }
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public double update( double inClose, double inVolume ) {
+         if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
+            throw new IllegalArgumentException("EFI update: BadParam");
          core.EFI_StreamStep(this, inClose, inVolume);
          return this.cur_outReal;
       }
@@ -459,6 +469,8 @@
        * handle's shape is cheaper than reusing one.
        */
       public double peek( double inClose, double inVolume ) {
+         if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
+            throw new IllegalArgumentException("EFI peek: BadParam");
          EFI_Stream scratch = new EFI_Stream(this);
          core.EFI_StreamStep(scratch, inClose, inVolume);
          return scratch.cur_outReal;
@@ -762,6 +774,14 @@
     */
    public EFI_Stream EFI_Open( double inClose[], double inVolume[], int optInTimePeriod )
    {
+      if( inClose.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
+            if( !Double.isFinite(inClose[taFiniteIdx]) )
+               throw new IllegalArgumentException("EFI open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
+            if( !Double.isFinite(inVolume[taFiniteIdx]) )
+               throw new IllegalArgumentException("EFI open: BadParam");
+      }
       return EFI_OpenInternal(inClose, inVolume, 0, optInTimePeriod);
    }
    /**
@@ -775,6 +795,14 @@
     */
    public EFI_Stream EFI_OpenAndFill( double inClose[], double inVolume[], int optInTimePeriod, double outReal[] )
    {
+      if( inClose.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
+            if( !Double.isFinite(inClose[taFiniteIdx]) )
+               throw new IllegalArgumentException("EFI openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
+            if( !Double.isFinite(inVolume[taFiniteIdx]) )
+               throw new IllegalArgumentException("EFI openAndFill: BadParam");
+      }
       EFI_Stream sp = new EFI_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

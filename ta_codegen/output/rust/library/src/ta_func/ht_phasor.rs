@@ -1247,13 +1247,16 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.HT_PHASOR_Open(&data).expect("enough history");
-    /// let peeked = s.peek(100.9);
-    /// let updated = s.update(100.9);
+    /// let peeked = s.peek(100.9).expect("a finite bar");
+    /// let updated = s.update(100.9).expect("a finite bar");
     /// assert_eq!(peeked.0.to_bits(), updated.0.to_bits());
     /// assert_eq!(peeked.1.to_bits(), updated.1.to_bits());
     /// ```
     #[doc(alias = "TA_HT_PHASOR_Open")]
     pub fn HT_PHASOR_Open(&self, inReal: &[f64], ) -> Result<(HT_PHASOR_Stream, (f64, f64)), RetCode> {
+        if inReal.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.HT_PHASOR_OpenInternal(inReal, 0)
     }
 
@@ -1265,6 +1268,9 @@ impl Core {
         &self, inReal: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInPhase: &mut [f64], outQuadrature: &mut [f64],
     ) -> Result<HT_PHASOR_Stream, RetCode> {
         if outInPhase.as_ptr() == outQuadrature.as_ptr() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
         self.HT_PHASOR_OpenCore(inReal, 0, outBegIdx, outNBElement, outInPhase, outQuadrature, 1)
@@ -1283,13 +1289,26 @@ impl Core {
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl HT_PHASOR_Stream {
-    /// Commit one closed bar; always produces a value. Never allocates.
+    /// Commit one closed bar. Never allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite (NaN or ±Inf).
+    /// That check runs before anything is written, so the handle is left
+    /// exactly as it was and the stream stays usable:
+    /// skip the bar, or close and re-open on a clean history. This is the
+    /// one place the streaming tier is stricter than the batch API, which
+    /// computes on whatever it is given — a handle retains its state, so a
+    /// single non-finite bar would poison every later value it produces.
     #[doc(alias = "TA_HT_PHASOR_Update")]
-    pub fn update(&mut self, inReal: f64) -> (f64, f64) {
+    pub fn update(&mut self, inReal: f64) -> Result<(f64, f64), RetCode> {
+        if !inReal.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut outInPhase: f64 = 0.0_f64;
         let mut outQuadrature: f64 = 0.0_f64;
         self.core.HT_PHASOR_step_internal(&mut self.state, inReal, &mut outInPhase, &mut outQuadrature);
-        (outInPhase, outQuadrature)
+        Ok((outInPhase, outQuadrature))
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
@@ -1299,9 +1318,16 @@ impl HT_PHASOR_Stream {
     /// often removed outright by the optimizer, which is why nothing is
     /// reused here, but that is not a guarantee: budget for a clone of the
     /// window and prefer `update` on a `clone()` in a hot loop.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite, exactly as
+    /// `update` rejects it.
     #[doc(alias = "TA_HT_PHASOR_Peek")]
-    #[must_use]
-    pub fn peek(&self, inReal: f64) -> (f64, f64) {
+    pub fn peek(&self, inReal: f64) -> Result<(f64, f64), RetCode> {
+        if !inReal.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut scratch = self.clone();
         scratch.update(inReal)
     }

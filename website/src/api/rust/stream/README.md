@@ -33,15 +33,24 @@ let history: Vec<f64> = /* ...your closing prices... */;
 let (mut s, last) = core.SMA_Open(&history, 30)?;   // stream + value at the last history bar
 
 // Each time a bar closes:
-let v = s.update(new_close);                         // always a value; never allocates
+let v = s.update(new_close)?;                        // Err only for a non-finite bar
 
 // Intra-bar, on the not-yet-closed bar (repeat as the price ticks):
-let provisional = s.peek(forming_close);             // state left unchanged
+let provisional = s.peek(forming_close)?;            // state left unchanged
 
 // dropping `s` closes the stream
 ```
 
-`Open` returns a `Result` — `Err(RetCode::BadParam)` if a parameter is out of range or there is too little history. After a successful `Open`, `update` and `peek` are **infallible** (they return the value directly) and `update` never allocates.
+`Open` returns a `Result` — `Err(RetCode::BadParam)` if a parameter is out of range, there is too little history, or the history holds a non-finite value. `update` and `peek` return a `Result` too, and after a successful `Open` the only thing they reject is a **non-finite bar**, leaving the handle exactly as it was.
+
+One narrow exception to "the handle is unchanged": a *composed* indicator drives its sub-stages through their own public update, so a value the library computed internally is re-checked there. If such an intermediate overflowed to an infinity, the rejection would surface after earlier sub-stages had advanced, and would name the sub-stage. It needs input magnitudes around 1e306 and up — the overflow class TA-Lib already treats as out of scope — but the guarantee is stated for the caller-supplied case, which is the one you can provoke. `update` never allocates.
+
+**Non-finite input is rejected.** NaN and ±Inf are not supported as inputs anywhere in TA-Lib, but the streaming tier is the one that *enforces* it: every public streaming entry point checks, and rejects without touching the handle. The batch API does not filter — it computes on whatever it is given.
+
+The difference is the retained state. Batch computes and forgets, so a NaN reaches the outputs depending on that bar and no others; a stream handle carries state forward, so a single non-finite bar would poison every value it produces afterwards, long after the feed recovers. Rejecting the bar and leaving the handle usable is more useful than accepting it and going permanently NaN.
+
+This covers the warm-up history at open, every bar value at update/peek, and a real optional parameter that is NaN — which the batch range check lets through, since `x < min` and `x > max` are both false for NaN.
+
 
 ## Rules
 
@@ -63,7 +72,7 @@ let mut warmup = vec![0.0; history.len()];
 let mut s = core.SMA_OpenAndFill(&history, 30, &mut beg, &mut nb, &mut warmup)?;
 
 // warmup[0..nb] is the SMA over all of history; then stream on:
-let v = s.update(new_close);
+let v = s.update(new_close)?;
 ```
 
 The optional parameters and outputs (`outBegIdx`, `outNBElement`, one slice per output) are exactly the [batch method](/api/rust/)'s; the output slices must not alias the input or each other.
@@ -75,11 +84,11 @@ Inputs and outputs mirror the batch method. Multi-output functions return a tupl
 ```rust
 // MACD: one input, three outputs
 let (mut s, (macd, signal, hist)) = core.MACD_Open(&history, 12, 26, 9)?;
-let (macd, signal, hist) = s.update(new_close);
+let (macd, signal, hist) = s.update(new_close)?;
 
 // A candlestick pattern returns i32
 let (mut s, _) = core.CDLDOJI_Open(&open, &high, &low, &close)?;
-let pattern: i32 = s.update(o, h, l, c);
+let pattern: i32 = s.update(o, h, l, c)?;
 ```
 
 ## Discovering streamable functions

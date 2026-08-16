@@ -268,15 +268,22 @@ public partial class Core
          this.fillRange = other.fillRange;
       }
 
-      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
-      /// <para>Never throws after a successful open, and allocates nothing — neither
-      /// handle state nor a return value.</para>
+      /// <para>Allocates nothing — neither handle state nor a return value.</para>
+      /// <para>Throws <see cref="System.ArgumentException"/> if any bar value is not
+      /// finite (NaN or an infinity). That check runs before anything is written,
+      /// so the handle is left exactly as it was and the stream stays usable: skip
+      /// the bar, or re-open on a clean history. This is the one place the
+      /// streaming tier is stricter than the batch API, which computes on whatever
+      /// it is given: a handle retains its state, so a single non-finite bar would
+      /// poison every later value it produces.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>The value at the bar just committed.</returns>
       public double Update( double inReal )
       {
+         if( !double.IsFinite(inReal) ) throw Core.StreamFailure("LN", "update", RetCode.BadParam);
          core.LN_StreamStep(this, inReal);
          return cur_outReal;
       }
@@ -294,6 +301,7 @@ public partial class Core
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public double Peek( double inReal )
       {
+         if( !double.IsFinite(inReal) ) throw Core.StreamFailure("LN", "peek", RetCode.BadParam);
          LN_Stream scratch = new LN_Stream(this);
          core.LN_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -405,6 +413,8 @@ public partial class Core
    public LN_Stream LN_Open( ReadOnlySpan<double> inReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      foreach( double taFiniteV in inReal )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("LN", "open", RetCode.BadParam);
       return LN_OpenInternal(inReal, 0);
    }
 
@@ -433,6 +443,8 @@ public partial class Core
    public LN_Stream LN_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      foreach( double taFiniteV in inReal )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("LN", "openAndFill", RetCode.BadParam);
       LN_Stream sp = new LN_Stream(this);
       RetCode retCode = LN_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

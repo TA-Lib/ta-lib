@@ -568,11 +568,11 @@ static void TA_STOCHF_ReleaseInternal( struct TA_STOCHF_Stream *sp )
 }
 
 /* Private function, not in public API. */
-static void TA_STOCHF_StepInternal( struct TA_STOCHF_Stream *sp, double inHigh, double inLow, double inClose, double *outFastK, double *outFastD )
+static TA_RetCode TA_STOCHF_StepInternal( struct TA_STOCHF_Stream *sp, double inHigh, double inLow, double inClose, double *outFastK, double *outFastD )
 {
    double tmp;
-   double cur_tempBuffer;
-   double cur_outFastD;
+   double cur_tempBuffer = 0.0;
+   double cur_outFastD = 0.0;
 
    if( sp->today >= 1073741824 )
    {
@@ -647,12 +647,17 @@ static void TA_STOCHF_StepInternal( struct TA_STOCHF_Stream *sp, double inHigh, 
    sp->today += 1;
 
    /* Pipeline the new bar through the sub-streams (batch tail order). */
-   if( sp->peekMode )
-      TA_MA_Peek( (const TA_MA_Stream *)sp->sub0, cur_tempBuffer, &cur_outFastD );
-   else
-      TA_MA_Update( sp->sub0, cur_tempBuffer, &cur_outFastD );
+   {
+      TA_RetCode subRc;
+      if( sp->peekMode )
+         subRc = TA_MA_Peek( (const TA_MA_Stream *)sp->sub0, cur_tempBuffer, &cur_outFastD );
+      else
+         subRc = TA_MA_Update( sp->sub0, cur_tempBuffer, &cur_outFastD );
+      if( subRc != TA_SUCCESS ) return subRc;
+   }
    *outFastK = cur_tempBuffer;
    *outFastD = cur_outFastD;
+   return TA_SUCCESS;
 }
 
 static TA_RetCode TA_STOCHF_OpenCore( struct TA_STOCHF_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, int *outBegIdx, int *outNBElement, double outFastK[], double outFastD[], int outStride )
@@ -1012,6 +1017,18 @@ TA_RetCode TA_STOCHF_OpenInternal( struct TA_STOCHF_Stream **stream, const doubl
 
 TA_LIB_API TA_RetCode TA_STOCHF_Open( TA_STOCHF_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, double *outFastK, double *outFastD )
 {
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inHigh || !inLow || !inClose || !outFastK || !outFastD ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inHigh[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inLow[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inClose[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_STOCHF_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outFastK, outFastD );
 }
 
@@ -1020,7 +1037,17 @@ TA_LIB_API TA_RetCode TA_STOCHF_OpenAndFill( TA_STOCHF_Stream **stream, const do
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
    if( !outBegIdx || !outNBElement || !outFastK || !outFastD ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inClose || !outFastK || !outFastD ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outFastK == (const void *)inHigh || (const void *)outFastK == (const void *)inLow || (const void *)outFastK == (const void *)inClose || (const void *)outFastD == (const void *)inHigh || (const void *)outFastD == (const void *)inLow || (const void *)outFastD == (const void *)inClose || (const void *)outFastK == (const void *)outFastD ) return TA_BAD_PARAM;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inHigh[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inLow[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inClose[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_STOCHF_OpenCore( stream, inHigh, inLow, inClose, 0, historyLen, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1 );
 }
 
@@ -1033,8 +1060,8 @@ TA_RetCode TA_STOCHF_OpenAndFillInternal( struct TA_STOCHF_Stream **stream, cons
 TA_LIB_API TA_RetCode TA_STOCHF_Update( TA_STOCHF_Stream *stream, double inHigh, double inLow, double inClose, double *outFastK, double *outFastD )
 {
    if( !stream || !outFastK || !outFastD ) return TA_BAD_PARAM;
-   TA_STOCHF_StepInternal( stream, inHigh, inLow, inClose, outFastK, outFastD );
-   return TA_SUCCESS;
+   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
+   return TA_STOCHF_StepInternal( stream, inHigh, inLow, inClose, outFastK, outFastD );
 }
 
 TA_LIB_API TA_RetCode TA_STOCHF_Peek( const TA_STOCHF_Stream *stream, double inHigh, double inLow, double inClose, double *outFastK, double *outFastD )
@@ -1042,6 +1069,7 @@ TA_LIB_API TA_RetCode TA_STOCHF_Peek( const TA_STOCHF_Stream *stream, double inH
    struct TA_STOCHF_Stream scratch;
 
    if( !stream || !outFastK || !outFastD ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    scratch = *stream;
    scratch.x_inHigh = stream->xMirror_inHigh;
    memcpy( scratch.x_inHigh, stream->x_inHigh, sizeof(double) * (size_t)stream->xPhys );
@@ -1050,8 +1078,7 @@ TA_LIB_API TA_RetCode TA_STOCHF_Peek( const TA_STOCHF_Stream *stream, double inH
    scratch.x_inClose = stream->xMirror_inClose;
    memcpy( scratch.x_inClose, stream->x_inClose, sizeof(double) * (size_t)stream->xPhys );
    scratch.peekMode = 1;
-   TA_STOCHF_StepInternal( &scratch, inHigh, inLow, inClose, outFastK, outFastD );
-   return TA_SUCCESS;
+   return TA_STOCHF_StepInternal( &scratch, inHigh, inLow, inClose, outFastK, outFastD );
 }
 
 TA_LIB_API TA_RetCode TA_STOCHF_Close( TA_STOCHF_Stream *stream )

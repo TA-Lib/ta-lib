@@ -1262,15 +1262,22 @@ public partial class Core
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
       [ThreadStatic] private static HT_SINE_Stream? peekScratch;
 
-      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
-      /// <para>Never throws after a successful open, and allocates nothing — neither
-      /// handle state nor a return value.</para>
+      /// <para>Allocates nothing — neither handle state nor a return value.</para>
+      /// <para>Throws <see cref="System.ArgumentException"/> if any bar value is not
+      /// finite (NaN or an infinity). That check runs before anything is written,
+      /// so the handle is left exactly as it was and the stream stays usable: skip
+      /// the bar, or re-open on a clean history. This is the one place the
+      /// streaming tier is stricter than the batch API, which computes on whatever
+      /// it is given: a handle retains its state, so a single non-finite bar would
+      /// poison every later value it produces.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>The value at the bar just committed.</returns>
       public HT_SINE_Value Update( double inReal )
       {
+         if( !double.IsFinite(inReal) ) throw Core.StreamFailure("HT_SINE", "update", RetCode.BadParam);
          core.HT_SINE_StreamStep(this, inReal);
          return new HT_SINE_Value(cur_outSine, cur_outLeadSine);
       }
@@ -1288,6 +1295,7 @@ public partial class Core
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public HT_SINE_Value Peek( double inReal )
       {
+         if( !double.IsFinite(inReal) ) throw Core.StreamFailure("HT_SINE", "peek", RetCode.BadParam);
          HT_SINE_Stream? scratch = peekScratch;
          if( scratch is null ) {
             scratch = new HT_SINE_Stream(this);
@@ -2067,6 +2075,8 @@ public partial class Core
    public HT_SINE_Stream HT_SINE_Open( ReadOnlySpan<double> inReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      foreach( double taFiniteV in inReal )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("HT_SINE", "open", RetCode.BadParam);
       return HT_SINE_OpenInternal(inReal, 0);
    }
 
@@ -2097,6 +2107,8 @@ public partial class Core
    public HT_SINE_Stream HT_SINE_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outSine, Span<double> outLeadSine )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      foreach( double taFiniteV in inReal )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("HT_SINE", "openAndFill", RetCode.BadParam);
       HT_SINE_Stream sp = new HT_SINE_Stream(this);
       RetCode retCode = HT_SINE_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outSine, outLeadSine);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

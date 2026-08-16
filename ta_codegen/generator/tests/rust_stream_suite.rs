@@ -91,14 +91,15 @@ fn test_rust_sma_ring_stream_section() {
     // Capture: numeric ring cap from live locals + tail copy.
     assert!(s.contains("let cap_trailingIdx: i64 = (i as i64) - (trailingIdx as i64);"));
     assert!(s.contains(".copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);"));
-    // Handle impl: infallible update, scratch-peek, auto-trait pin.
-    assert!(s.contains("pub fn update(&mut self, inReal: f64) -> f64 {"));
+    // Handle impl: fallible update (non-finite bars are rejected),
+    // scratch-peek, auto-trait pin.
+    assert!(s.contains("pub fn update(&mut self, inReal: f64) -> Result<f64, RetCode> {"));
     // Every state gets the buffer-reusing restore (#201) — a state can be some
     // other handle's sub — but SMA's own peek does not use it: one ring, no
     // sub-handle and a loop-free transition is the shape whose stack copy the
     // optimizer deletes outright, which no scratch can beat.
     assert!(s.contains("self.ring_trailingIdx_inReal.clone_from(&src.ring_trailingIdx_inReal);"));
-    assert!(s.contains("pub fn peek(&self, inReal: f64) -> f64 {"));
+    assert!(s.contains("pub fn peek(&self, inReal: f64) -> Result<f64, RetCode> {"));
     assert!(s.contains("let mut scratch = self.clone();"));
     assert!(s.contains("scratch.update(inReal)"));
     assert!(!s.contains("PEEK_SCRATCH"));
@@ -118,7 +119,7 @@ fn test_rust_ema_scalar_recurrence_stream_section() {
     // Compatibility is consumed during the transcribed open (read from self).
     assert!(s.contains("self.compatibility"));
     // Update returns the bare value.
-    assert!(s.contains("pub fn update(&mut self, inReal: f64) -> f64 {"));
+    assert!(s.contains("pub fn update(&mut self, inReal: f64) -> Result<f64, RetCode> {"));
     // No heap in the state, so peek keeps the throwaway copy and no
     // thread-local scratch is emitted at all (#201).
     assert!(s.contains("let mut scratch = self.clone();"));
@@ -132,7 +133,7 @@ fn test_rust_ema_scalar_recurrence_stream_section() {
 fn test_rust_macd_three_output_tuple() {
     let s = rust_stream_section("macd");
     assert!(s.contains("-> Result<(MACD_Stream, (f64, f64, f64)), RetCode>"));
-    assert!(s.contains("pub fn update(&mut self, inReal: f64) -> (f64, f64, f64) {"));
+    assert!(s.contains("pub fn update(&mut self, inReal: f64) -> Result<(f64, f64, f64), RetCode> {"));
     assert!(s.contains(", outMACD: &mut f64, outMACDSignal: &mut f64, outMACDHist: &mut f64)"));
     // Tuple assembled in batch output order.
     assert!(s.contains("(outMACD, outMACDSignal, outMACDHist)"));
@@ -144,7 +145,7 @@ fn test_rust_cdldoji_candle_settings_and_int_output() {
     // Candle settings read through the handle's immutable Core snapshot.
     assert!(s.contains("self.candle_settings"));
     // Integer output end to end.
-    assert!(s.contains("pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {"));
+    assert!(s.contains("pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> Result<i32, RetCode> {"));
     assert!(s.contains("outInteger: &mut i32"));
     // OHLC ring over all four price arrays.
     assert!(s.contains("ring_BodyDojiTrailingIdx_inOpen"));
@@ -171,7 +172,7 @@ fn test_rust_minmaxindex_extrema_i32_and_rebase() {
     // Capture casts the still-live batch locals at the struct literal.
     assert!(s.contains("today: (today) as i32,"));
     // Index outputs stay batch-exact i32 pairs.
-    assert!(s.contains("pub fn update(&mut self, inReal: f64) -> (i32, i32) {"));
+    assert!(s.contains("pub fn update(&mut self, inReal: f64) -> Result<(i32, i32), RetCode> {"));
     // One buffer: peek keeps the throwaway copy, the shape whose clone the
     // optimizer folds away (#201).
     assert!(!s.contains("PEEK_SCRATCH"));

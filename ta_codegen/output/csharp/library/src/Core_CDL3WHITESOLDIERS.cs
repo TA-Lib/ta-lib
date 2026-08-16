@@ -789,10 +789,16 @@ public partial class Core
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
       [ThreadStatic] private static CDL3WHITESOLDIERS_Stream? peekScratch;
 
-      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
-      /// <para>Never throws after a successful open, and allocates nothing — neither
-      /// handle state nor a return value.</para>
+      /// <para>Allocates nothing — neither handle state nor a return value.</para>
+      /// <para>Throws <see cref="System.ArgumentException"/> if any bar value is not
+      /// finite (NaN or an infinity). That check runs before anything is written,
+      /// so the handle is left exactly as it was and the stream stays usable: skip
+      /// the bar, or re-open on a clean history. This is the one place the
+      /// streaming tier is stricter than the batch API, which computes on whatever
+      /// it is given: a handle retains its state, so a single non-finite bar would
+      /// poison every later value it produces.</para>
       /// </remarks>
       /// <param name="inOpen">This bar's open price.</param>
       /// <param name="inHigh">This bar's high price.</param>
@@ -801,6 +807,7 @@ public partial class Core
       /// <returns>The value at the bar just committed.</returns>
       public int Update( double inOpen, double inHigh, double inLow, double inClose )
       {
+         if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDL3WHITESOLDIERS", "update", RetCode.BadParam);
          core.CDL3WHITESOLDIERS_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return cur_outInteger;
       }
@@ -821,6 +828,7 @@ public partial class Core
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public int Peek( double inOpen, double inHigh, double inLow, double inClose )
       {
+         if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDL3WHITESOLDIERS", "peek", RetCode.BadParam);
          CDL3WHITESOLDIERS_Stream? scratch = peekScratch;
          if( scratch is null ) {
             scratch = new CDL3WHITESOLDIERS_Stream(this);
@@ -1329,6 +1337,14 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
       if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      foreach( double taFiniteV in inOpen )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("CDL3WHITESOLDIERS", "open", RetCode.BadParam);
+      foreach( double taFiniteV in inHigh )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("CDL3WHITESOLDIERS", "open", RetCode.BadParam);
+      foreach( double taFiniteV in inLow )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("CDL3WHITESOLDIERS", "open", RetCode.BadParam);
+      foreach( double taFiniteV in inClose )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("CDL3WHITESOLDIERS", "open", RetCode.BadParam);
       return CDL3WHITESOLDIERS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
@@ -1367,6 +1383,14 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
       if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      foreach( double taFiniteV in inOpen )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("CDL3WHITESOLDIERS", "openAndFill", RetCode.BadParam);
+      foreach( double taFiniteV in inHigh )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("CDL3WHITESOLDIERS", "openAndFill", RetCode.BadParam);
+      foreach( double taFiniteV in inLow )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("CDL3WHITESOLDIERS", "openAndFill", RetCode.BadParam);
+      foreach( double taFiniteV in inClose )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("CDL3WHITESOLDIERS", "openAndFill", RetCode.BadParam);
       CDL3WHITESOLDIERS_Stream sp = new CDL3WHITESOLDIERS_Stream(this);
       RetCode retCode = CDL3WHITESOLDIERS_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

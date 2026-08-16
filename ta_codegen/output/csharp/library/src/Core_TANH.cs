@@ -260,15 +260,22 @@ public partial class Core
          this.fillRange = other.fillRange;
       }
 
-      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
-      /// <para>Never throws after a successful open, and allocates nothing — neither
-      /// handle state nor a return value.</para>
+      /// <para>Allocates nothing — neither handle state nor a return value.</para>
+      /// <para>Throws <see cref="System.ArgumentException"/> if any bar value is not
+      /// finite (NaN or an infinity). That check runs before anything is written,
+      /// so the handle is left exactly as it was and the stream stays usable: skip
+      /// the bar, or re-open on a clean history. This is the one place the
+      /// streaming tier is stricter than the batch API, which computes on whatever
+      /// it is given: a handle retains its state, so a single non-finite bar would
+      /// poison every later value it produces.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>The value at the bar just committed.</returns>
       public double Update( double inReal )
       {
+         if( !double.IsFinite(inReal) ) throw Core.StreamFailure("TANH", "update", RetCode.BadParam);
          core.TANH_StreamStep(this, inReal);
          return cur_outReal;
       }
@@ -286,6 +293,7 @@ public partial class Core
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public double Peek( double inReal )
       {
+         if( !double.IsFinite(inReal) ) throw Core.StreamFailure("TANH", "peek", RetCode.BadParam);
          TANH_Stream scratch = new TANH_Stream(this);
          core.TANH_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -397,6 +405,8 @@ public partial class Core
    public TANH_Stream TANH_Open( ReadOnlySpan<double> inReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      foreach( double taFiniteV in inReal )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("TANH", "open", RetCode.BadParam);
       return TANH_OpenInternal(inReal, 0);
    }
 
@@ -425,6 +435,8 @@ public partial class Core
    public TANH_Stream TANH_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      foreach( double taFiniteV in inReal )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("TANH", "openAndFill", RetCode.BadParam);
       TANH_Stream sp = new TANH_Stream(this);
       RetCode retCode = TANH_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

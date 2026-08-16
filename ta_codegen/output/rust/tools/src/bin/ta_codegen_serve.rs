@@ -15673,8 +15673,8 @@ fn sv_accbands(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0.2, b2[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.0.to_bits() != up.0.to_bits() { peek_all = false; }
                             if pk.1.to_bits() != up.1.to_bits() { peek_all = false; }
                             if pk.2.to_bits() != up.2.to_bits() { peek_all = false; }
@@ -15682,7 +15682,7 @@ fn sv_accbands(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                             if sv_xtier_ne(up.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b2[t - beg].to_bits(), up.2.to_bits()); } }
                         } else {
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.0.to_bits()); } }
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                             if sv_xtier_ne(up.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b2[t - beg].to_bits(), up.2.to_bits()); } }
@@ -15772,12 +15772,12 @@ fn sv_acos(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -15865,12 +15865,12 @@ fn sv_ad(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                            let Ok(pk) = st.peek(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -15958,12 +15958,12 @@ fn sv_add(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t], fz_v[t]);
-                            let up = st.update(fz_c[t], fz_v[t]);
+                            let Ok(pk) = st.peek(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t], fz_v[t]);
+                            let Ok(up) = st.update(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -16054,12 +16054,12 @@ fn sv_adosc(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                            let Ok(pk) = st.peek(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -16149,12 +16149,12 @@ fn sv_adx(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -16244,12 +16244,12 @@ fn sv_adxr(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -16348,12 +16348,12 @@ fn sv_apo(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -16447,14 +16447,14 @@ fn sv_aroon(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_h[t], fz_l[t]);
-                            let up = st.update(fz_h[t], fz_l[t]);
+                            let Ok(pk) = st.peek(fz_h[t], fz_l[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_h[t], fz_l[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.0.to_bits() != up.0.to_bits() { peek_all = false; }
                             if pk.1.to_bits() != up.1.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.0.to_bits()); } }
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                         } else {
-                            let up = st.update(fz_h[t], fz_l[t]);
+                            let Ok(up) = st.update(fz_h[t], fz_l[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.0.to_bits()); } }
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                         }
@@ -16544,12 +16544,12 @@ fn sv_aroonosc(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_h[t], fz_l[t]);
-                            let up = st.update(fz_h[t], fz_l[t]);
+                            let Ok(pk) = st.peek(fz_h[t], fz_l[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_h[t], fz_l[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_h[t], fz_l[t]);
+                            let Ok(up) = st.update(fz_h[t], fz_l[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -16637,12 +16637,12 @@ fn sv_asin(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -16730,12 +16730,12 @@ fn sv_atan(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -16825,12 +16825,12 @@ fn sv_atr(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -16919,12 +16919,12 @@ fn sv_avgdev(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -17012,12 +17012,12 @@ fn sv_avgprice(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -17127,8 +17127,8 @@ fn sv_bbands(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0.2, b2[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.0.to_bits() != up.0.to_bits() { peek_all = false; }
                             if pk.1.to_bits() != up.1.to_bits() { peek_all = false; }
                             if pk.2.to_bits() != up.2.to_bits() { peek_all = false; }
@@ -17136,7 +17136,7 @@ fn sv_bbands(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                             if sv_xtier_ne(up.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b2[t - beg].to_bits(), up.2.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.0.to_bits()); } }
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                             if sv_xtier_ne(up.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b2[t - beg].to_bits(), up.2.to_bits()); } }
@@ -17227,12 +17227,12 @@ fn sv_beta(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t], fz_v[t]);
-                            let up = st.update(fz_c[t], fz_v[t]);
+                            let Ok(pk) = st.peek(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t], fz_v[t]);
+                            let Ok(up) = st.update(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -17320,12 +17320,12 @@ fn sv_bop(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -17414,12 +17414,12 @@ fn sv_cci(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -17511,12 +17511,12 @@ fn sv_cdl2crows(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -17608,12 +17608,12 @@ fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -17705,12 +17705,12 @@ fn sv_cdl3inside(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -17802,12 +17802,12 @@ fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -17899,12 +17899,12 @@ fn sv_cdl3outside(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -17996,12 +17996,12 @@ fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -18093,12 +18093,12 @@ fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -18191,12 +18191,12 @@ fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -18288,12 +18288,12 @@ fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -18385,12 +18385,12 @@ fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -18482,12 +18482,12 @@ fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -18579,12 +18579,12 @@ fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -18676,12 +18676,12 @@ fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -18773,12 +18773,12 @@ fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -18871,12 +18871,12 @@ fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -18968,12 +18968,12 @@ fn sv_cdldoji(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -19065,12 +19065,12 @@ fn sv_cdldojistar(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -19162,12 +19162,12 @@ fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -19259,12 +19259,12 @@ fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -19357,12 +19357,12 @@ fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -19455,12 +19455,12 @@ fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -19552,12 +19552,12 @@ fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -19649,12 +19649,12 @@ fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -19746,12 +19746,12 @@ fn sv_cdlhammer(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -19843,12 +19843,12 @@ fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -19940,12 +19940,12 @@ fn sv_cdlharami(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -20037,12 +20037,12 @@ fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -20134,12 +20134,12 @@ fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -20231,12 +20231,12 @@ fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -20328,12 +20328,12 @@ fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -20425,12 +20425,12 @@ fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -20522,12 +20522,12 @@ fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -20619,12 +20619,12 @@ fn sv_cdlinneck(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -20716,12 +20716,12 @@ fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -20813,12 +20813,12 @@ fn sv_cdlkicking(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -20910,12 +20910,12 @@ fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -21007,12 +21007,12 @@ fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -21104,12 +21104,12 @@ fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -21201,12 +21201,12 @@ fn sv_cdllongline(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -21298,12 +21298,12 @@ fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -21395,12 +21395,12 @@ fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -21493,12 +21493,12 @@ fn sv_cdlmathold(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -21591,12 +21591,12 @@ fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -21689,12 +21689,12 @@ fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -21786,12 +21786,12 @@ fn sv_cdlonneck(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -21883,12 +21883,12 @@ fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -21980,12 +21980,12 @@ fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -22077,12 +22077,12 @@ fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -22174,12 +22174,12 @@ fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -22271,12 +22271,12 @@ fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -22368,12 +22368,12 @@ fn sv_cdlshortline(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -22465,12 +22465,12 @@ fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -22562,12 +22562,12 @@ fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -22659,12 +22659,12 @@ fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -22756,12 +22756,12 @@ fn sv_cdltakuri(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -22853,12 +22853,12 @@ fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -22950,12 +22950,12 @@ fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -23047,12 +23047,12 @@ fn sv_cdltristar(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -23144,12 +23144,12 @@ fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -23241,12 +23241,12 @@ fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -23338,12 +23338,12 @@ fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -23431,12 +23431,12 @@ fn sv_ceil(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -23525,12 +23525,12 @@ fn sv_cmf(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                            let Ok(pk) = st.peek(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -23620,12 +23620,12 @@ fn sv_cmo(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -23714,12 +23714,12 @@ fn sv_cmou(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -23808,12 +23808,12 @@ fn sv_correl(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t], fz_v[t]);
-                            let up = st.update(fz_c[t], fz_v[t]);
+                            let Ok(pk) = st.peek(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t], fz_v[t]);
+                            let Ok(up) = st.update(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -23901,12 +23901,12 @@ fn sv_cos(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -23994,12 +23994,12 @@ fn sv_cosh(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -24089,12 +24089,12 @@ fn sv_dema(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -24182,12 +24182,12 @@ fn sv_div(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t], fz_v[t]);
-                            let up = st.update(fz_c[t], fz_v[t]);
+                            let Ok(pk) = st.peek(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t], fz_v[t]);
+                            let Ok(up) = st.update(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -24277,12 +24277,12 @@ fn sv_dx(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -24371,12 +24371,12 @@ fn sv_efi(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t], fz_v[t]);
-                            let up = st.update(fz_c[t], fz_v[t]);
+                            let Ok(pk) = st.peek(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t], fz_v[t]);
+                            let Ok(up) = st.update(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -24466,12 +24466,12 @@ fn sv_ema(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -24559,12 +24559,12 @@ fn sv_exp(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -24652,12 +24652,12 @@ fn sv_floor(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -24746,12 +24746,12 @@ fn sv_hma(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -24840,12 +24840,12 @@ fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -24934,12 +24934,12 @@ fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -25033,14 +25033,14 @@ fn sv_ht_phasor(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.0.to_bits() != up.0.to_bits() { peek_all = false; }
                             if pk.1.to_bits() != up.1.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.0.to_bits()); } }
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.0.to_bits()); } }
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                         }
@@ -25135,14 +25135,14 @@ fn sv_ht_sine(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.0.to_bits() != up.0.to_bits() { peek_all = false; }
                             if pk.1.to_bits() != up.1.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.0.to_bits()); } }
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.0.to_bits()); } }
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                         }
@@ -25232,12 +25232,12 @@ fn sv_ht_trendline(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -25326,12 +25326,12 @@ fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -25420,12 +25420,12 @@ fn sv_imi(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -25515,12 +25515,12 @@ fn sv_kama(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -25609,12 +25609,12 @@ fn sv_linearreg(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -25703,12 +25703,12 @@ fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -25797,12 +25797,12 @@ fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -25891,12 +25891,12 @@ fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -25984,12 +25984,12 @@ fn sv_ln(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -26077,12 +26077,12 @@ fn sv_log10(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -26180,12 +26180,12 @@ fn sv_ma(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -26287,8 +26287,8 @@ fn sv_macd(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0.2, b2[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.0.to_bits() != up.0.to_bits() { peek_all = false; }
                             if pk.1.to_bits() != up.1.to_bits() { peek_all = false; }
                             if pk.2.to_bits() != up.2.to_bits() { peek_all = false; }
@@ -26296,7 +26296,7 @@ fn sv_macd(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                             if sv_xtier_ne(up.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b2[t - beg].to_bits(), up.2.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.0.to_bits()); } }
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                             if sv_xtier_ne(up.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b2[t - beg].to_bits(), up.2.to_bits()); } }
@@ -26418,8 +26418,8 @@ fn sv_macdext(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0.2, b2[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.0.to_bits() != up.0.to_bits() { peek_all = false; }
                             if pk.1.to_bits() != up.1.to_bits() { peek_all = false; }
                             if pk.2.to_bits() != up.2.to_bits() { peek_all = false; }
@@ -26427,7 +26427,7 @@ fn sv_macdext(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                             if sv_xtier_ne(up.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b2[t - beg].to_bits(), up.2.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.0.to_bits()); } }
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                             if sv_xtier_ne(up.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b2[t - beg].to_bits(), up.2.to_bits()); } }
@@ -26529,8 +26529,8 @@ fn sv_macdfix(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0.2, b2[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.0.to_bits() != up.0.to_bits() { peek_all = false; }
                             if pk.1.to_bits() != up.1.to_bits() { peek_all = false; }
                             if pk.2.to_bits() != up.2.to_bits() { peek_all = false; }
@@ -26538,7 +26538,7 @@ fn sv_macdfix(core: &Core, params: &Value) -> String {
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                             if sv_xtier_ne(up.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b2[t - beg].to_bits(), up.2.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.0.to_bits()); } }
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                             if sv_xtier_ne(up.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b2[t - beg].to_bits(), up.2.to_bits()); } }
@@ -26636,14 +26636,14 @@ fn sv_mama(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.0.to_bits() != up.0.to_bits() { peek_all = false; }
                             if pk.1.to_bits() != up.1.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.0.to_bits()); } }
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.0.to_bits()); } }
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                         }
@@ -26732,12 +26732,12 @@ fn sv_marketfi(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_h[t], fz_l[t], fz_v[t]);
-                            let up = st.update(fz_h[t], fz_l[t], fz_v[t]);
+                            let Ok(pk) = st.peek(fz_h[t], fz_l[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_h[t], fz_l[t], fz_v[t]);
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -26837,12 +26837,12 @@ fn sv_mavp(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t], fz_v[t]);
-                            let up = st.update(fz_c[t], fz_v[t]);
+                            let Ok(pk) = st.peek(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t], fz_v[t]);
+                            let Ok(up) = st.update(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -26931,12 +26931,12 @@ fn sv_max(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -27025,12 +27025,12 @@ fn sv_maxindex(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -27118,12 +27118,12 @@ fn sv_medprice(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_h[t], fz_l[t]);
-                            let up = st.update(fz_h[t], fz_l[t]);
+                            let Ok(pk) = st.peek(fz_h[t], fz_l[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_h[t], fz_l[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_h[t], fz_l[t]);
+                            let Ok(up) = st.update(fz_h[t], fz_l[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -27212,12 +27212,12 @@ fn sv_mfi(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                            let Ok(pk) = st.peek(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]);
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -27306,12 +27306,12 @@ fn sv_midpoint(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -27400,12 +27400,12 @@ fn sv_midprice(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_h[t], fz_l[t]);
-                            let up = st.update(fz_h[t], fz_l[t]);
+                            let Ok(pk) = st.peek(fz_h[t], fz_l[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_h[t], fz_l[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_h[t], fz_l[t]);
+                            let Ok(up) = st.update(fz_h[t], fz_l[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -27494,12 +27494,12 @@ fn sv_min(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -27588,12 +27588,12 @@ fn sv_minindex(core: &Core, params: &Value) -> String {
                     if v0 != b0[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk != up { peek_all = false; }
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up); } }
                         }
                     }
@@ -27687,14 +27687,14 @@ fn sv_minmax(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.0.to_bits() != up.0.to_bits() { peek_all = false; }
                             if pk.1.to_bits() != up.1.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.0.to_bits()); } }
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.0.to_bits()); } }
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                         }
@@ -27789,14 +27789,14 @@ fn sv_minmaxindex(core: &Core, params: &Value) -> String {
                     if v0.1 != b1[p - 1 - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.0 != up.0 { peek_all = false; }
                             if pk.1 != up.1 { peek_all = false; }
                             if up.0 != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up.0); } }
                             if up.1 != b1[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b1[t - beg], up.1); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if up.0 != b0[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b0[t - beg], up.0); } }
                             if up.1 != b1[t - beg] { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{}\",\"streamv\":\"{}\"", t, b1[t - beg], up.1); } }
                         }
@@ -27887,12 +27887,12 @@ fn sv_minus_di(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -27982,12 +27982,12 @@ fn sv_minus_dm(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_h[t], fz_l[t]);
-                            let up = st.update(fz_h[t], fz_l[t]);
+                            let Ok(pk) = st.peek(fz_h[t], fz_l[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_h[t], fz_l[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_h[t], fz_l[t]);
+                            let Ok(up) = st.update(fz_h[t], fz_l[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -28076,12 +28076,12 @@ fn sv_mom(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -28169,12 +28169,12 @@ fn sv_mult(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t], fz_v[t]);
-                            let up = st.update(fz_c[t], fz_v[t]);
+                            let Ok(pk) = st.peek(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t], fz_v[t]);
+                            let Ok(up) = st.update(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -28264,12 +28264,12 @@ fn sv_natr(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -28357,12 +28357,12 @@ fn sv_nvi(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t], fz_v[t]);
-                            let up = st.update(fz_c[t], fz_v[t]);
+                            let Ok(pk) = st.peek(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t], fz_v[t]);
+                            let Ok(up) = st.update(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -28450,12 +28450,12 @@ fn sv_obv(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t], fz_v[t]);
-                            let up = st.update(fz_c[t], fz_v[t]);
+                            let Ok(pk) = st.peek(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t], fz_v[t]);
+                            let Ok(up) = st.update(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -28545,12 +28545,12 @@ fn sv_plus_di(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -28640,12 +28640,12 @@ fn sv_plus_dm(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_h[t], fz_l[t]);
-                            let up = st.update(fz_h[t], fz_l[t]);
+                            let Ok(pk) = st.peek(fz_h[t], fz_l[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_h[t], fz_l[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_h[t], fz_l[t]);
+                            let Ok(up) = st.update(fz_h[t], fz_l[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -28744,12 +28744,12 @@ fn sv_ppo(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -28837,12 +28837,12 @@ fn sv_pvi(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t], fz_v[t]);
-                            let up = st.update(fz_c[t], fz_v[t]);
+                            let Ok(pk) = st.peek(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t], fz_v[t]);
+                            let Ok(up) = st.update(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -28941,12 +28941,12 @@ fn sv_pvo(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_v[t]);
-                            let up = st.update(fz_v[t]);
+                            let Ok(pk) = st.peek(fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_v[t]);
+                            let Ok(up) = st.update(fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -29035,12 +29035,12 @@ fn sv_qstick(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_o[t], fz_c[t]);
-                            let up = st.update(fz_o[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_o[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_o[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_o[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_o[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -29129,12 +29129,12 @@ fn sv_roc(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -29223,12 +29223,12 @@ fn sv_rocp(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -29317,12 +29317,12 @@ fn sv_rocr(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -29411,12 +29411,12 @@ fn sv_rocr100(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -29506,12 +29506,12 @@ fn sv_rsi(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -29601,12 +29601,12 @@ fn sv_sar(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_h[t], fz_l[t]);
-                            let up = st.update(fz_h[t], fz_l[t]);
+                            let Ok(pk) = st.peek(fz_h[t], fz_l[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_h[t], fz_l[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_h[t], fz_l[t]);
+                            let Ok(up) = st.update(fz_h[t], fz_l[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -29702,12 +29702,12 @@ fn sv_sarext(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_h[t], fz_l[t]);
-                            let up = st.update(fz_h[t], fz_l[t]);
+                            let Ok(pk) = st.peek(fz_h[t], fz_l[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_h[t], fz_l[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_h[t], fz_l[t]);
+                            let Ok(up) = st.update(fz_h[t], fz_l[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -29795,12 +29795,12 @@ fn sv_sin(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -29888,12 +29888,12 @@ fn sv_sinh(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -29982,12 +29982,12 @@ fn sv_sma(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -30075,12 +30075,12 @@ fn sv_sqrt(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -30170,12 +30170,12 @@ fn sv_stddev(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -30285,14 +30285,14 @@ fn sv_stoch(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.0.to_bits() != up.0.to_bits() { peek_all = false; }
                             if pk.1.to_bits() != up.1.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.0.to_bits()); } }
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                         } else {
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.0.to_bits()); } }
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                         }
@@ -30397,14 +30397,14 @@ fn sv_stochf(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.0.to_bits() != up.0.to_bits() { peek_all = false; }
                             if pk.1.to_bits() != up.1.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.0.to_bits()); } }
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                         } else {
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.0.to_bits()); } }
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                         }
@@ -30511,14 +30511,14 @@ fn sv_stochrsi(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.0.to_bits() != up.0.to_bits() { peek_all = false; }
                             if pk.1.to_bits() != up.1.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.0.to_bits()); } }
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.0.to_bits()); } }
                             if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
                         }
@@ -30607,12 +30607,12 @@ fn sv_sub(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t], fz_v[t]);
-                            let up = st.update(fz_c[t], fz_v[t]);
+                            let Ok(pk) = st.peek(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t], fz_v[t]);
+                            let Ok(up) = st.update(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -30701,12 +30701,12 @@ fn sv_sum(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -30797,12 +30797,12 @@ fn sv_t3(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -30890,12 +30890,12 @@ fn sv_tan(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -30983,12 +30983,12 @@ fn sv_tanh(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -31078,12 +31078,12 @@ fn sv_tema(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -31171,12 +31171,12 @@ fn sv_trange(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -31265,12 +31265,12 @@ fn sv_trima(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -31360,12 +31360,12 @@ fn sv_trix(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -31454,12 +31454,12 @@ fn sv_tsf(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -31547,12 +31547,12 @@ fn sv_typprice(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -31643,12 +31643,12 @@ fn sv_ultosc(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -31738,12 +31738,12 @@ fn sv_var(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -31832,12 +31832,12 @@ fn sv_vwma(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t], fz_v[t]);
-                            let up = st.update(fz_c[t], fz_v[t]);
+                            let Ok(pk) = st.peek(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t], fz_v[t]);
+                            let Ok(up) = st.update(fz_c[t], fz_v[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -31925,12 +31925,12 @@ fn sv_wad(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -32018,12 +32018,12 @@ fn sv_wclprice(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -32112,12 +32112,12 @@ fn sv_willr(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_h[t], fz_l[t], fz_c[t]);
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(pk) = st.peek(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_h[t], fz_l[t], fz_c[t]);
+                            let Ok(up) = st.update(fz_h[t], fz_l[t], fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }
@@ -32206,12 +32206,12 @@ fn sv_wma(core: &Core, params: &Value) -> String {
                     if sv_xtier_ne(v0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
                     for t in p..svN {
                         if t % 7 == 0 {
-                            let pk = st.peek(fz_c[t]);
-                            let up = st.update(fz_c[t]);
+                            let Ok(pk) = st.peek(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if pk.to_bits() != up.to_bits() { peek_all = false; }
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         } else {
-                            let up = st.update(fz_c[t]);
+                            let Ok(up) = st.update(fz_c[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
                             if sv_xtier_ne(up, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.to_bits()); } }
                         }
                     }

@@ -702,10 +702,20 @@
       private static final ThreadLocal<MAVP_Stream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public double update( double inReal, double inPeriods ) {
+         if( !Double.isFinite(inReal) || !Double.isFinite(inPeriods) )
+            throw new IllegalArgumentException("MAVP update: BadParam");
          core.MAVP_StreamStep(this, inReal, inPeriods);
          return this.cur_outReal;
       }
@@ -720,6 +730,8 @@
        * the thread.
        */
       public double peek( double inReal, double inPeriods ) {
+         if( !Double.isFinite(inReal) || !Double.isFinite(inPeriods) )
+            throw new IllegalArgumentException("MAVP peek: BadParam");
          MAVP_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new MAVP_Stream(this);
@@ -918,6 +930,14 @@
     */
    public MAVP_Stream MAVP_Open( double inReal[], double inPeriods[], int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
+      if( inReal.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal[taFiniteIdx]) )
+               throw new IllegalArgumentException("MAVP open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inPeriods.length; taFiniteIdx++ )
+            if( !Double.isFinite(inPeriods[taFiniteIdx]) )
+               throw new IllegalArgumentException("MAVP open: BadParam");
+      }
       return MAVP_OpenInternal(inReal, inPeriods, 0, optInMinPeriod, optInMaxPeriod, optInMAType);
    }
    /**
@@ -931,6 +951,14 @@
     */
    public MAVP_Stream MAVP_OpenAndFill( double inReal[], double inPeriods[], int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, double outReal[] )
    {
+      if( inReal.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
+            if( !Double.isFinite(inReal[taFiniteIdx]) )
+               throw new IllegalArgumentException("MAVP openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inPeriods.length; taFiniteIdx++ )
+            if( !Double.isFinite(inPeriods[taFiniteIdx]) )
+               throw new IllegalArgumentException("MAVP openAndFill: BadParam");
+      }
       MAVP_Stream sp = new MAVP_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

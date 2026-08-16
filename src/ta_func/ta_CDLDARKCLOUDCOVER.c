@@ -344,7 +344,7 @@ static TA_RetCode TA_CDLDARKCLOUDCOVER_OpenCore( struct TA_CDLDARKCLOUDCOVER_Str
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( optInPenetration == TA_REAL_DEFAULT )
       optInPenetration = 0.5;
-   else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX )
+   else if( !(optInPenetration >= 0e0 && optInPenetration <= TA_REAL_MAX) )
       return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
@@ -495,6 +495,19 @@ TA_RetCode TA_CDLDARKCLOUDCOVER_OpenInternal( struct TA_CDLDARKCLOUDCOVER_Stream
 
 TA_LIB_API TA_RetCode TA_CDLDARKCLOUDCOVER_Open( TA_CDLDARKCLOUDCOVER_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, double optInPenetration, int *outInteger )
 {
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inOpen[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inHigh[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inLow[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inClose[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_CDLDARKCLOUDCOVER_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, optInPenetration, outInteger );
 }
 
@@ -503,7 +516,18 @@ TA_LIB_API TA_RetCode TA_CDLDARKCLOUDCOVER_OpenAndFill( TA_CDLDARKCLOUDCOVER_Str
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
    if( !outBegIdx || !outNBElement || !outInteger ) return TA_BAD_PARAM;
+   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
+   {
+      int taFiniteIdx;
+      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
+         if( !TA_IS_FINITE( inOpen[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inHigh[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inLow[taFiniteIdx] ) ||
+             !TA_IS_FINITE( inClose[taFiniteIdx] ) ) return TA_BAD_PARAM;
+   }
    return TA_CDLDARKCLOUDCOVER_OpenCore( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, optInPenetration, outBegIdx, outNBElement, outInteger, 1 );
 }
 
@@ -516,6 +540,7 @@ TA_RetCode TA_CDLDARKCLOUDCOVER_OpenAndFillInternal( struct TA_CDLDARKCLOUDCOVER
 TA_LIB_API TA_RetCode TA_CDLDARKCLOUDCOVER_Update( TA_CDLDARKCLOUDCOVER_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    TA_CDLDARKCLOUDCOVER_StepInternal( stream, inOpen, inHigh, inLow, inClose, outInteger );
    return TA_SUCCESS;
 }
@@ -525,6 +550,7 @@ TA_LIB_API TA_RetCode TA_CDLDARKCLOUDCOVER_Peek( const TA_CDLDARKCLOUDCOVER_Stre
    struct TA_CDLDARKCLOUDCOVER_Stream scratch;
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    scratch = *stream;
    scratch.ring_BodyLongTrailingIdx_inOpen = stream->ringMirror_BodyLongTrailingIdx_inOpen;
    memcpy( scratch.ring_BodyLongTrailingIdx_inOpen, stream->ring_BodyLongTrailingIdx_inOpen, sizeof(double) * (size_t)(stream->ringCap_BodyLongTrailingIdx > 0 ? stream->ringCap_BodyLongTrailingIdx : 1) );

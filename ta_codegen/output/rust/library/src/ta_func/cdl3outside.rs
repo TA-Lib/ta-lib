@@ -387,12 +387,18 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.CDL3OUTSIDE_Open(&open, &high, &low, &close).expect("enough history");
-    /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
-    /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
+    /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9).expect("a finite bar");
+    /// let updated = s.update(100.2, 101.4, 99.1, 100.9).expect("a finite bar");
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDL3OUTSIDE_Open")]
     pub fn CDL3OUTSIDE_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDL3OUTSIDE_Stream, i32), RetCode> {
+        if inOpen.iter().any(|v| !v.is_finite())
+            || inHigh.iter().any(|v| !v.is_finite())
+            || inLow.iter().any(|v| !v.is_finite())
+            || inClose.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.CDL3OUTSIDE_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
@@ -403,6 +409,12 @@ impl Core {
     pub fn CDL3OUTSIDE_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
     ) -> Result<CDL3OUTSIDE_Stream, RetCode> {
+        if inOpen.iter().any(|v| !v.is_finite())
+            || inHigh.iter().any(|v| !v.is_finite())
+            || inLow.iter().any(|v| !v.is_finite())
+            || inClose.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.CDL3OUTSIDE_OpenCore(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1)
     }
 
@@ -419,12 +431,25 @@ impl Core {
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl CDL3OUTSIDE_Stream {
-    /// Commit one closed bar; always produces a value. Never allocates.
+    /// Commit one closed bar. Never allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite (NaN or ±Inf).
+    /// That check runs before anything is written, so the handle is left
+    /// exactly as it was and the stream stays usable:
+    /// skip the bar, or close and re-open on a clean history. This is the
+    /// one place the streaming tier is stricter than the batch API, which
+    /// computes on whatever it is given — a handle retains its state, so a
+    /// single non-finite bar would poison every later value it produces.
     #[doc(alias = "TA_CDL3OUTSIDE_Update")]
-    pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
+    pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> Result<i32, RetCode> {
+        if !inOpen.is_finite() || !inHigh.is_finite() || !inLow.is_finite() || !inClose.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut outInteger: i32 = 0_i32;
         self.core.CDL3OUTSIDE_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
-        outInteger
+        Ok(outInteger)
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
@@ -432,9 +457,16 @@ impl CDL3OUTSIDE_Stream {
     /// on a scratch copy of the state). Never writes the handle, so peeks may
     /// run concurrently with each other. This handle holds only scalars, so the copy is a
     /// few machine words and `peek` never allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite, exactly as
+    /// `update` rejects it.
     #[doc(alias = "TA_CDL3OUTSIDE_Peek")]
-    #[must_use]
-    pub fn peek(&self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
+    pub fn peek(&self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> Result<i32, RetCode> {
+        if !inOpen.is_finite() || !inHigh.is_finite() || !inLow.is_finite() || !inClose.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut scratch = self.clone();
         scratch.update(inOpen, inHigh, inLow, inClose)
     }

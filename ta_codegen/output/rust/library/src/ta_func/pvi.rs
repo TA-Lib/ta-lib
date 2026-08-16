@@ -403,12 +403,16 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.PVI_Open(&close, &volume).expect("enough history");
-    /// let peeked = s.peek(100.9, 12_345.0);
-    /// let updated = s.update(100.9, 12_345.0);
+    /// let peeked = s.peek(100.9, 12_345.0).expect("a finite bar");
+    /// let updated = s.update(100.9, 12_345.0).expect("a finite bar");
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_PVI_Open")]
     pub fn PVI_Open(&self, inClose: &[f64], inVolume: &[f64], ) -> Result<(PVI_Stream, f64), RetCode> {
+        if inClose.iter().any(|v| !v.is_finite())
+            || inVolume.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.PVI_OpenInternal(inClose, inVolume, 0)
     }
 
@@ -419,6 +423,10 @@ impl Core {
     pub fn PVI_OpenAndFill(
         &self, inClose: &[f64], inVolume: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<PVI_Stream, RetCode> {
+        if inClose.iter().any(|v| !v.is_finite())
+            || inVolume.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.PVI_OpenCore(inClose, inVolume, 0, outBegIdx, outNBElement, outReal, 1)
     }
 
@@ -435,12 +443,25 @@ impl Core {
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl PVI_Stream {
-    /// Commit one closed bar; always produces a value. Never allocates.
+    /// Commit one closed bar. Never allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite (NaN or ±Inf).
+    /// That check runs before anything is written, so the handle is left
+    /// exactly as it was and the stream stays usable:
+    /// skip the bar, or close and re-open on a clean history. This is the
+    /// one place the streaming tier is stricter than the batch API, which
+    /// computes on whatever it is given — a handle retains its state, so a
+    /// single non-finite bar would poison every later value it produces.
     #[doc(alias = "TA_PVI_Update")]
-    pub fn update(&mut self, inClose: f64, inVolume: f64) -> f64 {
+    pub fn update(&mut self, inClose: f64, inVolume: f64) -> Result<f64, RetCode> {
+        if !inClose.is_finite() || !inVolume.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut outReal: f64 = 0.0_f64;
         self.core.PVI_step_internal(&mut self.state, inClose, inVolume, &mut outReal);
-        outReal
+        Ok(outReal)
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
@@ -448,9 +469,16 @@ impl PVI_Stream {
     /// on a scratch copy of the state). Never writes the handle, so peeks may
     /// run concurrently with each other. This handle holds only scalars, so the copy is a
     /// few machine words and `peek` never allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite, exactly as
+    /// `update` rejects it.
     #[doc(alias = "TA_PVI_Peek")]
-    #[must_use]
-    pub fn peek(&self, inClose: f64, inVolume: f64) -> f64 {
+    pub fn peek(&self, inClose: f64, inVolume: f64) -> Result<f64, RetCode> {
+        if !inClose.is_finite() || !inVolume.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut scratch = self.clone();
         scratch.update(inClose, inVolume)
     }

@@ -20,6 +20,12 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   same bar — verified per function, per bar, in all four languages. `OpenAndFill`
   opens a stream and fills the whole history's output in one pass, for callers
   who want both. Available for every indicator that has one.
+
+  One place the streaming API is deliberately stricter than the batch one: a
+  non-finite input (NaN or an infinity) is **rejected** rather than computed on,
+  at open and at every bar, and the handle is left unchanged so the stream stays
+  usable. A stream carries state forward, so one bad bar from a feed would
+  otherwise poison every value it produces afterwards.
 - (#81) Microsoft VCPKG support. Thanks @greenTableWork !
 - (#78) CMake can now opt out of building the static or the shared library (both built by default). Thanks @BwL1289 !
 - (#75) More docs for DEMA, TEMA, T3, MFI, ULTOSC, KAMA and TRIX. Thanks @nehemiah888 !

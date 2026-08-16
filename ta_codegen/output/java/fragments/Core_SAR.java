@@ -645,10 +645,20 @@
       }
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public double update( double inHigh, double inLow ) {
+         if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
+            throw new IllegalArgumentException("SAR update: BadParam");
          core.SAR_StreamStep(this, inHigh, inLow);
          return this.cur_outReal;
       }
@@ -661,6 +671,8 @@
        * handle's shape is cheaper than reusing one.
        */
       public double peek( double inHigh, double inLow ) {
+         if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
+            throw new IllegalArgumentException("SAR peek: BadParam");
          SAR_Stream scratch = new SAR_Stream(this);
          core.SAR_StreamStep(scratch, inHigh, inLow);
          return scratch.cur_outReal;
@@ -826,12 +838,12 @@
       }
       if( optInAcceleration == REAL_DEFAULT ) {
          optInAcceleration = 2e-2;
-      } else if( optInAcceleration < 0e0 || optInAcceleration > REAL_MAX ) {
+      } else if( !(optInAcceleration >= 0e0 && optInAcceleration <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInMaximum == REAL_DEFAULT ) {
          optInMaximum = 2e-1;
-      } else if( optInMaximum < 0e0 || optInMaximum > REAL_MAX ) {
+      } else if( !(optInMaximum >= 0e0 && optInMaximum <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       /* > 0 indicates long. == 0 indicates short */
@@ -1122,6 +1134,14 @@
     */
    public SAR_Stream SAR_Open( double inHigh[], double inLow[], double optInAcceleration, double optInMaximum )
    {
+      if( inHigh.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
+            if( !Double.isFinite(inHigh[taFiniteIdx]) )
+               throw new IllegalArgumentException("SAR open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
+            if( !Double.isFinite(inLow[taFiniteIdx]) )
+               throw new IllegalArgumentException("SAR open: BadParam");
+      }
       return SAR_OpenInternal(inHigh, inLow, 0, optInAcceleration, optInMaximum);
    }
    /**
@@ -1135,6 +1155,14 @@
     */
    public SAR_Stream SAR_OpenAndFill( double inHigh[], double inLow[], double optInAcceleration, double optInMaximum, double outReal[] )
    {
+      if( inHigh.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
+            if( !Double.isFinite(inHigh[taFiniteIdx]) )
+               throw new IllegalArgumentException("SAR openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
+            if( !Double.isFinite(inLow[taFiniteIdx]) )
+               throw new IllegalArgumentException("SAR openAndFill: BadParam");
+      }
       SAR_Stream sp = new SAR_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

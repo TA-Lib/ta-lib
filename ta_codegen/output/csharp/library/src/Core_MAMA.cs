@@ -1248,15 +1248,22 @@ public partial class Core
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
       [ThreadStatic] private static MAMA_Stream? peekScratch;
 
-      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
-      /// <para>Never throws after a successful open, and allocates nothing — neither
-      /// handle state nor a return value.</para>
+      /// <para>Allocates nothing — neither handle state nor a return value.</para>
+      /// <para>Throws <see cref="System.ArgumentException"/> if any bar value is not
+      /// finite (NaN or an infinity). That check runs before anything is written,
+      /// so the handle is left exactly as it was and the stream stays usable: skip
+      /// the bar, or re-open on a clean history. This is the one place the
+      /// streaming tier is stricter than the batch API, which computes on whatever
+      /// it is given: a handle retains its state, so a single non-finite bar would
+      /// poison every later value it produces.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>The value at the bar just committed.</returns>
       public MAMA_Value Update( double inReal )
       {
+         if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MAMA", "update", RetCode.BadParam);
          core.MAMA_StreamStep(this, inReal);
          return new MAMA_Value(cur_outMAMA, cur_outFAMA);
       }
@@ -1274,6 +1281,7 @@ public partial class Core
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public MAMA_Value Peek( double inReal )
       {
+         if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MAMA", "peek", RetCode.BadParam);
          MAMA_Stream? scratch = peekScratch;
          if( scratch is null ) {
             scratch = new MAMA_Stream(this);
@@ -1558,12 +1566,12 @@ public partial class Core
       }
       if( optInFastLimit == TA_REAL_DEFAULT ) {
          optInFastLimit = 5e-1;
-      } else if( optInFastLimit < 1e-2 || optInFastLimit > 9.9e-1 ) {
+      } else if( !(optInFastLimit >= 1e-2 && optInFastLimit <= 9.9e-1) ) {
          return RetCode.BadParam;
       }
       if( optInSlowLimit == TA_REAL_DEFAULT ) {
          optInSlowLimit = 5e-2;
-      } else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 ) {
+      } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
          return RetCode.BadParam;
       }
       a = 0.0962;
@@ -2008,6 +2016,8 @@ public partial class Core
    public MAMA_Stream MAMA_Open( ReadOnlySpan<double> inReal, double optInFastLimit, double optInSlowLimit )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      foreach( double taFiniteV in inReal )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MAMA", "open", RetCode.BadParam);
       return MAMA_OpenInternal(inReal, 0, optInFastLimit, optInSlowLimit);
    }
 
@@ -2042,6 +2052,8 @@ public partial class Core
    public MAMA_Stream MAMA_OpenAndFill( ReadOnlySpan<double> inReal, double optInFastLimit, double optInSlowLimit, Span<double> outMAMA, Span<double> outFAMA )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      foreach( double taFiniteV in inReal )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MAMA", "openAndFill", RetCode.BadParam);
       MAMA_Stream sp = new MAMA_Stream(this);
       RetCode retCode = MAMA_OpenAndFillBody(sp, inReal, optInFastLimit, optInSlowLimit, out int outBegIdx, out int outNBElement, outMAMA, outFAMA);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

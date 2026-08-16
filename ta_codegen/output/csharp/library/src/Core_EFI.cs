@@ -498,16 +498,23 @@ public partial class Core
          this.fillRange = other.fillRange;
       }
 
-      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
-      /// <para>Never throws after a successful open, and allocates nothing — neither
-      /// handle state nor a return value.</para>
+      /// <para>Allocates nothing — neither handle state nor a return value.</para>
+      /// <para>Throws <see cref="System.ArgumentException"/> if any bar value is not
+      /// finite (NaN or an infinity). That check runs before anything is written,
+      /// so the handle is left exactly as it was and the stream stays usable: skip
+      /// the bar, or re-open on a clean history. This is the one place the
+      /// streaming tier is stricter than the batch API, which computes on whatever
+      /// it is given: a handle retains its state, so a single non-finite bar would
+      /// poison every later value it produces.</para>
       /// </remarks>
       /// <param name="inClose">This bar's close price.</param>
       /// <param name="inVolume">This bar's volume.</param>
       /// <returns>The value at the bar just committed.</returns>
       public double Update( double inClose, double inVolume )
       {
+         if( !double.IsFinite(inClose) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("EFI", "update", RetCode.BadParam);
          core.EFI_StreamStep(this, inClose, inVolume);
          return cur_outReal;
       }
@@ -526,6 +533,7 @@ public partial class Core
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public double Peek( double inClose, double inVolume )
       {
+         if( !double.IsFinite(inClose) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("EFI", "peek", RetCode.BadParam);
          EFI_Stream scratch = new EFI_Stream(this);
          core.EFI_StreamStep(scratch, inClose, inVolume);
          return scratch.cur_outReal;
@@ -835,6 +843,10 @@ public partial class Core
    {
       if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
+      foreach( double taFiniteV in inClose )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("EFI", "open", RetCode.BadParam);
+      foreach( double taFiniteV in inVolume )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("EFI", "open", RetCode.BadParam);
       return EFI_OpenInternal(inClose, inVolume, 0, optInTimePeriod);
    }
 
@@ -867,6 +879,10 @@ public partial class Core
    {
       if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
+      foreach( double taFiniteV in inClose )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("EFI", "openAndFill", RetCode.BadParam);
+      foreach( double taFiniteV in inVolume )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("EFI", "openAndFill", RetCode.BadParam);
       EFI_Stream sp = new EFI_Stream(this);
       RetCode retCode = EFI_OpenAndFillBody(sp, inClose, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

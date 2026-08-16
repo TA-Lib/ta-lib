@@ -503,15 +503,22 @@ public partial class Core
          this.fillRange = other.fillRange;
       }
 
-      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
-      /// <para>Never throws after a successful open, and allocates nothing — neither
-      /// handle state nor a return value.</para>
+      /// <para>Allocates nothing — neither handle state nor a return value.</para>
+      /// <para>Throws <see cref="System.ArgumentException"/> if any bar value is not
+      /// finite (NaN or an infinity). That check runs before anything is written,
+      /// so the handle is left exactly as it was and the stream stays usable: skip
+      /// the bar, or re-open on a clean history. This is the one place the
+      /// streaming tier is stricter than the batch API, which computes on whatever
+      /// it is given: a handle retains its state, so a single non-finite bar would
+      /// poison every later value it produces.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>The value at the bar just committed.</returns>
       public MINMAXINDEX_Value Update( double inReal )
       {
+         if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MINMAXINDEX", "update", RetCode.BadParam);
          core.MINMAXINDEX_StreamStep(this, inReal);
          return new MINMAXINDEX_Value(cur_outMinIdx, cur_outMaxIdx);
       }
@@ -529,6 +536,7 @@ public partial class Core
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public MINMAXINDEX_Value Peek( double inReal )
       {
+         if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MINMAXINDEX", "peek", RetCode.BadParam);
          MINMAXINDEX_Stream scratch = new MINMAXINDEX_Stream(this);
          core.MINMAXINDEX_StreamStep(scratch, inReal);
          return new MINMAXINDEX_Value(scratch.cur_outMinIdx, scratch.cur_outMaxIdx);
@@ -794,6 +802,8 @@ public partial class Core
    public MINMAXINDEX_Stream MINMAXINDEX_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      foreach( double taFiniteV in inReal )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MINMAXINDEX", "open", RetCode.BadParam);
       return MINMAXINDEX_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -827,6 +837,8 @@ public partial class Core
    public MINMAXINDEX_Stream MINMAXINDEX_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<int> outMinIdx, Span<int> outMaxIdx )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      foreach( double taFiniteV in inReal )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MINMAXINDEX", "openAndFill", RetCode.BadParam);
       MINMAXINDEX_Stream sp = new MINMAXINDEX_Stream(this);
       RetCode retCode = MINMAXINDEX_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outMinIdx, outMaxIdx);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

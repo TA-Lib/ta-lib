@@ -354,20 +354,21 @@ impl STOCHRSI_StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn STOCHRSI_step_internal(&self, sp: &mut STOCHRSI_StreamState, inReal: f64, outFastK: &mut f64, outFastD: &mut f64) {
+    fn STOCHRSI_step_internal(&self, sp: &mut STOCHRSI_StreamState, inReal: f64, outFastK: &mut f64, outFastD: &mut f64) -> Result<(), RetCode> {
         let mut cur_tempRSIBuffer: f64 = 0.0_f64;
         let mut cur_outFastK: f64 = 0.0_f64;
         let mut cur_outFastD: f64 = 0.0_f64;
 
         // Pipeline the new bar through the sub-streams (batch tail order).
-        cur_tempRSIBuffer = sp.sub0.update(inReal);
+        cur_tempRSIBuffer = sp.sub0.update(inReal)?;
         {
-            let _sub_out = sp.sub1.update(cur_tempRSIBuffer, cur_tempRSIBuffer, cur_tempRSIBuffer);
+            let _sub_out = sp.sub1.update(cur_tempRSIBuffer, cur_tempRSIBuffer, cur_tempRSIBuffer)?;
             cur_outFastK = _sub_out.0;
             cur_outFastD = _sub_out.1;
         }
         (*outFastK) = cur_outFastK;
         (*outFastD) = cur_outFastD;
+        Ok(())
     }
 
     /// The single whole-history transcription behind [`Core::STOCHRSI_OpenInternal`]
@@ -528,13 +529,16 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.STOCHRSI_Open(&data, 14, 5, 3, MAType::SMA).expect("enough history");
-    /// let peeked = s.peek(100.9);
-    /// let updated = s.update(100.9);
+    /// let peeked = s.peek(100.9).expect("a finite bar");
+    /// let updated = s.update(100.9).expect("a finite bar");
     /// assert_eq!(peeked.0.to_bits(), updated.0.to_bits());
     /// assert_eq!(peeked.1.to_bits(), updated.1.to_bits());
     /// ```
     #[doc(alias = "TA_STOCHRSI_Open")]
     pub fn STOCHRSI_Open(&self, inReal: &[f64], optInTimePeriod: i32, optInFastK_Period: i32, optInFastD_Period: i32, optInFastD_MAType: MAType) -> Result<(STOCHRSI_Stream, (f64, f64)), RetCode> {
+        if inReal.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.STOCHRSI_OpenInternal(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType)
     }
 
@@ -546,6 +550,9 @@ impl Core {
         &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outFastK: &mut [f64], outFastD: &mut [f64],
     ) -> Result<STOCHRSI_Stream, RetCode> {
         if outFastK.as_ptr() == outFastD.as_ptr() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
         self.STOCHRSI_OpenCore(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1)
@@ -572,13 +579,26 @@ thread_local! {
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl STOCHRSI_Stream {
-    /// Commit one closed bar; always produces a value. Never allocates.
+    /// Commit one closed bar. Never allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite (NaN or ±Inf).
+    /// That check runs before anything is written, so the handle is left
+    /// exactly as it was and the stream stays usable:
+    /// skip the bar, or close and re-open on a clean history. This is the
+    /// one place the streaming tier is stricter than the batch API, which
+    /// computes on whatever it is given — a handle retains its state, so a
+    /// single non-finite bar would poison every later value it produces.
     #[doc(alias = "TA_STOCHRSI_Update")]
-    pub fn update(&mut self, inReal: f64) -> (f64, f64) {
+    pub fn update(&mut self, inReal: f64) -> Result<(f64, f64), RetCode> {
+        if !inReal.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut outFastK: f64 = 0.0_f64;
         let mut outFastD: f64 = 0.0_f64;
-        self.core.STOCHRSI_step_internal(&mut self.state, inReal, &mut outFastK, &mut outFastD);
-        (outFastK, outFastD)
+        self.core.STOCHRSI_step_internal(&mut self.state, inReal, &mut outFastK, &mut outFastD)?;
+        Ok((outFastK, outFastD))
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
@@ -586,9 +606,16 @@ impl STOCHRSI_Stream {
     /// on a scratch copy of the state). Never writes the handle, so peeks may
     /// run concurrently with each other. The copy it runs on is held per thread and reused,
     /// so only the first peek of this function on a thread allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite, exactly as
+    /// `update` rejects it.
     #[doc(alias = "TA_STOCHRSI_Peek")]
-    #[must_use]
-    pub fn peek(&self, inReal: f64) -> (f64, f64) {
+    pub fn peek(&self, inReal: f64) -> Result<(f64, f64), RetCode> {
+        if !inReal.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         STOCHRSI_PEEK_SCRATCH.with(|cell| {
             let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
             scratch.restore_from(self);

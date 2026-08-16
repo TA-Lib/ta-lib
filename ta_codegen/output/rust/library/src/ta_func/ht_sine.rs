@@ -1485,13 +1485,16 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.HT_SINE_Open(&data).expect("enough history");
-    /// let peeked = s.peek(100.9);
-    /// let updated = s.update(100.9);
+    /// let peeked = s.peek(100.9).expect("a finite bar");
+    /// let updated = s.update(100.9).expect("a finite bar");
     /// assert_eq!(peeked.0.to_bits(), updated.0.to_bits());
     /// assert_eq!(peeked.1.to_bits(), updated.1.to_bits());
     /// ```
     #[doc(alias = "TA_HT_SINE_Open")]
     pub fn HT_SINE_Open(&self, inReal: &[f64], ) -> Result<(HT_SINE_Stream, (f64, f64)), RetCode> {
+        if inReal.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.HT_SINE_OpenInternal(inReal, 0)
     }
 
@@ -1503,6 +1506,9 @@ impl Core {
         &self, inReal: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outSine: &mut [f64], outLeadSine: &mut [f64],
     ) -> Result<HT_SINE_Stream, RetCode> {
         if outSine.as_ptr() == outLeadSine.as_ptr() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
         self.HT_SINE_OpenCore(inReal, 0, outBegIdx, outNBElement, outSine, outLeadSine, 1)
@@ -1529,13 +1535,26 @@ thread_local! {
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl HT_SINE_Stream {
-    /// Commit one closed bar; always produces a value. Never allocates.
+    /// Commit one closed bar. Never allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite (NaN or ±Inf).
+    /// That check runs before anything is written, so the handle is left
+    /// exactly as it was and the stream stays usable:
+    /// skip the bar, or close and re-open on a clean history. This is the
+    /// one place the streaming tier is stricter than the batch API, which
+    /// computes on whatever it is given — a handle retains its state, so a
+    /// single non-finite bar would poison every later value it produces.
     #[doc(alias = "TA_HT_SINE_Update")]
-    pub fn update(&mut self, inReal: f64) -> (f64, f64) {
+    pub fn update(&mut self, inReal: f64) -> Result<(f64, f64), RetCode> {
+        if !inReal.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut outSine: f64 = 0.0_f64;
         let mut outLeadSine: f64 = 0.0_f64;
         self.core.HT_SINE_step_internal(&mut self.state, inReal, &mut outSine, &mut outLeadSine);
-        (outSine, outLeadSine)
+        Ok((outSine, outLeadSine))
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
@@ -1543,9 +1562,16 @@ impl HT_SINE_Stream {
     /// on a scratch copy of the state). Never writes the handle, so peeks may
     /// run concurrently with each other. The copy it runs on is held per thread and reused,
     /// so only the first peek of this function on a thread allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite, exactly as
+    /// `update` rejects it.
     #[doc(alias = "TA_HT_SINE_Peek")]
-    #[must_use]
-    pub fn peek(&self, inReal: f64) -> (f64, f64) {
+    pub fn peek(&self, inReal: f64) -> Result<(f64, f64), RetCode> {
+        if !inReal.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         HT_SINE_PEEK_SCRATCH.with(|cell| {
             let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
             scratch.restore_from(self);

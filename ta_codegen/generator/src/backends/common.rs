@@ -21,6 +21,45 @@ pub const TA_INTEGER_MIN: i32 = i32::MIN + 1;
 pub const TA_INTEGER_MAX: i32 = i32::MAX;
 pub const TA_INTEGER_DEFAULT: i32 = i32::MIN;
 
+/// How a real optional parameter's declared range is tested.
+///
+/// Both spellings cost the same two comparisons; they differ only on NaN, and
+/// that difference is the whole point.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(crate) enum RealRangeTest {
+    /// `x < min || x > max` — what the pre-cutover reference emitted, and what the
+    /// batch tier still emits. Every declared bound is finite (±3e37 at the widest),
+    /// so this rejects ±Inf; it **admits NaN**, because both comparisons are false
+    /// for NaN. That is the batch tier's documented "no filtering" behaviour.
+    Legacy,
+    /// `!(x >= min && x <= max)` — the same two comparisons with the sense inverted,
+    /// so NaN falls out of the conjunction and is rejected along with ±Inf. The
+    /// streaming tier's boundary contract: nothing non-finite enters a live handle.
+    RejectNonFinite,
+}
+
+impl RealRangeTest {
+    /// The range rejection condition for `name` over `[lo, hi]`, already rendered
+    /// in the backend's syntax (the three languages agree on all four operators).
+    pub(crate) fn reject_cond(self, name: &str, lo: &str, hi: &str) -> String {
+        self.reject_cond_styled(name, lo, hi, false)
+    }
+
+    /// [`Self::reject_cond`] with each comparison parenthesized. Rust's emitter
+    /// has always spelled the legacy test `(x < lo) || (x > hi)`; keeping that
+    /// exactly is what makes the batch tier BYTE-identical across this change
+    /// rather than merely equivalent — a reviewer reading the regen diff should
+    /// not have to decide whether 48 changed batch lines are cosmetic.
+    pub(crate) fn reject_cond_styled(self, name: &str, lo: &str, hi: &str, paren: bool) -> String {
+        match (self, paren) {
+            (Self::Legacy, false) => format!("{name} < {lo} || {name} > {hi}"),
+            (Self::Legacy, true) => format!("({name} < {lo}) || ({name} > {hi})"),
+            (Self::RejectNonFinite, false) => format!("!({name} >= {lo} && {name} <= {hi})"),
+            (Self::RejectNonFinite, true) => format!("!(({name} >= {lo}) && ({name} <= {hi}))"),
+        }
+    }
+}
+
 /// Render a real range bound: the `REAL_MIN`/`REAL_MAX` sentinels by name, anything
 /// else as a literal. `prefix` is the backend's namespace (`"TA_"` for C, empty for
 /// Rust and Java, whose crate and package already namespace them) — so the generated

@@ -533,15 +533,22 @@ public partial class Core
       /* Peek's reusable scratch — one per thread, see CopyFrom. */
       [ThreadStatic] private static STOCHRSI_Stream? peekScratch;
 
-      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
-      /// <para>Never throws after a successful open, and allocates nothing — neither
-      /// handle state nor a return value.</para>
+      /// <para>Allocates nothing — neither handle state nor a return value.</para>
+      /// <para>Throws <see cref="System.ArgumentException"/> if any bar value is not
+      /// finite (NaN or an infinity). That check runs before anything is written,
+      /// so the handle is left exactly as it was and the stream stays usable: skip
+      /// the bar, or re-open on a clean history. This is the one place the
+      /// streaming tier is stricter than the batch API, which computes on whatever
+      /// it is given: a handle retains its state, so a single non-finite bar would
+      /// poison every later value it produces.</para>
       /// </remarks>
       /// <param name="inReal">This bar's value for <c>inReal</c>.</param>
       /// <returns>The value at the bar just committed.</returns>
       public STOCHRSI_Value Update( double inReal )
       {
+         if( !double.IsFinite(inReal) ) throw Core.StreamFailure("STOCHRSI", "update", RetCode.BadParam);
          core.STOCHRSI_StreamStep(this, inReal);
          return new STOCHRSI_Value(cur_outFastK, cur_outFastD);
       }
@@ -559,6 +566,7 @@ public partial class Core
       /// <returns>What <see cref="Update"/> would return for this bar.</returns>
       public STOCHRSI_Value Peek( double inReal )
       {
+         if( !double.IsFinite(inReal) ) throw Core.StreamFailure("STOCHRSI", "peek", RetCode.BadParam);
          STOCHRSI_Stream? scratch = peekScratch;
          if( scratch is null ) {
             scratch = new STOCHRSI_Stream(this);
@@ -796,6 +804,8 @@ public partial class Core
    public STOCHRSI_Stream STOCHRSI_Open( ReadOnlySpan<double> inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      foreach( double taFiniteV in inReal )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("STOCHRSI", "open", RetCode.BadParam);
       return STOCHRSI_OpenInternal(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
    }
 
@@ -835,6 +845,8 @@ public partial class Core
    public STOCHRSI_Stream STOCHRSI_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, Span<double> outFastK, Span<double> outFastD )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      foreach( double taFiniteV in inReal )
+         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("STOCHRSI", "openAndFill", RetCode.BadParam);
       STOCHRSI_Stream sp = new STOCHRSI_Stream(this);
       RetCode retCode = STOCHRSI_OpenAndFillBody(sp, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out int outBegIdx, out int outNBElement, outFastK, outFastD);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

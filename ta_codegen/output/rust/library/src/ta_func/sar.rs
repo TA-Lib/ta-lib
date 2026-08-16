@@ -644,12 +644,12 @@ impl Core {
         }
         if optInAcceleration == REAL_DEFAULT {
             optInAcceleration = 2e-2;
-        } else if (optInAcceleration < 0e0) || (optInAcceleration > REAL_MAX) {
+        } else if !((optInAcceleration >= 0e0) && (optInAcceleration <= REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
         if optInMaximum == REAL_DEFAULT {
             optInMaximum = 2e-1;
-        } else if (optInMaximum < 0e0) || (optInMaximum > REAL_MAX) {
+        } else if !((optInMaximum >= 0e0) && (optInMaximum <= REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inHigh.len();
@@ -915,12 +915,16 @@ impl Core {
     ///
     /// let core = Core::new();
     /// let (mut s, _last) = core.SAR_Open(&high, &low, 0.02, 0.2).expect("enough history");
-    /// let peeked = s.peek(101.4, 99.1);
-    /// let updated = s.update(101.4, 99.1);
+    /// let peeked = s.peek(101.4, 99.1).expect("a finite bar");
+    /// let updated = s.update(101.4, 99.1).expect("a finite bar");
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_SAR_Open")]
     pub fn SAR_Open(&self, inHigh: &[f64], inLow: &[f64], optInAcceleration: f64, optInMaximum: f64) -> Result<(SAR_Stream, f64), RetCode> {
+        if inHigh.iter().any(|v| !v.is_finite())
+            || inLow.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.SAR_OpenInternal(inHigh, inLow, 0, optInAcceleration, optInMaximum)
     }
 
@@ -931,6 +935,10 @@ impl Core {
     pub fn SAR_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], mut optInAcceleration: f64, mut optInMaximum: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<SAR_Stream, RetCode> {
+        if inHigh.iter().any(|v| !v.is_finite())
+            || inLow.iter().any(|v| !v.is_finite()) {
+            return Err(RetCode::BadParam);
+        }
         self.SAR_OpenCore(inHigh, inLow, 0, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal, 1)
     }
 
@@ -947,12 +955,25 @@ impl Core {
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl SAR_Stream {
-    /// Commit one closed bar; always produces a value. Never allocates.
+    /// Commit one closed bar. Never allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite (NaN or ±Inf).
+    /// That check runs before anything is written, so the handle is left
+    /// exactly as it was and the stream stays usable:
+    /// skip the bar, or close and re-open on a clean history. This is the
+    /// one place the streaming tier is stricter than the batch API, which
+    /// computes on whatever it is given — a handle retains its state, so a
+    /// single non-finite bar would poison every later value it produces.
     #[doc(alias = "TA_SAR_Update")]
-    pub fn update(&mut self, inHigh: f64, inLow: f64) -> f64 {
+    pub fn update(&mut self, inHigh: f64, inLow: f64) -> Result<f64, RetCode> {
+        if !inHigh.is_finite() || !inLow.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut outReal: f64 = 0.0_f64;
         self.core.SAR_step_internal(&mut self.state, inHigh, inLow, &mut outReal);
-        outReal
+        Ok(outReal)
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
@@ -960,9 +981,16 @@ impl SAR_Stream {
     /// on a scratch copy of the state). Never writes the handle, so peeks may
     /// run concurrently with each other. This handle holds only scalars, so the copy is a
     /// few machine words and `peek` never allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite, exactly as
+    /// `update` rejects it.
     #[doc(alias = "TA_SAR_Peek")]
-    #[must_use]
-    pub fn peek(&self, inHigh: f64, inLow: f64) -> f64 {
+    pub fn peek(&self, inHigh: f64, inLow: f64) -> Result<f64, RetCode> {
+        if !inHigh.is_finite() || !inLow.is_finite() {
+            return Err(RetCode::BadParam);
+        }
         let mut scratch = self.clone();
         scratch.update(inHigh, inLow)
     }

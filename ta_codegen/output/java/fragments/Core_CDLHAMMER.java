@@ -612,10 +612,20 @@
       private static final ThreadLocal<CDLHAMMER_Stream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
-       * Commit one closed bar; always produces the new current value.
-       * Never throws after a successful open; never allocates handle state.
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the handle is left exactly as it was —
+       * the stream stays usable, so skip the bar or re-open on a clean
+       * history. This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+         if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+            throw new IllegalArgumentException("CDLHAMMER update: BadParam");
          core.CDLHAMMER_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outInteger;
       }
@@ -630,6 +640,8 @@
        * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
+         if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+            throw new IllegalArgumentException("CDLHAMMER peek: BadParam");
          CDLHAMMER_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new CDLHAMMER_Stream(this);
@@ -1028,6 +1040,20 @@
     */
    public CDLHAMMER_Stream CDLHAMMER_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
+      if( inOpen.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
+            if( !Double.isFinite(inOpen[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLHAMMER open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
+            if( !Double.isFinite(inHigh[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLHAMMER open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
+            if( !Double.isFinite(inLow[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLHAMMER open: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
+            if( !Double.isFinite(inClose[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLHAMMER open: BadParam");
+      }
       return CDLHAMMER_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -1041,6 +1067,20 @@
     */
    public CDLHAMMER_Stream CDLHAMMER_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
+      if( inOpen.length >= 1 ) {
+         for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
+            if( !Double.isFinite(inOpen[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLHAMMER openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
+            if( !Double.isFinite(inHigh[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLHAMMER openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
+            if( !Double.isFinite(inLow[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLHAMMER openAndFill: BadParam");
+         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
+            if( !Double.isFinite(inClose[taFiniteIdx]) )
+               throw new IllegalArgumentException("CDLHAMMER openAndFill: BadParam");
+      }
       CDLHAMMER_Stream sp = new CDLHAMMER_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
