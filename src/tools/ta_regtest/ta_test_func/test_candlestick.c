@@ -3473,6 +3473,614 @@ static void build_dojistar( void )
   pb_flat(8);
 }
 
+/* ---- Moderate tier, unit 4: the penetration family + counterattack -------- *
+ *
+ * Six flat, parameterless patterns, and the first unit where CONDITIONS ARE
+ * ENTAILED BY THEIR SIBLINGS. Every previous unit had a flip for every
+ * condition; these constrain the same prices from several directions at once,
+ * so six of the thirty-six cannot be falsified alone and carry a derivation
+ * instead. Each waiver is refutable in the usual way: produce a flip whose
+ * paired control fires and it is wrong.
+ *
+ * INNECK, ONNECK, THRUSTING and PIERCING share their first conditions
+ * character for character -- prior black, prior long, this white, this opening
+ * below the prior low -- and diverge only in where the closing price has to
+ * land. A model copy-pasted between them agrees on two thirds of its
+ * conditions, which is precisely the case where agreement proves nothing, so
+ * the four are built together and each penetration test is flipped at its OWN
+ * reference point:
+ *
+ *   INNECK     close(i) between close(i-1) and close(i-1) + Equal
+ *   ONNECK     close(i) within +/-Equal of the prior LOW
+ *   THRUSTING  close(i) above close(i-1) + Equal, up to the prior body's midpoint
+ *   PIERCING   close(i) above that same midpoint, below the prior OPEN
+ *
+ * The prior bar is (105,106,96,100) throughout: black, body 5, and a HighLow
+ * of exactly 10 so it leaves the averages at i on their exact values, as in
+ * unit 3. Its close is 100, its low 96, its open 105, and avg(Equal) is 0.5.
+ */
+
+/* CDLINNECK -- the white candle closes just barely into the prior black body.
+ *
+ *   c0  color(i-1) == -1
+ *   c1  realbody(i-1) > avg(BodyLong, i-1)
+ *   c2  color(i) == 1
+ *   c3  open(i) < low(i-1)
+ *   c4  close(i) <= close(i-1) + avg(Equal, i-1)
+ *   c5  close(i) >= close(i-1)
+ *
+ * c4 and c5 are both inclusive, so each is pinned by a control sitting exactly
+ * on it rather than by its flip.
+ */
+static void cond_inneck( int i, int *c )
+{
+   double eq = pb_avg(TA_Equal, i-1);
+   c[0] = !pb_white(i-1);
+   c[1] = pb_body(i-1) > pb_avg(TA_BodyLong, i-1);
+   c[2] = pb_white(i);
+   c[3] = pbO[i] < pbL[i-1];
+   c[4] = pbC[i] <= pbC[i-1] + eq;
+   c[5] = pbC[i] >= pbC[i-1];
+}
+
+static void build_inneck( void )
+{
+  pb_conditions(6);
+
+  pb_waive(2, "c3 puts open(i) below low(i-1), and low(i-1) <= close(i-1) on any bar; "
+              "c5 puts close(i) at or above close(i-1). So close(i) >= close(i-1) >= "
+              "low(i-1) > open(i) and the candle is white by construction");
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);                  /* prior: black, body 12, low 96, close 100 */
+  int d=pb_bar(95,101,94,100.2);
+  pb_detect(d,-100,"detect: prior black long, white opening at 95 < 96, close 100.2 in [100,100.5]");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,96,112);                  /* prior WHITE, close 112 -> band [112,112.5] */
+  int f0=pb_bar(95,113,94,112.2);
+  pb_flip(f0,0,"break c0: the prior candle is white");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int k0=pb_bar(95,101,94,100.2);
+  pb_control(k0,-100,0,"restore c0: the prior candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(102,106,96,100);                  /* prior body 2 == avg */
+  int f1=pb_bar(95,101,94,100.2);
+  pb_flip(f1,1,"break c1: prior body 2 == avg 2, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int k1=pb_bar(95,101,94,100.2);
+  pb_control(k1,-100,1,"restore c1: prior body 12 > 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int f3=pb_bar(96,101,94,100.2);          /* open 96 == the prior low */
+  pb_flip(f3,3,"break c3: open 96 == prior low 96, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int k3=pb_bar(95,101,94,100.2);
+  pb_control(k3,-100,3,"restore c3: open 95 < prior low 96");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int f4=pb_bar(95,101,94,100.6);          /* close above the band top 100.5 */
+  pb_flip(f4,4,"break c4: close 100.6 > band top 100.5");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int k4=pb_bar(95,101,94,100.5);          /* close exactly on it */
+  pb_control(k4,-100,4,"restore c4: close 100.5 == band top, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int f5=pb_bar(95,101,94,99.9);           /* close below the prior close */
+  pb_flip(f5,5,"break c5: close 99.9 < prior close 100");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int k5=pb_bar(95,101,94,100);            /* close exactly on it */
+  pb_control(k5,-100,5,"restore c5: close 100 == prior close, inclusive");
+  pb_flat(8);
+}
+
+/* CDLONNECK -- the white candle closes back at the prior LOW, not its close.
+ *
+ *   c0..c3  identical to INNECK
+ *   c4  close(i) <= low(i-1) + avg(Equal, i-1)
+ *   c5  close(i) >= low(i-1) - avg(Equal, i-1)
+ *
+ * Changing the reference point from the prior close to the prior low is the
+ * whole difference, and it also breaks INNECK's entailment: the band now sits
+ * AT the prior low rather than above the prior close, so a black second candle
+ * is reachable and c2 gets a real flip here where INNECK needs a waiver.
+ */
+static void cond_onneck( int i, int *c )
+{
+   double eq = pb_avg(TA_Equal, i-1);
+   c[0] = !pb_white(i-1);
+   c[1] = pb_body(i-1) > pb_avg(TA_BodyLong, i-1);
+   c[2] = pb_white(i);
+   c[3] = pbO[i] < pbL[i-1];
+   c[4] = pbC[i] <= pbL[i-1] + eq;
+   c[5] = pbC[i] >= pbL[i-1] - eq;
+}
+
+static void build_onneck( void )
+{
+  pb_conditions(6);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);                  /* prior: black, body 12, low 96 -> band [95.5,96.5] */
+  int d=pb_bar(95,97,94,96);
+  pb_detect(d,-100,"detect: white opening at 95 < 96, close 96 in [95.5,96.5]");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,96,112);                  /* prior WHITE, body 12; low still 96, band unchanged */
+  int f0=pb_bar(95,97,94,96);
+  pb_flip(f0,0,"break c0: the prior candle is white");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int k0=pb_bar(95,97,94,96);
+  pb_control(k0,-100,0,"restore c0: the prior candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(102,106,96,100);                  /* prior body 2 == avg */
+  int f1=pb_bar(95,97,94,96);
+  pb_flip(f1,1,"break c1: prior body 2 == avg 2, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int k1=pb_bar(95,97,94,96);
+  pb_control(k1,-100,1,"restore c1: prior body 12 > 2");
+  pb_flat(8);
+
+  /* c2 is flippable here, unlike INNECK: the band reaches BELOW the opening
+   * price, so a black candle can still satisfy c3, c4 and c5. */
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int f2=pb_bar(95.9,97,94,95.5);          /* black: closes under its own open */
+  pb_flip(f2,2,"break c2: this candle is black");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int k2=pb_bar(95,97,94,96);
+  pb_control(k2,-100,2,"restore c2: this candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int f3=pb_bar(96,97,94,96.2);            /* open 96 == the prior low */
+  pb_flip(f3,3,"break c3: open 96 == prior low 96, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int k3=pb_bar(95,97,94,96);
+  pb_control(k3,-100,3,"restore c3: open 95 < prior low 96");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int f4=pb_bar(95,97,94,96.6);            /* close above the band top 96.5 */
+  pb_flip(f4,4,"break c4: close 96.6 > band top 96.5");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int k4=pb_bar(95,97,94,96.5);
+  pb_control(k4,-100,4,"restore c4: close 96.5 == band top, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int f5=pb_bar(95,97,94,95.4);            /* close below the band bottom 95.5 */
+  pb_flip(f5,5,"break c5: close 95.4 < band bottom 95.5");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int k5=pb_bar(95,97,94,95.5);
+  pb_control(k5,-100,5,"restore c5: close 95.5 == band bottom, inclusive");
+  pb_flat(8);
+}
+
+/* CDLTHRUSTING -- the white candle pushes INTO the prior body but stops short
+ * of its midpoint.
+ *
+ *   c0..c3  identical to INNECK
+ *   c4  close(i) >  close(i-1) + avg(Equal, i-1)
+ *   c5  close(i) <= close(i-1) + realbody(i-1) * 0.5
+ *
+ * c4 is INNECK's c4 turned around: where INNECK caps the close just above the
+ * prior close, THRUSTING requires it to be past that point. So the two
+ * patterns are mutually exclusive on the same bars, and a model that borrowed
+ * INNECK's direction would fire on nothing this builder detects.
+ */
+static void cond_thrusting( int i, int *c )
+{
+   double eq = pb_avg(TA_Equal, i-1);
+   c[0] = !pb_white(i-1);
+   c[1] = pb_body(i-1) > pb_avg(TA_BodyLong, i-1);
+   c[2] = pb_white(i);
+   c[3] = pbO[i] < pbL[i-1];
+   c[4] = pbC[i] >  pbC[i-1] + eq;
+   c[5] = pbC[i] <= pbC[i-1] + pb_body(i-1) * 0.5;
+}
+
+static void build_thrusting( void )
+{
+  pb_conditions(6);
+
+  pb_waive(2, "c3 puts open(i) below low(i-1) <= close(i-1), and c4 puts close(i) "
+              "above close(i-1). So close(i) > close(i-1) >= low(i-1) > open(i) and "
+              "the candle is white by construction");
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);                  /* prior: close 100, body 12 -> midpoint 106 */
+  int d=pb_bar(95,103,94,101);
+  pb_detect(d,-100,"detect: white opening at 95 < 96, close 101 in (100.5, 102.5]");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,96,112);                  /* prior WHITE: close 112, body 12 -> midpoint 118 */
+  int f0=pb_bar(95,119,94,113);            /* close 113 in (112.5, 118] */
+  pb_flip(f0,0,"break c0: the prior candle is white");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int k0=pb_bar(95,103,94,101);
+  pb_control(k0,-100,0,"restore c0: the prior candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(102,106,96,100);                  /* prior body 2 == avg -> midpoint 101 */
+  int f1=pb_bar(95,102,94,100.8);
+  pb_flip(f1,1,"break c1: prior body 2 == avg 2, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int k1=pb_bar(95,103,94,101);
+  pb_control(k1,-100,1,"restore c1: prior body 12 > 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int f3=pb_bar(96,103,94,101);            /* open 96 == the prior low */
+  pb_flip(f3,3,"break c3: open 96 == prior low 96, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int k3=pb_bar(95,103,94,101);
+  pb_control(k3,-100,3,"restore c3: open 95 < prior low 96");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int f4=pb_bar(95,103,94,100.5);          /* close exactly at close(i-1)+Equal */
+  pb_flip(f4,4,"break c4: close 100.5 == 100 + Equal, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int k4=pb_bar(95,103,94,101);
+  pb_control(k4,-100,4,"restore c4: close 101 > 100.5");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int f5=pb_bar(95,107,94,106.1);          /* close above the midpoint 106 */
+  pb_flip(f5,5,"break c5: close 106.1 > midpoint 106");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int k5=pb_bar(95,107,94,106);            /* close exactly on the midpoint */
+  pb_control(k5,-100,5,"restore c5: close 106 == midpoint, inclusive");
+  pb_flat(8);
+}
+
+/* CDLPIERCING -- the white candle closes ABOVE the prior body's midpoint.
+ *
+ *   c0  color(i-1) == -1
+ *   c1  realbody(i-1) > avg(BodyLong, i-1)
+ *   c2  color(i) == 1
+ *   c3  realbody(i)   > avg(BodyLong, i)
+ *   c4  open(i)  < low(i-1)
+ *   c5  close(i) < open(i-1)
+ *   c6  close(i) > close(i-1) + realbody(i-1) * 0.5
+ *
+ * Three of the seven are entailed, the most of any pattern covered so far, and
+ * they are entailed for three different reasons -- which is why each carries
+ * its own derivation rather than one shared note. THRUSTING's c5 and this c6
+ * are the same midpoint approached from opposite sides, so the two patterns
+ * partition the prior body between them.
+ */
+static void cond_piercing( int i, int *c )
+{
+   c[0] = !pb_white(i-1);
+   c[1] = pb_body(i-1) > pb_avg(TA_BodyLong, i-1);
+   c[2] = pb_white(i);
+   c[3] = pb_body(i)   > pb_avg(TA_BodyLong, i);
+   c[4] = pbO[i]  < pbL[i-1];
+   c[5] = pbC[i]  < pbO[i-1];
+   c[6] = pbC[i]  > pbC[i-1] + pb_body(i-1) * 0.5;
+}
+
+static void build_piercing( void )
+{
+  pb_conditions(7);
+
+  pb_waive(0, "were the prior candle white, open(i-1) < close(i-1), so c6 requires "
+              "close(i) above close(i-1) + half a body -- itself above open(i-1) -- "
+              "while c5 requires close(i) below open(i-1). No value satisfies both, "
+              "so c5 & c6 entail a black prior candle");
+  pb_waive(2, "c4 puts open(i) below low(i-1) <= close(i-1), and c6 puts close(i) "
+              "above close(i-1). So close(i) > open(i) and the candle is white by "
+              "construction");
+  pb_waive(3, "c4 and c6 bracket the body from both ends: open(i) < low(i-1) and "
+              "close(i) > close(i-1) + realbody(i-1)/2, so realbody(i) exceeds "
+              "close(i-1) + realbody(i-1)/2 - low(i-1). On the detect bars that is "
+              "6.5 against an average of 2, and it cannot be shrunk to the average "
+              "without releasing c4 or c6 first");
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);                  /* prior: black, open 112, close 100, midpoint 106 */
+  int d=pb_bar(95,113,94,108);
+  pb_detect(d,100,"detect: white opening at 95 < 96, close 108 above midpoint 106, below open 112");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(102,106,96,100);                  /* prior body 2 == avg -> midpoint 101 */
+  int f1=pb_bar(95,102,94,101.5);          /* close 101.5 > 101 and < open 102 */
+  pb_flip(f1,1,"break c1: prior body 2 == avg 2, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int k1=pb_bar(95,113,94,108);
+  pb_control(k1,100,1,"restore c1: prior body 12 > 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int f4=pb_bar(96,113,94,108);            /* open 96 == the prior low */
+  pb_flip(f4,4,"break c4: open 96 == prior low 96, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int k4=pb_bar(95,113,94,108);
+  pb_control(k4,100,4,"restore c4: open 95 < prior low 96");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int f5=pb_bar(95,113,94,112);            /* close 112 == the prior open */
+  pb_flip(f5,5,"break c5: close 112 == prior open 112, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int k5=pb_bar(95,113,94,108);
+  pb_control(k5,100,5,"restore c5: close 108 < prior open 112");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int f6=pb_bar(95,113,94,106);            /* close exactly on the midpoint */
+  pb_flip(f6,6,"break c6: close 106 == midpoint 106, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int k6=pb_bar(95,113,94,108);
+  pb_control(k6,100,6,"restore c6: close 108 > midpoint 106");
+  pb_flat(8);
+}
+
+/* CDLHOMINGPIGEON -- a small black candle entirely inside a large black one.
+ *
+ *   c0  color(i-1) == -1
+ *   c1  color(i)   == -1
+ *   c2  realbody(i-1) > avg(BodyLong, i-1)
+ *   c3  realbody(i)  <= avg(BodyShort, i)
+ *   c4  open(i)  < open(i-1)
+ *   c5  close(i) > close(i-1)
+ *
+ * c4 and c5 together are the containment, expressed on the open and the close
+ * because both candles are black. That is also what entails c0: with a white
+ * prior candle the two would force this candle white too, contradicting c1.
+ */
+static void cond_homingpigeon( int i, int *c )
+{
+   c[0] = !pb_white(i-1);
+   c[1] = !pb_white(i);
+   c[2] = pb_body(i-1) >  pb_avg(TA_BodyLong, i-1);
+   c[3] = pb_body(i)   <= pb_avg(TA_BodyShort, i);
+   c[4] = pbO[i]  < pbO[i-1];
+   c[5] = pbC[i]  > pbC[i-1];
+}
+
+static void build_homingpigeon( void )
+{
+  pb_conditions(6);
+
+  pb_waive(0, "were the prior candle white, open(i-1) < close(i-1); c4 puts open(i) "
+              "below open(i-1) and c5 puts close(i) above close(i-1), so close(i) > "
+              "close(i-1) > open(i-1) > open(i) makes this candle white -- which c1 "
+              "forbids. So c1, c4 and c5 entail a black prior candle");
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);                  /* prior: black, open 112, close 100 */
+  int d=pb_bar(110,111,99,108);            /* black, body 2, inside on both ends */
+  pb_detect(d,100,"detect: both black, body 2 <= 3, open 110 < 112, close 108 > 100");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int f1=pb_bar(106,111,99,108);           /* WHITE */
+  pb_flip(f1,1,"break c1: this candle is white");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int k1=pb_bar(110,111,99,108);
+  pb_control(k1,100,1,"restore c1: this candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(102,106,96,100);                  /* prior body 2 == avg */
+  int f2=pb_bar(101.5,102,99,100.5);
+  pb_flip(f2,2,"break c2: prior body 2 == avg 2, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int k2=pb_bar(110,111,99,108);
+  pb_control(k2,100,2,"restore c2: prior body 12 > 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int f3=pb_bar(110,111,99,106);           /* body 4 > 3 */
+  pb_flip(f3,3,"break c3: body 4 > avg 3");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int k3=pb_bar(110,111,99,107);           /* body 3 == avg */
+  pb_control(k3,100,3,"restore c3: body 3 == avg 3, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int f4=pb_bar(112,113,99,110);           /* open 112 == the prior open */
+  pb_flip(f4,4,"break c4: open 112 == prior open 112, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int k4=pb_bar(110,111,99,108);
+  pb_control(k4,100,4,"restore c4: open 110 < prior open 112");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int f5=pb_bar(103,104,99,100);           /* close 100 == the prior close */
+  pb_flip(f5,5,"break c5: close 100 == prior close 100, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int k5=pb_bar(110,111,99,108);
+  pb_control(k5,100,5,"restore c5: close 108 > prior close 100");
+  pb_flat(8);
+}
+
+/* CDLCOUNTERATTACK -- two long opposite candles closing at the same level.
+ *
+ *   c0  color(i-1) == -color(i)
+ *   c1  realbody(i-1) > avg(BodyLong, i-1)
+ *   c2  realbody(i)   > avg(BodyLong, i)
+ *   c3  close(i) <= close(i-1) + avg(Equal, i-1)
+ *   c4  close(i) >= close(i-1) - avg(Equal, i-1)
+ *
+ * Bi-signed, and the sign comes from THIS candle: color(i)*100. c0 compares
+ * the two colours rather than fixing either, so both classes are reachable
+ * with the same five conditions -- unlike DOJISTAR, where the disjunct and the
+ * class were selected by the same colour. Flipping c0 means making the two
+ * candles the SAME colour, which is a different scenario from either detect.
+ */
+static void cond_counterattack( int i, int *c )
+{
+   double eq = pb_avg(TA_Equal, i-1);
+   c[0] = pb_white(i-1) != pb_white(i);
+   c[1] = pb_body(i-1) > pb_avg(TA_BodyLong, i-1);
+   c[2] = pb_body(i)   > pb_avg(TA_BodyLong, i);
+   c[3] = pbC[i] <= pbC[i-1] + eq;
+   c[4] = pbC[i] >= pbC[i-1] - eq;
+}
+
+static void build_counterattack( void )
+{
+  pb_conditions(5);
+  pb_signs(2);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);                  /* prior: BLACK, body 12, close 100 -> band [99.5,100.5] */
+  int d=pb_bar(95,101,94,100);             /* white, body 5, close 100 */
+  pb_detect(d,100,"detect black-then-white: opposite, bodies 12 and 5 > 3, closes equal");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int f0=pb_bar(104,105,95,100);           /* BLACK: same colour as the prior */
+  pb_flip(f0,0,"break c0: both candles are black");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int k0=pb_bar(95,101,94,100);
+  pb_control(k0,100,0,"restore c0: opposite colours");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(102,106,96,100);                  /* prior body 2 == avg */
+  int f1=pb_bar(95,101,94,100);
+  pb_flip(f1,1,"break c1: prior body 2 == avg 2, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int k1=pb_bar(95,101,94,100);
+  pb_control(k1,100,1,"restore c1: prior body 12 > 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int f2=pb_bar(97,101,96,100);            /* body 3 == avg */
+  pb_flip(f2,2,"break c2: body 3 == avg 3, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int k2=pb_bar(95,101,94,100);
+  pb_control(k2,100,2,"restore c2: body 5 > 3");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int f3=pb_bar(95,101,94,100.6);          /* close above the band top 100.5 */
+  pb_flip(f3,3,"break c3: close 100.6 > band top 100.5");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int k3=pb_bar(95,101,94,100.5);
+  pb_control(k3,100,3,"restore c3: close 100.5 == band top, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int f4=pb_bar(95,101,94,99.4);           /* close below the band bottom 99.5 */
+  pb_flip(f4,4,"break c4: close 99.4 < band bottom 99.5");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  int k4=pb_bar(95,101,94,99.5);
+  pb_control(k4,100,4,"restore c4: close 99.5 == band bottom, inclusive");
+  pb_flat(8);
+
+  /* The other output class: a white candle first, so THIS one is black and the
+   * sign flips. Same five conditions, mirrored. */
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,96,112);                  /* prior: WHITE, body 12, close 112 */
+  int db=pb_bar(117,118,111,112);          /* black, body 5, close 112 */
+  pb_detect(db,-100,"detect white-then-black: opposite, bodies 12 and 5 > 3, closes equal");
+  pb_flat(8);
+}
+
 static ErrorNumber test_marquee_predicate_coverage( void )
 {
    ErrorNumber e;
@@ -3499,6 +4107,12 @@ static ErrorNumber test_marquee_predicate_coverage( void )
    pb_reset(); build_shootingstar();        e = pb_check_mcdc("CDLSHOOTINGSTAR",        TA_CDLSHOOTINGSTAR,        cond_shootingstar);        if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_matchinglow();         e = pb_check_mcdc("CDLMATCHINGLOW",         TA_CDLMATCHINGLOW,         cond_matchinglow);         if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_dojistar();            e = pb_check_mcdc("CDLDOJISTAR",            TA_CDLDOJISTAR,            cond_dojistar);            if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_inneck();              e = pb_check_mcdc("CDLINNECK",              TA_CDLINNECK,              cond_inneck);              if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_onneck();              e = pb_check_mcdc("CDLONNECK",              TA_CDLONNECK,              cond_onneck);              if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_thrusting();           e = pb_check_mcdc("CDLTHRUSTING",           TA_CDLTHRUSTING,           cond_thrusting);           if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_piercing();            e = pb_check_mcdc("CDLPIERCING",            TA_CDLPIERCING,            cond_piercing);            if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_homingpigeon();        e = pb_check_mcdc("CDLHOMINGPIGEON",        TA_CDLHOMINGPIGEON,        cond_homingpigeon);        if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_counterattack();       e = pb_check_mcdc("CDLCOUNTERATTACK",       TA_CDLCOUNTERATTACK,       cond_counterattack);       if( e != TA_TEST_PASS ) return e;
    pb_report_totals();
    return TA_TEST_PASS;
 }
