@@ -379,8 +379,7 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CMF( int startIdx,
                         int endIdx,
                         double[] inHigh,
@@ -390,6 +389,11 @@ public partial class Core
                         int optInTimePeriod,
                         double[] outReal )
    {
+      ArgumentNullException.ThrowIfNull(inHigh);
+      ArgumentNullException.ThrowIfNull(inLow);
+      ArgumentNullException.ThrowIfNull(inClose);
+      ArgumentNullException.ThrowIfNull(inVolume);
+      ArgumentNullException.ThrowIfNull(outReal);
       RetCode retCode = CMF(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("CMF", retCode);
@@ -460,8 +464,7 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CMF( int startIdx,
                         int endIdx,
                         float[] inHigh,
@@ -471,6 +474,11 @@ public partial class Core
                         int optInTimePeriod,
                         double[] outReal )
    {
+      ArgumentNullException.ThrowIfNull(inHigh);
+      ArgumentNullException.ThrowIfNull(inLow);
+      ArgumentNullException.ThrowIfNull(inClose);
+      ArgumentNullException.ThrowIfNull(inVolume);
+      ArgumentNullException.ThrowIfNull(outReal);
       RetCode retCode = CMF(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("CMF", retCode);
@@ -871,10 +879,13 @@ public partial class Core
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CMF_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
-   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
-   /// pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
    public CMF_Stream CMF_Open( double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInTimePeriod )
    {
+      ArgumentNullException.ThrowIfNull(inHigh);
+      ArgumentNullException.ThrowIfNull(inLow);
+      ArgumentNullException.ThrowIfNull(inClose);
+      ArgumentNullException.ThrowIfNull(inVolume);
       return CMF_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod);
    }
 
@@ -903,10 +914,14 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public CMF_Stream CMF_OpenAndFill( double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInTimePeriod, double[] outReal )
    {
+      ArgumentNullException.ThrowIfNull(inHigh);
+      ArgumentNullException.ThrowIfNull(inLow);
+      ArgumentNullException.ThrowIfNull(inClose);
+      ArgumentNullException.ThrowIfNull(inVolume);
+      ArgumentNullException.ThrowIfNull(outReal);
       CMF_Stream sp = new CMF_Stream(this);
       RetCode retCode = CMF_OpenAndFillBody(sp, inHigh, inLow, inClose, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

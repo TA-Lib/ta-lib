@@ -114,9 +114,8 @@ pub fn guarded_docs(
          one array.",
     );
     b.exception(
-        "System.NullReferenceException",
-        "An input or output array is null. (Unlike the C library, the managed \
-         tier does not pre-validate nulls; the first array access throws.)",
+        "System.ArgumentNullException",
+        "An input or output array is null.",
     );
     b.render()
 }

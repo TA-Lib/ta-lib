@@ -430,8 +430,7 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MACDFIX( int startIdx,
                             int endIdx,
                             double[] inReal,
@@ -440,6 +439,10 @@ public partial class Core
                             double[] outMACDSignal,
                             double[] outMACDHist )
    {
+      ArgumentNullException.ThrowIfNull(inReal);
+      ArgumentNullException.ThrowIfNull(outMACD);
+      ArgumentNullException.ThrowIfNull(outMACDSignal);
+      ArgumentNullException.ThrowIfNull(outMACDHist);
       RetCode retCode = MACDFIX(startIdx, endIdx, inReal, optInSignalPeriod, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
       if( retCode != RetCode.Success ) {
          throw Failure("MACDFIX", retCode);
@@ -491,8 +494,7 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MACDFIX( int startIdx,
                             int endIdx,
                             float[] inReal,
@@ -501,6 +503,10 @@ public partial class Core
                             double[] outMACDSignal,
                             double[] outMACDHist )
    {
+      ArgumentNullException.ThrowIfNull(inReal);
+      ArgumentNullException.ThrowIfNull(outMACD);
+      ArgumentNullException.ThrowIfNull(outMACDSignal);
+      ArgumentNullException.ThrowIfNull(outMACDHist);
       RetCode retCode = MACDFIX(startIdx, endIdx, inReal, optInSignalPeriod, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
       if( retCode != RetCode.Success ) {
          throw Failure("MACDFIX", retCode);
@@ -908,10 +914,10 @@ public partial class Core
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MACDFIX_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
-   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
-   /// pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
    public MACDFIX_Stream MACDFIX_Open( double[] inReal, int optInSignalPeriod )
    {
+      ArgumentNullException.ThrowIfNull(inReal);
       return MACDFIX_OpenInternal(inReal, 0, optInSignalPeriod);
    }
 
@@ -941,10 +947,13 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public MACDFIX_Stream MACDFIX_OpenAndFill( double[] inReal, int optInSignalPeriod, double[] outMACD, double[] outMACDSignal, double[] outMACDHist )
    {
+      ArgumentNullException.ThrowIfNull(inReal);
+      ArgumentNullException.ThrowIfNull(outMACD);
+      ArgumentNullException.ThrowIfNull(outMACDSignal);
+      ArgumentNullException.ThrowIfNull(outMACDHist);
       MACDFIX_Stream sp = new MACDFIX_Stream(this);
       RetCode retCode = MACDFIX_OpenAndFillBody(sp, inReal, optInSignalPeriod, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

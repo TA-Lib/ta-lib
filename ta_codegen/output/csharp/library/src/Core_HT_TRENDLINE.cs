@@ -815,13 +815,14 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange HT_TRENDLINE( int startIdx,
                                  int endIdx,
                                  double[] inReal,
                                  double[] outReal )
    {
+      ArgumentNullException.ThrowIfNull(inReal);
+      ArgumentNullException.ThrowIfNull(outReal);
       RetCode retCode = HT_TRENDLINE(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("HT_TRENDLINE", retCode);
@@ -859,13 +860,14 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange HT_TRENDLINE( int startIdx,
                                  int endIdx,
                                  float[] inReal,
                                  double[] outReal )
    {
+      ArgumentNullException.ThrowIfNull(inReal);
+      ArgumentNullException.ThrowIfNull(outReal);
       RetCode retCode = HT_TRENDLINE(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("HT_TRENDLINE", retCode);
@@ -1907,10 +1909,10 @@ public partial class Core
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>HT_TRENDLINE_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
-   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
-   /// pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
    public HT_TRENDLINE_Stream HT_TRENDLINE_Open( double[] inReal )
    {
+      ArgumentNullException.ThrowIfNull(inReal);
       return HT_TRENDLINE_OpenInternal(inReal, 0);
    }
 
@@ -1935,10 +1937,11 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public HT_TRENDLINE_Stream HT_TRENDLINE_OpenAndFill( double[] inReal, double[] outReal )
    {
+      ArgumentNullException.ThrowIfNull(inReal);
+      ArgumentNullException.ThrowIfNull(outReal);
       HT_TRENDLINE_Stream sp = new HT_TRENDLINE_Stream(this);
       RetCode retCode = HT_TRENDLINE_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

@@ -215,8 +215,7 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CDL3OUTSIDE( int startIdx,
                                 int endIdx,
                                 double[] inOpen,
@@ -225,6 +224,11 @@ public partial class Core
                                 double[] inClose,
                                 int[] outInteger )
    {
+      ArgumentNullException.ThrowIfNull(inOpen);
+      ArgumentNullException.ThrowIfNull(inHigh);
+      ArgumentNullException.ThrowIfNull(inLow);
+      ArgumentNullException.ThrowIfNull(inClose);
+      ArgumentNullException.ThrowIfNull(outInteger);
       RetCode retCode = CDL3OUTSIDE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDL3OUTSIDE", retCode);
@@ -271,8 +275,7 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CDL3OUTSIDE( int startIdx,
                                 int endIdx,
                                 float[] inOpen,
@@ -281,6 +284,11 @@ public partial class Core
                                 float[] inClose,
                                 int[] outInteger )
    {
+      ArgumentNullException.ThrowIfNull(inOpen);
+      ArgumentNullException.ThrowIfNull(inHigh);
+      ArgumentNullException.ThrowIfNull(inLow);
+      ArgumentNullException.ThrowIfNull(inClose);
+      ArgumentNullException.ThrowIfNull(outInteger);
       RetCode retCode = CDL3OUTSIDE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDL3OUTSIDE", retCode);
@@ -546,10 +554,13 @@ public partial class Core
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CDL3OUTSIDE_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
-   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
-   /// pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
    public CDL3OUTSIDE_Stream CDL3OUTSIDE_Open( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose )
    {
+      ArgumentNullException.ThrowIfNull(inOpen);
+      ArgumentNullException.ThrowIfNull(inHigh);
+      ArgumentNullException.ThrowIfNull(inLow);
+      ArgumentNullException.ThrowIfNull(inClose);
       return CDL3OUTSIDE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
@@ -579,10 +590,14 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public CDL3OUTSIDE_Stream CDL3OUTSIDE_OpenAndFill( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int[] outInteger )
    {
+      ArgumentNullException.ThrowIfNull(inOpen);
+      ArgumentNullException.ThrowIfNull(inHigh);
+      ArgumentNullException.ThrowIfNull(inLow);
+      ArgumentNullException.ThrowIfNull(inClose);
+      ArgumentNullException.ThrowIfNull(outInteger);
       CDL3OUTSIDE_Stream sp = new CDL3OUTSIDE_Stream(this);
       RetCode retCode = CDL3OUTSIDE_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

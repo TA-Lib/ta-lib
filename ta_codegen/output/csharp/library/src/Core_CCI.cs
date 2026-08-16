@@ -318,8 +318,7 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CCI( int startIdx,
                         int endIdx,
                         double[] inHigh,
@@ -328,6 +327,10 @@ public partial class Core
                         int optInTimePeriod,
                         double[] outReal )
    {
+      ArgumentNullException.ThrowIfNull(inHigh);
+      ArgumentNullException.ThrowIfNull(inLow);
+      ArgumentNullException.ThrowIfNull(inClose);
+      ArgumentNullException.ThrowIfNull(outReal);
       RetCode retCode = CCI(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("CCI", retCode);
@@ -376,8 +379,7 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CCI( int startIdx,
                         int endIdx,
                         float[] inHigh,
@@ -386,6 +388,10 @@ public partial class Core
                         int optInTimePeriod,
                         double[] outReal )
    {
+      ArgumentNullException.ThrowIfNull(inHigh);
+      ArgumentNullException.ThrowIfNull(inLow);
+      ArgumentNullException.ThrowIfNull(inClose);
+      ArgumentNullException.ThrowIfNull(outReal);
       RetCode retCode = CCI(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("CCI", retCode);
@@ -736,10 +742,12 @@ public partial class Core
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CCI_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
-   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
-   /// pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
    public CCI_Stream CCI_Open( double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod )
    {
+      ArgumentNullException.ThrowIfNull(inHigh);
+      ArgumentNullException.ThrowIfNull(inLow);
+      ArgumentNullException.ThrowIfNull(inClose);
       return CCI_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
 
@@ -767,10 +775,13 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public CCI_Stream CCI_OpenAndFill( double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, double[] outReal )
    {
+      ArgumentNullException.ThrowIfNull(inHigh);
+      ArgumentNullException.ThrowIfNull(inLow);
+      ArgumentNullException.ThrowIfNull(inClose);
+      ArgumentNullException.ThrowIfNull(outReal);
       CCI_Stream sp = new CCI_Stream(this);
       RetCode retCode = CCI_OpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

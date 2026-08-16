@@ -553,6 +553,21 @@ fn gen_public_wrapper(
         out.push_str(param);
     }
     out.push_str(" )\n   {\n");
+    // Null checks belong on the PUBLIC wrappers only. The internal cores are
+    // what cross-indicator calls and the JSON-RPC server reach, and every one
+    // of those call sites passes an array the generator itself created — so a
+    // check there would be dead weight on the hot path. Here it converts an
+    // NRE thrown from wherever the first access happens into an
+    // ArgumentNullException that names the parameter, which is also what the
+    // metadata binder already throws.
+    for name in func
+        .inputs
+        .iter()
+        .map(|i| &i.name)
+        .chain(func.outputs.iter().map(|o| &o.name))
+    {
+        let _ = writeln!(out, "      ArgumentNullException.ThrowIfNull({name});");
+    }
     {
         let _ = write!(out, "      RetCode retCode = {core}(");
         out.push_str(&args.join(", "));

@@ -882,8 +882,7 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MAMA( int startIdx,
                          int endIdx,
                          double[] inReal,
@@ -892,6 +891,9 @@ public partial class Core
                          double[] outMAMA,
                          double[] outFAMA )
    {
+      ArgumentNullException.ThrowIfNull(inReal);
+      ArgumentNullException.ThrowIfNull(outMAMA);
+      ArgumentNullException.ThrowIfNull(outFAMA);
       RetCode retCode = MAMA(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, out int outBegIdx, out int outNBElement, outMAMA, outFAMA);
       if( retCode != RetCode.Success ) {
          throw Failure("MAMA", retCode);
@@ -943,8 +945,7 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MAMA( int startIdx,
                          int endIdx,
                          float[] inReal,
@@ -953,6 +954,9 @@ public partial class Core
                          double[] outMAMA,
                          double[] outFAMA )
    {
+      ArgumentNullException.ThrowIfNull(inReal);
+      ArgumentNullException.ThrowIfNull(outMAMA);
+      ArgumentNullException.ThrowIfNull(outFAMA);
       RetCode retCode = MAMA(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, out int outBegIdx, out int outNBElement, outMAMA, outFAMA);
       if( retCode != RetCode.Success ) {
          throw Failure("MAMA", retCode);
@@ -1994,10 +1998,10 @@ public partial class Core
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MAMA_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
-   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
-   /// pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
    public MAMA_Stream MAMA_Open( double[] inReal, double optInFastLimit, double optInSlowLimit )
    {
+      ArgumentNullException.ThrowIfNull(inReal);
       return MAMA_OpenInternal(inReal, 0, optInFastLimit, optInSlowLimit);
    }
 
@@ -2027,10 +2031,12 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public MAMA_Stream MAMA_OpenAndFill( double[] inReal, double optInFastLimit, double optInSlowLimit, double[] outMAMA, double[] outFAMA )
    {
+      ArgumentNullException.ThrowIfNull(inReal);
+      ArgumentNullException.ThrowIfNull(outMAMA);
+      ArgumentNullException.ThrowIfNull(outFAMA);
       MAMA_Stream sp = new MAMA_Stream(this);
       RetCode retCode = MAMA_OpenAndFillBody(sp, inReal, optInFastLimit, optInSlowLimit, out int outBegIdx, out int outNBElement, outMAMA, outFAMA);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

@@ -642,8 +642,7 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange BBANDS( int startIdx,
                            int endIdx,
                            double[] inReal,
@@ -655,6 +654,10 @@ public partial class Core
                            double[] outRealMiddleBand,
                            double[] outRealLowerBand )
    {
+      ArgumentNullException.ThrowIfNull(inReal);
+      ArgumentNullException.ThrowIfNull(outRealUpperBand);
+      ArgumentNullException.ThrowIfNull(outRealMiddleBand);
+      ArgumentNullException.ThrowIfNull(outRealLowerBand);
       RetCode retCode = BBANDS(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out int outBegIdx, out int outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
       if( retCode != RetCode.Success ) {
          throw Failure("BBANDS", retCode);
@@ -724,8 +727,7 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange BBANDS( int startIdx,
                            int endIdx,
                            float[] inReal,
@@ -737,6 +739,10 @@ public partial class Core
                            double[] outRealMiddleBand,
                            double[] outRealLowerBand )
    {
+      ArgumentNullException.ThrowIfNull(inReal);
+      ArgumentNullException.ThrowIfNull(outRealUpperBand);
+      ArgumentNullException.ThrowIfNull(outRealMiddleBand);
+      ArgumentNullException.ThrowIfNull(outRealLowerBand);
       RetCode retCode = BBANDS(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out int outBegIdx, out int outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
       if( retCode != RetCode.Success ) {
          throw Failure("BBANDS", retCode);
@@ -1106,10 +1112,10 @@ public partial class Core
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>BBANDS_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
-   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
-   /// pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
    public BBANDS_Stream BBANDS_Open( double[] inReal, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
    {
+      ArgumentNullException.ThrowIfNull(inReal);
       return BBANDS_OpenInternal(inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
    }
 
@@ -1145,10 +1151,13 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public BBANDS_Stream BBANDS_OpenAndFill( double[] inReal, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, double[] outRealUpperBand, double[] outRealMiddleBand, double[] outRealLowerBand )
    {
+      ArgumentNullException.ThrowIfNull(inReal);
+      ArgumentNullException.ThrowIfNull(outRealUpperBand);
+      ArgumentNullException.ThrowIfNull(outRealMiddleBand);
+      ArgumentNullException.ThrowIfNull(outRealLowerBand);
       BBANDS_Stream sp = new BBANDS_Stream(this);
       RetCode retCode = BBANDS_OpenAndFillBody(sp, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out int outBegIdx, out int outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

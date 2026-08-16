@@ -281,8 +281,7 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CDLGRAVESTONEDOJI( int startIdx,
                                       int endIdx,
                                       double[] inOpen,
@@ -291,6 +290,11 @@ public partial class Core
                                       double[] inClose,
                                       int[] outInteger )
    {
+      ArgumentNullException.ThrowIfNull(inOpen);
+      ArgumentNullException.ThrowIfNull(inHigh);
+      ArgumentNullException.ThrowIfNull(inLow);
+      ArgumentNullException.ThrowIfNull(inClose);
+      ArgumentNullException.ThrowIfNull(outInteger);
       RetCode retCode = CDLGRAVESTONEDOJI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLGRAVESTONEDOJI", retCode);
@@ -343,8 +347,7 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CDLGRAVESTONEDOJI( int startIdx,
                                       int endIdx,
                                       float[] inOpen,
@@ -353,6 +356,11 @@ public partial class Core
                                       float[] inClose,
                                       int[] outInteger )
    {
+      ArgumentNullException.ThrowIfNull(inOpen);
+      ArgumentNullException.ThrowIfNull(inHigh);
+      ArgumentNullException.ThrowIfNull(inLow);
+      ArgumentNullException.ThrowIfNull(inClose);
+      ArgumentNullException.ThrowIfNull(outInteger);
       RetCode retCode = CDLGRAVESTONEDOJI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLGRAVESTONEDOJI", retCode);
@@ -808,10 +816,13 @@ public partial class Core
    /// bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
-   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
-   /// pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
    public CDLGRAVESTONEDOJI_Stream CDLGRAVESTONEDOJI_Open( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose )
    {
+      ArgumentNullException.ThrowIfNull(inOpen);
+      ArgumentNullException.ThrowIfNull(inHigh);
+      ArgumentNullException.ThrowIfNull(inLow);
+      ArgumentNullException.ThrowIfNull(inClose);
       return CDLGRAVESTONEDOJI_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
@@ -843,10 +854,14 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public CDLGRAVESTONEDOJI_Stream CDLGRAVESTONEDOJI_OpenAndFill( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int[] outInteger )
    {
+      ArgumentNullException.ThrowIfNull(inOpen);
+      ArgumentNullException.ThrowIfNull(inHigh);
+      ArgumentNullException.ThrowIfNull(inLow);
+      ArgumentNullException.ThrowIfNull(inClose);
+      ArgumentNullException.ThrowIfNull(outInteger);
       CDLGRAVESTONEDOJI_Stream sp = new CDLGRAVESTONEDOJI_Stream(this);
       RetCode retCode = CDLGRAVESTONEDOJI_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

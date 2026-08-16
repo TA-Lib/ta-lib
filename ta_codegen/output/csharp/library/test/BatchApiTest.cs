@@ -221,9 +221,32 @@ public static class BatchApiTest
 
         // The cast is required, not incidental: `null` alone is ambiguous between
         // the double[] and float[] overloads. Real callers pass a typed array.
-        CheckThrows<NullReferenceException>(
+        CheckThrows<ArgumentNullException>(
             () => core.SMA(0, 50, (double[])null!, 10, output),
-            "null input -> NullReferenceException");
+            "null input -> ArgumentNullException");
+        CheckThrows<ArgumentNullException>(
+            () => core.SMA(0, 50, input, 10, null!),
+            "null output -> ArgumentNullException");
+
+        // The exception names the parameter. That is the whole point of
+        // checking rather than letting the first array access throw: an NRE
+        // from inside a transcribed body says nothing about which argument was
+        // wrong, and the two-array functions have several candidates.
+        _checks++;
+        try
+        {
+            core.SMA(0, 50, (double[])null!, 10, output);
+            _failures++;
+            Console.WriteLine("  FAIL: expected a null rejection");
+        }
+        catch (ArgumentNullException e)
+        {
+            if (e.ParamName != "inReal")
+            {
+                _failures++;
+                Console.WriteLine($"  FAIL: ParamName was \"{e.ParamName}\", expected \"inReal\"");
+            }
+        }
 
         // Two outputs sharing one array has no correct answer (issue #108).
         var shared = new double[100];

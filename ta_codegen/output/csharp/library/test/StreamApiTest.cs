@@ -343,6 +343,45 @@ public static class StreamApiTest
         }
     }
 
+    /// <summary>Null arguments are named, not dereferenced.</summary>
+    /// <remarks>The public openers are the only place this is checked — the
+    /// composition seam and the internal cores are reached only with arrays the
+    /// generator created, so a check there would be dead weight.</remarks>
+    private static void NullArgumentsAreNamed()
+    {
+        var core = new Core();
+        double[] closes = Closes(120);
+        var outReal = new double[closes.Length];
+
+        CheckThrows<ArgumentNullException>(
+            () => core.SMA_Open(null!, 14),
+            "SMA_Open(null) throws ArgumentNullException");
+        CheckThrows<ArgumentNullException>(
+            () => core.SMA_OpenAndFill(null!, 14, outReal),
+            "SMA_OpenAndFill with a null input throws ArgumentNullException");
+        CheckThrows<ArgumentNullException>(
+            () => core.SMA_OpenAndFill(closes, 14, null!),
+            "SMA_OpenAndFill with a null output throws ArgumentNullException");
+
+        // It names the offending parameter. Without the check, two null arrays
+        // would compare equal and be rejected as aliasing instead.
+        _checks++;
+        try
+        {
+            core.SMA_OpenAndFill(null!, 14, null!);
+            _failures++;
+            Console.WriteLine("  FAIL: expected a null rejection");
+        }
+        catch (ArgumentNullException e)
+        {
+            if (e.ParamName != "inReal")
+            {
+                _failures++;
+                Console.WriteLine($"  FAIL: two nulls reported \"{e.ParamName}\", expected \"inReal\"");
+            }
+        }
+    }
+
     /// <summary>int.MinValue selects the documented default, as in batch.</summary>
     private static void IntegerSentinelSelectsTheDocumentedDefault()
     {
@@ -529,6 +568,7 @@ public static class StreamApiTest
         OpenAndFillMatchesBatch();
         MisuseThrowsTheDocumentedException();
         OpenAndFillRejectsAliasing();
+        NullArgumentsAreNamed();
         IntegerSentinelSelectsTheDocumentedDefault();
         SettingsAreCapturedFromTheOpeningCore();
         UpdateDoesNotAllocate();

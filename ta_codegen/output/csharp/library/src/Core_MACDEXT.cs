@@ -497,8 +497,7 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MACDEXT( int startIdx,
                             int endIdx,
                             double[] inReal,
@@ -512,6 +511,10 @@ public partial class Core
                             double[] outMACDSignal,
                             double[] outMACDHist )
    {
+      ArgumentNullException.ThrowIfNull(inReal);
+      ArgumentNullException.ThrowIfNull(outMACD);
+      ArgumentNullException.ThrowIfNull(outMACDSignal);
+      ArgumentNullException.ThrowIfNull(outMACDHist);
       RetCode retCode = MACDEXT(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
       if( retCode != RetCode.Success ) {
          throw Failure("MACDEXT", retCode);
@@ -584,8 +587,7 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MACDEXT( int startIdx,
                             int endIdx,
                             float[] inReal,
@@ -599,6 +601,10 @@ public partial class Core
                             double[] outMACDSignal,
                             double[] outMACDHist )
    {
+      ArgumentNullException.ThrowIfNull(inReal);
+      ArgumentNullException.ThrowIfNull(outMACD);
+      ArgumentNullException.ThrowIfNull(outMACDSignal);
+      ArgumentNullException.ThrowIfNull(outMACDHist);
       RetCode retCode = MACDEXT(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
       if( retCode != RetCode.Success ) {
          throw Failure("MACDEXT", retCode);
@@ -1038,10 +1044,10 @@ public partial class Core
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MACDEXT_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
-   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
-   /// pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
    public MACDEXT_Stream MACDEXT_Open( double[] inReal, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
    {
+      ArgumentNullException.ThrowIfNull(inReal);
       return MACDEXT_OpenInternal(inReal, 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
    }
 
@@ -1081,10 +1087,13 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public MACDEXT_Stream MACDEXT_OpenAndFill( double[] inReal, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, double[] outMACD, double[] outMACDSignal, double[] outMACDHist )
    {
+      ArgumentNullException.ThrowIfNull(inReal);
+      ArgumentNullException.ThrowIfNull(outMACD);
+      ArgumentNullException.ThrowIfNull(outMACDSignal);
+      ArgumentNullException.ThrowIfNull(outMACDHist);
       MACDEXT_Stream sp = new MACDEXT_Stream(this);
       RetCode retCode = MACDEXT_OpenAndFillBody(sp, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

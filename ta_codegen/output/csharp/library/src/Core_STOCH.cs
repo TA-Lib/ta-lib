@@ -582,8 +582,7 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange STOCH( int startIdx,
                           int endIdx,
                           double[] inHigh,
@@ -597,6 +596,11 @@ public partial class Core
                           double[] outSlowK,
                           double[] outSlowD )
    {
+      ArgumentNullException.ThrowIfNull(inHigh);
+      ArgumentNullException.ThrowIfNull(inLow);
+      ArgumentNullException.ThrowIfNull(inClose);
+      ArgumentNullException.ThrowIfNull(outSlowK);
+      ArgumentNullException.ThrowIfNull(outSlowD);
       RetCode retCode = STOCH(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out int outBegIdx, out int outNBElement, outSlowK, outSlowD);
       if( retCode != RetCode.Success ) {
          throw Failure("STOCH", retCode);
@@ -662,8 +666,7 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange STOCH( int startIdx,
                           int endIdx,
                           float[] inHigh,
@@ -677,6 +680,11 @@ public partial class Core
                           double[] outSlowK,
                           double[] outSlowD )
    {
+      ArgumentNullException.ThrowIfNull(inHigh);
+      ArgumentNullException.ThrowIfNull(inLow);
+      ArgumentNullException.ThrowIfNull(inClose);
+      ArgumentNullException.ThrowIfNull(outSlowK);
+      ArgumentNullException.ThrowIfNull(outSlowD);
       RetCode retCode = STOCH(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out int outBegIdx, out int outNBElement, outSlowK, outSlowD);
       if( retCode != RetCode.Success ) {
          throw Failure("STOCH", retCode);
@@ -1322,10 +1330,12 @@ public partial class Core
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>STOCH_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
-   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
-   /// pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
    public STOCH_Stream STOCH_Open( double[] inHigh, double[] inLow, double[] inClose, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
    {
+      ArgumentNullException.ThrowIfNull(inHigh);
+      ArgumentNullException.ThrowIfNull(inLow);
+      ArgumentNullException.ThrowIfNull(inClose);
       return STOCH_OpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
    }
 
@@ -1363,10 +1373,14 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public STOCH_Stream STOCH_OpenAndFill( double[] inHigh, double[] inLow, double[] inClose, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, double[] outSlowK, double[] outSlowD )
    {
+      ArgumentNullException.ThrowIfNull(inHigh);
+      ArgumentNullException.ThrowIfNull(inLow);
+      ArgumentNullException.ThrowIfNull(inClose);
+      ArgumentNullException.ThrowIfNull(outSlowK);
+      ArgumentNullException.ThrowIfNull(outSlowD);
       STOCH_Stream sp = new STOCH_Stream(this);
       RetCode retCode = STOCH_OpenAndFillBody(sp, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out int outBegIdx, out int outNBElement, outSlowK, outSlowD);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

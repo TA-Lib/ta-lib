@@ -316,8 +316,7 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MINMAXINDEX( int startIdx,
                                 int endIdx,
                                 double[] inReal,
@@ -325,6 +324,9 @@ public partial class Core
                                 int[] outMinIdx,
                                 int[] outMaxIdx )
    {
+      ArgumentNullException.ThrowIfNull(inReal);
+      ArgumentNullException.ThrowIfNull(outMinIdx);
+      ArgumentNullException.ThrowIfNull(outMaxIdx);
       RetCode retCode = MINMAXINDEX(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outMinIdx, outMaxIdx);
       if( retCode != RetCode.Success ) {
          throw Failure("MINMAXINDEX", retCode);
@@ -372,8 +374,7 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MINMAXINDEX( int startIdx,
                                 int endIdx,
                                 float[] inReal,
@@ -381,6 +382,9 @@ public partial class Core
                                 int[] outMinIdx,
                                 int[] outMaxIdx )
    {
+      ArgumentNullException.ThrowIfNull(inReal);
+      ArgumentNullException.ThrowIfNull(outMinIdx);
+      ArgumentNullException.ThrowIfNull(outMaxIdx);
       RetCode retCode = MINMAXINDEX(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outMinIdx, outMaxIdx);
       if( retCode != RetCode.Success ) {
          throw Failure("MINMAXINDEX", retCode);
@@ -783,10 +787,10 @@ public partial class Core
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MINMAXINDEX_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
-   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
-   /// pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
    public MINMAXINDEX_Stream MINMAXINDEX_Open( double[] inReal, int optInTimePeriod )
    {
+      ArgumentNullException.ThrowIfNull(inReal);
       return MINMAXINDEX_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -815,10 +819,12 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public MINMAXINDEX_Stream MINMAXINDEX_OpenAndFill( double[] inReal, int optInTimePeriod, int[] outMinIdx, int[] outMaxIdx )
    {
+      ArgumentNullException.ThrowIfNull(inReal);
+      ArgumentNullException.ThrowIfNull(outMinIdx);
+      ArgumentNullException.ThrowIfNull(outMaxIdx);
       MINMAXINDEX_Stream sp = new MINMAXINDEX_Stream(this);
       RetCode retCode = MINMAXINDEX_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outMinIdx, outMaxIdx);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

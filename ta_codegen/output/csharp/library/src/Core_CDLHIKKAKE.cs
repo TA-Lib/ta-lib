@@ -295,8 +295,7 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CDLHIKKAKE( int startIdx,
                                int endIdx,
                                double[] inOpen,
@@ -305,6 +304,11 @@ public partial class Core
                                double[] inClose,
                                int[] outInteger )
    {
+      ArgumentNullException.ThrowIfNull(inOpen);
+      ArgumentNullException.ThrowIfNull(inHigh);
+      ArgumentNullException.ThrowIfNull(inLow);
+      ArgumentNullException.ThrowIfNull(inClose);
+      ArgumentNullException.ThrowIfNull(outInteger);
       RetCode retCode = CDLHIKKAKE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLHIKKAKE", retCode);
@@ -351,8 +355,7 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CDLHIKKAKE( int startIdx,
                                int endIdx,
                                float[] inOpen,
@@ -361,6 +364,11 @@ public partial class Core
                                float[] inClose,
                                int[] outInteger )
    {
+      ArgumentNullException.ThrowIfNull(inOpen);
+      ArgumentNullException.ThrowIfNull(inHigh);
+      ArgumentNullException.ThrowIfNull(inLow);
+      ArgumentNullException.ThrowIfNull(inClose);
+      ArgumentNullException.ThrowIfNull(outInteger);
       RetCode retCode = CDLHIKKAKE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLHIKKAKE", retCode);
@@ -696,10 +704,13 @@ public partial class Core
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CDLHIKKAKE_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
-   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
-   /// pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
    public CDLHIKKAKE_Stream CDLHIKKAKE_Open( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose )
    {
+      ArgumentNullException.ThrowIfNull(inOpen);
+      ArgumentNullException.ThrowIfNull(inHigh);
+      ArgumentNullException.ThrowIfNull(inLow);
+      ArgumentNullException.ThrowIfNull(inClose);
       return CDLHIKKAKE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
@@ -728,10 +739,14 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public CDLHIKKAKE_Stream CDLHIKKAKE_OpenAndFill( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int[] outInteger )
    {
+      ArgumentNullException.ThrowIfNull(inOpen);
+      ArgumentNullException.ThrowIfNull(inHigh);
+      ArgumentNullException.ThrowIfNull(inLow);
+      ArgumentNullException.ThrowIfNull(inClose);
+      ArgumentNullException.ThrowIfNull(outInteger);
       CDLHIKKAKE_Stream sp = new CDLHIKKAKE_Stream(this);
       RetCode retCode = CDLHIKKAKE_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

@@ -594,8 +594,7 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MAVP( int startIdx,
                          int endIdx,
                          double[] inReal,
@@ -605,6 +604,9 @@ public partial class Core
                          MAType optInMAType,
                          double[] outReal )
    {
+      ArgumentNullException.ThrowIfNull(inReal);
+      ArgumentNullException.ThrowIfNull(inPeriods);
+      ArgumentNullException.ThrowIfNull(outReal);
       RetCode retCode = MAVP(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MAVP", retCode);
@@ -659,8 +661,7 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MAVP( int startIdx,
                          int endIdx,
                          float[] inReal,
@@ -670,6 +671,9 @@ public partial class Core
                          MAType optInMAType,
                          double[] outReal )
    {
+      ArgumentNullException.ThrowIfNull(inReal);
+      ArgumentNullException.ThrowIfNull(inPeriods);
+      ArgumentNullException.ThrowIfNull(outReal);
       RetCode retCode = MAVP(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MAVP", retCode);
@@ -991,10 +995,11 @@ public partial class Core
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MAVP_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
-   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
-   /// pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
    public MAVP_Stream MAVP_Open( double[] inReal, double[] inPeriods, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
+      ArgumentNullException.ThrowIfNull(inReal);
+      ArgumentNullException.ThrowIfNull(inPeriods);
       return MAVP_OpenInternal(inReal, inPeriods, 0, optInMinPeriod, optInMaxPeriod, optInMAType);
    }
 
@@ -1025,10 +1030,12 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
-   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
-   /// does not pre-validate nulls; the first array access throws.)</exception>
+   /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public MAVP_Stream MAVP_OpenAndFill( double[] inReal, double[] inPeriods, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, double[] outReal )
    {
+      ArgumentNullException.ThrowIfNull(inReal);
+      ArgumentNullException.ThrowIfNull(inPeriods);
+      ArgumentNullException.ThrowIfNull(outReal);
       MAVP_Stream sp = new MAVP_Stream(this);
       RetCode retCode = MAVP_OpenAndFillBody(sp, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

@@ -2288,11 +2288,7 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef) {
         "An optional parameter is outside its documented range, or the input series have \
          different lengths.",
     );
-    d.exception(
-        "System.NullReferenceException",
-        "An input array is null. (Unlike the C library, the managed tier does not \
-         pre-validate nulls; the first array access throws.)",
-    );
+    d.exception("System.ArgumentNullException", "An input array is null.");
     o.push('\n');
     o.push_str(&d.render(3));
     let _ = writeln!(
@@ -2301,6 +2297,13 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef) {
         in_sig.join(", ")
     );
     let _ = writeln!(o, "   {{");
+    // Public entry point: name the null rather than letting the transcribed
+    // body throw an NRE from wherever it first indexes. OpenInternal is the
+    // composition seam and is reached only with generator-created arrays, so
+    // it stays unchecked.
+    for input in &in_fwd {
+        let _ = writeln!(o, "      ArgumentNullException.ThrowIfNull({input});");
+    }
     let _ = writeln!(
         o,
         "      return {base}_OpenInternal({}, 0{opt_fwd_str});",
@@ -2375,11 +2378,7 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef) {
         "An optional parameter is outside its documented range, the input series have \
          different lengths, or an output array aliases an input or another output.",
     );
-    d.exception(
-        "System.NullReferenceException",
-        "An input or output array is null. (Unlike the C library, the managed tier does \
-         not pre-validate nulls; the first array access throws.)",
-    );
+    d.exception("System.ArgumentNullException", "An input or output array is null.");
     o.push('\n');
     o.push_str(&d.render(3));
     let _ = writeln!(
@@ -2388,6 +2387,13 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef) {
         fill_sig.join(", ")
     );
     let _ = writeln!(o, "   {{");
+    // Inputs AND outputs: the fill path writes through the caller's arrays, so
+    // a null output is as much a caller error as a null input, and the
+    // aliasing guard below would otherwise see two nulls as "equal" and answer
+    // BadParam instead of naming the argument.
+    for name in in_fwd.iter().chain(func.outputs.iter().map(|o2| &o2.name)) {
+        let _ = writeln!(o, "      ArgumentNullException.ThrowIfNull({name});");
+    }
     let _ = writeln!(o, "      {class} sp = new {class}(this);");
     let _ = writeln!(
         o,
