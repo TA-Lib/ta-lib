@@ -62,11 +62,11 @@ TA_LIB_API int TA_MAMA_Lookback( double optInFastLimit, double optInSlowLimit )
 {
    if( optInFastLimit == TA_REAL_DEFAULT )
       optInFastLimit = 0.5;
-   else if( optInFastLimit < 1e-2 || optInFastLimit > 9.9e-1 )
+   else if( !(optInFastLimit >= 1e-2 && optInFastLimit <= 9.9e-1) )
       return -1;
    if( optInSlowLimit == TA_REAL_DEFAULT )
       optInSlowLimit = 0.05;
-   else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 )
+   else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) )
       return -1;
    /* The two parameters are not a factor to determine
     * the lookback, but are still requested for
@@ -172,11 +172,11 @@ TA_LIB_API TA_RetCode TA_MAMA( int    startIdx,
       return TA_BAD_PARAM;
    if( optInFastLimit == TA_REAL_DEFAULT )
       optInFastLimit = 0.5;
-   else if( optInFastLimit < 1e-2 || optInFastLimit > 9.9e-1 )
+   else if( !(optInFastLimit >= 1e-2 && optInFastLimit <= 9.9e-1) )
       return TA_BAD_PARAM;
    if( optInSlowLimit == TA_REAL_DEFAULT )
       optInSlowLimit = 0.05;
-   else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 )
+   else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) )
       return TA_BAD_PARAM;
    if( !outMAMA )
       return TA_BAD_PARAM;
@@ -593,11 +593,11 @@ TA_RetCode TA_S_MAMA( int    startIdx,
       return TA_BAD_PARAM;
    if( optInFastLimit == TA_REAL_DEFAULT )
       optInFastLimit = 0.5;
-   else if( optInFastLimit < 1e-2 || optInFastLimit > 9.9e-1 )
+   else if( !(optInFastLimit >= 1e-2 && optInFastLimit <= 9.9e-1) )
       return TA_BAD_PARAM;
    if( optInSlowLimit == TA_REAL_DEFAULT )
       optInSlowLimit = 0.05;
-   else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 )
+   else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) )
       return TA_BAD_PARAM;
    if( !outMAMA )
       return TA_BAD_PARAM;

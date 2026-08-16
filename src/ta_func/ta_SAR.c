@@ -62,11 +62,11 @@ TA_LIB_API int TA_SAR_Lookback( double optInAcceleration, double optInMaximum )
 {
    if( optInAcceleration == TA_REAL_DEFAULT )
       optInAcceleration = 0.02;
-   else if( optInAcceleration < 0e0 || optInAcceleration > TA_REAL_MAX )
+   else if( !(optInAcceleration >= 0e0 && optInAcceleration <= TA_REAL_MAX) )
       return -1;
    if( optInMaximum == TA_REAL_DEFAULT )
       optInMaximum = 0.2;
-   else if( optInMaximum < 0e0 || optInMaximum > TA_REAL_MAX )
+   else if( !(optInMaximum >= 0e0 && optInMaximum <= TA_REAL_MAX) )
       return -1;
    /* SAR always sacrify one price bar to establish the
     * initial extreme price.
@@ -110,11 +110,11 @@ TA_LIB_API TA_RetCode TA_SAR( int    startIdx,
       return TA_BAD_PARAM;
    if( optInAcceleration == TA_REAL_DEFAULT )
       optInAcceleration = 0.02;
-   else if( optInAcceleration < 0e0 || optInAcceleration > TA_REAL_MAX )
+   else if( !(optInAcceleration >= 0e0 && optInAcceleration <= TA_REAL_MAX) )
       return TA_BAD_PARAM;
    if( optInMaximum == TA_REAL_DEFAULT )
       optInMaximum = 0.2;
-   else if( optInMaximum < 0e0 || optInMaximum > TA_REAL_MAX )
+   else if( !(optInMaximum >= 0e0 && optInMaximum <= TA_REAL_MAX) )
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
@@ -402,11 +402,11 @@ TA_RetCode TA_S_SAR( int    startIdx,
       return TA_BAD_PARAM;
    if( optInAcceleration == TA_REAL_DEFAULT )
       optInAcceleration = 0.02;
-   else if( optInAcceleration < 0e0 || optInAcceleration > TA_REAL_MAX )
+   else if( !(optInAcceleration >= 0e0 && optInAcceleration <= TA_REAL_MAX) )
       return TA_BAD_PARAM;
    if( optInMaximum == TA_REAL_DEFAULT )
       optInMaximum = 0.2;
-   else if( optInMaximum < 0e0 || optInMaximum > TA_REAL_MAX )
+   else if( !(optInMaximum >= 0e0 && optInMaximum <= TA_REAL_MAX) )
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;

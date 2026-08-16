@@ -86,7 +86,7 @@ use crate::streaming::{self, StreamModel, StreamPlan};
 
 use super::common::CANDLE_FNS;
 use super::csharp::{
-    cs_series_in, cs_series_out, cs_type_str, opt_param_type_str,
+    cs_series_in, cs_series_out, cs_type_str, emit_opt_param_validation, opt_param_type_str,
     render_csharp_switch_label, render_expr, render_hoisted_blocks, render_statement_ctx,
     CsRenderCtx,
 };
@@ -1788,7 +1788,7 @@ fn emit_open_validation(
     let _ = writeln!(o, "      if( historyLen > MAX_INDEX + 1 ) {{");
     let _ = writeln!(o, "         return RetCode.OutOfRangeEndIndex;");
     let _ = writeln!(o, "      }}");
-    o.push_str(&super::csharp::emit_opt_param_validation_ex(func, "RetCode.BadParam", enums, super::common::RealRangeTest::RejectNonFinite));
+    o.push_str(&emit_opt_param_validation(func, "RetCode.BadParam", enums));
     if mode == OutMode::Fill {
         o.push_str(&alias_reject(func, &inputs));
     }

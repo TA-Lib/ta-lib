@@ -40,7 +40,7 @@ use super::rust_doc::{series_def, unit_domain, CLOSE_SERIES, UNIT_SERIES, VOLUME
 use super::rust_lang::{
     build_matype_map, collect_for_loop_vars, collect_sentinel_vars, collect_signed_int_vars,
     collect_var_types, emit_circbuf_prolog_rust, expr_is_untyped_integer, CircBufTier,
-    render_expr, render_hoisted_blocks, render_statement,
+    gen_opt_param_validation_with, render_expr, render_hoisted_blocks, render_statement,
     RustRenderCtx,
 };
 use crate::helper_registry::hoist_block_helpers;
@@ -1447,12 +1447,11 @@ fn emit_open_validation_head(o: &mut String, func: &FuncDef, mode: OutMode, enum
         }
     }
     for p in &func.optional_inputs {
-        o.push_str(&super::rust_lang::gen_opt_param_validation_ex(
+        o.push_str(&gen_opt_param_validation_with(
             p,
             "        ",
             "return Err(RetCode::BadParam);",
             enums,
-            super::common::RealRangeTest::RejectNonFinite,
         ));
     }
 }

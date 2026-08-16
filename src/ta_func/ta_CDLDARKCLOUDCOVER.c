@@ -63,7 +63,7 @@ TA_LIB_API int TA_CDLDARKCLOUDCOVER_Lookback( double optInPenetration )
    double BodyLong_factor = TA_Globals->candleSettings[TA_BodyLong].factor;
    if( optInPenetration == TA_REAL_DEFAULT )
       optInPenetration = 0.5;
-   else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX )
+   else if( !(optInPenetration >= 0e0 && optInPenetration <= TA_REAL_MAX) )
       return -1;
    return BodyLong_avgPeriod + 1;
 }
@@ -103,7 +103,7 @@ TA_LIB_API TA_RetCode TA_CDLDARKCLOUDCOVER( int    startIdx,
       return TA_BAD_PARAM;
    if( optInPenetration == TA_REAL_DEFAULT )
       optInPenetration = 0.5;
-   else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX )
+   else if( !(optInPenetration >= 0e0 && optInPenetration <= TA_REAL_MAX) )
       return TA_BAD_PARAM;
    if( !outInteger )
       return TA_BAD_PARAM;
@@ -211,7 +211,7 @@ TA_RetCode TA_S_CDLDARKCLOUDCOVER( int    startIdx,
       return TA_BAD_PARAM;
    if( optInPenetration == TA_REAL_DEFAULT )
       optInPenetration = 0.5;
-   else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX )
+   else if( !(optInPenetration >= 0e0 && optInPenetration <= TA_REAL_MAX) )
       return TA_BAD_PARAM;
    if( !outInteger )
       return TA_BAD_PARAM;

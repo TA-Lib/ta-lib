@@ -68,7 +68,7 @@ TA_LIB_API int TA_VAR_Lookback( int optInTimePeriod, double optInNbDev )
       return -1;
    if( optInNbDev == TA_REAL_DEFAULT )
       optInNbDev = 1;
-   else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX )
+   else if( !(optInNbDev >= TA_REAL_MIN && optInNbDev <= TA_REAL_MAX) )
       return -1;
    return optInTimePeriod - 1;
 }
@@ -110,7 +110,7 @@ TA_LIB_API TA_RetCode TA_VAR( int    startIdx,
       return TA_BAD_PARAM;
    if( optInNbDev == TA_REAL_DEFAULT )
       optInNbDev = 1;
-   else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX )
+   else if( !(optInNbDev >= TA_REAL_MIN && optInNbDev <= TA_REAL_MAX) )
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
@@ -279,7 +279,7 @@ TA_RetCode TA_S_VAR( int    startIdx,
       return TA_BAD_PARAM;
    if( optInNbDev == TA_REAL_DEFAULT )
       optInNbDev = 1;
-   else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX )
+   else if( !(optInNbDev >= TA_REAL_MIN && optInNbDev <= TA_REAL_MAX) )
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;

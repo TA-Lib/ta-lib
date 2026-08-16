@@ -63,7 +63,7 @@ use crate::streaming::{self, StreamModel, StreamPlan};
 use super::fma::{self, FmaVarSets};
 use super::java::{
     build_matype_map, collect_address_of_vars, collect_double_address_of_vars, collect_matype_vars,
-    java_type_str, render_expr, render_hoisted_blocks,
+    emit_opt_param_validation, java_type_str, render_expr, render_hoisted_blocks,
     render_statement_ctx, JavaRenderCtx, JAVA_CANDLE_FNS,
 };
 use crate::helper_registry::hoist_block_helpers;
@@ -1432,7 +1432,7 @@ fn emit_open_validation(o: &mut String, func: &FuncDef, mode: OutMode, enums: &H
     let _ = writeln!(o, "      if( historyLen > MAX_INDEX + 1 ) {{");
     let _ = writeln!(o, "         return RetCode.OutOfRangeEndIndex;");
     let _ = writeln!(o, "      }}");
-    o.push_str(&super::java::emit_opt_param_validation_ex(func, "RetCode.BadParam", enums, super::common::RealRangeTest::RejectNonFinite));
+    o.push_str(&emit_opt_param_validation(func, "RetCode.BadParam", enums));
     if mode == OutMode::Fill {
         // FILL ONLY (the wrapper owns it once merged): OpenAndFill writes outputs then reads the
         // input tail to seed rings — the batch tier's in==out allowance is

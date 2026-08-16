@@ -66,7 +66,7 @@ TA_LIB_API int TA_CDLMORNINGSTAR_Lookback( double optInPenetration )
    double BodyShort_factor = TA_Globals->candleSettings[TA_BodyShort].factor;
    if( optInPenetration == TA_REAL_DEFAULT )
       optInPenetration = 0.3;
-   else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX )
+   else if( !(optInPenetration >= 0e0 && optInPenetration <= TA_REAL_MAX) )
       return -1;
    return max(BodyShort_avgPeriod,BodyLong_avgPeriod) + 2;
 }
@@ -113,7 +113,7 @@ TA_LIB_API TA_RetCode TA_CDLMORNINGSTAR( int    startIdx,
       return TA_BAD_PARAM;
    if( optInPenetration == TA_REAL_DEFAULT )
       optInPenetration = 0.3;
-   else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX )
+   else if( !(optInPenetration >= 0e0 && optInPenetration <= TA_REAL_MAX) )
       return TA_BAD_PARAM;
    if( !outInteger )
       return TA_BAD_PARAM;
@@ -244,7 +244,7 @@ TA_RetCode TA_S_CDLMORNINGSTAR( int    startIdx,
       return TA_BAD_PARAM;
    if( optInPenetration == TA_REAL_DEFAULT )
       optInPenetration = 0.3;
-   else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX )
+   else if( !(optInPenetration >= 0e0 && optInPenetration <= TA_REAL_MAX) )
       return TA_BAD_PARAM;
    if( !outInteger )
       return TA_BAD_PARAM;

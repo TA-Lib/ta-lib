@@ -38,7 +38,7 @@
       }
       if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 1e0;
-      } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
+      } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
          return -1;
       }
       return optInTimePeriod - 1 ;
@@ -80,7 +80,7 @@
       }
       if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 1e0;
-      } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
+      } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       /* Identify the minimum number of price bar needed to calculate
@@ -237,7 +237,7 @@
       }
       if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 1e0;
-      } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
+      } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       nbInitialElementNeeded = optInTimePeriod - 1;

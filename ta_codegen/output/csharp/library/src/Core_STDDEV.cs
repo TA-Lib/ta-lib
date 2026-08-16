@@ -81,7 +81,7 @@ public partial class Core
       }
       if( optInNbDev == TA_REAL_DEFAULT ) {
          optInNbDev = 1e0;
-      } else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX ) {
+      } else if( !(optInNbDev >= TA_REAL_MIN && optInNbDev <= TA_REAL_MAX) ) {
          return -1;
       }
       /* Lookback is driven by the variance. */
@@ -115,7 +115,7 @@ public partial class Core
       }
       if( optInNbDev == TA_REAL_DEFAULT ) {
          optInNbDev = 1e0;
-      } else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX ) {
+      } else if( !(optInNbDev >= TA_REAL_MIN && optInNbDev <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( (outReal.Overlaps(inReal) && outReal != inReal) ) {
@@ -179,7 +179,7 @@ public partial class Core
       }
       if( optInNbDev == TA_REAL_DEFAULT ) {
          optInNbDev = 1e0;
-      } else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX ) {
+      } else if( !(optInNbDev >= TA_REAL_MIN && optInNbDev <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       retCode = VAR(startIdx, endIdx, inReal, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, outReal);

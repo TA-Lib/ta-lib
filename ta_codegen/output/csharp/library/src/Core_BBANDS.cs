@@ -102,12 +102,12 @@ public partial class Core
       }
       if( optInNbDevUp == TA_REAL_DEFAULT ) {
          optInNbDevUp = 2e0;
-      } else if( optInNbDevUp < TA_REAL_MIN || optInNbDevUp > TA_REAL_MAX ) {
+      } else if( !(optInNbDevUp >= TA_REAL_MIN && optInNbDevUp <= TA_REAL_MAX) ) {
          return -1;
       }
       if( optInNbDevDn == TA_REAL_DEFAULT ) {
          optInNbDevDn = 2e0;
-      } else if( optInNbDevDn < TA_REAL_MIN || optInNbDevDn > TA_REAL_MAX ) {
+      } else if( !(optInNbDevDn >= TA_REAL_MIN && optInNbDevDn <= TA_REAL_MAX) ) {
          return -1;
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
@@ -170,12 +170,12 @@ public partial class Core
       }
       if( optInNbDevUp == TA_REAL_DEFAULT ) {
          optInNbDevUp = 2e0;
-      } else if( optInNbDevUp < TA_REAL_MIN || optInNbDevUp > TA_REAL_MAX ) {
+      } else if( !(optInNbDevUp >= TA_REAL_MIN && optInNbDevUp <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInNbDevDn == TA_REAL_DEFAULT ) {
          optInNbDevDn = 2e0;
-      } else if( optInNbDevDn < TA_REAL_MIN || optInNbDevDn > TA_REAL_MAX ) {
+      } else if( !(optInNbDevDn >= TA_REAL_MIN && optInNbDevDn <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
@@ -425,12 +425,12 @@ public partial class Core
       }
       if( optInNbDevUp == TA_REAL_DEFAULT ) {
          optInNbDevUp = 2e0;
-      } else if( optInNbDevUp < TA_REAL_MIN || optInNbDevUp > TA_REAL_MAX ) {
+      } else if( !(optInNbDevUp >= TA_REAL_MIN && optInNbDevUp <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInNbDevDn == TA_REAL_DEFAULT ) {
          optInNbDevDn = 2e0;
-      } else if( optInNbDevDn < TA_REAL_MIN || optInNbDevDn > TA_REAL_MAX ) {
+      } else if( !(optInNbDevDn >= TA_REAL_MIN && optInNbDevDn <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {

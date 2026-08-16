@@ -21,42 +21,30 @@ pub const TA_INTEGER_MIN: i32 = i32::MIN + 1;
 pub const TA_INTEGER_MAX: i32 = i32::MAX;
 pub const TA_INTEGER_DEFAULT: i32 = i32::MIN;
 
-/// How a real optional parameter's declared range is tested.
+/// The rejection condition for a real optional parameter's declared range.
 ///
-/// Both spellings cost the same two comparisons; they differ only on NaN, and
-/// that difference is the whole point.
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub(crate) enum RealRangeTest {
-    /// `x < min || x > max` — what the pre-cutover reference emitted, and what the
-    /// batch tier still emits. Every declared bound is finite (±3e37 at the widest),
-    /// so this rejects ±Inf; it **admits NaN**, because both comparisons are false
-    /// for NaN. That is the batch tier's documented "no filtering" behaviour.
-    Legacy,
-    /// `!(x >= min && x <= max)` — the same two comparisons with the sense inverted,
-    /// so NaN falls out of the conjunction and is rejected along with ±Inf. The
-    /// streaming tier's boundary contract: nothing non-finite enters a live handle.
-    RejectNonFinite,
-}
-
-impl RealRangeTest {
-    /// The range rejection condition for `name` over `[lo, hi]`, already rendered
-    /// in the backend's syntax (the three languages agree on all four operators).
-    pub(crate) fn reject_cond(self, name: &str, lo: &str, hi: &str) -> String {
-        self.reject_cond_styled(name, lo, hi, false)
-    }
-
-    /// [`Self::reject_cond`] with each comparison parenthesized. Rust's emitter
-    /// has always spelled the legacy test `(x < lo) || (x > hi)`; keeping that
-    /// exactly is what makes the batch tier BYTE-identical across this change
-    /// rather than merely equivalent — a reviewer reading the regen diff should
-    /// not have to decide whether 48 changed batch lines are cosmetic.
-    pub(crate) fn reject_cond_styled(self, name: &str, lo: &str, hi: &str, paren: bool) -> String {
-        match (self, paren) {
-            (Self::Legacy, false) => format!("{name} < {lo} || {name} > {hi}"),
-            (Self::Legacy, true) => format!("({name} < {lo}) || ({name} > {hi})"),
-            (Self::RejectNonFinite, false) => format!("!({name} >= {lo} && {name} <= {hi})"),
-            (Self::RejectNonFinite, true) => format!("!(({name} >= {lo}) && ({name} <= {hi}))"),
-        }
+/// Spelled `!(x >= min && x <= max)` rather than the obvious `x < min || x > max`.
+/// The two are identical for every finite `x` — and every declared bound in the
+/// corpus is finite, ±3e37 at the widest — but they differ on NaN, and that
+/// difference is the whole point: `NaN < min` and `NaN > max` are BOTH false, so
+/// the obvious spelling silently ACCEPTS a NaN parameter and computes with it.
+/// The inverted form costs the same two comparisons and rejects NaN along with
+/// the infinities.
+///
+/// One spelling everywhere — batch, lookback and streaming. The streaming tier
+/// got it first (it cannot afford a NaN entering a retained handle), but there
+/// was never a reason for the batch tier to accept a parameter it has no
+/// meaning for; "batch does not filter" is a statement about INPUT SERIES, not
+/// about parameters.
+///
+/// `paren` parenthesizes each comparison, which is how the Rust backend has
+/// always spelled it.
+#[must_use]
+pub(crate) fn real_range_reject(name: &str, lo: &str, hi: &str, paren: bool) -> String {
+    if paren {
+        format!("!(({name} >= {lo}) && ({name} <= {hi}))")
+    } else {
+        format!("!({name} >= {lo} && {name} <= {hi})")
     }
 }
 

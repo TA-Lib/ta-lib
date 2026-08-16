@@ -72,7 +72,7 @@ public partial class Core
    {
       if( optInPenetration == TA_REAL_DEFAULT ) {
          optInPenetration = 5e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= TA_REAL_MAX) ) {
          return -1;
       }
       int BodyLong_rangeType = (int)this.candleSettings[(int)CandleSettingType.BodyLong].rangeType;
@@ -110,7 +110,7 @@ public partial class Core
       }
       if( optInPenetration == TA_REAL_DEFAULT ) {
          optInPenetration = 5e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       /* Identify the minimum number of price bar needed
@@ -204,7 +204,7 @@ public partial class Core
       }
       if( optInPenetration == TA_REAL_DEFAULT ) {
          optInPenetration = 5e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       lookbackTotal = CDLDARKCLOUDCOVER_Lookback(optInPenetration);

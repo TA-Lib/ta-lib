@@ -86,7 +86,7 @@ impl Core {
         }
         if optInNbDev == REAL_DEFAULT {
             optInNbDev = 1e0;
-        } else if (optInNbDev < REAL_MIN) || (optInNbDev > REAL_MAX) {
+        } else if !((optInNbDev >= REAL_MIN) && (optInNbDev <= REAL_MAX)) {
             return usize::MAX;
         }
         // Lookback is driven by the variance.
@@ -185,7 +185,7 @@ impl Core {
         }
         if optInNbDev == REAL_DEFAULT {
             optInNbDev = 1e0;
-        } else if (optInNbDev < REAL_MIN) || (optInNbDev > REAL_MAX) {
+        } else if !((optInNbDev >= REAL_MIN) && (optInNbDev <= REAL_MAX)) {
             return RetCode::BadParam;
         }
         let _assertLb = self.STDDEV_Lookback(optInTimePeriod, optInNbDev);

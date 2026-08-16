@@ -79,7 +79,7 @@ impl Core {
     pub fn CDLDARKCLOUDCOVER_Lookback(&self, mut optInPenetration: f64) -> usize {
         if optInPenetration == REAL_DEFAULT {
             optInPenetration = 5e-1;
-        } else if (optInPenetration < 0e0) || (optInPenetration > REAL_MAX) {
+        } else if !((optInPenetration >= 0e0) && (optInPenetration <= REAL_MAX)) {
             return usize::MAX;
         }
         #[allow(non_snake_case)]
@@ -184,7 +184,7 @@ impl Core {
         }
         if optInPenetration == REAL_DEFAULT {
             optInPenetration = 5e-1;
-        } else if (optInPenetration < 0e0) || (optInPenetration > REAL_MAX) {
+        } else if !((optInPenetration >= 0e0) && (optInPenetration <= REAL_MAX)) {
             return RetCode::BadParam;
         }
         let _assertLb = self.CDLDARKCLOUDCOVER_Lookback(optInPenetration);

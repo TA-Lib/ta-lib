@@ -34,12 +34,12 @@
    {
       if( optInFastLimit == REAL_DEFAULT ) {
          optInFastLimit = 5e-1;
-      } else if( optInFastLimit < 1e-2 || optInFastLimit > 9.9e-1 ) {
+      } else if( !(optInFastLimit >= 1e-2 && optInFastLimit <= 9.9e-1) ) {
          return -1;
       }
       if( optInSlowLimit == REAL_DEFAULT ) {
          optInSlowLimit = 5e-2;
-      } else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 ) {
+      } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
          return -1;
       }
       /* The two parameters are not a factor to determine
@@ -143,12 +143,12 @@
       }
       if( optInFastLimit == REAL_DEFAULT ) {
          optInFastLimit = 5e-1;
-      } else if( optInFastLimit < 1e-2 || optInFastLimit > 9.9e-1 ) {
+      } else if( !(optInFastLimit >= 1e-2 && optInFastLimit <= 9.9e-1) ) {
          return RetCode.BadParam;
       }
       if( optInSlowLimit == REAL_DEFAULT ) {
          optInSlowLimit = 5e-2;
-      } else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 ) {
+      } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
          return RetCode.BadParam;
       }
       if( outMAMA == outFAMA ) {
@@ -538,12 +538,12 @@
       }
       if( optInFastLimit == REAL_DEFAULT ) {
          optInFastLimit = 5e-1;
-      } else if( optInFastLimit < 1e-2 || optInFastLimit > 9.9e-1 ) {
+      } else if( !(optInFastLimit >= 1e-2 && optInFastLimit <= 9.9e-1) ) {
          return RetCode.BadParam;
       }
       if( optInSlowLimit == REAL_DEFAULT ) {
          optInSlowLimit = 5e-2;
-      } else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 ) {
+      } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
          return RetCode.BadParam;
       }
       if( outMAMA == outFAMA ) {

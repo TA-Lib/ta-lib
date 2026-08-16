@@ -95,42 +95,42 @@ impl Core {
     pub fn SAREXT_Lookback(&self, mut optInStartValue: f64, mut optInOffsetOnReverse: f64, mut optInAccelerationInitLong: f64, mut optInAccelerationLong: f64, mut optInAccelerationMaxLong: f64, mut optInAccelerationInitShort: f64, mut optInAccelerationShort: f64, mut optInAccelerationMaxShort: f64) -> usize {
         if optInStartValue == REAL_DEFAULT {
             optInStartValue = 0e0;
-        } else if (optInStartValue < REAL_MIN) || (optInStartValue > REAL_MAX) {
+        } else if !((optInStartValue >= REAL_MIN) && (optInStartValue <= REAL_MAX)) {
             return usize::MAX;
         }
         if optInOffsetOnReverse == REAL_DEFAULT {
             optInOffsetOnReverse = 0e0;
-        } else if (optInOffsetOnReverse < 0e0) || (optInOffsetOnReverse > REAL_MAX) {
+        } else if !((optInOffsetOnReverse >= 0e0) && (optInOffsetOnReverse <= REAL_MAX)) {
             return usize::MAX;
         }
         if optInAccelerationInitLong == REAL_DEFAULT {
             optInAccelerationInitLong = 2e-2;
-        } else if (optInAccelerationInitLong < 0e0) || (optInAccelerationInitLong > REAL_MAX) {
+        } else if !((optInAccelerationInitLong >= 0e0) && (optInAccelerationInitLong <= REAL_MAX)) {
             return usize::MAX;
         }
         if optInAccelerationLong == REAL_DEFAULT {
             optInAccelerationLong = 2e-2;
-        } else if (optInAccelerationLong < 0e0) || (optInAccelerationLong > REAL_MAX) {
+        } else if !((optInAccelerationLong >= 0e0) && (optInAccelerationLong <= REAL_MAX)) {
             return usize::MAX;
         }
         if optInAccelerationMaxLong == REAL_DEFAULT {
             optInAccelerationMaxLong = 2e-1;
-        } else if (optInAccelerationMaxLong < 0e0) || (optInAccelerationMaxLong > REAL_MAX) {
+        } else if !((optInAccelerationMaxLong >= 0e0) && (optInAccelerationMaxLong <= REAL_MAX)) {
             return usize::MAX;
         }
         if optInAccelerationInitShort == REAL_DEFAULT {
             optInAccelerationInitShort = 2e-2;
-        } else if (optInAccelerationInitShort < 0e0) || (optInAccelerationInitShort > REAL_MAX) {
+        } else if !((optInAccelerationInitShort >= 0e0) && (optInAccelerationInitShort <= REAL_MAX)) {
             return usize::MAX;
         }
         if optInAccelerationShort == REAL_DEFAULT {
             optInAccelerationShort = 2e-2;
-        } else if (optInAccelerationShort < 0e0) || (optInAccelerationShort > REAL_MAX) {
+        } else if !((optInAccelerationShort >= 0e0) && (optInAccelerationShort <= REAL_MAX)) {
             return usize::MAX;
         }
         if optInAccelerationMaxShort == REAL_DEFAULT {
             optInAccelerationMaxShort = 2e-1;
-        } else if (optInAccelerationMaxShort < 0e0) || (optInAccelerationMaxShort > REAL_MAX) {
+        } else if !((optInAccelerationMaxShort >= 0e0) && (optInAccelerationMaxShort <= REAL_MAX)) {
             return usize::MAX;
         }
         // SAR always sacrifices one price bar to establish the
@@ -287,42 +287,42 @@ impl Core {
         }
         if optInStartValue == REAL_DEFAULT {
             optInStartValue = 0e0;
-        } else if (optInStartValue < REAL_MIN) || (optInStartValue > REAL_MAX) {
+        } else if !((optInStartValue >= REAL_MIN) && (optInStartValue <= REAL_MAX)) {
             return RetCode::BadParam;
         }
         if optInOffsetOnReverse == REAL_DEFAULT {
             optInOffsetOnReverse = 0e0;
-        } else if (optInOffsetOnReverse < 0e0) || (optInOffsetOnReverse > REAL_MAX) {
+        } else if !((optInOffsetOnReverse >= 0e0) && (optInOffsetOnReverse <= REAL_MAX)) {
             return RetCode::BadParam;
         }
         if optInAccelerationInitLong == REAL_DEFAULT {
             optInAccelerationInitLong = 2e-2;
-        } else if (optInAccelerationInitLong < 0e0) || (optInAccelerationInitLong > REAL_MAX) {
+        } else if !((optInAccelerationInitLong >= 0e0) && (optInAccelerationInitLong <= REAL_MAX)) {
             return RetCode::BadParam;
         }
         if optInAccelerationLong == REAL_DEFAULT {
             optInAccelerationLong = 2e-2;
-        } else if (optInAccelerationLong < 0e0) || (optInAccelerationLong > REAL_MAX) {
+        } else if !((optInAccelerationLong >= 0e0) && (optInAccelerationLong <= REAL_MAX)) {
             return RetCode::BadParam;
         }
         if optInAccelerationMaxLong == REAL_DEFAULT {
             optInAccelerationMaxLong = 2e-1;
-        } else if (optInAccelerationMaxLong < 0e0) || (optInAccelerationMaxLong > REAL_MAX) {
+        } else if !((optInAccelerationMaxLong >= 0e0) && (optInAccelerationMaxLong <= REAL_MAX)) {
             return RetCode::BadParam;
         }
         if optInAccelerationInitShort == REAL_DEFAULT {
             optInAccelerationInitShort = 2e-2;
-        } else if (optInAccelerationInitShort < 0e0) || (optInAccelerationInitShort > REAL_MAX) {
+        } else if !((optInAccelerationInitShort >= 0e0) && (optInAccelerationInitShort <= REAL_MAX)) {
             return RetCode::BadParam;
         }
         if optInAccelerationShort == REAL_DEFAULT {
             optInAccelerationShort = 2e-2;
-        } else if (optInAccelerationShort < 0e0) || (optInAccelerationShort > REAL_MAX) {
+        } else if !((optInAccelerationShort >= 0e0) && (optInAccelerationShort <= REAL_MAX)) {
             return RetCode::BadParam;
         }
         if optInAccelerationMaxShort == REAL_DEFAULT {
             optInAccelerationMaxShort = 2e-1;
-        } else if (optInAccelerationMaxShort < 0e0) || (optInAccelerationMaxShort > REAL_MAX) {
+        } else if !((optInAccelerationMaxShort >= 0e0) && (optInAccelerationMaxShort <= REAL_MAX)) {
             return RetCode::BadParam;
         }
         let _assertLb = self.SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);

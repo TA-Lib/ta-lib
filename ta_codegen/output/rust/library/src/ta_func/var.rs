@@ -88,7 +88,7 @@ impl Core {
         }
         if optInNbDev == REAL_DEFAULT {
             optInNbDev = 1e0;
-        } else if (optInNbDev < REAL_MIN) || (optInNbDev > REAL_MAX) {
+        } else if !((optInNbDev >= REAL_MIN) && (optInNbDev <= REAL_MAX)) {
             return usize::MAX;
         }
         return (optInTimePeriod - 1) as usize;
@@ -183,7 +183,7 @@ impl Core {
         }
         if optInNbDev == REAL_DEFAULT {
             optInNbDev = 1e0;
-        } else if (optInNbDev < REAL_MIN) || (optInNbDev > REAL_MAX) {
+        } else if !((optInNbDev >= REAL_MIN) && (optInNbDev <= REAL_MAX)) {
             return RetCode::BadParam;
         }
         let _assertLb = self.VAR_Lookback(optInTimePeriod, optInNbDev);

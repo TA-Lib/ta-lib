@@ -95,7 +95,7 @@ impl Core {
         }
         if optInVFactor == REAL_DEFAULT {
             optInVFactor = 7e-1;
-        } else if (optInVFactor < 0e0) || (optInVFactor > 1e0) {
+        } else if !((optInVFactor >= 0e0) && (optInVFactor <= 1e0)) {
             return usize::MAX;
         }
         return (6 * (optInTimePeriod - 1) + self.unstable_period[FuncUnstId::T3 as usize]) as usize;
@@ -230,7 +230,7 @@ impl Core {
         }
         if optInVFactor == REAL_DEFAULT {
             optInVFactor = 7e-1;
-        } else if (optInVFactor < 0e0) || (optInVFactor > 1e0) {
+        } else if !((optInVFactor >= 0e0) && (optInVFactor <= 1e0)) {
             return RetCode::BadParam;
         }
         let _assertLb = self.T3_Lookback(optInTimePeriod, optInVFactor);

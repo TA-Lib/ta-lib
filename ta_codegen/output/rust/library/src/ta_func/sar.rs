@@ -81,12 +81,12 @@ impl Core {
     pub fn SAR_Lookback(&self, mut optInAcceleration: f64, mut optInMaximum: f64) -> usize {
         if optInAcceleration == REAL_DEFAULT {
             optInAcceleration = 2e-2;
-        } else if (optInAcceleration < 0e0) || (optInAcceleration > REAL_MAX) {
+        } else if !((optInAcceleration >= 0e0) && (optInAcceleration <= REAL_MAX)) {
             return usize::MAX;
         }
         if optInMaximum == REAL_DEFAULT {
             optInMaximum = 2e-1;
-        } else if (optInMaximum < 0e0) || (optInMaximum > REAL_MAX) {
+        } else if !((optInMaximum >= 0e0) && (optInMaximum <= REAL_MAX)) {
             return usize::MAX;
         }
         // SAR always sacrify one price bar to establish the
@@ -222,12 +222,12 @@ impl Core {
         }
         if optInAcceleration == REAL_DEFAULT {
             optInAcceleration = 2e-2;
-        } else if (optInAcceleration < 0e0) || (optInAcceleration > REAL_MAX) {
+        } else if !((optInAcceleration >= 0e0) && (optInAcceleration <= REAL_MAX)) {
             return RetCode::BadParam;
         }
         if optInMaximum == REAL_DEFAULT {
             optInMaximum = 2e-1;
-        } else if (optInMaximum < 0e0) || (optInMaximum > REAL_MAX) {
+        } else if !((optInMaximum >= 0e0) && (optInMaximum <= REAL_MAX)) {
             return RetCode::BadParam;
         }
         let _assertLb = self.SAR_Lookback(optInAcceleration, optInMaximum);

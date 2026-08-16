@@ -75,12 +75,12 @@ public partial class Core
    {
       if( optInAcceleration == TA_REAL_DEFAULT ) {
          optInAcceleration = 2e-2;
-      } else if( optInAcceleration < 0e0 || optInAcceleration > TA_REAL_MAX ) {
+      } else if( !(optInAcceleration >= 0e0 && optInAcceleration <= TA_REAL_MAX) ) {
          return -1;
       }
       if( optInMaximum == TA_REAL_DEFAULT ) {
          optInMaximum = 2e-1;
-      } else if( optInMaximum < 0e0 || optInMaximum > TA_REAL_MAX ) {
+      } else if( !(optInMaximum >= 0e0 && optInMaximum <= TA_REAL_MAX) ) {
          return -1;
       }
       /* SAR always sacrify one price bar to establish the
@@ -122,12 +122,12 @@ public partial class Core
       }
       if( optInAcceleration == TA_REAL_DEFAULT ) {
          optInAcceleration = 2e-2;
-      } else if( optInAcceleration < 0e0 || optInAcceleration > TA_REAL_MAX ) {
+      } else if( !(optInAcceleration >= 0e0 && optInAcceleration <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInMaximum == TA_REAL_DEFAULT ) {
          optInMaximum = 2e-1;
-      } else if( optInMaximum < 0e0 || optInMaximum > TA_REAL_MAX ) {
+      } else if( !(optInMaximum >= 0e0 && optInMaximum <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( (outReal.Overlaps(inHigh) && outReal != inHigh) || (outReal.Overlaps(inLow) && outReal != inLow) ) {
@@ -382,12 +382,12 @@ public partial class Core
       }
       if( optInAcceleration == TA_REAL_DEFAULT ) {
          optInAcceleration = 2e-2;
-      } else if( optInAcceleration < 0e0 || optInAcceleration > TA_REAL_MAX ) {
+      } else if( !(optInAcceleration >= 0e0 && optInAcceleration <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInMaximum == TA_REAL_DEFAULT ) {
          optInMaximum = 2e-1;
-      } else if( optInMaximum < 0e0 || optInMaximum > TA_REAL_MAX ) {
+      } else if( !(optInMaximum >= 0e0 && optInMaximum <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( startIdx < 1 ) {

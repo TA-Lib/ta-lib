@@ -94,7 +94,7 @@ public partial class Core
       }
       if( optInVFactor == TA_REAL_DEFAULT ) {
          optInVFactor = 7e-1;
-      } else if( optInVFactor < 0e0 || optInVFactor > 1e0 ) {
+      } else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) ) {
          return -1;
       }
       return 6 * (optInTimePeriod - 1) + this.unstablePeriod[(int)FuncUnstId.T3] ;
@@ -141,7 +141,7 @@ public partial class Core
       }
       if( optInVFactor == TA_REAL_DEFAULT ) {
          optInVFactor = 7e-1;
-      } else if( optInVFactor < 0e0 || optInVFactor > 1e0 ) {
+      } else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) ) {
          return RetCode.BadParam;
       }
       if( (outReal.Overlaps(inReal) && outReal != inReal) ) {
@@ -319,7 +319,7 @@ public partial class Core
       }
       if( optInVFactor == TA_REAL_DEFAULT ) {
          optInVFactor = 7e-1;
-      } else if( optInVFactor < 0e0 || optInVFactor > 1e0 ) {
+      } else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) ) {
          return RetCode.BadParam;
       }
       lookbackTotal = 6 * (optInTimePeriod - 1) + this.unstablePeriod[(int)FuncUnstId.T3];

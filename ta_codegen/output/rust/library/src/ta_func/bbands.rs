@@ -106,12 +106,12 @@ impl Core {
         }
         if optInNbDevUp == REAL_DEFAULT {
             optInNbDevUp = 2e0;
-        } else if (optInNbDevUp < REAL_MIN) || (optInNbDevUp > REAL_MAX) {
+        } else if !((optInNbDevUp >= REAL_MIN) && (optInNbDevUp <= REAL_MAX)) {
             return usize::MAX;
         }
         if optInNbDevDn == REAL_DEFAULT {
             optInNbDevDn = 2e0;
-        } else if (optInNbDevDn < REAL_MIN) || (optInNbDevDn > REAL_MAX) {
+        } else if !((optInNbDevDn >= REAL_MIN) && (optInNbDevDn <= REAL_MAX)) {
             return usize::MAX;
         }
         if optInMAType == MAType::DEFAULT {
@@ -295,12 +295,12 @@ impl Core {
         }
         if optInNbDevUp == REAL_DEFAULT {
             optInNbDevUp = 2e0;
-        } else if (optInNbDevUp < REAL_MIN) || (optInNbDevUp > REAL_MAX) {
+        } else if !((optInNbDevUp >= REAL_MIN) && (optInNbDevUp <= REAL_MAX)) {
             return RetCode::BadParam;
         }
         if optInNbDevDn == REAL_DEFAULT {
             optInNbDevDn = 2e0;
-        } else if (optInNbDevDn < REAL_MIN) || (optInNbDevDn > REAL_MAX) {
+        } else if !((optInNbDevDn >= REAL_MIN) && (optInNbDevDn <= REAL_MAX)) {
             return RetCode::BadParam;
         }
         if optInMAType == MAType::DEFAULT {

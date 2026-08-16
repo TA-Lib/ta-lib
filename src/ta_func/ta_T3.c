@@ -75,7 +75,7 @@ TA_LIB_API int TA_T3_Lookback( int optInTimePeriod, double optInVFactor )
       return -1;
    if( optInVFactor == TA_REAL_DEFAULT )
       optInVFactor = 0.7;
-   else if( optInVFactor < 0e0 || optInVFactor > 1e0 )
+   else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) )
       return -1;
    return 6 * (optInTimePeriod - 1) + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_T3,T3);
 }
@@ -121,7 +121,7 @@ TA_LIB_API TA_RetCode TA_T3( int    startIdx,
       return TA_BAD_PARAM;
    if( optInVFactor == TA_REAL_DEFAULT )
       optInVFactor = 0.7;
-   else if( optInVFactor < 0e0 || optInVFactor > 1e0 )
+   else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) )
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
@@ -311,7 +311,7 @@ TA_RetCode TA_S_T3( int    startIdx,
       return TA_BAD_PARAM;
    if( optInVFactor == TA_REAL_DEFAULT )
       optInVFactor = 0.7;
-   else if( optInVFactor < 0e0 || optInVFactor > 1e0 )
+   else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) )
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;

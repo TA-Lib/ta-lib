@@ -49,7 +49,7 @@
       }
       if( optInVFactor == REAL_DEFAULT ) {
          optInVFactor = 7e-1;
-      } else if( optInVFactor < 0e0 || optInVFactor > 1e0 ) {
+      } else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) ) {
          return -1;
       }
       return 6 * (optInTimePeriod - 1) + this.unstablePeriod[FuncUnstId.T3.ordinal()] ;
@@ -94,7 +94,7 @@
       }
       if( optInVFactor == REAL_DEFAULT ) {
          optInVFactor = 7e-1;
-      } else if( optInVFactor < 0e0 || optInVFactor > 1e0 ) {
+      } else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) ) {
          return RetCode.BadParam;
       }
       /* For an explanation of this function, please read:
@@ -267,7 +267,7 @@
       }
       if( optInVFactor == REAL_DEFAULT ) {
          optInVFactor = 7e-1;
-      } else if( optInVFactor < 0e0 || optInVFactor > 1e0 ) {
+      } else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) ) {
          return RetCode.BadParam;
       }
       lookbackTotal = 6 * (optInTimePeriod - 1) + this.unstablePeriod[FuncUnstId.T3.ordinal()];

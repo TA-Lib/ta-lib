@@ -72,7 +72,7 @@ public partial class Core
    {
       if( optInPenetration == TA_REAL_DEFAULT ) {
          optInPenetration = 3e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= TA_REAL_MAX) ) {
          return -1;
       }
       int BodyDoji_rangeType = (int)this.candleSettings[(int)CandleSettingType.BodyDoji].rangeType;
@@ -126,7 +126,7 @@ public partial class Core
       }
       if( optInPenetration == TA_REAL_DEFAULT ) {
          optInPenetration = 3e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       /* Identify the minimum number of price bar needed
@@ -251,7 +251,7 @@ public partial class Core
       }
       if( optInPenetration == TA_REAL_DEFAULT ) {
          optInPenetration = 3e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
       lookbackTotal = CDLMORNINGDOJISTAR_Lookback(optInPenetration);

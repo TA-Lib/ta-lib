@@ -10276,12 +10276,12 @@ public final class Core {
       }
       if( optInNbDevUp == REAL_DEFAULT ) {
          optInNbDevUp = 2e0;
-      } else if( optInNbDevUp < REAL_MIN || optInNbDevUp > REAL_MAX ) {
+      } else if( !(optInNbDevUp >= REAL_MIN && optInNbDevUp <= REAL_MAX) ) {
          return -1;
       }
       if( optInNbDevDn == REAL_DEFAULT ) {
          optInNbDevDn = 2e0;
-      } else if( optInNbDevDn < REAL_MIN || optInNbDevDn > REAL_MAX ) {
+      } else if( !(optInNbDevDn >= REAL_MIN && optInNbDevDn <= REAL_MAX) ) {
          return -1;
       }
       if( optInMAType == MAType.DEFAULT ) {
@@ -10340,12 +10340,12 @@ public final class Core {
       }
       if( optInNbDevUp == REAL_DEFAULT ) {
          optInNbDevUp = 2e0;
-      } else if( optInNbDevUp < REAL_MIN || optInNbDevUp > REAL_MAX ) {
+      } else if( !(optInNbDevUp >= REAL_MIN && optInNbDevUp <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInNbDevDn == REAL_DEFAULT ) {
          optInNbDevDn = 2e0;
-      } else if( optInNbDevDn < REAL_MIN || optInNbDevDn > REAL_MAX ) {
+      } else if( !(optInNbDevDn >= REAL_MIN && optInNbDevDn <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInMAType == MAType.DEFAULT ) {
@@ -10588,12 +10588,12 @@ public final class Core {
       }
       if( optInNbDevUp == REAL_DEFAULT ) {
          optInNbDevUp = 2e0;
-      } else if( optInNbDevUp < REAL_MIN || optInNbDevUp > REAL_MAX ) {
+      } else if( !(optInNbDevUp >= REAL_MIN && optInNbDevUp <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInNbDevDn == REAL_DEFAULT ) {
          optInNbDevDn = 2e0;
-      } else if( optInNbDevDn < REAL_MIN || optInNbDevDn > REAL_MAX ) {
+      } else if( !(optInNbDevDn >= REAL_MIN && optInNbDevDn <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInMAType == MAType.DEFAULT ) {
@@ -19995,7 +19995,7 @@ public final class Core {
    {
       if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 3e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return -1;
       }
       int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].rangeType.ordinal();
@@ -20047,7 +20047,7 @@ public final class Core {
       }
       if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 3e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       /* Identify the minimum number of price bar needed
@@ -20169,7 +20169,7 @@ public final class Core {
       }
       if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 3e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       lookbackTotal = CDLABANDONEDBABY_Lookback(optInPenetration);
@@ -26732,7 +26732,7 @@ public final class Core {
    {
       if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 5e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return -1;
       }
       int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
@@ -26768,7 +26768,7 @@ public final class Core {
       }
       if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 5e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       /* Identify the minimum number of price bar needed
@@ -26860,7 +26860,7 @@ public final class Core {
       }
       if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 5e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       lookbackTotal = CDLDARKCLOUDCOVER_Lookback(optInPenetration);
@@ -30381,7 +30381,7 @@ public final class Core {
    {
       if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 3e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return -1;
       }
       int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].rangeType.ordinal();
@@ -30433,7 +30433,7 @@ public final class Core {
       }
       if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 3e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       /* Identify the minimum number of price bar needed
@@ -30556,7 +30556,7 @@ public final class Core {
       }
       if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 3e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       lookbackTotal = CDLEVENINGDOJISTAR_Lookback(optInPenetration);
@@ -31422,7 +31422,7 @@ public final class Core {
    {
       if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 3e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return -1;
       }
       int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
@@ -31467,7 +31467,7 @@ public final class Core {
       }
       if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 3e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       /* Identify the minimum number of price bar needed
@@ -31580,7 +31580,7 @@ public final class Core {
       }
       if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 3e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       lookbackTotal = CDLEVENINGSTAR_Lookback(optInPenetration);
@@ -49949,7 +49949,7 @@ public final class Core {
    {
       if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 5e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return -1;
       }
       int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
@@ -49993,7 +49993,7 @@ public final class Core {
       }
       if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 5e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       /* Identify the minimum number of price bar needed
@@ -50120,7 +50120,7 @@ public final class Core {
       }
       if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 5e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       lookbackTotal = CDLMATHOLD_Lookback(optInPenetration);
@@ -51039,7 +51039,7 @@ public final class Core {
    {
       if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 3e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return -1;
       }
       int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].rangeType.ordinal();
@@ -51091,7 +51091,7 @@ public final class Core {
       }
       if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 3e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       /* Identify the minimum number of price bar needed
@@ -51214,7 +51214,7 @@ public final class Core {
       }
       if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 3e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       lookbackTotal = CDLMORNINGDOJISTAR_Lookback(optInPenetration);
@@ -52086,7 +52086,7 @@ public final class Core {
    {
       if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 3e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return -1;
       }
       int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
@@ -52131,7 +52131,7 @@ public final class Core {
       }
       if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 3e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       /* Identify the minimum number of price bar needed
@@ -52244,7 +52244,7 @@ public final class Core {
       }
       if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 3e-1;
-      } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       lookbackTotal = CDLMORNINGSTAR_Lookback(optInPenetration);
@@ -99126,12 +99126,12 @@ public final class Core {
    {
       if( optInFastLimit == REAL_DEFAULT ) {
          optInFastLimit = 5e-1;
-      } else if( optInFastLimit < 1e-2 || optInFastLimit > 9.9e-1 ) {
+      } else if( !(optInFastLimit >= 1e-2 && optInFastLimit <= 9.9e-1) ) {
          return -1;
       }
       if( optInSlowLimit == REAL_DEFAULT ) {
          optInSlowLimit = 5e-2;
-      } else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 ) {
+      } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
          return -1;
       }
       /* The two parameters are not a factor to determine
@@ -99235,12 +99235,12 @@ public final class Core {
       }
       if( optInFastLimit == REAL_DEFAULT ) {
          optInFastLimit = 5e-1;
-      } else if( optInFastLimit < 1e-2 || optInFastLimit > 9.9e-1 ) {
+      } else if( !(optInFastLimit >= 1e-2 && optInFastLimit <= 9.9e-1) ) {
          return RetCode.BadParam;
       }
       if( optInSlowLimit == REAL_DEFAULT ) {
          optInSlowLimit = 5e-2;
-      } else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 ) {
+      } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
          return RetCode.BadParam;
       }
       if( outMAMA == outFAMA ) {
@@ -99630,12 +99630,12 @@ public final class Core {
       }
       if( optInFastLimit == REAL_DEFAULT ) {
          optInFastLimit = 5e-1;
-      } else if( optInFastLimit < 1e-2 || optInFastLimit > 9.9e-1 ) {
+      } else if( !(optInFastLimit >= 1e-2 && optInFastLimit <= 9.9e-1) ) {
          return RetCode.BadParam;
       }
       if( optInSlowLimit == REAL_DEFAULT ) {
          optInSlowLimit = 5e-2;
-      } else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 ) {
+      } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
          return RetCode.BadParam;
       }
       if( outMAMA == outFAMA ) {
@@ -124013,12 +124013,12 @@ public final class Core {
    {
       if( optInAcceleration == REAL_DEFAULT ) {
          optInAcceleration = 2e-2;
-      } else if( optInAcceleration < 0e0 || optInAcceleration > REAL_MAX ) {
+      } else if( !(optInAcceleration >= 0e0 && optInAcceleration <= REAL_MAX) ) {
          return -1;
       }
       if( optInMaximum == REAL_DEFAULT ) {
          optInMaximum = 2e-1;
-      } else if( optInMaximum < 0e0 || optInMaximum > REAL_MAX ) {
+      } else if( !(optInMaximum >= 0e0 && optInMaximum <= REAL_MAX) ) {
          return -1;
       }
       /* SAR always sacrify one price bar to establish the
@@ -124058,12 +124058,12 @@ public final class Core {
       }
       if( optInAcceleration == REAL_DEFAULT ) {
          optInAcceleration = 2e-2;
-      } else if( optInAcceleration < 0e0 || optInAcceleration > REAL_MAX ) {
+      } else if( !(optInAcceleration >= 0e0 && optInAcceleration <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInMaximum == REAL_DEFAULT ) {
          optInMaximum = 2e-1;
-      } else if( optInMaximum < 0e0 || optInMaximum > REAL_MAX ) {
+      } else if( !(optInMaximum >= 0e0 && optInMaximum <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       /* > 0 indicates long. == 0 indicates short */
@@ -124313,12 +124313,12 @@ public final class Core {
       }
       if( optInAcceleration == REAL_DEFAULT ) {
          optInAcceleration = 2e-2;
-      } else if( optInAcceleration < 0e0 || optInAcceleration > REAL_MAX ) {
+      } else if( !(optInAcceleration >= 0e0 && optInAcceleration <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInMaximum == REAL_DEFAULT ) {
          optInMaximum = 2e-1;
-      } else if( optInMaximum < 0e0 || optInMaximum > REAL_MAX ) {
+      } else if( !(optInMaximum >= 0e0 && optInMaximum <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( startIdx < 1 ) {
@@ -125209,42 +125209,42 @@ public final class Core {
    {
       if( optInStartValue == REAL_DEFAULT ) {
          optInStartValue = 0e0;
-      } else if( optInStartValue < REAL_MIN || optInStartValue > REAL_MAX ) {
+      } else if( !(optInStartValue >= REAL_MIN && optInStartValue <= REAL_MAX) ) {
          return -1;
       }
       if( optInOffsetOnReverse == REAL_DEFAULT ) {
          optInOffsetOnReverse = 0e0;
-      } else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > REAL_MAX ) {
+      } else if( !(optInOffsetOnReverse >= 0e0 && optInOffsetOnReverse <= REAL_MAX) ) {
          return -1;
       }
       if( optInAccelerationInitLong == REAL_DEFAULT ) {
          optInAccelerationInitLong = 2e-2;
-      } else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > REAL_MAX ) {
+      } else if( !(optInAccelerationInitLong >= 0e0 && optInAccelerationInitLong <= REAL_MAX) ) {
          return -1;
       }
       if( optInAccelerationLong == REAL_DEFAULT ) {
          optInAccelerationLong = 2e-2;
-      } else if( optInAccelerationLong < 0e0 || optInAccelerationLong > REAL_MAX ) {
+      } else if( !(optInAccelerationLong >= 0e0 && optInAccelerationLong <= REAL_MAX) ) {
          return -1;
       }
       if( optInAccelerationMaxLong == REAL_DEFAULT ) {
          optInAccelerationMaxLong = 2e-1;
-      } else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > REAL_MAX ) {
+      } else if( !(optInAccelerationMaxLong >= 0e0 && optInAccelerationMaxLong <= REAL_MAX) ) {
          return -1;
       }
       if( optInAccelerationInitShort == REAL_DEFAULT ) {
          optInAccelerationInitShort = 2e-2;
-      } else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > REAL_MAX ) {
+      } else if( !(optInAccelerationInitShort >= 0e0 && optInAccelerationInitShort <= REAL_MAX) ) {
          return -1;
       }
       if( optInAccelerationShort == REAL_DEFAULT ) {
          optInAccelerationShort = 2e-2;
-      } else if( optInAccelerationShort < 0e0 || optInAccelerationShort > REAL_MAX ) {
+      } else if( !(optInAccelerationShort >= 0e0 && optInAccelerationShort <= REAL_MAX) ) {
          return -1;
       }
       if( optInAccelerationMaxShort == REAL_DEFAULT ) {
          optInAccelerationMaxShort = 2e-1;
-      } else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > REAL_MAX ) {
+      } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= REAL_MAX) ) {
          return -1;
       }
       /* SAR always sacrifices one price bar to establish the
@@ -125291,42 +125291,42 @@ public final class Core {
       }
       if( optInStartValue == REAL_DEFAULT ) {
          optInStartValue = 0e0;
-      } else if( optInStartValue < REAL_MIN || optInStartValue > REAL_MAX ) {
+      } else if( !(optInStartValue >= REAL_MIN && optInStartValue <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInOffsetOnReverse == REAL_DEFAULT ) {
          optInOffsetOnReverse = 0e0;
-      } else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > REAL_MAX ) {
+      } else if( !(optInOffsetOnReverse >= 0e0 && optInOffsetOnReverse <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationInitLong == REAL_DEFAULT ) {
          optInAccelerationInitLong = 2e-2;
-      } else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > REAL_MAX ) {
+      } else if( !(optInAccelerationInitLong >= 0e0 && optInAccelerationInitLong <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationLong == REAL_DEFAULT ) {
          optInAccelerationLong = 2e-2;
-      } else if( optInAccelerationLong < 0e0 || optInAccelerationLong > REAL_MAX ) {
+      } else if( !(optInAccelerationLong >= 0e0 && optInAccelerationLong <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationMaxLong == REAL_DEFAULT ) {
          optInAccelerationMaxLong = 2e-1;
-      } else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > REAL_MAX ) {
+      } else if( !(optInAccelerationMaxLong >= 0e0 && optInAccelerationMaxLong <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationInitShort == REAL_DEFAULT ) {
          optInAccelerationInitShort = 2e-2;
-      } else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > REAL_MAX ) {
+      } else if( !(optInAccelerationInitShort >= 0e0 && optInAccelerationInitShort <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationShort == REAL_DEFAULT ) {
          optInAccelerationShort = 2e-2;
-      } else if( optInAccelerationShort < 0e0 || optInAccelerationShort > REAL_MAX ) {
+      } else if( !(optInAccelerationShort >= 0e0 && optInAccelerationShort <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationMaxShort == REAL_DEFAULT ) {
          optInAccelerationMaxShort = 2e-1;
-      } else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > REAL_MAX ) {
+      } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       /* > 0 indicates long. == 0 indicates short */
@@ -125640,42 +125640,42 @@ public final class Core {
       }
       if( optInStartValue == REAL_DEFAULT ) {
          optInStartValue = 0e0;
-      } else if( optInStartValue < REAL_MIN || optInStartValue > REAL_MAX ) {
+      } else if( !(optInStartValue >= REAL_MIN && optInStartValue <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInOffsetOnReverse == REAL_DEFAULT ) {
          optInOffsetOnReverse = 0e0;
-      } else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > REAL_MAX ) {
+      } else if( !(optInOffsetOnReverse >= 0e0 && optInOffsetOnReverse <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationInitLong == REAL_DEFAULT ) {
          optInAccelerationInitLong = 2e-2;
-      } else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > REAL_MAX ) {
+      } else if( !(optInAccelerationInitLong >= 0e0 && optInAccelerationInitLong <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationLong == REAL_DEFAULT ) {
          optInAccelerationLong = 2e-2;
-      } else if( optInAccelerationLong < 0e0 || optInAccelerationLong > REAL_MAX ) {
+      } else if( !(optInAccelerationLong >= 0e0 && optInAccelerationLong <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationMaxLong == REAL_DEFAULT ) {
          optInAccelerationMaxLong = 2e-1;
-      } else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > REAL_MAX ) {
+      } else if( !(optInAccelerationMaxLong >= 0e0 && optInAccelerationMaxLong <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationInitShort == REAL_DEFAULT ) {
          optInAccelerationInitShort = 2e-2;
-      } else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > REAL_MAX ) {
+      } else if( !(optInAccelerationInitShort >= 0e0 && optInAccelerationInitShort <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationShort == REAL_DEFAULT ) {
          optInAccelerationShort = 2e-2;
-      } else if( optInAccelerationShort < 0e0 || optInAccelerationShort > REAL_MAX ) {
+      } else if( !(optInAccelerationShort >= 0e0 && optInAccelerationShort <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( optInAccelerationMaxShort == REAL_DEFAULT ) {
          optInAccelerationMaxShort = 2e-1;
-      } else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > REAL_MAX ) {
+      } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( startIdx < 1 ) {
@@ -128468,7 +128468,7 @@ public final class Core {
       }
       if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 1e0;
-      } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
+      } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
          return -1;
       }
       /* Lookback is driven by the variance. */
@@ -128500,7 +128500,7 @@ public final class Core {
       }
       if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 1e0;
-      } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
+      } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       /* Calculate the variance. */
@@ -128559,7 +128559,7 @@ public final class Core {
       }
       if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 1e0;
-      } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
+      } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       retCode = VAR_Internal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
@@ -133294,7 +133294,7 @@ public final class Core {
       }
       if( optInVFactor == REAL_DEFAULT ) {
          optInVFactor = 7e-1;
-      } else if( optInVFactor < 0e0 || optInVFactor > 1e0 ) {
+      } else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) ) {
          return -1;
       }
       return 6 * (optInTimePeriod - 1) + this.unstablePeriod[FuncUnstId.T3.ordinal()] ;
@@ -133339,7 +133339,7 @@ public final class Core {
       }
       if( optInVFactor == REAL_DEFAULT ) {
          optInVFactor = 7e-1;
-      } else if( optInVFactor < 0e0 || optInVFactor > 1e0 ) {
+      } else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) ) {
          return RetCode.BadParam;
       }
       /* For an explanation of this function, please read:
@@ -133512,7 +133512,7 @@ public final class Core {
       }
       if( optInVFactor == REAL_DEFAULT ) {
          optInVFactor = 7e-1;
-      } else if( optInVFactor < 0e0 || optInVFactor > 1e0 ) {
+      } else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) ) {
          return RetCode.BadParam;
       }
       lookbackTotal = 6 * (optInTimePeriod - 1) + this.unstablePeriod[FuncUnstId.T3.ordinal()];
@@ -140773,7 +140773,7 @@ public final class Core {
       }
       if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 1e0;
-      } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
+      } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
          return -1;
       }
       return optInTimePeriod - 1 ;
@@ -140815,7 +140815,7 @@ public final class Core {
       }
       if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 1e0;
-      } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
+      } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       /* Identify the minimum number of price bar needed to calculate
@@ -140972,7 +140972,7 @@ public final class Core {
       }
       if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 1e0;
-      } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
+      } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       nbInitialElementNeeded = optInTimePeriod - 1;

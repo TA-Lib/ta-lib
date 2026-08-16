@@ -29,18 +29,10 @@ use crate::registry::Registry;
 use crate::streaming::{self, circ_storages, CircState, DispatchPlan, StreamModel, StreamPlan};
 
 use super::c::{
-    c_decl, emit_opt_param_validation_ex, render_c_switch_label, render_expression,
+    c_decl, emit_opt_param_validation, render_c_switch_label, render_expression,
     render_statement, render_statement_stream,
 };
-use super::common::RealRangeTest;
 use super::fma;
-
-/// The streaming tier's optional-parameter validation: identical to the batch
-/// tier's except that a real parameter's range test rejects NaN (see
-/// [`RealRangeTest`]). Nothing non-finite may enter a live handle.
-fn emit_opt_param_validation(func: &FuncDef, fail: &str, enums: &HashMap<String, EnumDef>) -> String {
-    emit_opt_param_validation_ex(func, fail, enums, RealRangeTest::RejectNonFinite)
-}
 
 /// C name mapping for the transition rewrite: state fields through the
 /// handle pointer, current bars as same-named scalar params, outputs as

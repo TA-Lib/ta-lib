@@ -82,12 +82,12 @@ impl Core {
     pub fn MAMA_Lookback(&self, mut optInFastLimit: f64, mut optInSlowLimit: f64) -> usize {
         if optInFastLimit == REAL_DEFAULT {
             optInFastLimit = 5e-1;
-        } else if (optInFastLimit < 1e-2) || (optInFastLimit > 9.9e-1) {
+        } else if !((optInFastLimit >= 1e-2) && (optInFastLimit <= 9.9e-1)) {
             return usize::MAX;
         }
         if optInSlowLimit == REAL_DEFAULT {
             optInSlowLimit = 5e-2;
-        } else if (optInSlowLimit < 1e-2) || (optInSlowLimit > 9.9e-1) {
+        } else if !((optInSlowLimit >= 1e-2) && (optInSlowLimit <= 9.9e-1)) {
             return usize::MAX;
         }
         // The two parameters are not a factor to determine
@@ -239,12 +239,12 @@ impl Core {
         }
         if optInFastLimit == REAL_DEFAULT {
             optInFastLimit = 5e-1;
-        } else if (optInFastLimit < 1e-2) || (optInFastLimit > 9.9e-1) {
+        } else if !((optInFastLimit >= 1e-2) && (optInFastLimit <= 9.9e-1)) {
             return RetCode::BadParam;
         }
         if optInSlowLimit == REAL_DEFAULT {
             optInSlowLimit = 5e-2;
-        } else if (optInSlowLimit < 1e-2) || (optInSlowLimit > 9.9e-1) {
+        } else if !((optInSlowLimit >= 1e-2) && (optInSlowLimit <= 9.9e-1)) {
             return RetCode::BadParam;
         }
         if outMAMA.as_ptr() == outFAMA.as_ptr() {
