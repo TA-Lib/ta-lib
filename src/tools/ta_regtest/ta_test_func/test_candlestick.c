@@ -5491,6 +5491,445 @@ static void build_gapsidesidewhite( void )
   pb_flat(8);
 }
 
+/* ---- Hard tier: CDLRISEFALL3METHODS -------------------------------------- *
+ *
+ * A long candle, three small ones of the opposite colour holding inside its
+ * range and moving against it, then a long candle of the first one's colour
+ * carrying past its close. Nineteen conditions over five bars -- the largest
+ * conjunction in the corpus -- and the first builder to face three structures
+ * at once.
+ *
+ * A FIVE-DEEP WINDOW CASCADE. BodyLong and BodyShort both default to
+ * (RealBody, 10, 1.0), which is why one BodyPeriodTotal[] serves both, and the
+ * five reads sit at i-4..i so each window swallows one more scenario bar than
+ * the last:
+ *
+ *   avg(i-4) = P                          all primer
+ *   avg(i-3) = (9P + A4)/10
+ *   avg(i-2) = (8P + A4 + A3)/10
+ *   avg(i-1) = (7P + A4 + A3 + A2)/10
+ *   avg(i)   = (6P + A4 + A3 + A2 + A1)/10
+ *
+ * so every bar placed shifts every threshold after it. P=2 with bodies
+ * 12, 2, 2, 2, 12 lands the five on 2, 3, 3, 3, 3 exactly, and that is the
+ * geometry every scenario returns to.
+ *
+ * THE COLOUR CHAIN CANNOT BE BROKEN ONE LINK AT A TIME. c0..c3 compare
+ * adjacent colours, so each interior bar appears in two of them and changing
+ * one bar's colour falsifies both. Breaking exactly one link takes TWO colour
+ * changes -- c1's flip is white, black, white, white, black, which leaves c0,
+ * c2 and c3 satisfied and only c1 broken. The controls for those four are the
+ * detect itself rather than the flip bars with one value moved back, because
+ * restoring one link forces a second bar to move as well; there is no
+ * single-value control to write.
+ *
+ * SIX CONDITIONS ARE ENTAILED IN ONE DIRECTION AND FREE IN THE OTHER, which is
+ * why this pattern needs both branches and not merely for the output class.
+ * On the rising side the 2nd to 4th are black, so a body's floor is its close
+ * and c10/c11 chain them: close(i-1) < close(i-2) < close(i-3) < high(i-4)
+ * makes c6 and c8 entailed. On the falling side those bars are white, the floor
+ * is the open, and the chain says nothing about it -- so c6 and c8 are flipped
+ * there. c7 and c9 are the same argument mirrored, entailed falling and flipped
+ * rising. Nothing is waived: every condition is flipped, just not always on the
+ * side you would first reach for.
+ */
+static void cond_risefall3methods( int i, int *c )
+{
+   int k4 = pb_white(i-4) ? 1 : -1;
+   int k3 = pb_white(i-3) ? 1 : -1;
+   int k2 = pb_white(i-2) ? 1 : -1;
+   int k1 = pb_white(i-1) ? 1 : -1;
+   int k0 = pb_white(i)   ? 1 : -1;
+   double H4 = pbH[i-4], L4 = pbL[i-4];
+   c[0]  = k4 == -k3;
+   c[1]  = k3 ==  k2;
+   c[2]  = k2 ==  k1;
+   c[3]  = k1 == -k0;
+   c[4]  = pb_bodylo(i-3) < H4;
+   c[5]  = pb_bodyhi(i-3) > L4;
+   c[6]  = pb_bodylo(i-2) < H4;
+   c[7]  = pb_bodyhi(i-2) > L4;
+   c[8]  = pb_bodylo(i-1) < H4;
+   c[9]  = pb_bodyhi(i-1) > L4;
+   c[10] = pbC[i-2]*k4 < pbC[i-3]*k4;
+   c[11] = pbC[i-1]*k4 < pbC[i-2]*k4;
+   c[12] = pbO[i]  *k4 > pbC[i-1]*k4;
+   c[13] = pbC[i]  *k4 > pbC[i-4]*k4;
+   c[14] = pb_body(i-4) > pb_avg(TA_BodyLong,  i-4);
+   c[15] = pb_body(i-3) < pb_avg(TA_BodyShort, i-3);
+   c[16] = pb_body(i-2) < pb_avg(TA_BodyShort, i-2);
+   c[17] = pb_body(i-1) < pb_avg(TA_BodyShort, i-1);
+   c[18] = pb_body(i)   > pb_avg(TA_BodyLong,  i);
+}
+
+static void build_risefall3methods( void )
+{
+  pb_conditions(19);
+  pb_signs(2);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(110,111,107,108);
+  pb_bar(108,109,105,106);
+  pb_bar(106,107,103,104);
+  int s1=pb_bar(105,118,104,117);
+  pb_detect(s1,100,"detect rising: white, 3 falling black inside its range, white closing above it");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,99,100);
+  pb_bar(102,105,101,104);
+  pb_bar(104,107,103,106);
+  pb_bar(106,109,105,108);
+  int s2=pb_bar(107,108,95,96);
+  pb_detect(s2,-100,"detect falling: the mirror, firing the other output class");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(106,109,105,108);
+  pb_bar(104,107,103,106);
+  pb_bar(102,105,101,104);
+  int s3=pb_bar(125,126,112,113);
+  pb_flip(s3,0,"break c0: the 1st and 2nd are both white -- the 2nd AND 3rD are moved, because one colour change breaks two links of the chain");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(110,111,107,108);
+  pb_bar(108,109,105,106);
+  pb_bar(106,107,103,104);
+  int s4=pb_bar(105,118,104,117);
+  pb_control(s4,100,0,"restore c0: white, black, black, black, white -- the whole chain, since one link cannot be restored alone");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(110,111,107,108);
+  pb_bar(104,107,103,106);
+  pb_bar(102,105,101,104);
+  int s5=pb_bar(125,126,112,113);
+  pb_flip(s5,1,"break c1: the 2nd is black and the 3rd white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(110,111,107,108);
+  pb_bar(108,109,105,106);
+  pb_bar(106,107,103,104);
+  int s6=pb_bar(105,118,104,117);
+  pb_control(s6,100,1,"restore c1: the 2nd and 3rd are both black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(110,111,107,108);
+  pb_bar(108,109,105,106);
+  pb_bar(102,105,101,104);
+  int s7=pb_bar(125,126,112,113);
+  pb_flip(s7,2,"break c2: the 3rd is black and the 4th white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(110,111,107,108);
+  pb_bar(108,109,105,106);
+  pb_bar(106,107,103,104);
+  int s8=pb_bar(105,118,104,117);
+  pb_control(s8,100,2,"restore c2: the 3rd and 4th are both black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(110,111,107,108);
+  pb_bar(108,109,105,106);
+  pb_bar(106,107,103,104);
+  int s9=pb_bar(125,126,112,113);
+  pb_flip(s9,3,"break c3: the 4th and 5th are both black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(110,111,107,108);
+  pb_bar(108,109,105,106);
+  pb_bar(106,107,103,104);
+  int s10=pb_bar(105,118,104,117);
+  pb_control(s10,100,3,"restore c3: the 4th is black and the 5th white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(115,116,112,113);
+  pb_bar(108,109,105,106);
+  pb_bar(106,107,103,104);
+  int s11=pb_bar(105,118,104,117);
+  pb_flip(s11,4,"break c4: 2nd body floor 113 == the 1st's high 113, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(114,115,111,112);
+  pb_bar(108,109,105,106);
+  pb_bar(106,107,103,104);
+  int s12=pb_bar(105,118,104,117);
+  pb_control(s12,100,4,"restore c4: 2nd body floor 112 < 113");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,100,112);
+  pb_bar(100,101,97,98);
+  pb_bar(100.25,101,97,97.75);
+  pb_bar(100.25,101,97,97.5);
+  int s13=pb_bar(98,114,97,113);
+  pb_flip(s13,5,"break c5: 2nd body ceiling 100 == the 1st's low 100, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,100,112);
+  pb_bar(100.25,101,97,98.25);
+  pb_bar(100.25,101,97,97.75);
+  pb_bar(100.25,101,97,97.5);
+  int s14=pb_bar(98,114,97,113);
+  pb_control(s14,100,5,"restore c5: 2nd body ceiling 100.25 > 100");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,99,100);
+  pb_bar(102,105,101,104);
+  pb_bar(113,116,112,115);
+  pb_bar(112.75,116,112,115.25);
+  int s15=pb_bar(110,111,97,98);
+  pb_flip(s15,6,"break c6: 3rd body floor 113 == the 1st's high 113 -- on the BEAR side, where it is not entailed");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,99,100);
+  pb_bar(102,105,101,104);
+  pb_bar(112.75,116,112,114.75);
+  pb_bar(112.75,116,112,115.25);
+  int s16=pb_bar(110,111,97,98);
+  pb_control(s16,-100,6,"restore c6: 3rd body floor 112.75 < 113");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,100,112);
+  pb_bar(101,102,98,99);
+  pb_bar(100,101,97,98);
+  pb_bar(100.25,101,97,97.75);
+  int s17=pb_bar(98,114,97,113);
+  pb_flip(s17,7,"break c7: 3rd body ceiling 100 == the 1st's low 100, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,100,112);
+  pb_bar(101,102,98,99);
+  pb_bar(100.25,101,97,98.25);
+  pb_bar(100.25,101,97,97.75);
+  int s18=pb_bar(98,114,97,113);
+  pb_control(s18,100,7,"restore c7: 3rd body ceiling 100.25 > 100");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,99,100);
+  pb_bar(102,105,101,104);
+  pb_bar(104,107,103,106);
+  pb_bar(113,116,112,115);
+  int s19=pb_bar(110,111,97,98);
+  pb_flip(s19,8,"break c8: 4th body floor 113 == the 1st's high 113 -- on the BEAR side, where it is not entailed");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,99,100);
+  pb_bar(102,105,101,104);
+  pb_bar(104,107,103,106);
+  pb_bar(112.75,116,112,114.75);
+  int s20=pb_bar(110,111,97,98);
+  pb_control(s20,-100,8,"restore c8: 4th body floor 112.75 < 113");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,100,112);
+  pb_bar(104,105,101,102);
+  pb_bar(102,103,99,100);
+  pb_bar(100,101,97,98);
+  int s21=pb_bar(99,114,98,113);
+  pb_flip(s21,9,"break c9: 4th body ceiling 100 == the 1st's low 100, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,100,112);
+  pb_bar(104,105,101,102);
+  pb_bar(102,103,99,100);
+  pb_bar(100.25,101,97,98.25);
+  int s22=pb_bar(99,114,98,113);
+  pb_control(s22,100,9,"restore c9: 4th body ceiling 100.25 > 100");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(110,111,107,108);
+  pb_bar(110,111,107,108);
+  pb_bar(106,107,103,104);
+  int s23=pb_bar(105,118,104,117);
+  pb_flip(s23,10,"break c10: 3rd close 108 == the 2nd close, the fall is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(110,111,107,108);
+  pb_bar(108,109,105,106);
+  pb_bar(106,107,103,104);
+  int s24=pb_bar(105,118,104,117);
+  pb_control(s24,100,10,"restore c10: 3rd close 106 < the 2nd close 108");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(110,111,107,108);
+  pb_bar(108,109,105,106);
+  pb_bar(108,109,105,106);
+  int s25=pb_bar(107,118,106,117);
+  pb_flip(s25,11,"break c11: 4th close 106 == the 3rd close, the fall is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(110,111,107,108);
+  pb_bar(108,109,105,106);
+  pb_bar(106,107,103,104);
+  int s26=pb_bar(105,118,104,117);
+  pb_control(s26,100,11,"restore c11: 4th close 104 < the 3rd close 106");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(110,111,107,108);
+  pb_bar(108,109,105,106);
+  pb_bar(106,107,103,104);
+  int s27=pb_bar(104,118,103,117);
+  pb_flip(s27,12,"break c12: 5th opens 104 == the 4th close, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(110,111,107,108);
+  pb_bar(108,109,105,106);
+  pb_bar(106,107,103,104);
+  int s28=pb_bar(105,118,104,117);
+  pb_control(s28,100,12,"restore c12: 5th opens 105 > the 4th close 104");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(110,111,107,108);
+  pb_bar(108,109,105,106);
+  pb_bar(106,107,103,104);
+  int s29=pb_bar(105,113,104,112);
+  pb_flip(s29,13,"break c13: 5th closes 112 == the 1st close, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(110,111,107,108);
+  pb_bar(108,109,105,106);
+  pb_bar(106,107,103,104);
+  int s30=pb_bar(105,118,104,117);
+  pb_control(s30,100,13,"restore c13: 5th closes 117 > the 1st close 112");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,113,99,112);
+  pb_bar(110,111,108,109);
+  pb_bar(110,111,108,108.5);
+  pb_bar(109.5,110,107,108);
+  int s31=pb_bar(109,122,108,121);
+  pb_flip(s31,14,"break c14: 1st body 2 == avg 2, the test is strict (the 3 small bodies shrink with it to stay under their own averages)");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(109,113,99,112);
+  pb_bar(110,111,108,109);
+  pb_bar(110,111,108,108.5);
+  pb_bar(109.5,110,107,108);
+  int s32=pb_bar(109,122,108,121);
+  pb_control(s32,100,14,"restore c14: 1st body 3 > avg 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(111,112,107,108);
+  pb_bar(108,109,105,106);
+  pb_bar(106,107,103,104);
+  int s33=pb_bar(105,118,104,117);
+  pb_flip(s33,15,"break c15: 2nd body 3 == avg 3, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(110,111,107,108);
+  pb_bar(108,109,105,106);
+  pb_bar(106,107,103,104);
+  int s34=pb_bar(105,118,104,117);
+  pb_control(s34,100,15,"restore c15: 2nd body 2 < avg 3");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(110,111,107,108);
+  pb_bar(110,111,106,107);
+  pb_bar(107,108,104,105);
+  int s35=pb_bar(106,119,105,118);
+  pb_flip(s35,16,"break c16: 3rd body 3 == avg 3, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(110,111,107,108);
+  pb_bar(108,109,105,106);
+  pb_bar(106,107,103,104);
+  int s36=pb_bar(105,118,104,117);
+  pb_control(s36,100,16,"restore c16: 3rd body 2 < avg 3");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(110,111,107,108);
+  pb_bar(108,109,105,106);
+  pb_bar(108,109,104,105);
+  int s37=pb_bar(106,119,105,118);
+  pb_flip(s37,17,"break c17: 4th body 3 == avg 3, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(110,111,107,108);
+  pb_bar(108,109,105,106);
+  pb_bar(106,107,103,104);
+  int s38=pb_bar(105,118,104,117);
+  pb_control(s38,100,17,"restore c17: 4th body 2 < avg 3");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(110,111,107,108);
+  pb_bar(108,109,105,106);
+  pb_bar(106,107,103,104);
+  int s39=pb_bar(110,114,109,113);
+  pb_flip(s39,18,"break c18: 5th body 3 == avg 3, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(110,111,107,108);
+  pb_bar(108,109,105,106);
+  pb_bar(106,107,103,104);
+  int s40=pb_bar(110,115,109,114);
+  pb_control(s40,100,18,"restore c18: 5th body 4 > avg 3");
+  pb_flat(8);
+
+}
+
 static ErrorNumber test_marquee_predicate_coverage( void )
 {
    ErrorNumber e;
@@ -5530,6 +5969,7 @@ static ErrorNumber test_marquee_predicate_coverage( void )
    pb_reset(); build_eveningdojistar();     e = pb_check_mcdc_p("CDLEVENINGDOJISTAR",   TA_CDLEVENINGDOJISTAR,   0.3, cond_eveningdojistar); if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_advanceblock();        e = pb_check_mcdc("CDLADVANCEBLOCK",        TA_CDLADVANCEBLOCK,        cond_advanceblock);        if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_gapsidesidewhite();    e = pb_check_mcdc("CDLGAPSIDESIDEWHITE",    TA_CDLGAPSIDESIDEWHITE,    cond_gapsidesidewhite);    if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_risefall3methods();    e = pb_check_mcdc("CDLRISEFALL3METHODS",    TA_CDLRISEFALL3METHODS,    cond_risefall3methods);    if( e != TA_TEST_PASS ) return e;
    pb_report_totals();
    return TA_TEST_PASS;
 }
