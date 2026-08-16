@@ -6783,6 +6783,371 @@ static void build_abandonedbaby( void )
 
 }
 
+/* ---- Hard tier: CDLMATHOLD ----------------------------------------------- *
+ *
+ * A long white candle, a gap, three small "reaction days" that give some of it
+ * back without giving back too much, and a white 5th closing above all of
+ * them. Sixteen conditions over five bars, a penetration parameter, and a
+ * four-deep body cascade -- the combination CDLRISEFALL3METHODS and the
+ * penetration patterns each had half of.
+ *
+ *   c0..c2   colours: 1st white, 2nd black, 5th white
+ *   c3       the 2nd gaps up off the 1st
+ *   c4,c5    the 3rd and 4th body floors stay below close(1st)
+ *   c6,c7    ...and above close(1st) - realbody(1st) * penetration
+ *   c8,c9    the 3rd's ceiling is under open(2nd), the 4th's under the 3rd's
+ *   c10      the 5th opens above close(4th)
+ *   c11      the 5th closes above every reaction-day high
+ *   c12..c15 the 1st is long; the 2nd, 3rd and 4th are short
+ *
+ * THE REACTION DAYS LIVE IN A BAND WITH BOTH EDGES DERIVED FROM THE FIRST
+ * CANDLE. c4/c6 and c5/c7 are two-sided: a body floor must sit below
+ * close(1st) and above close(1st) - realbody(1st) * penetration. Both edges
+ * move when the first candle's body moves, which is what makes c12's flip the
+ * awkward one -- dropping that body to its BodyLong boundary of 2 raises the
+ * penetration line from 106 to 111 and squeezes the band to (111, 112), so the
+ * three small bodies have to be re-cut to fit inside a one-point corridor.
+ *
+ * c8 is the other one worth reading. Its boundary puts the 3rd's ceiling
+ * exactly at open(2nd), while c4 keeps the 3rd's floor below close(1st) and
+ * c14 keeps its body under 3 -- so open(2nd) can be at most close(1st) + 3, and
+ * the 2nd candle has to be lowered from the detect's layout before the boundary
+ * is reachable at all. Two conditions bounding one bar from opposite sides, with
+ * a third bounding its size, is the shape to look for when a boundary seems
+ * unreachable.
+ *
+ * The cascade is the familiar one: BodyLong at i-4 on an all-primer window,
+ * then BodyShort at i-3, i-2 and i-1 each swallowing one more scenario body.
+ * P=2 with bodies 12, 2, 2, 2 puts the four thresholds on 2, 3, 3, 3 exactly.
+ * There is no body test on the 5th candle at all, which is why its body is free
+ * to grow whenever a flip needs its close pushed past the reaction highs.
+ */
+static void cond_mathold( int i, int *c )
+{
+   double line = pbC[i-4] - pb_body(i-4) * 0.5;
+   c[0]  = pb_white(i-4);
+   c[1]  = !pb_white(i-3);
+   c[2]  = pb_white(i);
+   c[3]  = pb_bodylo(i-3) > pb_bodyhi(i-4);
+   c[4]  = pb_bodylo(i-2) < pbC[i-4];
+   c[5]  = pb_bodylo(i-1) < pbC[i-4];
+   c[6]  = pb_bodylo(i-2) > line;
+   c[7]  = pb_bodylo(i-1) > line;
+   c[8]  = pb_bodyhi(i-2) < pbO[i-3];
+   c[9]  = pb_bodyhi(i-1) < pb_bodyhi(i-2);
+   c[10] = pbO[i] > pbC[i-1];
+   c[11] = pbC[i] > (pbH[i-3] > pbH[i-2] ? (pbH[i-3] > pbH[i-1] ? pbH[i-3] : pbH[i-1])
+                                         : (pbH[i-2] > pbH[i-1] ? pbH[i-2] : pbH[i-1]));
+   c[12] = pb_body(i-4) > pb_avg(TA_BodyLong,  i-4);
+   c[13] = pb_body(i-3) < pb_avg(TA_BodyShort, i-3);
+   c[14] = pb_body(i-2) < pb_avg(TA_BodyShort, i-2);
+   c[15] = pb_body(i-1) < pb_avg(TA_BodyShort, i-1);
+}
+
+static void build_mathold( void )
+{
+  pb_conditions(16);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m1=pb_bar(109,119,108,118);
+  pb_detect(m1,100,"detect: long white, a gap, three small reaction days holding inside the first body, white 5th closing above them all");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,99,100);
+  pb_bar(116,117,113,114);
+  pb_bar(99,100,96,97);
+  pb_bar(98,99,95,96);
+  int m2=pb_bar(97,119,96,118);
+  pb_flip(m2,0,"break c0: the 1st candle is black -- the whole layout drops with it, since close(1st) sets both the penetration line and the band the reaction days sit in");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m3=pb_bar(109,119,108,118);
+  pb_control(m3,100,0,"restore c0: the 1st candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(114,117,113,116);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m4=pb_bar(109,119,108,118);
+  pb_flip(m4,1,"break c1: the 2nd candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m5=pb_bar(109,119,108,118);
+  pb_control(m5,100,1,"restore c1: the 2nd candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m6=pb_bar(120,121,108,118);
+  pb_flip(m6,2,"break c2: the 5th candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m7=pb_bar(109,119,108,118);
+  pb_control(m7,100,2,"restore c2: the 5th candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(114,117,112,112);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m8=pb_bar(109,119,108,118);
+  pb_flip(m8,3,"break c3: 2nd body floor 112 == the 1st body ceiling 112, the gap test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m9=pb_bar(109,119,108,118);
+  pb_control(m9,100,3,"restore c3: 2nd body floor 114 > 112");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(114,115,111,112);
+  pb_bar(110,111,107,108);
+  int m10=pb_bar(109,119,108,118);
+  pb_flip(m10,4,"break c4: 3rd body floor 112 == close(1st), the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m11=pb_bar(109,119,108,118);
+  pb_control(m11,100,4,"restore c4: 3rd body floor 109 < close(1st) 112");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(118,119,113,116);
+  pb_bar(113,114,110,111);
+  pb_bar(112.5,113,111,112);
+  int m12=pb_bar(113,121,112,120);
+  pb_flip(m12,5,"break c5: 4th body floor 112 == close(1st), the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(118,119,113,116);
+  pb_bar(113,114,110,111);
+  pb_bar(112.5,113,111,111.5);
+  int m13=pb_bar(113,121,111,120);
+  pb_control(m13,100,5,"restore c5: 4th body floor 111.5 < close(1st) 112");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(108,109,105,106);
+  pb_bar(107.5,108,105,106.5);
+  int m14=pb_bar(107,119,106,118);
+  pb_flip(m14,6,"break c6: 3rd body floor 106 == the penetration line 112 - 12*0.5, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(108.5,109,105,106.5);
+  pb_bar(107.5,108,105,106.5);
+  int m15=pb_bar(107,119,106,118);
+  pb_control(m15,100,6,"restore c6: 3rd body floor 106.5 > the penetration line 106");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(108,109,105,106);
+  int m16=pb_bar(107,119,106,118);
+  pb_flip(m16,7,"break c7: 4th body floor 106 == the penetration line, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m17=pb_bar(109,119,108,118);
+  pb_control(m17,100,7,"restore c7: 4th body floor 108 > 106");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(114.5,117,112,112.5);
+  pb_bar(114.5,115,111,111.75);
+  pb_bar(110,111,107,108);
+  int m18=pb_bar(109,119,108,118);
+  pb_flip(m18,8,"break c8: 3rd body ceiling 114.5 == open(2nd), the test is strict -- the 2nd is lowered to make room, because c4 and c14 together cap open(2nd) at close(1st) + 3");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(114.5,117,112,112.5);
+  pb_bar(114,115,111,111.25);
+  pb_bar(110,111,107,108);
+  int m19=pb_bar(109,119,107,118);
+  pb_control(m19,100,8,"restore c8: 3rd body ceiling 114 < open(2nd) 114.5");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(111,112,108,109);
+  int m20=pb_bar(110,119,108,118);
+  pb_flip(m20,9,"break c9: 4th body ceiling 111 == the 3rd's, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m21=pb_bar(109,119,108,118);
+  pb_control(m21,100,9,"restore c9: 4th body ceiling 110 < the 3rd's 111");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m22=pb_bar(108,119,107,118);
+  pb_flip(m22,10,"break c10: 5th opens 108 == close(4th), the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m23=pb_bar(109,119,108,118);
+  pb_control(m23,100,10,"restore c10: 5th opens 109 > close(4th) 108");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m24=pb_bar(109,119,108,117);
+  pb_flip(m24,11,"break c11: 5th closes 117 == the highest reaction-day high, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m25=pb_bar(109,119,108,118);
+  pb_control(m25,100,11,"restore c11: 5th closes 118 > the highest reaction-day high 117");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,113,99,112);
+  pb_bar(115,117,113,114);
+  pb_bar(112.5,113,111,111.5);
+  pb_bar(112.25,113,111,111.25);
+  int m26=pb_bar(112,119,111,118);
+  pb_flip(m26,12,"break c12: 1st body 2 == avg 2, the test is strict -- the three small bodies shrink with it and the reaction band narrows to (111,112), because the penetration line rises with the shorter body");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(109,113,99,112);
+  pb_bar(115,117,113,114);
+  pb_bar(112.5,113,111,111.5);
+  pb_bar(112.25,113,111,111.25);
+  int m27=pb_bar(112,119,111,118);
+  pb_control(m27,100,12,"restore c12: 1st body 3 > avg 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(117,118,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m28=pb_bar(109,120,108,119);
+  pb_flip(m28,13,"break c13: 2nd body 3 == avg 3, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m29=pb_bar(109,119,108,118);
+  pb_control(m29,100,13,"restore c13: 2nd body 2 < avg 3");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(112,113,108,109);
+  pb_bar(110,111,107,108);
+  int m30=pb_bar(109,119,108,118);
+  pb_flip(m30,14,"break c14: 3rd body 3 == avg 3, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m31=pb_bar(109,119,108,118);
+  pb_control(m31,100,14,"restore c14: 3rd body 2 < avg 3");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,106,107);
+  int m32=pb_bar(109,119,106,118);
+  pb_flip(m32,15,"break c15: 4th body 3 == avg 3, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  pb_bar(111,112,108,109);
+  pb_bar(110,111,107,108);
+  int m33=pb_bar(109,119,108,118);
+  pb_control(m33,100,15,"restore c15: 4th body 2 < avg 3");
+  pb_flat(8);
+
+}
+
 static ErrorNumber test_marquee_predicate_coverage( void )
 {
    ErrorNumber e;
@@ -6825,6 +7190,7 @@ static ErrorNumber test_marquee_predicate_coverage( void )
    pb_reset(); build_risefall3methods();    e = pb_check_mcdc("CDLRISEFALL3METHODS",    TA_CDLRISEFALL3METHODS,    cond_risefall3methods);    if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_breakaway();           e = pb_check_mcdc("CDLBREAKAWAY",           TA_CDLBREAKAWAY,           cond_breakaway);           if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_abandonedbaby();       e = pb_check_mcdc_p("CDLABANDONEDBABY",     TA_CDLABANDONEDBABY,     0.3, cond_abandonedbaby);   if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_mathold();             e = pb_check_mcdc_p("CDLMATHOLD",           TA_CDLMATHOLD,           0.5, cond_mathold);         if( e != TA_TEST_PASS ) return e;
    pb_report_totals();
    return TA_TEST_PASS;
 }
