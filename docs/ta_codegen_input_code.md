@@ -120,7 +120,7 @@ generator recognizes and maps per language:
 |---|---|
 | `TA_IS_ZERO(x)` / `TA_IS_ZERO_OR_NEG(x)` | epsilon comparison against zero |
 | `TA_GetUnstablePeriod(TA_FUNC_UNST_<NAME>)` | this function's configured unstable period |
-| `TA_COMPATIBILITY_DEFAULT` / `TA_COMPATIBILITY_METASTOCK` | compatibility-mode constants |
+| `TA_COMPATIBILITY_DEFAULT` / `TA_COMPATIBILITY_METASTOCK` | compatibility-mode constants — **not for new functions**: preserved for those that already honour one, and unreachable from the Rust, Java and C# APIs, which expose no compatibility setting |
 | candle-settings access (CDL* patterns) | resolved via the generated candle helpers |
 | `CIRCBUF_PROLOG_CLASS` / `CIRCBUF_INIT_CLASS` / `CIRCBUF_NEXT` / `CIRCBUF_DESTROY` | circular scratch buffer over a local `typedef struct` element type (`src/ta_common/ta_memory.h`); see `cmf.c` or `ultosc.c` for usage |
 

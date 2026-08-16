@@ -81,19 +81,22 @@ If this page and the repo disagree, the repo wins; it is versioned with the code
 - Never edit generated output: `src/ta_func/`, `src/ta_abstract/` and everything under `ta_codegen/output/` are overwritten on the next `generate`. Change `ta_codegen/input/` and regenerate.
 - `<name>.md` documents the original algebra of the indicator, never implementation artifacts: no zero-guards, epsilon comparisons or `period == 1` special cases in the formula.
 - In the `.c` input, call other TA functions by their bare lowercase name (`sma(...)`, `ema_lookback(...)`); the generator resolves each to the language's native symbol.
+- Your function may be called with an output array aliasing one of its inputs — `outReal == inClose` is a supported, tested calling convention. Within a bar, read every input value you need *before* writing that bar's output; a trailing index can reach the slot you just wrote. Carry what you need in a scalar. Every function is checked, bitwise, on every input/output pair.
+- New functions do not support `TA_SetCompatibility`. The compatibility constants are preserved for the functions that already honour one, and the Rust, Java and C# APIs expose no such setting — so honouring it in a new function makes its C output diverge from three backends that cannot read it. Copying an EMA-shaped function will hand you a METASTOCK seeding arm; drop it.
 - Enums, groups and other shared surfaces are generated; search the generator before hand-adding one anywhere.
 - If `generate` panics on a C construct, do not contort the algorithm to dodge the parser. Match the style of a shipped input file, or raise it on the spec issue: parser extensions are generator changes and need maintainer sign-off.
 
 **Definition of done:**
 
 - `scripts/regtest.py` passes end to end (C tests + all-language verification).
-- The new function has a non-vacuous test: golden values from an independent source, with source, version and tolerance documented at the call site. A test that cannot fail on a wrong formula does not count.
+- The new function has a non-vacuous test: golden values from an independent source, with source, version and tolerance documented at the call site. A test that cannot fail on a wrong formula does not count. To show it cannot, break what it guards and watch it go red — and in a generated tree, confirm the break actually landed: mutate `ta_codegen/input/`, regenerate, then check the mutation is present in the generated source. A green gate over a mutation that never reached the code means *sabotage never applied*, not *guard verified*.
 - Regeneration is idempotent: running `generate` again leaves `git status` clean.
-- The generator's own suite passes: `cd ta_codegen/generator && cargo test`.
+- The generator's own suite passes: `cd ta_codegen/generator && cargo test`. Some of its tests are inventories keyed on a function's properties; a new function may belong in one. A failure naming your function in a test you never touched is the inventory asking to be updated, not a regression.
 - The generated `website/src/functions/<name>.md` is correct; its sections are gated against the YAML by the generator. Optional live preview: `cd website && pnpm install && pnpm docs:dev` (needs Node and pnpm).
 
 **DO NOT:**
 
+- **DO NOT** compute golden values yourself and attribute them to a reference implementation. What makes an oracle independent is not the citation but the execution: the values must be *produced by running* the cited source at the cited version, or transcribed unchanged from a table published in it. Re-deriving the formula and labelling the result with a vendor's name is the same computation twice with a false provenance attached — worse than no oracle, because it agrees with your implementation for exactly the reason it must not. If you cannot run the source, say so on the spec issue rather than substituting your own arithmetic; a maintainer may be able to run it for you.
 - **DO NOT** invent parameter defaults or ranges. The `<name>.yaml` spec is the human-approved source of truth for acceptable ranges and defaults; ask the contributor.
 - **DO NOT** modify the test harness or loosen a tolerance to make a gate pass. Harness changes require explicit human approval.
 - **DO NOT** include unrelated generated-file churn in the pull request.
