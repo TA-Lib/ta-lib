@@ -4118,6 +4118,645 @@ static void build_counterattack( void )
   pb_flat(8);
 }
 
+/* ---- Moderate tier, unit 5: the penetration patterns --------------------- *
+ *
+ * The five non-hard candlesticks that take optInPenetration, and the first
+ * builders to go through pb_check_mcdc_p. Two things are new here.
+ *
+ * THE PARAMETER IS PASSED PER PATTERN, NOT SHARED. CDLDARKCLOUDCOVER defaults
+ * to 0.5 and the four stars to 0.3; each builder passes its own, so a boundary
+ * flip means the same thing here as on a parameterless pattern.
+ *
+ * A PENETRATION BOUNDARY IS WRITTEN AS THE ARITHMETIC, NOT AS A DECIMAL.
+ * close(i-2) +/- realbody(i-2) * penetration is not a round number for a
+ * penetration of 0.3 -- 100 + 12*0.3 is 103.59999999999999432 -- and while
+ * that happens to be the same double as the literal 103.6, relying on that is
+ * relying on a coincidence. The flips below write `100.0 + 12.0*0.3`, which is
+ * the expression the library evaluates, so the two agree by construction.
+ *
+ * THREE-BAR PATTERNS PUT TWO BARS INSIDE THE WINDOW AT i. Unit 4's lesson
+ * doubled: with primer body P, first bar A and second bar B,
+ *
+ *   avg(BodyLong,  i-2) = P                  window is all primer
+ *   avg(BodyShort, i-1) = (9P + A)/10        the first bar is in it
+ *   avg(BodyShort, i)   = (8P + A + B)/10    both are
+ *
+ * P=2 with A=12, B=2 gives 2.0, 3.0, 3.0 -- all exact -- and that is what the
+ * two STAR builders use. The DOJISTAR builders cannot: their middle bar must
+ * be a doji, so B is 0, and their c5 reads BodyDoji, which is HighLow-typed
+ * and therefore constrains the FIRST bar's high-low range to 10 -- capping its
+ * body at 10, so A=12 is unavailable. A=4, B=0 gives 2.0, 1.0, 2.0 instead,
+ * also exact. The two geometries are why the four are not one copy-pasted
+ * builder.
+ */
+
+/* CDLDARKCLOUDCOVER -- a black candle opening above a long white one and
+ * closing well into it.
+ *
+ *   c0  color(i-1) == 1
+ *   c1  realbody(i-1) > avg(BodyLong, i-1)
+ *   c2  color(i) == -1
+ *   c3  open(i)  > high(i-1)
+ *   c4  close(i) > open(i-1)
+ *   c5  close(i) < close(i-1) - realbody(i-1) * penetration
+ *
+ * Two conditions are entailed, and both derivations use only price ordering --
+ * no settings average, which is the distinction that made unit 4's PIERCING c3
+ * waiver wrong.
+ */
+static void cond_darkcloudcover( int i, int *c )
+{
+   c[0] = pb_white(i-1);
+   c[1] = pb_body(i-1) > pb_avg(TA_BodyLong, i-1);
+   c[2] = !pb_white(i);
+   c[3] = pbO[i] > pbH[i-1];
+   c[4] = pbC[i] > pbO[i-1];
+   c[5] = pbC[i] < pbC[i-1] - pb_body(i-1) * 0.5;
+}
+
+static void build_darkcloudcover( void )
+{
+  pb_conditions(6);
+
+  pb_waive(0, "were the prior candle black, open(i-1) > close(i-1); c4 puts close(i) "
+              "above open(i-1) and c5 puts it below close(i-1) minus half a body, "
+              "itself below close(i-1). No value is both above open(i-1) and below "
+              "close(i-1) when the first exceeds the second, so c4 & c5 entail a "
+              "white prior candle");
+  pb_waive(2, "c3 puts open(i) above high(i-1), which is at or above close(i-1); c5 "
+              "puts close(i) below close(i-1). So close(i) < open(i) and the candle "
+              "is black by construction");
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,96,112);                  /* prior: white, body 12, open 100, close 112, high 113 */
+  int d=pb_bar(114,115,103,104);           /* black, opens above 113, closes at 104 in (100,106) */
+  pb_detect(d,-100,"detect: opens 114 > high 113, closes 104 above open 100 and below 112 - 6");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(105,113,96,107);                  /* prior body 2 == avg -> band (105,106) */
+  int f1=pb_bar(114,115,104,105.5);
+  pb_flip(f1,1,"break c1: prior body 2 == avg 2, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,96,112);
+  int k1=pb_bar(114,115,103,104);
+  pb_control(k1,-100,1,"restore c1: prior body 12 > 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,96,112);
+  int f3=pb_bar(113,115,103,104);          /* opens exactly at the prior high */
+  pb_flip(f3,3,"break c3: open 113 == prior high 113, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,96,112);
+  int k3=pb_bar(114,115,103,104);
+  pb_control(k3,-100,3,"restore c3: open 114 > prior high 113");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,96,112);
+  int f4=pb_bar(114,115,99,100);           /* closes exactly at the prior open */
+  pb_flip(f4,4,"break c4: close 100 == prior open 100, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,96,112);
+  int k4=pb_bar(114,115,103,104);
+  pb_control(k4,-100,4,"restore c4: close 104 > prior open 100");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,96,112);
+  int f5=pb_bar(114,115,105,112.0-12.0*0.5);   /* closes exactly on the penetration line */
+  pb_flip(f5,5,"break c5: close 106 == 112 - 12*0.5, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,96,112);
+  int k5=pb_bar(114,115,103,104);
+  pb_control(k5,-100,5,"restore c5: close 104 < 106");
+  pb_flat(8);
+}
+
+/* CDLMORNINGSTAR -- a long black candle, a small body gapping down from it,
+ * then a white candle closing well back into the first.
+ *
+ *   c0  color(i-2) == -1
+ *   c1  color(i)   == 1
+ *   c2  realbodygapdown(i-1, i-2)
+ *   c3  close(i) >  close(i-2) + realbody(i-2) * penetration
+ *   c4  realbody(i-2) >  avg(BodyLong,  i-2)
+ *   c5  realbody(i-1) <= avg(BodyShort, i-1)
+ *   c6  realbody(i)   >  avg(BodyShort, i)
+ *
+ * Three separate averaging windows, at three different bars. c4's is entirely
+ * primer, c5's contains the first bar, c6's contains both -- which is why the
+ * c4 flip has to be checked against what it does to the other two: shrinking
+ * the first bar's body to the BodyLong boundary also lowers c5's and c6's
+ * thresholds, and the scenario has to stay inside them.
+ */
+static void cond_morningstar( int i, int *c )
+{
+   c[0] = !pb_white(i-2);
+   c[1] = pb_white(i);
+   c[2] = pb_bodyhi(i-1) < pb_bodylo(i-2);
+   c[3] = pbC[i] >  pbC[i-2] + pb_body(i-2) * 0.3;
+   c[4] = pb_body(i-2) >  pb_avg(TA_BodyLong,  i-2);
+   c[5] = pb_body(i-1) <= pb_avg(TA_BodyShort, i-1);
+   c[6] = pb_body(i)   >  pb_avg(TA_BodyShort, i);
+}
+
+static void build_morningstar( void )
+{
+  pb_conditions(7);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);                  /* 1st: black, body 12, close 100 */
+  pb_bar(97,98,94,95);                     /* 2nd: body 2, gaps down under 100 */
+  int d=pb_bar(99,105,98,104);             /* 3rd: white, body 5, closes 104 */
+  pb_detect(d,100,"detect: close 104 > 100 + 12*0.3, bodies 12 > 2, 2 <= 3, 5 > 3");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,96,112);                  /* 1st WHITE, close 112 -> line 115.6 */
+  pb_bar(97,98,94,95);
+  int f0=pb_bar(111,117,110,116);
+  pb_flip(f0,0,"break c0: the first candle is white");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  pb_bar(97,98,94,95);
+  int k0=pb_bar(99,105,98,104);
+  pb_control(k0,100,0,"restore c0: the first candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  pb_bar(97,98,94,95);
+  int f1=pb_bar(108,109,102,104);          /* BLACK third candle, body 4 */
+  pb_flip(f1,1,"break c1: the third candle is black");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  pb_bar(97,98,94,95);
+  int k1=pb_bar(99,105,98,104);
+  pb_control(k1,100,1,"restore c1: the third candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  pb_bar(100,101,98,98);                   /* 2nd body top 100 == the 1st's floor */
+  int f2=pb_bar(99,105,98,104);
+  pb_flip(f2,2,"break c2: body top 100 == the first candle's floor 100, the gap test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  pb_bar(97,98,94,95);
+  int k2=pb_bar(99,105,98,104);
+  pb_control(k2,100,2,"restore c2: body top 97 < 100");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  pb_bar(97,98,94,95);
+  int f3=pb_bar(99,105,98,100.0+12.0*0.3); /* closes exactly on the penetration line */
+  pb_flip(f3,3,"break c3: close == 100 + 12*0.3, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  pb_bar(97,98,94,95);
+  int k3=pb_bar(99,105,98,104);
+  pb_control(k3,100,3,"restore c3: close 104 is above the line");
+  pb_flat(8);
+
+  /* c4's flip drops the first body to the BodyLong boundary, which also drops
+   * c5's threshold to 2.0 and c6's to 2.0 -- both still satisfied by the same
+   * second and third bars, and the penetration line falls to 100 + 2*0.3. */
+  pb_primer(12,100,2,4);
+  pb_bar(102,113,96,100);                  /* 1st body 2 == avg */
+  pb_bar(97,98,94,95);
+  int f4=pb_bar(99,105,98,104);
+  pb_flip(f4,4,"break c4: first body 2 == avg 2, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  pb_bar(97,98,94,95);
+  int k4=pb_bar(99,105,98,104);
+  pb_control(k4,100,4,"restore c4: first body 12 > 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  pb_bar(97,98,92,93);                     /* 2nd body 4 > 3 */
+  int f5=pb_bar(99,105,98,104);
+  pb_flip(f5,5,"break c5: second body 4 > avg 3");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  pb_bar(97,98,94,95);                     /* body 2 */
+  int k5=pb_bar(99,105,98,104);
+  pb_control(k5,100,5,"restore c5: second body 2 <= 3");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  pb_bar(97,98,94,95);
+  int f6=pb_bar(101,105,100,104);          /* 3rd body 3 == avg */
+  pb_flip(f6,6,"break c6: third body 3 == avg 3, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);
+  pb_bar(97,98,94,95);
+  int k6=pb_bar(99,105,98,104);
+  pb_control(k6,100,6,"restore c6: third body 5 > 3");
+  pb_flat(8);
+}
+
+/* CDLEVENINGSTAR -- MORNINGSTAR upside down.
+ *
+ *   c0  color(i-2) == 1
+ *   c1  color(i)   == -1
+ *   c2  realbodygapup(i-1, i-2)
+ *   c3  close(i) <  close(i-2) - realbody(i-2) * penetration
+ *   c4..c6  identical to MORNINGSTAR
+ *
+ * Only the first four differ from MORNINGSTAR, and all four differ only in
+ * direction: the colours swap, the gap inverts, and the penetration line is
+ * subtracted rather than added. That is the whole pattern, which is exactly
+ * why a model copy-pasted from MORNINGSTAR would agree on c4, c5 and c6 and
+ * disagree with the library on everything that matters.
+ */
+static void cond_eveningstar( int i, int *c )
+{
+   c[0] = pb_white(i-2);
+   c[1] = !pb_white(i);
+   c[2] = pb_bodylo(i-1) > pb_bodyhi(i-2);
+   c[3] = pbC[i] <  pbC[i-2] - pb_body(i-2) * 0.3;
+   c[4] = pb_body(i-2) >  pb_avg(TA_BodyLong,  i-2);
+   c[5] = pb_body(i-1) <= pb_avg(TA_BodyShort, i-1);
+   c[6] = pb_body(i)   >  pb_avg(TA_BodyShort, i);
+}
+
+static void build_eveningstar( void )
+{
+  pb_conditions(7);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,96,112);                  /* 1st: white, body 12, close 112 */
+  pb_bar(115,118,114,117);                 /* 2nd: body 2, gaps up over 112 */
+  int d=pb_bar(113,114,107,108);           /* 3rd: black, body 5, closes 108 */
+  pb_detect(d,-100,"detect: close 108 < 112 - 12*0.3, bodies 12 > 2, 2 <= 3, 5 > 3");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,96,100);                  /* 1st BLACK, close 100 -> line 96.4 */
+  pb_bar(115,118,114,117);
+  int f0=pb_bar(101,102,95,96);
+  pb_flip(f0,0,"break c0: the first candle is black");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,96,112);
+  pb_bar(115,118,114,117);
+  int k0=pb_bar(113,114,107,108);
+  pb_control(k0,-100,0,"restore c0: the first candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,96,112);
+  pb_bar(115,118,114,117);
+  int f1=pb_bar(104,114,103,108);          /* WHITE third candle, body 4 */
+  pb_flip(f1,1,"break c1: the third candle is white");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,96,112);
+  pb_bar(115,118,114,117);
+  int k1=pb_bar(113,114,107,108);
+  pb_control(k1,-100,1,"restore c1: the third candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,96,112);
+  pb_bar(112,118,111,114);                 /* 2nd body floor 112 == the 1st's ceiling */
+  int f2=pb_bar(113,114,107,108);
+  pb_flip(f2,2,"break c2: body floor 112 == the first candle's ceiling 112, the gap test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,96,112);
+  pb_bar(115,118,114,117);
+  int k2=pb_bar(113,114,107,108);
+  pb_control(k2,-100,2,"restore c2: body floor 115 > 112");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,96,112);
+  pb_bar(115,118,114,117);
+  int f3=pb_bar(113,114,107,112.0-12.0*0.3);  /* closes exactly on the penetration line */
+  pb_flip(f3,3,"break c3: close == 112 - 12*0.3, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,96,112);
+  pb_bar(115,118,114,117);
+  int k3=pb_bar(113,114,107,108);
+  pb_control(k3,-100,3,"restore c3: close 108 is below the line");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,96,102);                  /* 1st body 2 == avg -> line 101.4 */
+  pb_bar(115,118,114,117);
+  int f4=pb_bar(113,114,100,101);
+  pb_flip(f4,4,"break c4: first body 2 == avg 2, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,96,112);
+  pb_bar(115,118,114,117);
+  int k4=pb_bar(113,114,107,108);
+  pb_control(k4,-100,4,"restore c4: first body 12 > 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,96,112);
+  pb_bar(115,120,114,119);                 /* 2nd body 4 > 3 */
+  int f5=pb_bar(113,114,107,108);
+  pb_flip(f5,5,"break c5: second body 4 > avg 3");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,96,112);
+  pb_bar(115,118,114,117);
+  int k5=pb_bar(113,114,107,108);
+  pb_control(k5,-100,5,"restore c5: second body 2 <= 3");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,96,112);
+  pb_bar(115,118,114,117);
+  int f6=pb_bar(111,114,107,108);          /* 3rd body 3 == avg */
+  pb_flip(f6,6,"break c6: third body 3 == avg 3, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,96,112);
+  pb_bar(115,118,114,117);
+  int k6=pb_bar(113,114,107,108);
+  pb_control(k6,-100,6,"restore c6: third body 5 > 3");
+  pb_flat(8);
+}
+
+/* CDLMORNINGDOJISTAR -- MORNINGSTAR with the middle candle required to be a
+ * doji rather than merely short.
+ *
+ *   c0..c4, c6  identical to MORNINGSTAR
+ *   c5  realbody(i-1) <= avg(BodyDoji, i-1)
+ *
+ * One condition differs, and it changes the whole geometry. BodyDoji is
+ * HighLow-typed, so its window measures the RANGE of the ten bars ending at
+ * i-2 -- which pins the first bar's high-low to 10 for the threshold to stay
+ * exact, capping its body at 10 and putting MORNINGSTAR's A=12 out of reach.
+ * A=4, B=0 gives 2.0 / 1.0 / 2.0 instead. Sharing MORNINGSTAR's bars here
+ * would leave c5's flip nowhere near its boundary.
+ */
+static void cond_morningdojistar( int i, int *c )
+{
+   c[0] = !pb_white(i-2);
+   c[1] = pb_white(i);
+   c[2] = pb_bodyhi(i-1) < pb_bodylo(i-2);
+   c[3] = pbC[i] >  pbC[i-2] + pb_body(i-2) * 0.3;
+   c[4] = pb_body(i-2) >  pb_avg(TA_BodyLong,  i-2);
+   c[5] = pb_body(i-1) <= pb_avg(TA_BodyDoji,  i-1);
+   c[6] = pb_body(i)   >  pb_avg(TA_BodyShort, i);
+}
+
+static void build_morningdojistar( void )
+{
+  pb_conditions(7);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);                  /* 1st: black, body 4, HighLow 10, close 100 */
+  pb_bar(98,99,97,98);                     /* 2nd: doji, body 0, gaps down under 100 */
+  int d=pb_bar(100,104,99,103);            /* 3rd: white, body 3, closes 103 */
+  pb_detect(d,100,"detect: close 103 > 100 + 4*0.3, bodies 4 > 2, 0 <= 1, 3 > 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(96,106,94,100);                   /* 1st WHITE, body 4, close 100 */
+  pb_bar(94,95,93,94);
+  int f0=pb_bar(100,104,99,103);
+  pb_flip(f0,0,"break c0: the first candle is white");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(98,99,97,98);
+  int k0=pb_bar(100,104,99,103);
+  pb_control(k0,100,0,"restore c0: the first candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(98,99,97,98);
+  int f1=pb_bar(106,107,102,103);          /* BLACK third candle, body 3 */
+  pb_flip(f1,1,"break c1: the third candle is black");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(98,99,97,98);
+  int k1=pb_bar(100,104,99,103);
+  pb_control(k1,100,1,"restore c1: the third candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(100,101,99,100);                  /* 2nd body top 100 == the 1st's floor */
+  int f2=pb_bar(100,104,99,103);
+  pb_flip(f2,2,"break c2: body top 100 == the first candle's floor 100, the gap test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(98,99,97,98);
+  int k2=pb_bar(100,104,99,103);
+  pb_control(k2,100,2,"restore c2: body top 98 < 100");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(98,99,97,98);
+  int f3=pb_bar(99,104,98,100.0+4.0*0.3);  /* closes exactly on the line, body 2.2 keeps c6 true */
+  pb_flip(f3,3,"break c3: close == 100 + 4*0.3, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(98,99,97,98);
+  int k3=pb_bar(100,104,99,103);
+  pb_control(k3,100,3,"restore c3: close 103 is above the line");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(102,106,96,100);                  /* 1st body 2 == avg */
+  pb_bar(98,99,97,98);
+  int f4=pb_bar(100,104,99,103);
+  pb_flip(f4,4,"break c4: first body 2 == avg 2, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(98,99,97,98);
+  int k4=pb_bar(100,104,99,103);
+  pb_control(k4,100,4,"restore c4: first body 4 > 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(98,99,96,96);                     /* 2nd body 2 > 1 */
+  int f5=pb_bar(100,104,99,103);
+  pb_flip(f5,5,"break c5: second body 2 > doji threshold 1");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(98,99,96,97);                     /* body 1 == threshold */
+  int k5=pb_bar(100,104,99,103);
+  pb_control(k5,100,5,"restore c5: second body 1 == threshold 1, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(98,99,97,98);
+  int f6=pb_bar(101,104,100,103);          /* 3rd body 2 == avg */
+  pb_flip(f6,6,"break c6: third body 2 == avg 2, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(98,99,97,98);
+  int k6=pb_bar(100,104,99,103);
+  pb_control(k6,100,6,"restore c6: third body 3 > 2");
+  pb_flat(8);
+}
+
+/* CDLEVENINGDOJISTAR -- EVENINGSTAR with a doji middle candle.
+ *
+ *   c0..c4, c6  identical to EVENINGSTAR
+ *   c5  realbody(i-1) <= avg(BodyDoji, i-1)
+ *
+ * The fourth corner of the square: MORNING/EVENING differ by direction,
+ * STAR/DOJISTAR by which setting the middle body is measured against. Each of
+ * the four shares six of its seven conditions with two of the others, so the
+ * only cases that separate them are the ones placed on the condition that
+ * differs -- c0..c3 between the directions, c5 between the two settings.
+ */
+static void cond_eveningdojistar( int i, int *c )
+{
+   c[0] = pb_white(i-2);
+   c[1] = !pb_white(i);
+   c[2] = pb_bodylo(i-1) > pb_bodyhi(i-2);
+   c[3] = pbC[i] <  pbC[i-2] - pb_body(i-2) * 0.3;
+   c[4] = pb_body(i-2) >  pb_avg(TA_BodyLong,  i-2);
+   c[5] = pb_body(i-1) <= pb_avg(TA_BodyDoji,  i-1);
+   c[6] = pb_body(i)   >  pb_avg(TA_BodyShort, i);
+}
+
+static void build_eveningdojistar( void )
+{
+  pb_conditions(7);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(96,106,96,100);                   /* 1st: white, body 4, HighLow 10, close 100 */
+  pb_bar(102,103,101,102);                 /* 2nd: doji, body 0, gaps up over 100 */
+  int d=pb_bar(100,101,96,97);             /* 3rd: black, body 3, closes 97 */
+  pb_detect(d,-100,"detect: close 97 < 100 - 4*0.3, bodies 4 > 2, 0 <= 1, 3 > 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);                  /* 1st BLACK, body 4, close 100 */
+  pb_bar(106,107,105,106);
+  int f0=pb_bar(100,101,96,97);
+  pb_flip(f0,0,"break c0: the first candle is black");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(96,106,96,100);
+  pb_bar(102,103,101,102);
+  int k0=pb_bar(100,101,96,97);
+  pb_control(k0,-100,0,"restore c0: the first candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(96,106,96,100);
+  pb_bar(102,103,101,102);
+  int f1=pb_bar(94,101,93,97);             /* WHITE third candle, body 3 */
+  pb_flip(f1,1,"break c1: the third candle is white");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(96,106,96,100);
+  pb_bar(102,103,101,102);
+  int k1=pb_bar(100,101,96,97);
+  pb_control(k1,-100,1,"restore c1: the third candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(96,106,96,100);
+  pb_bar(100,101,99,100);                  /* 2nd body floor 100 == the 1st's ceiling */
+  int f2=pb_bar(100,101,96,97);
+  pb_flip(f2,2,"break c2: body floor 100 == the first candle's ceiling 100, the gap test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(96,106,96,100);
+  pb_bar(102,103,101,102);
+  int k2=pb_bar(100,101,96,97);
+  pb_control(k2,-100,2,"restore c2: body floor 102 > 100");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(96,106,96,100);
+  pb_bar(102,103,101,102);
+  int f3=pb_bar(101,102,96,100.0-4.0*0.3); /* closes exactly on the line, body 2.2 keeps c6 true */
+  pb_flip(f3,3,"break c3: close == 100 - 4*0.3, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(96,106,96,100);
+  pb_bar(102,103,101,102);
+  int k3=pb_bar(100,101,96,97);
+  pb_control(k3,-100,3,"restore c3: close 97 is below the line");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(98,106,96,100);                   /* 1st body 2 == avg */
+  pb_bar(102,103,101,102);
+  int f4=pb_bar(100,101,96,97);
+  pb_flip(f4,4,"break c4: first body 2 == avg 2, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(96,106,96,100);
+  pb_bar(102,103,101,102);
+  int k4=pb_bar(100,101,96,97);
+  pb_control(k4,-100,4,"restore c4: first body 4 > 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(96,106,96,100);
+  pb_bar(102,105,101,104);                 /* 2nd body 2 > 1 */
+  int f5=pb_bar(100,101,96,97);
+  pb_flip(f5,5,"break c5: second body 2 > doji threshold 1");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(96,106,96,100);
+  pb_bar(102,104,101,103);                 /* body 1 == threshold */
+  int k5=pb_bar(100,101,96,97);
+  pb_control(k5,-100,5,"restore c5: second body 1 == threshold 1, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(96,106,96,100);
+  pb_bar(102,103,101,102);
+  int f6=pb_bar(99,101,96,97);             /* 3rd body 2 == avg */
+  pb_flip(f6,6,"break c6: third body 2 == avg 2, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(96,106,96,100);
+  pb_bar(102,103,101,102);
+  int k6=pb_bar(100,101,96,97);
+  pb_control(k6,-100,6,"restore c6: third body 3 > 2");
+  pb_flat(8);
+}
+
 static ErrorNumber test_marquee_predicate_coverage( void )
 {
    ErrorNumber e;
@@ -4150,6 +4789,11 @@ static ErrorNumber test_marquee_predicate_coverage( void )
    pb_reset(); build_piercing();            e = pb_check_mcdc("CDLPIERCING",            TA_CDLPIERCING,            cond_piercing);            if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_homingpigeon();        e = pb_check_mcdc("CDLHOMINGPIGEON",        TA_CDLHOMINGPIGEON,        cond_homingpigeon);        if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_counterattack();       e = pb_check_mcdc("CDLCOUNTERATTACK",       TA_CDLCOUNTERATTACK,       cond_counterattack);       if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_darkcloudcover();      e = pb_check_mcdc_p("CDLDARKCLOUDCOVER",    TA_CDLDARKCLOUDCOVER,    0.5, cond_darkcloudcover);  if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_morningstar();         e = pb_check_mcdc_p("CDLMORNINGSTAR",       TA_CDLMORNINGSTAR,       0.3, cond_morningstar);     if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_eveningstar();         e = pb_check_mcdc_p("CDLEVENINGSTAR",       TA_CDLEVENINGSTAR,       0.3, cond_eveningstar);     if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_morningdojistar();     e = pb_check_mcdc_p("CDLMORNINGDOJISTAR",   TA_CDLMORNINGDOJISTAR,   0.3, cond_morningdojistar); if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_eveningdojistar();     e = pb_check_mcdc_p("CDLEVENINGDOJISTAR",   TA_CDLEVENINGDOJISTAR,   0.3, cond_eveningdojistar); if( e != TA_TEST_PASS ) return e;
    pb_report_totals();
    return TA_TEST_PASS;
 }
