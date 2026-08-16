@@ -68,13 +68,13 @@ impl Core {
     /// before the first output value can be produced.
     pub fn CDLHIGHWAVE_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
-        let BodyShort_rangeType: i32 = self.candle_settings.body_short.range_type;
+        let BodyShort_rangeType: i32 = self.candle_settings.body_short.range_type as i32;
         #[allow(non_snake_case)]
         let BodyShort_avgPeriod: i32 = self.candle_settings.body_short.avg_period;
         #[allow(non_snake_case)]
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         #[allow(non_snake_case)]
-        let ShadowVeryLong_rangeType: i32 = self.candle_settings.shadow_very_long.range_type;
+        let ShadowVeryLong_rangeType: i32 = self.candle_settings.shadow_very_long.range_type as i32;
         #[allow(non_snake_case)]
         let ShadowVeryLong_avgPeriod: i32 = self.candle_settings.shadow_very_long.avg_period;
         #[allow(non_snake_case)]
@@ -193,13 +193,13 @@ impl Core {
         let mut ShadowTrailingIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         #[allow(non_snake_case)]
-        let BodyShort_rangeType: i32 = self.candle_settings.body_short.range_type;
+        let BodyShort_rangeType: i32 = self.candle_settings.body_short.range_type as i32;
         #[allow(non_snake_case)]
         let BodyShort_avgPeriod: i32 = self.candle_settings.body_short.avg_period;
         #[allow(non_snake_case)]
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         #[allow(non_snake_case)]
-        let ShadowVeryLong_rangeType: i32 = self.candle_settings.shadow_very_long.range_type;
+        let ShadowVeryLong_rangeType: i32 = self.candle_settings.shadow_very_long.range_type as i32;
         #[allow(non_snake_case)]
         let ShadowVeryLong_avgPeriod: i32 = self.candle_settings.shadow_very_long.avg_period;
         #[allow(non_snake_case)]
@@ -428,13 +428,13 @@ impl CDLHIGHWAVE_StreamState {
 impl Core {
     fn CDLHIGHWAVE_step_internal(&self, sp: &mut CDLHIGHWAVE_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
-        let BodyShort_rangeType: i32 = self.candle_settings.body_short.range_type;
+        let BodyShort_rangeType: i32 = self.candle_settings.body_short.range_type as i32;
         #[allow(non_snake_case)]
         let BodyShort_avgPeriod: i32 = self.candle_settings.body_short.avg_period;
         #[allow(non_snake_case)]
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         #[allow(non_snake_case)]
-        let ShadowVeryLong_rangeType: i32 = self.candle_settings.shadow_very_long.range_type;
+        let ShadowVeryLong_rangeType: i32 = self.candle_settings.shadow_very_long.range_type as i32;
         #[allow(non_snake_case)]
         let ShadowVeryLong_avgPeriod: i32 = self.candle_settings.shadow_very_long.avg_period;
         #[allow(non_snake_case)]
@@ -562,13 +562,13 @@ impl Core {
         let mut ShadowTrailingIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         #[allow(non_snake_case)]
-        let BodyShort_rangeType: i32 = self.candle_settings.body_short.range_type;
+        let BodyShort_rangeType: i32 = self.candle_settings.body_short.range_type as i32;
         #[allow(non_snake_case)]
         let BodyShort_avgPeriod: i32 = self.candle_settings.body_short.avg_period;
         #[allow(non_snake_case)]
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         #[allow(non_snake_case)]
-        let ShadowVeryLong_rangeType: i32 = self.candle_settings.shadow_very_long.range_type;
+        let ShadowVeryLong_rangeType: i32 = self.candle_settings.shadow_very_long.range_type as i32;
         #[allow(non_snake_case)]
         let ShadowVeryLong_avgPeriod: i32 = self.candle_settings.shadow_very_long.avg_period;
         #[allow(non_snake_case)]

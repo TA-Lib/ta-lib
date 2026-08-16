@@ -74,7 +74,7 @@ impl Core {
     /// before the first output value can be produced.
     pub fn CDLHIKKAKEMOD_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
-        let Near_rangeType: i32 = self.candle_settings.near.range_type;
+        let Near_rangeType: i32 = self.candle_settings.near.range_type as i32;
         #[allow(non_snake_case)]
         let Near_avgPeriod: i32 = self.candle_settings.near.avg_period;
         #[allow(non_snake_case)]
@@ -186,7 +186,7 @@ impl Core {
         let mut patternHigh: f64 = 0.0_f64;
         let mut patternLow: f64 = 0.0_f64;
         #[allow(non_snake_case)]
-        let Near_rangeType: i32 = self.candle_settings.near.range_type;
+        let Near_rangeType: i32 = self.candle_settings.near.range_type as i32;
         #[allow(non_snake_case)]
         let Near_avgPeriod: i32 = self.candle_settings.near.avg_period;
         #[allow(non_snake_case)]
@@ -464,7 +464,7 @@ impl CDLHIKKAKEMOD_StreamState {
 impl Core {
     fn CDLHIKKAKEMOD_step_internal(&self, sp: &mut CDLHIKKAKEMOD_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
-        let Near_rangeType: i32 = self.candle_settings.near.range_type;
+        let Near_rangeType: i32 = self.candle_settings.near.range_type as i32;
         #[allow(non_snake_case)]
         let Near_avgPeriod: i32 = self.candle_settings.near.avg_period;
         #[allow(non_snake_case)]
@@ -572,7 +572,7 @@ impl Core {
         let mut patternHigh: f64 = 0.0_f64;
         let mut patternLow: f64 = 0.0_f64;
         #[allow(non_snake_case)]
-        let Near_rangeType: i32 = self.candle_settings.near.range_type;
+        let Near_rangeType: i32 = self.candle_settings.near.range_type as i32;
         #[allow(non_snake_case)]
         let Near_avgPeriod: i32 = self.candle_settings.near.avg_period;
         #[allow(non_snake_case)]

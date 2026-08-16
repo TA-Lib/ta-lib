@@ -68,19 +68,19 @@ impl Core {
     /// the first output value can be produced.
     pub fn CDLTAKURI_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
-        let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type;
+        let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type as i32;
         #[allow(non_snake_case)]
         let BodyDoji_avgPeriod: i32 = self.candle_settings.body_doji.avg_period;
         #[allow(non_snake_case)]
         let BodyDoji_factor: f64 = self.candle_settings.body_doji.factor;
         #[allow(non_snake_case)]
-        let ShadowVeryLong_rangeType: i32 = self.candle_settings.shadow_very_long.range_type;
+        let ShadowVeryLong_rangeType: i32 = self.candle_settings.shadow_very_long.range_type as i32;
         #[allow(non_snake_case)]
         let ShadowVeryLong_avgPeriod: i32 = self.candle_settings.shadow_very_long.avg_period;
         #[allow(non_snake_case)]
         let ShadowVeryLong_factor: f64 = self.candle_settings.shadow_very_long.factor;
         #[allow(non_snake_case)]
-        let ShadowVeryShort_rangeType: i32 = self.candle_settings.shadow_very_short.range_type;
+        let ShadowVeryShort_rangeType: i32 = self.candle_settings.shadow_very_short.range_type as i32;
         #[allow(non_snake_case)]
         let ShadowVeryShort_avgPeriod: i32 = self.candle_settings.shadow_very_short.avg_period;
         #[allow(non_snake_case)]
@@ -189,19 +189,19 @@ impl Core {
         let mut ShadowVeryLongTrailingIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         #[allow(non_snake_case)]
-        let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type;
+        let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type as i32;
         #[allow(non_snake_case)]
         let BodyDoji_avgPeriod: i32 = self.candle_settings.body_doji.avg_period;
         #[allow(non_snake_case)]
         let BodyDoji_factor: f64 = self.candle_settings.body_doji.factor;
         #[allow(non_snake_case)]
-        let ShadowVeryLong_rangeType: i32 = self.candle_settings.shadow_very_long.range_type;
+        let ShadowVeryLong_rangeType: i32 = self.candle_settings.shadow_very_long.range_type as i32;
         #[allow(non_snake_case)]
         let ShadowVeryLong_avgPeriod: i32 = self.candle_settings.shadow_very_long.avg_period;
         #[allow(non_snake_case)]
         let ShadowVeryLong_factor: f64 = self.candle_settings.shadow_very_long.factor;
         #[allow(non_snake_case)]
-        let ShadowVeryShort_rangeType: i32 = self.candle_settings.shadow_very_short.range_type;
+        let ShadowVeryShort_rangeType: i32 = self.candle_settings.shadow_very_short.range_type as i32;
         #[allow(non_snake_case)]
         let ShadowVeryShort_avgPeriod: i32 = self.candle_settings.shadow_very_short.avg_period;
         #[allow(non_snake_case)]
@@ -500,19 +500,19 @@ impl CDLTAKURI_StreamState {
 impl Core {
     fn CDLTAKURI_step_internal(&self, sp: &mut CDLTAKURI_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
-        let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type;
+        let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type as i32;
         #[allow(non_snake_case)]
         let BodyDoji_avgPeriod: i32 = self.candle_settings.body_doji.avg_period;
         #[allow(non_snake_case)]
         let BodyDoji_factor: f64 = self.candle_settings.body_doji.factor;
         #[allow(non_snake_case)]
-        let ShadowVeryLong_rangeType: i32 = self.candle_settings.shadow_very_long.range_type;
+        let ShadowVeryLong_rangeType: i32 = self.candle_settings.shadow_very_long.range_type as i32;
         #[allow(non_snake_case)]
         let ShadowVeryLong_avgPeriod: i32 = self.candle_settings.shadow_very_long.avg_period;
         #[allow(non_snake_case)]
         let ShadowVeryLong_factor: f64 = self.candle_settings.shadow_very_long.factor;
         #[allow(non_snake_case)]
-        let ShadowVeryShort_rangeType: i32 = self.candle_settings.shadow_very_short.range_type;
+        let ShadowVeryShort_rangeType: i32 = self.candle_settings.shadow_very_short.range_type as i32;
         #[allow(non_snake_case)]
         let ShadowVeryShort_avgPeriod: i32 = self.candle_settings.shadow_very_short.avg_period;
         #[allow(non_snake_case)]
@@ -687,19 +687,19 @@ impl Core {
         let mut ShadowVeryLongTrailingIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         #[allow(non_snake_case)]
-        let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type;
+        let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type as i32;
         #[allow(non_snake_case)]
         let BodyDoji_avgPeriod: i32 = self.candle_settings.body_doji.avg_period;
         #[allow(non_snake_case)]
         let BodyDoji_factor: f64 = self.candle_settings.body_doji.factor;
         #[allow(non_snake_case)]
-        let ShadowVeryLong_rangeType: i32 = self.candle_settings.shadow_very_long.range_type;
+        let ShadowVeryLong_rangeType: i32 = self.candle_settings.shadow_very_long.range_type as i32;
         #[allow(non_snake_case)]
         let ShadowVeryLong_avgPeriod: i32 = self.candle_settings.shadow_very_long.avg_period;
         #[allow(non_snake_case)]
         let ShadowVeryLong_factor: f64 = self.candle_settings.shadow_very_long.factor;
         #[allow(non_snake_case)]
-        let ShadowVeryShort_rangeType: i32 = self.candle_settings.shadow_very_short.range_type;
+        let ShadowVeryShort_rangeType: i32 = self.candle_settings.shadow_very_short.range_type as i32;
         #[allow(non_snake_case)]
         let ShadowVeryShort_avgPeriod: i32 = self.candle_settings.shadow_very_short.avg_period;
         #[allow(non_snake_case)]

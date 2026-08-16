@@ -5,7 +5,7 @@ use serde_json::{self, Value};
 use std::io::{self, BufRead, Write};
 use std::time::Instant;
 use ta_lib::{Core, CoreBuilder, RetCode, FuncUnstId, MAX_INDEX};
-use ta_lib::{CandleSetting, CandleSettings, CandleSettingType};
+use ta_lib::{CandleSetting, CandleSettings, CandleSettingType, RangeType};
 use ta_lib::abstract_api::{self, InputType, OutputType, OptInputType};
 use ta_lib::MAType;
 
@@ -884,7 +884,10 @@ fn apply_candle_setting(core: &mut Core, st: i64, rt: i64, ap: i64, factor: f64)
     let Some(setting_type) = candle_setting_type_from_int(st) else {
         return Err("Invalid candle setting");
     };
-    let (Ok(range_type), Ok(avg_period)) = (i32::try_from(rt), i32::try_from(ap)) else {
+    let (Ok(rt32), Ok(avg_period)) = (i32::try_from(rt), i32::try_from(ap)) else {
+        return Err("Invalid candle setting");
+    };
+    let Ok(range_type) = RangeType::try_from(rt32) else {
         return Err("Invalid candle setting");
     };
     let setting = CandleSetting { range_type, avg_period, factor };
@@ -15565,7 +15568,7 @@ fn sv_candle_settings(rd: i32) -> CandleSettings {
     match rd {
         1 => all(&mut s, &|c| c.avg_period += 3),
         2 => all(&mut s, &|c| c.avg_period = 0),
-        3 => all(&mut s, &|c| c.range_type = 2),
+        3 => all(&mut s, &|c| c.range_type = RangeType::Shadows),
         _ => {}
     }
     s

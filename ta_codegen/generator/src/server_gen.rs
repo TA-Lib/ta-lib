@@ -3783,7 +3783,7 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("use std::io::{self, BufRead, Write};\n");
     s.push_str("use std::time::Instant;\n");
     s.push_str("use ta_lib::{Core, CoreBuilder, RetCode, FuncUnstId, MAX_INDEX};\n");
-    s.push_str("use ta_lib::{CandleSetting, CandleSettings, CandleSettingType};\n");
+    s.push_str("use ta_lib::{CandleSetting, CandleSettings, CandleSettingType, RangeType};\n");
     s.push_str("use ta_lib::abstract_api::{self, InputType, OutputType, OptInputType};\n");
     // The enum types the handlers convert wire ints into, from what the
     // definitions actually declare rather than a name spelled here.
@@ -4005,7 +4005,14 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("    let Some(setting_type) = candle_setting_type_from_int(st) else {\n");
     s.push_str("        return Err(\"Invalid candle setting\");\n");
     s.push_str("    };\n");
-    s.push_str("    let (Ok(range_type), Ok(avg_period)) = (i32::try_from(rt), i32::try_from(ap)) else {\n");
+    // The range type is an enum in the crate, so the wire integer is converted
+    // here rather than at the builder: `RangeType::try_from` is what rejects an
+    // out-of-domain one, and it must answer the same "Invalid candle setting"
+    // the C server answers TA_BAD_PARAM to.
+    s.push_str("    let (Ok(rt32), Ok(avg_period)) = (i32::try_from(rt), i32::try_from(ap)) else {\n");
+    s.push_str("        return Err(\"Invalid candle setting\");\n");
+    s.push_str("    };\n");
+    s.push_str("    let Ok(range_type) = RangeType::try_from(rt32) else {\n");
     s.push_str("        return Err(\"Invalid candle setting\");\n");
     s.push_str("    };\n");
     s.push_str("    let setting = CandleSetting { range_type, avg_period, factor };\n");
@@ -5364,7 +5371,7 @@ pub(crate) fn generate_rust_stream_verify(
     s.push_str("}\n\n");
     // Candle-settings rounds (mirror the C sweep): defaults / avgPeriod+3 /
     // avgPeriod=0 (instant candle) / rangeType=Shadows.
-    s.push_str("fn sv_candle_settings(rd: i32) -> CandleSettings {\n    let mut s = CandleSettings::default_settings();\n    let all = |s: &mut CandleSettings, f: &dyn Fn(&mut CandleSetting)| {\n        for cs in [&mut s.body_long, &mut s.body_very_long, &mut s.body_short, &mut s.body_doji,\n                   &mut s.shadow_long, &mut s.shadow_very_long, &mut s.shadow_short,\n                   &mut s.shadow_very_short, &mut s.near, &mut s.far, &mut s.equal] {\n            f(cs);\n        }\n    };\n    match rd {\n        1 => all(&mut s, &|c| c.avg_period += 3),\n        2 => all(&mut s, &|c| c.avg_period = 0),\n        3 => all(&mut s, &|c| c.range_type = 2),\n        _ => {}\n    }\n    s\n}\n\n");
+    s.push_str("fn sv_candle_settings(rd: i32) -> CandleSettings {\n    let mut s = CandleSettings::default_settings();\n    let all = |s: &mut CandleSettings, f: &dyn Fn(&mut CandleSetting)| {\n        for cs in [&mut s.body_long, &mut s.body_very_long, &mut s.body_short, &mut s.body_doji,\n                   &mut s.shadow_long, &mut s.shadow_very_long, &mut s.shadow_short,\n                   &mut s.shadow_very_short, &mut s.near, &mut s.far, &mut s.equal] {\n            f(cs);\n        }\n    };\n    match rd {\n        1 => all(&mut s, &|c| c.avg_period += 3),\n        2 => all(&mut s, &|c| c.avg_period = 0),\n        3 => all(&mut s, &|c| c.range_type = RangeType::Shadows),\n        _ => {}\n    }\n    s\n}\n\n");
     s.push_str("fn sv_apply_candles(b: CoreBuilder, s: &CandleSettings) -> CoreBuilder {\n    b.candle_setting(CandleSettingType::BodyLong, s.body_long)\n     .candle_setting(CandleSettingType::BodyVeryLong, s.body_very_long)\n     .candle_setting(CandleSettingType::BodyShort, s.body_short)\n     .candle_setting(CandleSettingType::BodyDoji, s.body_doji)\n     .candle_setting(CandleSettingType::ShadowLong, s.shadow_long)\n     .candle_setting(CandleSettingType::ShadowVeryLong, s.shadow_very_long)\n     .candle_setting(CandleSettingType::ShadowShort, s.shadow_short)\n     .candle_setting(CandleSettingType::ShadowVeryShort, s.shadow_very_short)\n     .candle_setting(CandleSettingType::Near, s.near)\n     .candle_setting(CandleSettingType::Far, s.far)\n     .candle_setting(CandleSettingType::Equal, s.equal)\n}\n\n");
 
     let lookup = crate::streaming::FuncsLookup(funcs);

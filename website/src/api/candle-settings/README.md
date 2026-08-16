@@ -52,21 +52,23 @@ until changed or restored.
 @tab Rust
 
 ```rust
-use ta_lib::{CandleSetting, CandleSettingType, Core};
+use ta_lib::{CandleSetting, CandleSettingType, Core, RangeType};
 
 // Treat a "long body" as 1.2x the average real body of the last 10 candles:
 let core = Core::builder()
     .candle_setting(
         CandleSettingType::BodyLong,
-        CandleSetting { range_type: 0, avg_period: 10, factor: 1.2 },
+        CandleSetting { range_type: RangeType::RealBody, avg_period: 10, factor: 1.2 },
     )
     .build()?;
 ```
 
-`range_type` is `0` = real body, `1` = high-to-low, `2` = shadows. Any other
-`range_type`, an `avg_period` outside `0..=MAX_INDEX`, or a NaN `factor` is
-refused, and `build()` reports `RetCode::BadParam` — the same domain C rejects
-with `TA_BAD_PARAM`.
+`RangeType` is `RealBody`, `HighLow` or `Shadows` — the three C spells
+`TA_RangeType_*`. There is no fourth to reject, so unlike C the domain is
+enforced by the type rather than at the call; `RangeType::try_from(i32)` is where
+a raw value from a config file or the wire is checked. An `avg_period` outside
+`0..=MAX_INDEX` or a NaN `factor` is refused, and `build()` reports
+`RetCode::BadParam` — the same domain C rejects with `TA_BAD_PARAM`.
 
 There is no restore call and none is needed: a builder starts from the defaults, so
 "restoring" a setting means simply not overriding it. Settings are fixed when the

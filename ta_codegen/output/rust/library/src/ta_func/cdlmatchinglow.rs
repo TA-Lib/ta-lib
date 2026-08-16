@@ -68,7 +68,7 @@ impl Core {
     /// before the first output value can be produced.
     pub fn CDLMATCHINGLOW_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
-        let Equal_rangeType: i32 = self.candle_settings.equal.range_type;
+        let Equal_rangeType: i32 = self.candle_settings.equal.range_type as i32;
         #[allow(non_snake_case)]
         let Equal_avgPeriod: i32 = self.candle_settings.equal.avg_period;
         #[allow(non_snake_case)]
@@ -183,7 +183,7 @@ impl Core {
         let mut EqualTrailingIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         #[allow(non_snake_case)]
-        let Equal_rangeType: i32 = self.candle_settings.equal.range_type;
+        let Equal_rangeType: i32 = self.candle_settings.equal.range_type as i32;
         #[allow(non_snake_case)]
         let Equal_avgPeriod: i32 = self.candle_settings.equal.avg_period;
         #[allow(non_snake_case)]
@@ -358,7 +358,7 @@ impl CDLMATCHINGLOW_StreamState {
 impl Core {
     fn CDLMATCHINGLOW_step_internal(&self, sp: &mut CDLMATCHINGLOW_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
-        let Equal_rangeType: i32 = self.candle_settings.equal.range_type;
+        let Equal_rangeType: i32 = self.candle_settings.equal.range_type as i32;
         #[allow(non_snake_case)]
         let Equal_avgPeriod: i32 = self.candle_settings.equal.avg_period;
         #[allow(non_snake_case)]
@@ -445,7 +445,7 @@ impl Core {
         let mut EqualTrailingIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         #[allow(non_snake_case)]
-        let Equal_rangeType: i32 = self.candle_settings.equal.range_type;
+        let Equal_rangeType: i32 = self.candle_settings.equal.range_type as i32;
         #[allow(non_snake_case)]
         let Equal_avgPeriod: i32 = self.candle_settings.equal.avg_period;
         #[allow(non_snake_case)]

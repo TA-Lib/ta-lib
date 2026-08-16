@@ -127,13 +127,46 @@ pub const INTEGER_MAX: i32 = i32::MAX;
 /// accepted or rejected identically in all four.
 pub const MAX_INDEX: usize = 100_000_000;
 
+/// What a candlestick setting measures a candle against. Mirrors the C
+/// `TA_RangeType`, and the `RangeType` enum of the Java and C# ports.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum RangeType {
+    /// The real body: `|close - open|`.
+    RealBody = 0,
+    /// The whole candle: `high - low`.
+    HighLow = 1,
+    /// The shadows only: `high - low` less the real body.
+    Shadows = 2,
+}
+
+impl TryFrom<i32> for RangeType {
+    type Error = RetCode;
+
+    /// Convert a raw range type, as C, the JSON-RPC server and a configuration
+    /// file hold it.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if the value names no member — the same domain C
+    /// rejects with `TA_BAD_PARAM`.
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
+        Ok(match value {
+            0 => Self::RealBody,
+            1 => Self::HighLow,
+            2 => Self::Shadows,
+            _ => return Err(RetCode::BadParam),
+        })
+    }
+}
+
 /// A single candlestick setting entry.
 ///
 /// `PartialEq` but not `Eq`: `factor` is an `f64`.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct CandleSetting {
-    /// Range type: 0 = RealBody, 1 = HighLow, 2 = Shadows.
-    pub range_type: i32,
+    /// What the candle is measured against.
+    pub range_type: RangeType,
     /// Period length for averaging.
     pub avg_period: i32,
     /// Scaling factor.
@@ -161,17 +194,17 @@ impl CandleSettings {
     /// Default candle settings matching TA-Lib C defaults.
     pub fn default_settings() -> Self {
         Self {
-            body_long:         CandleSetting { range_type: 0, avg_period: 10, factor: 1.0 },
-            body_very_long:    CandleSetting { range_type: 0, avg_period: 10, factor: 3.0 },
-            body_short:        CandleSetting { range_type: 0, avg_period: 10, factor: 1.0 },
-            body_doji:         CandleSetting { range_type: 1, avg_period: 10, factor: 0.1 },
-            shadow_long:       CandleSetting { range_type: 0, avg_period:  0, factor: 1.0 },
-            shadow_very_long:  CandleSetting { range_type: 0, avg_period:  0, factor: 2.0 },
-            shadow_short:      CandleSetting { range_type: 2, avg_period: 10, factor: 1.0 },
-            shadow_very_short: CandleSetting { range_type: 1, avg_period: 10, factor: 0.1 },
-            near:              CandleSetting { range_type: 1, avg_period:  5, factor: 0.2 },
-            far:               CandleSetting { range_type: 1, avg_period:  5, factor: 0.6 },
-            equal:             CandleSetting { range_type: 1, avg_period:  5, factor: 0.05 },
+            body_long:         CandleSetting { range_type: RangeType::RealBody, avg_period: 10, factor: 1.0 },
+            body_very_long:    CandleSetting { range_type: RangeType::RealBody, avg_period: 10, factor: 3.0 },
+            body_short:        CandleSetting { range_type: RangeType::RealBody, avg_period: 10, factor: 1.0 },
+            body_doji:         CandleSetting { range_type: RangeType::HighLow,  avg_period: 10, factor: 0.1 },
+            shadow_long:       CandleSetting { range_type: RangeType::RealBody, avg_period:  0, factor: 1.0 },
+            shadow_very_long:  CandleSetting { range_type: RangeType::RealBody, avg_period:  0, factor: 2.0 },
+            shadow_short:      CandleSetting { range_type: RangeType::Shadows,  avg_period: 10, factor: 1.0 },
+            shadow_very_short: CandleSetting { range_type: RangeType::HighLow,  avg_period: 10, factor: 0.1 },
+            near:              CandleSetting { range_type: RangeType::HighLow,  avg_period:  5, factor: 0.2 },
+            far:               CandleSetting { range_type: RangeType::HighLow,  avg_period:  5, factor: 0.6 },
+            equal:             CandleSetting { range_type: RangeType::HighLow,  avg_period:  5, factor: 0.05 },
         }
     }
 }
@@ -396,9 +429,11 @@ impl CoreBuilder {
     /// # Errors
     ///
     /// [`CoreBuilder::build`] reports [`RetCode::BadParam`] unless `setting_type`
-    /// names a single setting, `setting.range_type` is `0`, `1` or `2`,
-    /// `setting.avg_period` is between `0` and [`MAX_INDEX`], and
-    /// `setting.factor` is not NaN. `avg_period` is the lookback of every CDL\*
+    /// names a single setting, `setting.avg_period` is between `0` and
+    /// [`MAX_INDEX`], and `setting.factor` is not NaN. The range type needs no
+    /// check: [`RangeType`] has no out-of-domain value to reject, which is the
+    /// point of it being an enum rather than the `int` C carries.
+    /// `avg_period` is the lookback of every CDL\*
     /// function that reads the setting, so it is bounded like one; `factor`
     /// scales a threshold and takes any finite value. C rejects the same values
     /// with `TA_BAD_PARAM`.
@@ -414,9 +449,6 @@ impl CoreBuilder {
         // a value that can arrive from a config file is a worse failure than one
         // the caller can handle, and every check here precedes the write, so a
         // rejection leaves the settings exactly as they were.
-        if !(0..=2).contains(&setting.range_type) {
-            return self.reject(RetCode::BadParam);
-        }
         if setting.avg_period < 0 || setting.avg_period as i64 > MAX_INDEX as i64 {
             return self.reject(RetCode::BadParam);
         }
@@ -450,12 +482,12 @@ impl CoreBuilder {
     /// *deriving a new `Core`* whose settings happen to be the defaults again:
     ///
     /// ```
-    /// use ta_lib::{CandleSetting, CandleSettingType, Core};
+    /// use ta_lib::{CandleSetting, CandleSettingType, Core, RangeType};
     ///
     /// let tuned = Core::builder()
     ///     .candle_setting(
     ///         CandleSettingType::BodyLong,
-    ///         CandleSetting { range_type: 2, avg_period: 20, factor: 1.5 },
+    ///         CandleSetting { range_type: RangeType::Shadows, avg_period: 20, factor: 1.5 },
     ///     )
     ///     .build()?;
     ///
@@ -545,7 +577,7 @@ mod tests {
             assert_eq!(core.compatibility, Compatibility::Default);
             assert!(core.unstable_period.iter().all(|&p| p == 0));
             // A representative candle default (BodyDoji: HighLow range, 10, 0.1).
-            assert_eq!(core.candle_settings.body_doji.range_type, 1);
+            assert_eq!(core.candle_settings.body_doji.range_type, RangeType::HighLow);
             assert_eq!(core.candle_settings.body_doji.avg_period, 10);
             assert_eq!(core.candle_settings.body_doji.factor, 0.1);
         }
@@ -664,7 +696,7 @@ mod tests {
             .unstable_period(FuncUnstId::EMA, ceiling + 1)
             .candle_setting(
                 CandleSettingType::AllCandleSettings,
-                CandleSetting { range_type: 1, avg_period: 1, factor: 1.0 },
+                CandleSetting { range_type: RangeType::HighLow, avg_period: 1, factor: 1.0 },
             )
             .build()
             .unwrap_err();
@@ -707,10 +739,10 @@ mod tests {
 
     #[test]
     fn builder_candle_setting_overrides_one_leaves_rest() {
-        let custom = CandleSetting { range_type: 2, avg_period: 20, factor: 1.5 };
+        let custom = CandleSetting { range_type: RangeType::Shadows, avg_period: 20, factor: 1.5 };
         let core =
             Core::builder().candle_setting(CandleSettingType::BodyLong, custom).build().unwrap();
-        assert_eq!(core.candle_settings.body_long.range_type, 2);
+        assert_eq!(core.candle_settings.body_long.range_type, RangeType::Shadows);
         assert_eq!(core.candle_settings.body_long.avg_period, 20);
         assert_eq!(core.candle_settings.body_long.factor, 1.5);
         // A different setting keeps its default.
@@ -723,8 +755,8 @@ mod tests {
         // in this crate can reach into a built Core, and this is the assertion
         // that says so: `tuned` must still carry its override afterwards. C
         // cannot make the same claim -- its restore writes a process-wide global.
-        let custom = CandleSetting { range_type: 2, avg_period: 20, factor: 1.5 };
-        let other = CandleSetting { range_type: 0, avg_period: 7, factor: 4.0 };
+        let custom = CandleSetting { range_type: RangeType::Shadows, avg_period: 20, factor: 1.5 };
+        let other = CandleSetting { range_type: RangeType::RealBody, avg_period: 7, factor: 4.0 };
         let tuned = Core::builder()
             .candle_setting(CandleSettingType::BodyLong, custom)
             .candle_setting(CandleSettingType::BodyDoji, other)
@@ -739,7 +771,7 @@ mod tests {
 
         // The derived Core has that one slot back at its default...
         assert_eq!(derived.candle_settings.body_long, CandleSetting {
-            range_type: 0,
+            range_type: RangeType::RealBody,
             avg_period: 10,
             factor: 1.0
         });
@@ -769,7 +801,7 @@ mod tests {
         // The asymmetry is the point, and it mirrors C exactly: the same
         // TA_AllCandleSettings that TA_SetCandleSettings answers TA_BAD_PARAM to
         // is a legal selector for TA_RestoreCandleDefaultSettings.
-        let custom = CandleSetting { range_type: 2, avg_period: 20, factor: 1.5 };
+        let custom = CandleSetting { range_type: RangeType::Shadows, avg_period: 20, factor: 1.5 };
         let tuned = Core::builder()
             .candle_setting(CandleSettingType::BodyLong, custom)
             .candle_setting(CandleSettingType::Equal, custom)
@@ -790,7 +822,8 @@ mod tests {
     fn restore_candle_default_does_not_clear_a_latched_rejection() {
         // Restoring is not an apology for an earlier bad argument. `err` is
         // first-wins precisely so a later valid call cannot swallow the report.
-        let bad = CandleSetting { range_type: 9, avg_period: 10, factor: 1.0 };
+        // The bad field is the period; the range type can no longer be one.
+        let bad = CandleSetting { range_type: RangeType::RealBody, avg_period: -1, factor: 1.0 };
         let err = Core::builder()
             .candle_setting(CandleSettingType::BodyLong, bad)
             .restore_candle_default(CandleSettingType::AllCandleSettings)
@@ -806,7 +839,7 @@ mod tests {
         // for the same call (#144). Rust reports it at build() rather than
         // aborting (#186) -- note the `.build()`, without which this test would
         // assert nothing at all now that the setter no longer panics.
-        let custom = CandleSetting { range_type: 2, avg_period: 99, factor: 9.0 };
+        let custom = CandleSetting { range_type: RangeType::Shadows, avg_period: 99, factor: 9.0 };
         let err = Core::builder()
             .candle_setting(CandleSettingType::AllCandleSettings, custom)
             .build()
@@ -818,7 +851,7 @@ mod tests {
     fn a_rejected_candle_setting_writes_nothing() {
         // Same no-write rule as the period: the wildcard names no slot, so a
         // rejection must not have scribbled into one on the way out.
-        let custom = CandleSetting { range_type: 2, avg_period: 99, factor: 9.0 };
+        let custom = CandleSetting { range_type: RangeType::Shadows, avg_period: 99, factor: 9.0 };
         let builder = Core::builder().candle_setting(CandleSettingType::AllCandleSettings, custom);
         let defaults = CandleSettings::default_settings();
         assert_eq!(builder.candle_settings.body_long.avg_period, defaults.body_long.avg_period);
@@ -835,7 +868,7 @@ mod tests {
         // call succeeds (#185). Reported, not asserted (#186) -- note the
         // `.build()`, without which this test would assert nothing now that the
         // setter latches instead of panicking.
-        let custom = CandleSetting { range_type: 1, avg_period: -1, factor: 0.1 };
+        let custom = CandleSetting { range_type: RangeType::HighLow, avg_period: -1, factor: 0.1 };
         let err = Core::builder()
             .candle_setting(CandleSettingType::BodyDoji, custom)
             .build()
@@ -848,7 +881,7 @@ mod tests {
         // The boundary on the legal side: zero means "no averaging", which every
         // CDL* body handles, so a guard written as `<= 0` would refuse a valid
         // setting.
-        let custom = CandleSetting { range_type: 1, avg_period: 0, factor: 0.1 };
+        let custom = CandleSetting { range_type: RangeType::HighLow, avg_period: 0, factor: 0.1 };
         let core = Core::builder()
             .candle_setting(CandleSettingType::BodyDoji, custom)
             .build()
@@ -862,7 +895,7 @@ mod tests {
         // than the largest addressable series could never produce output, and an
         // unbounded one overflows the lookback it feeds.
         let custom = CandleSetting {
-            range_type: 1,
+            range_type: RangeType::HighLow,
             avg_period: (MAX_INDEX as i32).saturating_add(1),
             factor: 0.1,
         };
@@ -874,23 +907,28 @@ mod tests {
     }
 
     #[test]
-    fn candle_setting_rejects_an_out_of_domain_range_type() {
-        // A choice list's domain is its member list. Anything else falls through
-        // every arm of the generated candle-range match to 0.0 — every range
-        // zero, every threshold zero, and a silently meaningless answer.
-        let custom = CandleSetting { range_type: 3, avg_period: 10, factor: 0.1 };
-        let err = Core::builder()
-            .candle_setting(CandleSettingType::BodyDoji, custom)
-            .build()
-            .unwrap_err();
-        assert_eq!(err, RetCode::BadParam);
+    fn range_type_rejects_an_out_of_domain_value() {
+        // A choice list's domain is its member list. Anything else would fall
+        // through every arm of the generated candle-range match to 0.0 — every
+        // range zero, every threshold zero, and a silently meaningless answer.
+        //
+        // The builder cannot be handed one: `RangeType` has no such value to
+        // construct. This is the boundary where a raw integer still arrives —
+        // the JSON-RPC server, a config file, C interop — so it is where the
+        // domain is enforced, and the three legal values must survive it.
+        assert_eq!(RangeType::try_from(3), Err(RetCode::BadParam));
+        assert_eq!(RangeType::try_from(-1), Err(RetCode::BadParam));
+        assert_eq!(RangeType::try_from(i32::MIN), Err(RetCode::BadParam));
+        assert_eq!(RangeType::try_from(0), Ok(RangeType::RealBody));
+        assert_eq!(RangeType::try_from(1), Ok(RangeType::HighLow));
+        assert_eq!(RangeType::try_from(2), Ok(RangeType::Shadows));
     }
 
     #[test]
     fn candle_setting_accepts_the_ceilings() {
         // The upper boundary on the legal side, for both bounded fields.
         let custom = CandleSetting {
-            range_type: 2,
+            range_type: RangeType::Shadows,
             avg_period: i32::try_from(MAX_INDEX).unwrap(),
             factor: 0.1,
         };
@@ -899,7 +937,7 @@ mod tests {
             .build()
             .expect("the ceilings are on the legal side of the bound");
         assert_eq!(core.candle_settings.body_doji.avg_period, i32::try_from(MAX_INDEX).unwrap());
-        assert_eq!(core.candle_settings.body_doji.range_type, 2);
+        assert_eq!(core.candle_settings.body_doji.range_type, RangeType::Shadows);
     }
 
     #[test]
@@ -919,7 +957,7 @@ mod tests {
             let core = Core::builder()
                 .candle_setting(
                     CandleSettingType::BodyDoji,
-                    CandleSetting { range_type: 1, avg_period, factor: 0.1 },
+                    CandleSetting { range_type: RangeType::HighLow, avg_period, factor: 0.1 },
                 )
                 .build()
                 .expect("every avg_period in this sweep is inside the bound");
@@ -944,7 +982,7 @@ mod tests {
         // NaN makes every comparison it feeds false, so the patterns simply stop
         // matching -- indistinguishable from "this shape never occurs" unless the
         // setter refuses it.
-        let custom = CandleSetting { range_type: 1, avg_period: 10, factor: f64::NAN };
+        let custom = CandleSetting { range_type: RangeType::HighLow, avg_period: 10, factor: f64::NAN };
         let err = Core::builder()
             .candle_setting(CandleSettingType::BodyDoji, custom)
             .build()
@@ -957,7 +995,7 @@ mod tests {
         // Only NaN is refused: a negative factor is a legal, if unusual,
         // threshold scale, so a guard written as `< 0.0 || is_nan()` would be
         // wrong. C accepts it too.
-        let custom = CandleSetting { range_type: 1, avg_period: 10, factor: -1.5 };
+        let custom = CandleSetting { range_type: RangeType::HighLow, avg_period: 10, factor: -1.5 };
         let core = Core::builder()
             .candle_setting(CandleSettingType::BodyDoji, custom)
             .build()
@@ -969,7 +1007,7 @@ mod tests {
     fn candle_setting_accepts_the_last_real_setting() {
         // The other side of the guard's boundary: Equal is the variant declared
         // immediately before the wildcard, so a guard widened by one rejects it.
-        let custom = CandleSetting { range_type: 2, avg_period: 99, factor: 9.0 };
+        let custom = CandleSetting { range_type: RangeType::Shadows, avg_period: 99, factor: 9.0 };
         let core =
             Core::builder().candle_setting(CandleSettingType::Equal, custom).build().unwrap();
         assert_eq!(core.candle_settings.equal.avg_period, 99);
@@ -999,7 +1037,7 @@ mod tests {
         let tuned = Core::builder()
             .candle_setting(
                 CandleSettingType::BodyDoji,
-                CandleSetting { range_type: 1, avg_period: 10, factor: 1.0e9 },
+                CandleSetting { range_type: RangeType::HighLow, avg_period: 10, factor: 1.0e9 },
             )
             .build()
             .unwrap();
@@ -1021,7 +1059,7 @@ mod tests {
             .unstable_period(FuncUnstId::RSI, 5)
             .candle_setting(
                 CandleSettingType::BodyLong,
-                CandleSetting { range_type: 2, avg_period: 20, factor: 1.5 },
+                CandleSetting { range_type: RangeType::Shadows, avg_period: 20, factor: 1.5 },
             )
             .build()
             .unwrap();
@@ -1038,7 +1076,7 @@ mod tests {
         // candle_settings survived the round-trip (default avg_period would be 10).
         assert_eq!(derived.candle_settings.body_long.avg_period, 20);
         assert_eq!(derived.candle_settings.body_long.factor, 1.5);
-        assert_eq!(derived.candle_settings.body_long.range_type, 2);
+        assert_eq!(derived.candle_settings.body_long.range_type, RangeType::Shadows);
     }
 
     #[test]

@@ -245,12 +245,12 @@ argument once, as `RetCode::BadParam`.
 The `CDL*` pattern functions judge each candle against tunable thresholds. See [candlestick settings](/api/candle-settings/) for the full list and defaults; the builder sets them the same way:
 
 ```rust
-use ta_lib::{CandleSetting, CandleSettingType, Core};
+use ta_lib::{CandleSetting, CandleSettingType, Core, RangeType};
 
 let core = Core::builder()
     .candle_setting(
         CandleSettingType::BodyLong,
-        CandleSetting { range_type: 0 /* real body */, avg_period: 10, factor: 1.2 },
+        CandleSetting { range_type: RangeType::RealBody, avg_period: 10, factor: 1.2 },
     )
     .build()?;
 ```

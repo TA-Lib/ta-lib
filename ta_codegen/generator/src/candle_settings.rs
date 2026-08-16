@@ -207,8 +207,12 @@ pub fn emit_c_unpacking(settings: &BTreeSet<String>, indent: usize) -> String {
 ///
 /// ```rust,ignore
 /// #[allow(non_snake_case)]
-/// let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
+/// let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;
 /// ```
+///
+/// `range_type` is a `RangeType` enum in the crate, cast to the `i32` the
+/// generated candle-range comparisons run on — the same shape as Java's
+/// `.ordinal()` and C#'s `(int)` cast below.
 pub fn emit_rust_unpacking(settings: &BTreeSet<String>, indent: usize) -> String {
     let pad = " ".repeat(indent);
     let mut out = String::new();
@@ -216,7 +220,7 @@ pub fn emit_rust_unpacking(settings: &BTreeSet<String>, indent: usize) -> String
         let snake = pascal_to_snake_case(setting);
         out.push_str(&format!(
             "{pad}#[allow(non_snake_case)]\n\
-             {pad}let {setting}_rangeType: i32 = self.candle_settings.{snake}.range_type;\n"
+             {pad}let {setting}_rangeType: i32 = self.candle_settings.{snake}.range_type as i32;\n"
         ));
         out.push_str(&format!(
             "{pad}#[allow(non_snake_case)]\n\
@@ -410,7 +414,12 @@ mod tests {
         let mut settings = BTreeSet::new();
         settings.insert("BodyLong".to_string());
         let code = emit_rust_unpacking(&settings, 8);
-        assert!(code.contains("self.candle_settings.body_long.range_type"));
+        // The whole line, cast included: `range_type` is a `RangeType` enum, so
+        // a substring stopping at the field name passes with the cast missing —
+        // which would not compile.
+        assert!(code.contains(
+            "let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;"
+        ));
         assert!(code.contains("self.candle_settings.body_long.avg_period"));
         assert!(code.contains("self.candle_settings.body_long.factor"));
         assert!(code.contains("#[allow(non_snake_case)]"));

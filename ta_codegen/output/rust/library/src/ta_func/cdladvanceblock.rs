@@ -68,31 +68,31 @@ impl Core {
     /// before the first output value can be produced.
     pub fn CDLADVANCEBLOCK_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
-        let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
+        let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;
         #[allow(non_snake_case)]
         let BodyLong_avgPeriod: i32 = self.candle_settings.body_long.avg_period;
         #[allow(non_snake_case)]
         let BodyLong_factor: f64 = self.candle_settings.body_long.factor;
         #[allow(non_snake_case)]
-        let Far_rangeType: i32 = self.candle_settings.far.range_type;
+        let Far_rangeType: i32 = self.candle_settings.far.range_type as i32;
         #[allow(non_snake_case)]
         let Far_avgPeriod: i32 = self.candle_settings.far.avg_period;
         #[allow(non_snake_case)]
         let Far_factor: f64 = self.candle_settings.far.factor;
         #[allow(non_snake_case)]
-        let Near_rangeType: i32 = self.candle_settings.near.range_type;
+        let Near_rangeType: i32 = self.candle_settings.near.range_type as i32;
         #[allow(non_snake_case)]
         let Near_avgPeriod: i32 = self.candle_settings.near.avg_period;
         #[allow(non_snake_case)]
         let Near_factor: f64 = self.candle_settings.near.factor;
         #[allow(non_snake_case)]
-        let ShadowLong_rangeType: i32 = self.candle_settings.shadow_long.range_type;
+        let ShadowLong_rangeType: i32 = self.candle_settings.shadow_long.range_type as i32;
         #[allow(non_snake_case)]
         let ShadowLong_avgPeriod: i32 = self.candle_settings.shadow_long.avg_period;
         #[allow(non_snake_case)]
         let ShadowLong_factor: f64 = self.candle_settings.shadow_long.factor;
         #[allow(non_snake_case)]
-        let ShadowShort_rangeType: i32 = self.candle_settings.shadow_short.range_type;
+        let ShadowShort_rangeType: i32 = self.candle_settings.shadow_short.range_type as i32;
         #[allow(non_snake_case)]
         let ShadowShort_avgPeriod: i32 = self.candle_settings.shadow_short.avg_period;
         #[allow(non_snake_case)]
@@ -210,31 +210,31 @@ impl Core {
         let mut FarTrailingIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         #[allow(non_snake_case)]
-        let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
+        let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;
         #[allow(non_snake_case)]
         let BodyLong_avgPeriod: i32 = self.candle_settings.body_long.avg_period;
         #[allow(non_snake_case)]
         let BodyLong_factor: f64 = self.candle_settings.body_long.factor;
         #[allow(non_snake_case)]
-        let Far_rangeType: i32 = self.candle_settings.far.range_type;
+        let Far_rangeType: i32 = self.candle_settings.far.range_type as i32;
         #[allow(non_snake_case)]
         let Far_avgPeriod: i32 = self.candle_settings.far.avg_period;
         #[allow(non_snake_case)]
         let Far_factor: f64 = self.candle_settings.far.factor;
         #[allow(non_snake_case)]
-        let Near_rangeType: i32 = self.candle_settings.near.range_type;
+        let Near_rangeType: i32 = self.candle_settings.near.range_type as i32;
         #[allow(non_snake_case)]
         let Near_avgPeriod: i32 = self.candle_settings.near.avg_period;
         #[allow(non_snake_case)]
         let Near_factor: f64 = self.candle_settings.near.factor;
         #[allow(non_snake_case)]
-        let ShadowLong_rangeType: i32 = self.candle_settings.shadow_long.range_type;
+        let ShadowLong_rangeType: i32 = self.candle_settings.shadow_long.range_type as i32;
         #[allow(non_snake_case)]
         let ShadowLong_avgPeriod: i32 = self.candle_settings.shadow_long.avg_period;
         #[allow(non_snake_case)]
         let ShadowLong_factor: f64 = self.candle_settings.shadow_long.factor;
         #[allow(non_snake_case)]
-        let ShadowShort_rangeType: i32 = self.candle_settings.shadow_short.range_type;
+        let ShadowShort_rangeType: i32 = self.candle_settings.shadow_short.range_type as i32;
         #[allow(non_snake_case)]
         let ShadowShort_avgPeriod: i32 = self.candle_settings.shadow_short.avg_period;
         #[allow(non_snake_case)]
@@ -829,31 +829,31 @@ impl CDLADVANCEBLOCK_StreamState {
 impl Core {
     fn CDLADVANCEBLOCK_step_internal(&self, sp: &mut CDLADVANCEBLOCK_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
-        let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
+        let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;
         #[allow(non_snake_case)]
         let BodyLong_avgPeriod: i32 = self.candle_settings.body_long.avg_period;
         #[allow(non_snake_case)]
         let BodyLong_factor: f64 = self.candle_settings.body_long.factor;
         #[allow(non_snake_case)]
-        let Far_rangeType: i32 = self.candle_settings.far.range_type;
+        let Far_rangeType: i32 = self.candle_settings.far.range_type as i32;
         #[allow(non_snake_case)]
         let Far_avgPeriod: i32 = self.candle_settings.far.avg_period;
         #[allow(non_snake_case)]
         let Far_factor: f64 = self.candle_settings.far.factor;
         #[allow(non_snake_case)]
-        let Near_rangeType: i32 = self.candle_settings.near.range_type;
+        let Near_rangeType: i32 = self.candle_settings.near.range_type as i32;
         #[allow(non_snake_case)]
         let Near_avgPeriod: i32 = self.candle_settings.near.avg_period;
         #[allow(non_snake_case)]
         let Near_factor: f64 = self.candle_settings.near.factor;
         #[allow(non_snake_case)]
-        let ShadowLong_rangeType: i32 = self.candle_settings.shadow_long.range_type;
+        let ShadowLong_rangeType: i32 = self.candle_settings.shadow_long.range_type as i32;
         #[allow(non_snake_case)]
         let ShadowLong_avgPeriod: i32 = self.candle_settings.shadow_long.avg_period;
         #[allow(non_snake_case)]
         let ShadowLong_factor: f64 = self.candle_settings.shadow_long.factor;
         #[allow(non_snake_case)]
-        let ShadowShort_rangeType: i32 = self.candle_settings.shadow_short.range_type;
+        let ShadowShort_rangeType: i32 = self.candle_settings.shadow_short.range_type as i32;
         #[allow(non_snake_case)]
         let ShadowShort_avgPeriod: i32 = self.candle_settings.shadow_short.avg_period;
         #[allow(non_snake_case)]
@@ -1159,31 +1159,31 @@ impl Core {
         let mut FarTrailingIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
         #[allow(non_snake_case)]
-        let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
+        let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type as i32;
         #[allow(non_snake_case)]
         let BodyLong_avgPeriod: i32 = self.candle_settings.body_long.avg_period;
         #[allow(non_snake_case)]
         let BodyLong_factor: f64 = self.candle_settings.body_long.factor;
         #[allow(non_snake_case)]
-        let Far_rangeType: i32 = self.candle_settings.far.range_type;
+        let Far_rangeType: i32 = self.candle_settings.far.range_type as i32;
         #[allow(non_snake_case)]
         let Far_avgPeriod: i32 = self.candle_settings.far.avg_period;
         #[allow(non_snake_case)]
         let Far_factor: f64 = self.candle_settings.far.factor;
         #[allow(non_snake_case)]
-        let Near_rangeType: i32 = self.candle_settings.near.range_type;
+        let Near_rangeType: i32 = self.candle_settings.near.range_type as i32;
         #[allow(non_snake_case)]
         let Near_avgPeriod: i32 = self.candle_settings.near.avg_period;
         #[allow(non_snake_case)]
         let Near_factor: f64 = self.candle_settings.near.factor;
         #[allow(non_snake_case)]
-        let ShadowLong_rangeType: i32 = self.candle_settings.shadow_long.range_type;
+        let ShadowLong_rangeType: i32 = self.candle_settings.shadow_long.range_type as i32;
         #[allow(non_snake_case)]
         let ShadowLong_avgPeriod: i32 = self.candle_settings.shadow_long.avg_period;
         #[allow(non_snake_case)]
         let ShadowLong_factor: f64 = self.candle_settings.shadow_long.factor;
         #[allow(non_snake_case)]
-        let ShadowShort_rangeType: i32 = self.candle_settings.shadow_short.range_type;
+        let ShadowShort_rangeType: i32 = self.candle_settings.shadow_short.range_type as i32;
         #[allow(non_snake_case)]
         let ShadowShort_avgPeriod: i32 = self.candle_settings.shadow_short.avg_period;
         #[allow(non_snake_case)]
