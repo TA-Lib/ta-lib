@@ -309,6 +309,7 @@ pub fn generate_c_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) ->
     s.push_str("#include <stdlib.h>\n");
     s.push_str("#include <stdarg.h>\n");
     s.push_str("#include <string.h>\n");
+    s.push_str("#include <limits.h>\n");
     s.push_str("#include <math.h>\n");
     s.push_str("#include <time.h>\n");
     s.push_str("#ifdef __APPLE__\n");
@@ -418,14 +419,32 @@ static int json_appendc(char *buf, int buf_size, int pos, char c) {
     return pos;
 }
 
+/* Parses wide and saturates, rather than atoi's silent truncation to int.
+ * A wire value of 2^32 truncates to 0, so `atoi` turned an out-of-domain
+ * request into a legal one and the server answered "ok" to a setting nobody
+ * asked for -- while the Rust and Java servers, which range-check a 64-bit
+ * parse, rejected the same request. Saturating fails closed instead: no
+ * parameter in the library has a legal domain reaching INT_MAX (the widest
+ * integer range is 100000, and the index ceiling is TA_MAX_INDEX = 1e8), so a
+ * saturated value is refused by whatever validation the field already has.
+ *
+ * INT_MIN is deliberately NOT the negative clamp: it is TA_INTEGER_DEFAULT,
+ * and manufacturing it would turn an out-of-range request into "use the
+ * documented default" -- silently wrong in the one direction that looks like
+ * success. A wire value of exactly INT_MIN still parses to INT_MIN, since that
+ * is how a caller legitimately asks for the default. */
 static int json_find_int(const char *json, const char *field) {
     char pattern[256];
+    long long v;
     snprintf(pattern, sizeof(pattern), "\"%s\":", field);
     const char *p = strstr(json, pattern);
     if( !p ) return 0;
     p += strlen(pattern);
     while( *p == ' ' ) p++;
-    return atoi(p);
+    v = strtoll(p, NULL, 10);
+    if( v > (long long)INT_MAX ) return INT_MAX;
+    if( v < (long long)INT_MIN ) return INT_MIN + 1;
+    return (int)v;
 }
 
 static double json_find_double(const char *json, const char *field) {
