@@ -77,6 +77,9 @@ final class Dispatch {
          case "ADXR":
             return core.ADXR(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOutput(0));
+         case "AO":
+            return core.AO(
+               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.intOpt(1), h.realOutput(0));
          case "APO":
             return core.APO(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.intOpt(1), h.maTypeOpt(2), h.realOutput(0));
@@ -597,6 +600,8 @@ final class Dispatch {
             return core.ADX_Lookback(h.intOpt(0));
          case "ADXR":
             return core.ADXR_Lookback(h.intOpt(0));
+         case "AO":
+            return core.AO_Lookback(h.intOpt(0), h.intOpt(1));
          case "APO":
             return core.APO_Lookback(h.intOpt(0), h.intOpt(1), h.maTypeOpt(2));
          case "AROON":

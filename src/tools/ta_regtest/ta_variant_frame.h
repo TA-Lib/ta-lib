@@ -402,6 +402,49 @@ static const TA_VOptSpec TA_VOpt_ADXR[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
 
+static TA_RetCode TA_AO_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_AO(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               (int)optIn[0] /* optInFastPeriod */,
+               (int)optIn[1] /* optInSlowPeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_AO_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_AO(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               (int)optIn[0] /* optInFastPeriod */,
+               (int)optIn[1] /* optInSlowPeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+
+static const TA_VInputKind TA_VIn_AO[] = { TA_VIN_HIGH, TA_VIN_LOW };
+static const TA_VOptSpec TA_VOpt_AO[] = {
+   { "optInFastPeriod", TA_VOPT_INT, 2.0, 100000.0, 5.0 },
+   { "optInSlowPeriod", TA_VOPT_INT, 2.0, 100000.0, 34.0 },
+};
+
 static TA_RetCode TA_APO_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -7075,6 +7118,8 @@ static const TA_VariantEntry TA_VariantTable[] = {
      3, TA_VIn_ADX, 1, TA_VOpt_ADX, 1, 0, 0 },
    { "ADXR", TA_ADXR_VFrameD, TA_ADXR_VFrameS,
      3, TA_VIn_ADXR, 1, TA_VOpt_ADXR, 1, 0, 0 },
+   { "AO", TA_AO_VFrameD, TA_AO_VFrameS,
+     2, TA_VIn_AO, 2, TA_VOpt_AO, 1, 0, 0 },
    { "APO", TA_APO_VFrameD, TA_APO_VFrameS,
      1, TA_VIn_APO, 3, TA_VOpt_APO, 1, 0, 0 },
    { "AROON", TA_AROON_VFrameD, TA_AROON_VFrameS,
@@ -7407,6 +7452,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_WMA, 1, TA_VOpt_WMA, 1, 0, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 172
+#define TA_VARIANT_TABLE_SIZE 173
 
 #endif /* TA_VARIANT_FRAME_H */

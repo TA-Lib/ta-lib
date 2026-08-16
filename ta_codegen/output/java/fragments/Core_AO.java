@@ -1,0 +1,839 @@
+/* List of contributors:
+ *
+ *  Initial  Name/description
+ *  -------------------------------------------------------------------
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
+ *
+ * Change history:
+ *
+ *  MMDDYY BY     Description
+ *  -------------------------------------------------------------------
+ *  081626 MF,CC  Initial version (#227).
+ */
+
+   /**
+    * Number of leading input bars {@link Core#AO} consumes before it can
+    * produce its first value.
+    * <p>Equivalently, the index of the first bar with a value when the whole
+    * series is requested. Feed at least {@code lookback + 1} bars to get any
+    * output.
+    *
+    * @param optInFastPeriod Number of bars in the short moving average. Default
+    *        5, the value Williams uses and every surveyed package ships (default 5;
+    *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSlowPeriod Number of bars in the long moving average. Default
+    *        34, likewise universal. MetaTrader, cTrader and Tulip Indicators hardcode
+    *        the pair; TradingView, pandas-ta-classic and StockSharp expose it, and at
+    *        the defaults the two agree exactly (default 34; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @return The lookback, or {@code -1} if a parameter is out of range.
+    */
+   public int AO_Lookback( int optInFastPeriod, int optInSlowPeriod )
+   {
+      if( optInFastPeriod == Integer.MIN_VALUE ) {
+         optInFastPeriod = 5;
+      } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
+         return -1;
+      }
+      if( optInSlowPeriod == Integer.MIN_VALUE ) {
+         optInSlowPeriod = 34;
+      } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
+         return -1;
+      }
+      /* The longer of the two windows drives the lookback, and it is the lookback
+       * of that window's SMA. There is no swap of an inverted pair, so the max is
+       * taken over the periods exactly as the caller gave them.
+       */
+      return SMA_Lookback(Math.max(optInFastPeriod, optInSlowPeriod)) ;
+
+   }
+   RetCode AO_Internal( int startIdx,
+                        int endIdx,
+                        double inHigh[],
+                        double inLow[],
+                        int optInFastPeriod,
+                        int optInSlowPeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
+   {
+      double sumFast = 0;
+      double sumSlow = 0;
+      double medianPrice = 0;
+      double tempReal = 0;
+      int i = 0;
+      int outIdx = 0;
+      int trailingFastIdx = 0;
+      int trailingSlowIdx = 0;
+      int lookbackTotal = 0;
+      if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+         return RetCode.OutOfRangeStartIndex ;
+      }
+      if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      if( optInFastPeriod == Integer.MIN_VALUE ) {
+         optInFastPeriod = 5;
+      } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( optInSlowPeriod == Integer.MIN_VALUE ) {
+         optInSlowPeriod = 34;
+      } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      /* Bill Williams' Awesome Oscillator (New Trading Dimensions, 1998): the
+       * spread between a short and a long simple moving average of the median
+       * price, drawn as a zero-centred histogram.
+       *
+       *    median_t = (high_t + low_t) / 2
+       *    AO_t     = SMA(median, fast)_t - SMA(median, slow)_t
+       *
+       * Both legs are plain SMAs, so there is no seeding convention to get wrong
+       * and no cross-library divergence of the kind an EMA brings.
+       *
+       * This is two copies of ta_codegen/input/sma/sma.c walking one derived
+       * series, sharing a single pass: the same running-sum order, the same
+       * snapshot of each total before the trailing bar leaves it, and the same
+       * divide by the period. Keeping the arithmetic identical is what makes the
+       * composed reference in test_composite.c -- TA_MEDPRICE, two TA_SMA calls
+       * and a TA_SUB -- bit-exact rather than merely close, so any future drift
+       * in either path is a hard failure instead of a tolerance argument.
+       *
+       * In particular each total is DIVIDED by its period; it is not multiplied
+       * by a precomputed 1/period. Tulip's ao.c multiplies by per5/per34, which
+       * costs it up to one ULP against TA_SMA. Dividing buys the memcmp
+       * differential, which is the stronger of the two gates (#117, #118).
+       *
+       * An inverted pair (fast > slow) is NOT swapped, unlike MACD and APO. The
+       * lookback is well defined either way and the result is simply -AO, so the
+       * swap would buy nothing and would have to be duplicated in ao_lookback.
+       */
+      /* Identify the minimum number of price bar needed
+       * to calculate at least one output.
+       */
+      lookbackTotal = (int)AO_Lookback(optInFastPeriod, optInSlowPeriod);
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.Success ;
+      }
+      sumFast = 0.0;
+      sumSlow = 0.0;
+      trailingFastIdx = startIdx - (int)(optInFastPeriod - 1);
+      trailingSlowIdx = startIdx - (int)(optInSlowPeriod - 1);
+      /* Add-up both initial periods, except for the last value.
+       *
+       * One pass over the longer warm-up window replaces two overlapping passes.
+       * A bar inside the shorter window is added to that total as it is reached,
+       * so each total still accumulates exactly the same bars in exactly the same
+       * ascending order two separate loops would have given it -- which is what
+       * keeps each leg bit-identical to the TA_SMA called with this same startIdx.
+       */
+      i = startIdx - lookbackTotal;
+      while( i < startIdx ) {
+         medianPrice = (inHigh[i] + inLow[i]) / 2.0;
+         if( i >= trailingFastIdx ) {
+            sumFast += medianPrice;
+         }
+         if( i >= trailingSlowIdx ) {
+            sumSlow += medianPrice;
+         }
+         i = i + 1;
+      }
+      /* Proceed with the calculation for the requested range.
+       * Note that this algorithm allows outReal to be the same
+       * buffer as either input.
+       */
+      outIdx = 0;
+      while( i <= endIdx ) {
+         medianPrice = (inHigh[i] + inLow[i]) / 2.0;
+         sumFast += medianPrice;
+         sumSlow += medianPrice;
+         i = i + 1;
+         /* Snapshot the oscillator before either total drops its trailing bar,
+          * mirroring the add-new / snapshot / subtract-old order of TA_SMA.
+          */
+         tempReal = sumFast / (double)optInFastPeriod - sumSlow / (double)optInSlowPeriod;
+         /* Read both trailing bars before writing the output. When startIdx is
+          * clamped to the lookback the longer window's trailing index equals
+          * outIdx exactly, so a store hoisted above this would read back the
+          * value it had just overwritten whenever the caller aliases outReal
+          * over inHigh or inLow.
+          */
+         sumFast -= (inHigh[trailingFastIdx] + inLow[trailingFastIdx]) / 2.0;
+         sumSlow -= (inHigh[trailingSlowIdx] + inLow[trailingSlowIdx]) / 2.0;
+         trailingFastIdx = trailingFastIdx + 1;
+         trailingSlowIdx = trailingSlowIdx + 1;
+         outReal[outIdx] = tempReal;
+         outIdx = outIdx + 1;
+      }
+      /* All done. Indicate the output limits and return. */
+      outNBElement.value = outIdx;
+      outBegIdx.value = startIdx;
+      return RetCode.Success ;
+   }
+   RetCode AO_Internal( int startIdx,
+                        int endIdx,
+                        float inHigh[],
+                        float inLow[],
+                        int optInFastPeriod,
+                        int optInSlowPeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
+   {
+      double sumFast = 0;
+      double sumSlow = 0;
+      double medianPrice = 0;
+      double tempReal = 0;
+      int i = 0;
+      int outIdx = 0;
+      int trailingFastIdx = 0;
+      int trailingSlowIdx = 0;
+      int lookbackTotal = 0;
+      if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+         return RetCode.OutOfRangeStartIndex ;
+      }
+      if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      if( optInFastPeriod == Integer.MIN_VALUE ) {
+         optInFastPeriod = 5;
+      } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( optInSlowPeriod == Integer.MIN_VALUE ) {
+         optInSlowPeriod = 34;
+      } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      lookbackTotal = (int)AO_Lookback(optInFastPeriod, optInSlowPeriod);
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.Success ;
+      }
+      sumFast = 0.0;
+      sumSlow = 0.0;
+      trailingFastIdx = startIdx - (int)(optInFastPeriod - 1);
+      trailingSlowIdx = startIdx - (int)(optInSlowPeriod - 1);
+      i = startIdx - lookbackTotal;
+      while( i < startIdx ) {
+         medianPrice = ((double)inHigh[i] + (double)inLow[i]) / 2.0;
+         if( i >= trailingFastIdx ) {
+            sumFast += medianPrice;
+         }
+         if( i >= trailingSlowIdx ) {
+            sumSlow += medianPrice;
+         }
+         i = i + 1;
+      }
+      outIdx = 0;
+      while( i <= endIdx ) {
+         medianPrice = ((double)inHigh[i] + (double)inLow[i]) / 2.0;
+         sumFast += medianPrice;
+         sumSlow += medianPrice;
+         i = i + 1;
+         tempReal = sumFast / (double)optInFastPeriod - sumSlow / (double)optInSlowPeriod;
+         sumFast -= ((double)inHigh[trailingFastIdx] + (double)inLow[trailingFastIdx]) / 2.0;
+         sumSlow -= ((double)inHigh[trailingSlowIdx] + (double)inLow[trailingSlowIdx]) / 2.0;
+         trailingFastIdx = trailingFastIdx + 1;
+         trailingSlowIdx = trailingSlowIdx + 1;
+         outReal[outIdx] = tempReal;
+         outIdx = outIdx + 1;
+      }
+      outNBElement.value = outIdx;
+      outBegIdx.value = startIdx;
+      return RetCode.Success ;
+   }
+   /**
+    * Bill Williams' Awesome Oscillator (*New Trading Dimensions*, 1998): market
+    * momentum read as the spread between a short and a long simple moving
+    * average of the median price. It contrasts what the recent bars have done
+    * against a longer stretch of the same market, using the bar midpoint rather
+    * than the close so that intrabar range, not the settle, drives the reading.
+    * Above zero the short window sits higher than the long one and momentum is
+    * with the bulls; below zero it is with the bears. It is drawn as a
+    * zero-centred histogram, and the readings that get traded are the zero-line
+    * crossings, the twin-peaks divergence, and the run of consecutive same-side
+    * bars — which is why the sign and the bar-to-bar change matter more than
+    * the level. The oscillator is the first leg of Williams' Profitunity
+    * system, alongside the Alligator and the Accelerator/Decelerator.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * median_t = ( high_t + low_t ) / 2; AO_t = SMA(median, fast)_t − SMA(median, slow)_t
+    * Both legs are plain simple moving averages, so there is no seeding convention and none of the cross-library divergence that comes with one. An inverted pair is not swapped: passing a fast period longer than the slow one is well defined and simply yields −AO.
+    * }</pre>
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#AO_Lookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inHigh High price of each bar.
+    * @param inLow Low price of each bar.
+    * @param optInFastPeriod Number of bars in the short moving average. Default
+    *        5, the value Williams uses and every surveyed package ships (default 5;
+    *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSlowPeriod Number of bars in the long moving average. Default
+    *        34, likewise universal. MetaTrader, cTrader and Tulip Indicators hardcode
+    *        the pair; TradingView, pandas-ta-classic and StockSharp expose it, and at
+    *        the defaults the two agree exactly (default 34; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param outReal Spread between the two moving averages, centred on zero.
+    *        Must hold at least {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#APO
+    * @see Core#MACD
+    * @see Core#MEDPRICE
+    * @see Core#PPO
+    * @see Core#ULTOSC
+    */
+   public OutRange AO( int startIdx,
+                       int endIdx,
+                       double inHigh[],
+                       double inLow[],
+                       int optInFastPeriod,
+                       int optInSlowPeriod,
+                       double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = AO_Internal(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("AO", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   /**
+    * Bill Williams' Awesome Oscillator (*New Trading Dimensions*, 1998): market
+    * momentum read as the spread between a short and a long simple moving
+    * average of the median price. It contrasts what the recent bars have done
+    * against a longer stretch of the same market, using the bar midpoint rather
+    * than the close so that intrabar range, not the settle, drives the reading.
+    * Above zero the short window sits higher than the long one and momentum is
+    * with the bulls; below zero it is with the bears. It is drawn as a
+    * zero-centred histogram, and the readings that get traded are the zero-line
+    * crossings, the twin-peaks divergence, and the run of consecutive same-side
+    * bars — which is why the sign and the bar-to-bar change matter more than
+    * the level. The oscillator is the first leg of Williams' Profitunity
+    * system, alongside the Alligator and the Accelerator/Decelerator.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * median_t = ( high_t + low_t ) / 2; AO_t = SMA(median, fast)_t − SMA(median, slow)_t
+    * Both legs are plain simple moving averages, so there is no seeding convention and none of the cross-library divergence that comes with one. An inverted pair is not swapped: passing a fast period longer than the slow one is well defined and simply yields −AO.
+    * }</pre>
+    * <p>This is the {@code float[]} overload. The arithmetic is performed in
+    * {@code double} before being written to the {@code double[]} output, so a
+    * result beyond {@code float} range is still representable.
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#AO_Lookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inHigh High price of each bar.
+    * @param inLow Low price of each bar.
+    * @param optInFastPeriod Number of bars in the short moving average. Default
+    *        5, the value Williams uses and every surveyed package ships (default 5;
+    *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInSlowPeriod Number of bars in the long moving average. Default
+    *        34, likewise universal. MetaTrader, cTrader and Tulip Indicators hardcode
+    *        the pair; TradingView, pandas-ta-classic and StockSharp expose it, and at
+    *        the defaults the two agree exactly (default 34; range 2..100000;
+    *        {@code Integer.MIN_VALUE} selects the default).
+    * @param outReal Spread between the two moving averages, centred on zero.
+    *        Must hold at least {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, or two outputs share one array.
+    * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#APO
+    * @see Core#MACD
+    * @see Core#MEDPRICE
+    * @see Core#PPO
+    * @see Core#ULTOSC
+    */
+   public OutRange AO( int startIdx,
+                       int endIdx,
+                       float inHigh[],
+                       float inLow[],
+                       int optInFastPeriod,
+                       int optInSlowPeriod,
+                       double outReal[] )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = AO_Internal(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("AO", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+/**** Streaming API *****/
+
+   /**
+    * A live AO stream (unrelated to {@code java.util.stream}): one value per
+    * closed bar, bit-identical to {@link Core#AO} over the same series.
+    * Open with {@link Core#AO_Open}; there is no close — the handle is
+    * ordinary heap state, unreferenced handles are simply garbage-collected.
+    * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+    * {@code value} and {@code copy} must not race with an {@code update} on
+    * the same handle. With no concurrent {@code update}, {@code peek}/
+    * {@code value}/{@code copy} never write the handle and may be called
+    * concurrently after safe publication. Independent handles (including
+    * {@code copy()} results) are fully independent.
+    * <p>Not serializable by design: to checkpoint, retain the history and
+    * re-open — the result is bit-identical by contract.
+    */
+   public static final class AO_Stream {
+      Core core;
+      int optInFastPeriod;
+      int optInSlowPeriod;
+      double sumFast;
+      double sumSlow;
+      double tempReal;
+      int ringPos_trailingFastIdx;
+      int ringCap_trailingFastIdx;
+      double[] ring_trailingFastIdx_inHigh;
+      double[] ring_trailingFastIdx_inLow;
+      int ringPos_trailingSlowIdx;
+      int ringCap_trailingSlowIdx;
+      double[] ring_trailingSlowIdx_inHigh;
+      double[] ring_trailingSlowIdx_inLow;
+      double cur_outReal;
+      OutRange fillRange = OutRange.EMPTY;
+
+      AO_Stream( Core core ) { this.core = core; }
+
+      /**
+       * The range filled by {@link Core#AO_OpenAndFill}, or
+       * {@link OutRange#EMPTY} when this handle came from a plain
+       * {@code open} (which fills nothing). Never {@code null}; a
+       * successful {@code openAndFill} always writes at least one value,
+       * so {@link OutRange#isEmpty()} tells the two apart.
+       */
+      public OutRange fillRange() { return fillRange; }
+
+      AO_Stream( AO_Stream other ) {
+         this.core = other.core;
+         this.optInFastPeriod = other.optInFastPeriod;
+         this.optInSlowPeriod = other.optInSlowPeriod;
+         this.sumFast = other.sumFast;
+         this.sumSlow = other.sumSlow;
+         this.tempReal = other.tempReal;
+         this.ringPos_trailingFastIdx = other.ringPos_trailingFastIdx;
+         this.ringCap_trailingFastIdx = other.ringCap_trailingFastIdx;
+         this.ring_trailingFastIdx_inHigh = other.ring_trailingFastIdx_inHigh.clone();
+         this.ring_trailingFastIdx_inLow = other.ring_trailingFastIdx_inLow.clone();
+         this.ringPos_trailingSlowIdx = other.ringPos_trailingSlowIdx;
+         this.ringCap_trailingSlowIdx = other.ringCap_trailingSlowIdx;
+         this.ring_trailingSlowIdx_inHigh = other.ring_trailingSlowIdx_inHigh.clone();
+         this.ring_trailingSlowIdx_inLow = other.ring_trailingSlowIdx_inLow.clone();
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      void copyFrom( AO_Stream other ) {
+         this.core = other.core;
+         this.optInFastPeriod = other.optInFastPeriod;
+         this.optInSlowPeriod = other.optInSlowPeriod;
+         this.sumFast = other.sumFast;
+         this.sumSlow = other.sumSlow;
+         this.tempReal = other.tempReal;
+         this.ringPos_trailingFastIdx = other.ringPos_trailingFastIdx;
+         this.ringCap_trailingFastIdx = other.ringCap_trailingFastIdx;
+         if( this.ring_trailingFastIdx_inHigh != null && this.ring_trailingFastIdx_inHigh.length == other.ring_trailingFastIdx_inHigh.length ) {
+            System.arraycopy( other.ring_trailingFastIdx_inHigh, 0, this.ring_trailingFastIdx_inHigh, 0, other.ring_trailingFastIdx_inHigh.length );
+         } else {
+            this.ring_trailingFastIdx_inHigh = other.ring_trailingFastIdx_inHigh.clone();
+         }
+         if( this.ring_trailingFastIdx_inLow != null && this.ring_trailingFastIdx_inLow.length == other.ring_trailingFastIdx_inLow.length ) {
+            System.arraycopy( other.ring_trailingFastIdx_inLow, 0, this.ring_trailingFastIdx_inLow, 0, other.ring_trailingFastIdx_inLow.length );
+         } else {
+            this.ring_trailingFastIdx_inLow = other.ring_trailingFastIdx_inLow.clone();
+         }
+         this.ringPos_trailingSlowIdx = other.ringPos_trailingSlowIdx;
+         this.ringCap_trailingSlowIdx = other.ringCap_trailingSlowIdx;
+         if( this.ring_trailingSlowIdx_inHigh != null && this.ring_trailingSlowIdx_inHigh.length == other.ring_trailingSlowIdx_inHigh.length ) {
+            System.arraycopy( other.ring_trailingSlowIdx_inHigh, 0, this.ring_trailingSlowIdx_inHigh, 0, other.ring_trailingSlowIdx_inHigh.length );
+         } else {
+            this.ring_trailingSlowIdx_inHigh = other.ring_trailingSlowIdx_inHigh.clone();
+         }
+         if( this.ring_trailingSlowIdx_inLow != null && this.ring_trailingSlowIdx_inLow.length == other.ring_trailingSlowIdx_inLow.length ) {
+            System.arraycopy( other.ring_trailingSlowIdx_inLow, 0, this.ring_trailingSlowIdx_inLow, 0, other.ring_trailingSlowIdx_inLow.length );
+         } else {
+            this.ring_trailingSlowIdx_inLow = other.ring_trailingSlowIdx_inLow.clone();
+         }
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
+      private static final ThreadLocal<AO_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+
+      /**
+       * Commit one closed bar; always produces the new current value.
+       * Never throws after a successful open; never allocates handle state.
+       */
+      public double update( double inHigh, double inLow ) {
+         core.AO_StreamStep(this, inHigh, inLow);
+         return this.cur_outReal;
+      }
+
+      /**
+       * Evaluate a forming bar without committing — bit-identical to what the
+       * next {@code update} with the same bar would return (it is the same
+       * generated code, run on a copy). Never writes this handle, so peeks may
+       * run concurrently with each other. It runs on a scratch handle held per thread and
+       * reused, so the copy allocates nothing after the first peek of this
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
+       */
+      public double peek( double inHigh, double inLow ) {
+         AO_Stream scratch = PEEK_SCRATCH.get();
+         if( scratch == null ) {
+            scratch = new AO_Stream(this);
+            PEEK_SCRATCH.set(scratch);
+         } else {
+            scratch.copyFrom(this);
+         }
+         core.AO_StreamStep(scratch, inHigh, inLow);
+         return scratch.cur_outReal;
+      }
+
+      /**
+       * The value at the most recently committed bar — the last history bar
+       * right after open, then whatever the latest {@code update} returned.
+       * A pure field read; {@code peek} does not change it.
+       */
+      public double value() {
+         return this.cur_outReal;
+      }
+
+      /**
+       * An independent deep copy of this stream: both evolve separately from
+       * here on (the Java rendering of the Rust handle's {@code Clone}).
+       */
+      public AO_Stream copy() {
+         return new AO_Stream(this);
+      }
+   }
+   void AO_StreamStep( AO_Stream sp, double inHigh, double inLow )
+   {
+      double medianPrice = 0.0;
+      if( sp.ringCap_trailingFastIdx == 0 ) {
+         sp.ring_trailingFastIdx_inHigh[0] = inHigh;
+         sp.ring_trailingFastIdx_inLow[0] = inLow;
+      }
+      if( sp.ringCap_trailingSlowIdx == 0 ) {
+         sp.ring_trailingSlowIdx_inHigh[0] = inHigh;
+         sp.ring_trailingSlowIdx_inLow[0] = inLow;
+      }
+      medianPrice = (inHigh + inLow) / 2.0;
+      sp.sumFast += medianPrice;
+      sp.sumSlow += medianPrice;
+      /* Snapshot the oscillator before either total drops its trailing bar,
+       * mirroring the add-new / snapshot / subtract-old order of TA_SMA.
+       */
+      sp.tempReal = sp.sumFast / (double)sp.optInFastPeriod - sp.sumSlow / (double)sp.optInSlowPeriod;
+      /* Read both trailing bars before writing the output. When startIdx is
+       * clamped to the lookback the longer window's trailing index equals
+       * outIdx exactly, so a store hoisted above this would read back the
+       * value it had just overwritten whenever the caller aliases outReal
+       * over inHigh or inLow.
+       */
+      sp.sumFast -= (sp.ring_trailingFastIdx_inHigh[sp.ringPos_trailingFastIdx] + sp.ring_trailingFastIdx_inLow[sp.ringPos_trailingFastIdx]) / 2.0;
+      sp.sumSlow -= (sp.ring_trailingSlowIdx_inHigh[sp.ringPos_trailingSlowIdx] + sp.ring_trailingSlowIdx_inLow[sp.ringPos_trailingSlowIdx]) / 2.0;
+      sp.cur_outReal = sp.tempReal;
+      sp.ring_trailingFastIdx_inHigh[sp.ringPos_trailingFastIdx] = inHigh;
+      sp.ring_trailingFastIdx_inLow[sp.ringPos_trailingFastIdx] = inLow;
+      sp.ringPos_trailingFastIdx = sp.ringPos_trailingFastIdx + 1;
+      if( sp.ringPos_trailingFastIdx >= sp.ringCap_trailingFastIdx ) {
+         sp.ringPos_trailingFastIdx = 0;
+      }
+      sp.ring_trailingSlowIdx_inHigh[sp.ringPos_trailingSlowIdx] = inHigh;
+      sp.ring_trailingSlowIdx_inLow[sp.ringPos_trailingSlowIdx] = inLow;
+      sp.ringPos_trailingSlowIdx = sp.ringPos_trailingSlowIdx + 1;
+      if( sp.ringPos_trailingSlowIdx >= sp.ringCap_trailingSlowIdx ) {
+         sp.ringPos_trailingSlowIdx = 0;
+      }
+   }
+   private RetCode AO_OpenCore( AO_Stream sp, double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   {
+      double sumFast = 0;
+      double sumSlow = 0;
+      double medianPrice = 0;
+      double tempReal = 0;
+      int i = 0;
+      int outIdx = 0;
+      int trailingFastIdx = 0;
+      int trailingSlowIdx = 0;
+      int lookbackTotal = 0;
+      int historyLen = inHigh.length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 || inLow.length != inHigh.length ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInFastPeriod == Integer.MIN_VALUE ) {
+         optInFastPeriod = 5;
+      } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( optInSlowPeriod == Integer.MIN_VALUE ) {
+         optInSlowPeriod = 34;
+      } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      /* Bill Williams' Awesome Oscillator (New Trading Dimensions, 1998): the
+       * spread between a short and a long simple moving average of the median
+       * price, drawn as a zero-centred histogram.
+       *
+       *    median_t = (high_t + low_t) / 2
+       *    AO_t     = SMA(median, fast)_t - SMA(median, slow)_t
+       *
+       * Both legs are plain SMAs, so there is no seeding convention to get wrong
+       * and no cross-library divergence of the kind an EMA brings.
+       *
+       * This is two copies of ta_codegen/input/sma/sma.c walking one derived
+       * series, sharing a single pass: the same running-sum order, the same
+       * snapshot of each total before the trailing bar leaves it, and the same
+       * divide by the period. Keeping the arithmetic identical is what makes the
+       * composed reference in test_composite.c -- TA_MEDPRICE, two TA_SMA calls
+       * and a TA_SUB -- bit-exact rather than merely close, so any future drift
+       * in either path is a hard failure instead of a tolerance argument.
+       *
+       * In particular each total is DIVIDED by its period; it is not multiplied
+       * by a precomputed 1/period. Tulip's ao.c multiplies by per5/per34, which
+       * costs it up to one ULP against TA_SMA. Dividing buys the memcmp
+       * differential, which is the stronger of the two gates (#117, #118).
+       *
+       * An inverted pair (fast > slow) is NOT swapped, unlike MACD and APO. The
+       * lookback is well defined either way and the result is simply -AO, so the
+       * swap would buy nothing and would have to be duplicated in ao_lookback.
+       */
+      /* Identify the minimum number of price bar needed
+       * to calculate at least one output.
+       */
+      lookbackTotal = (int)AO_Lookback(optInFastPeriod, optInSlowPeriod);
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      sumFast = 0.0;
+      sumSlow = 0.0;
+      trailingFastIdx = startIdx - (int)(optInFastPeriod - 1);
+      trailingSlowIdx = startIdx - (int)(optInSlowPeriod - 1);
+      /* Add-up both initial periods, except for the last value.
+       *
+       * One pass over the longer warm-up window replaces two overlapping passes.
+       * A bar inside the shorter window is added to that total as it is reached,
+       * so each total still accumulates exactly the same bars in exactly the same
+       * ascending order two separate loops would have given it -- which is what
+       * keeps each leg bit-identical to the TA_SMA called with this same startIdx.
+       */
+      i = startIdx - lookbackTotal;
+      while( i < startIdx ) {
+         medianPrice = (inHigh[i] + inLow[i]) / 2.0;
+         if( i >= trailingFastIdx ) {
+            sumFast += medianPrice;
+         }
+         if( i >= trailingSlowIdx ) {
+            sumSlow += medianPrice;
+         }
+         i = i + 1;
+      }
+      /* Proceed with the calculation for the requested range.
+       * Note that this algorithm allows outReal to be the same
+       * buffer as either input.
+       */
+      outIdx = 0;
+      while( i <= endIdx ) {
+         medianPrice = (inHigh[i] + inLow[i]) / 2.0;
+         sumFast += medianPrice;
+         sumSlow += medianPrice;
+         i = i + 1;
+         /* Snapshot the oscillator before either total drops its trailing bar,
+          * mirroring the add-new / snapshot / subtract-old order of TA_SMA.
+          */
+         tempReal = sumFast / (double)optInFastPeriod - sumSlow / (double)optInSlowPeriod;
+         /* Read both trailing bars before writing the output. When startIdx is
+          * clamped to the lookback the longer window's trailing index equals
+          * outIdx exactly, so a store hoisted above this would read back the
+          * value it had just overwritten whenever the caller aliases outReal
+          * over inHigh or inLow.
+          */
+         sumFast -= (inHigh[trailingFastIdx] + inLow[trailingFastIdx]) / 2.0;
+         sumSlow -= (inHigh[trailingSlowIdx] + inLow[trailingSlowIdx]) / 2.0;
+         trailingFastIdx = trailingFastIdx + 1;
+         trailingSlowIdx = trailingSlowIdx + 1;
+         outReal[outIdx * outStride] = tempReal;
+         outIdx = outIdx + 1;
+      }
+      /* All done. Indicate the output limits and return. */
+      outNBElement.value = outIdx;
+      outBegIdx.value = startIdx;
+      /* Capture the live batch state into the handle. */
+      int cap_trailingFastIdx = i - trailingFastIdx;
+      if( cap_trailingFastIdx < 0 || cap_trailingFastIdx > historyLen ) {
+         return RetCode.InternalError;
+      }
+      int allocN_trailingFastIdx = (cap_trailingFastIdx > 0)? cap_trailingFastIdx : 1;
+      double[] capRing_trailingFastIdx_inHigh = new double[allocN_trailingFastIdx];
+      System.arraycopy(inHigh, historyLen - cap_trailingFastIdx, capRing_trailingFastIdx_inHigh, 0, cap_trailingFastIdx);
+      double[] capRing_trailingFastIdx_inLow = new double[allocN_trailingFastIdx];
+      System.arraycopy(inLow, historyLen - cap_trailingFastIdx, capRing_trailingFastIdx_inLow, 0, cap_trailingFastIdx);
+      int cap_trailingSlowIdx = i - trailingSlowIdx;
+      if( cap_trailingSlowIdx < 0 || cap_trailingSlowIdx > historyLen ) {
+         return RetCode.InternalError;
+      }
+      int allocN_trailingSlowIdx = (cap_trailingSlowIdx > 0)? cap_trailingSlowIdx : 1;
+      double[] capRing_trailingSlowIdx_inHigh = new double[allocN_trailingSlowIdx];
+      System.arraycopy(inHigh, historyLen - cap_trailingSlowIdx, capRing_trailingSlowIdx_inHigh, 0, cap_trailingSlowIdx);
+      double[] capRing_trailingSlowIdx_inLow = new double[allocN_trailingSlowIdx];
+      System.arraycopy(inLow, historyLen - cap_trailingSlowIdx, capRing_trailingSlowIdx_inLow, 0, cap_trailingSlowIdx);
+      sp.optInFastPeriod = optInFastPeriod;
+      sp.optInSlowPeriod = optInSlowPeriod;
+      sp.sumFast = sumFast;
+      sp.sumSlow = sumSlow;
+      sp.tempReal = tempReal;
+      sp.ringPos_trailingFastIdx = 0;
+      sp.ringCap_trailingFastIdx = cap_trailingFastIdx;
+      sp.ring_trailingFastIdx_inHigh = capRing_trailingFastIdx_inHigh;
+      sp.ring_trailingFastIdx_inLow = capRing_trailingFastIdx_inLow;
+      sp.ringPos_trailingSlowIdx = 0;
+      sp.ringCap_trailingSlowIdx = cap_trailingSlowIdx;
+      sp.ring_trailingSlowIdx_inHigh = capRing_trailingSlowIdx_inHigh;
+      sp.ring_trailingSlowIdx_inLow = capRing_trailingSlowIdx_inLow;
+      sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+      return RetCode.Success;
+   }
+   private RetCode AO_OpenBody( AO_Stream sp, double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      return AO_OpenCore( sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, sink_outReal, 0 );
+   }
+   private RetCode AO_OpenAndFillBody( AO_Stream sp, double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
+         return RetCode.BadParam;
+      }
+      return AO_OpenCore( sp, inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1 );
+   }
+   private RetCode AO_OpenAndFillInternalBody( AO_Stream sp, double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return AO_OpenCore(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* AO_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   AO_Stream AO_OpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      AO_Stream sp = new AO_Stream(this);
+      RetCode retCode = AO_OpenAndFillInternalBody(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("AO openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("AO openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("AO openAndFill: " + retCode);
+   }
+   /* Internal startIdx-anchored open behind AO_Open (composition seam). */
+   AO_Stream AO_OpenInternal( double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod )
+   {
+      AO_Stream sp = new AO_Stream(this);
+      RetCode retCode = AO_OpenBody(sp, inHigh, inLow, startIdx, optInFastPeriod, optInSlowPeriod);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("AO open: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("AO open: internal error");
+      }
+      throw new IllegalArgumentException("AO open: " + retCode);
+   }
+   /**
+    * Open a live AO stream over the warm-up history; the handle's
+    * {@code value()} starts at the last history bar's value — bit-identical
+    * to {@link Core#AO} at that bar.
+    * <p>The history must hold at least {@code AO_Lookback(...) + 1} bars
+    * (unstable-period aware), or {@link InsufficientHistoryException} is
+    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
+    * default, as in the batch API).
+    */
+   public AO_Stream AO_Open( double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod )
+   {
+      return AO_OpenInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod);
+   }
+   /**
+    * {@link Core#AO_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#AO} over the whole history in the same single pass
+    * (no separate batch call needed for the warm-up plot). Output arrays must
+    * not alias the inputs or each other, and must hold
+    * {@code historyLen - lookback} values.
+    * <p>The range written is on the returned handle:
+    * {@link AO_Stream#fillRange()}.
+    */
+   public AO_Stream AO_OpenAndFill( double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod, double outReal[] )
+   {
+      AO_Stream sp = new AO_Stream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = AO_OpenAndFillBody(sp, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("AO openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("AO openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("AO openAndFill: " + retCode);
+   }

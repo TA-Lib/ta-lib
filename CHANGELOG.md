@@ -35,6 +35,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - EFI: Elder's Force Index (#206)
   - QSTICK: Qstick (ta-lib-proposal-drafts#24)
   - MARKETFI: Market Facilitation Index, a bar's range per unit of volume (ta-lib-proposal-drafts#23)
+  - AO: Awesome Oscillator, Bill Williams' fast-minus-slow SMA of the median price (#227)
 - New MAType (for MA, BBANDS, STOCK etc...):
   - TA_MAType_HMA (#139)
   - TA_MAType_DEFAULT — selects that parameter's documented MA type (#182)

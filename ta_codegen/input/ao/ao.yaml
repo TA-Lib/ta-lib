@@ -1,0 +1,27 @@
+name: AO
+group: Momentum Indicators
+hint: Awesome Oscillator
+flags: [stream]
+inputs:
+  - name: inPriceHL
+    type: price
+    price_components: [high, low]
+optional_inputs:
+  - name: optInFastPeriod
+    type: integer
+    display_name: Fast Period
+    hint: Period of the fast MA
+    range: [2, 100000]
+    default: 5
+    suggested: [4, 200, 1]
+  - name: optInSlowPeriod
+    type: integer
+    display_name: Slow Period
+    hint: Period of the slow MA
+    range: [2, 100000]
+    default: 34
+    suggested: [4, 200, 1]
+outputs:
+  - name: outReal
+    type: real
+    flags: [histogram]

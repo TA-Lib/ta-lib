@@ -444,6 +444,68 @@ TA_LIB_API TA_RetCode TA_ADXR_Close( TA_ADXR_Stream *stream );
 TA_LIB_API TA_RetCode TA_ADXR_OpenAndFill( TA_ADXR_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * TA_AO - Awesome Oscillator
+ * 
+ * Input  = High, Low
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInFastPeriod:(From 2 to 100000)
+ *    Period of the fast MA
+ * 
+ * optInSlowPeriod:(From 2 to 100000)
+ *    Period of the slow MA
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_AO( int    startIdx,
+                             int    endIdx,
+                                        const double inHigh[],
+                                        const double inLow[],
+                                        int           optInFastPeriod, /* From 2 to 100000 */
+                                        int           optInSlowPeriod, /* From 2 to 100000 */
+                                        int          *outBegIdx,
+                                        int          *outNBElement,
+                                        double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_AO( int    startIdx,
+                               int    endIdx,
+                                          const float  inHigh[],
+                                          const float  inLow[],
+                                          int           optInFastPeriod, /* From 2 to 100000 */
+                                          int           optInSlowPeriod, /* From 2 to 100000 */
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
+
+TA_LIB_API int TA_AO_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
+                                        int           optInSlowPeriod );  /* From 2 to 100000 */
+
+
+
+/*
+ * Streaming API for TA_AO — incremental per-bar evaluation.
+ * See docs/streaming-api-design.md.
+ */
+typedef struct TA_AO_Stream TA_AO_Stream;
+
+TA_LIB_API TA_RetCode TA_AO_Open( TA_AO_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInFastPeriod, int optInSlowPeriod, double *outReal );
+
+TA_LIB_API TA_RetCode TA_AO_Update( TA_AO_Stream *stream, double inHigh, double inLow, double *outReal );
+
+TA_LIB_API TA_RetCode TA_AO_Peek( const TA_AO_Stream *stream, double inHigh, double inLow, double *outReal );
+
+TA_LIB_API TA_RetCode TA_AO_Close( TA_AO_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history — bit-identical to TA_AO( 0, historyLen-1,
+ * ... ).
+ */
+TA_LIB_API TA_RetCode TA_AO_OpenAndFill( TA_AO_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInFastPeriod, int optInSlowPeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
  * TA_APO - Absolute Price Oscillator
  * 
  * Input  = double

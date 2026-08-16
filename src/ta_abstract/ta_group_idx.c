@@ -47,6 +47,7 @@ extern const TA_FuncDef TA_DEF_ADD;
 extern const TA_FuncDef TA_DEF_ADOSC;
 extern const TA_FuncDef TA_DEF_ADX;
 extern const TA_FuncDef TA_DEF_ADXR;
+extern const TA_FuncDef TA_DEF_AO;
 extern const TA_FuncDef TA_DEF_APO;
 extern const TA_FuncDef TA_DEF_AROON;
 extern const TA_FuncDef TA_DEF_AROONOSC;
@@ -281,6 +282,7 @@ NULL };
 const TA_FuncDef *TA_PerGroupFunc_4[] = {
 &TA_DEF_ADX,
 &TA_DEF_ADXR,
+&TA_DEF_AO,
 &TA_DEF_APO,
 &TA_DEF_AROON,
 &TA_DEF_AROONOSC,

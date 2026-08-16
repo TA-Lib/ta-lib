@@ -49,6 +49,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 
 - [ADX](/functions/adx.md) — Average Directional Movement Index
 - [ADXR](/functions/adxr.md) — Average Directional Movement Index Rating
+- [AO](/functions/ao.md) — Awesome Oscillator
 - [APO](/functions/apo.md) — Absolute Price Oscillator
 - [AROON](/functions/aroon.md) — Aroon
 - [AROONOSC](/functions/aroonosc.md) — Aroon Oscillator

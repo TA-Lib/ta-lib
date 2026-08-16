@@ -291,6 +291,7 @@ set(LIB_SOURCES
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_ADOSC.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_ADX.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_ADXR.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_AO.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_APO.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_AROON.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_AROONOSC.c"

@@ -715,7 +715,7 @@ static ErrorNumber testTAFunction_ALL( void )
    /* The tag is what --function= substring-matches, so every function the
     * group covers must appear in it: --function=VWMA matched nothing before
     * VWMA was named here (issue #137). */
-   DO_TEST( test_func_composite, "PVO,VWMA,CMF,HMA,EFI,QSTICK,COMPOSITE" );
+   DO_TEST( test_func_composite, "PVO,VWMA,CMF,HMA,EFI,QSTICK,AO,COMPOSITE" );
    DO_TEST( test_func_marketfi, "MARKETFI" );
    DO_TEST( test_func_cmf,       "CMF" );
    DO_TEST( test_func_cmou,      "CMOU" );

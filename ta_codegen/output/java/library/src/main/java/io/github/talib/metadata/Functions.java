@@ -95,6 +95,7 @@ public final class Functions {
       put(m, f_ADOSC());
       put(m, f_ADX());
       put(m, f_ADXR());
+      put(m, f_AO());
       put(m, f_APO());
       put(m, f_AROON());
       put(m, f_AROONOSC());
@@ -380,6 +381,29 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FunctionInfo f_AO() {
+      return new FunctionInfo(
+         "AO", "Momentum Indicators", "Awesome Oscillator", 0x02000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInFastPeriod", 0x00000000,
+               "Fast Period", "Period of the fast MA", 5.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInSlowPeriod", 0x00000000,
+               "Slow Period", "Period of the slow MA", 34.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000010)
          ));
    }
 
