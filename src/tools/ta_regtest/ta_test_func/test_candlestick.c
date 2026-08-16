@@ -7881,6 +7881,281 @@ static void build_identical3crows( void )
 
 }
 
+/* ---- Hard tier: CDLLADDERBOTTOM ------------------------------------------ *
+ *
+ * Three black candles stepping down, a fourth black one with a long upper
+ * shadow, and a white fifth that closes above that shadow. Twelve conditions
+ * over five bars and only ONE settings read -- ShadowVeryShort at i-1 -- which
+ * makes this the least settings-coupled pattern in the hard tier and the
+ * geometry correspondingly free.
+ *
+ * That one read still spans three of the five bars: its window ends at i-1, so
+ * it carries the 1st, 2nd and 3rd candles. Giving each of those a HighLow of 10
+ * puts it on 1 exactly, and every flip that moves one of those bodies keeps
+ * that HighLow so the threshold does not drift underneath it.
+ *
+ * c8 IS THE ONE READ THAT POINTS THE OTHER WAY. Everywhere else in this file a
+ * ShadowVeryShort test asks for a shadow UNDER the average; here the 4th
+ * candle's upper shadow must EXCEED it. The boundary is the same equality and
+ * the flip sits on it, but the control is above rather than below -- worth
+ * checking the direction before copying a shadow scenario from another builder.
+ *
+ * c1's flip is the only one that re-cuts the whole ladder. A white 2nd candle
+ * needs open(2nd) below close(2nd), while c4 puts open(2nd) above open(3rd) and
+ * c5 puts close(2nd) below close(1st) -- so the four prices have to interleave
+ * as open(3rd) < open(2nd) < close(2nd) < close(1st), which the detect's layout
+ * does not leave room for. Widening the 1st candle and dropping the 3rd is what
+ * makes the gap. c0 and c2, the other two colour tests, each move one bar: the
+ * outer two are not squeezed from both sides the way the middle one is.
+ */
+static void cond_ladderbottom( int i, int *c )
+{
+   c[0]  = !pb_white(i-4);
+   c[1]  = !pb_white(i-3);
+   c[2]  = !pb_white(i-2);
+   c[3]  = pbO[i-4] > pbO[i-3];
+   c[4]  = pbO[i-3] > pbO[i-2];
+   c[5]  = pbC[i-4] > pbC[i-3];
+   c[6]  = pbC[i-3] > pbC[i-2];
+   c[7]  = !pb_white(i-1);
+   c[8]  = pb_upsh(i-1) > pb_avg(TA_ShadowVeryShort, i-1);
+   c[9]  = pb_white(i);
+   c[10] = pbO[i] > pbO[i-1];
+   c[11] = pbC[i] > pbH[i-1];
+}
+
+static void build_ladderbottom( void )
+{
+  pb_conditions(12);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v1=pb_bar(113,117,112,116);
+  pb_detect(v1,100,"detect: three black candles with descending opens and closes, a black 4th with a long upper shadow, a white 5th closing above that shadow");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(119,121,111,120);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v2=pb_bar(113,117,112,116);
+  pb_flip(v2,0,"break c0: the 1st candle is white -- its open still leads the 2nd's, so only the colour test moves");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v3=pb_bar(113,117,112,116);
+  pb_control(v3,100,0,"restore c0: the 1st candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(125,126,116,120);
+  pb_bar(115,119,109,118);
+  pb_bar(114,115,105,110);
+  pb_bar(108,110,103,104);
+  int v4=pb_bar(109,113,108,112);
+  pb_flip(v4,1,"break c1: the 2nd candle is white -- the whole ladder is re-cut, because a white 2nd needs open(2nd) below close(2nd) while c4 puts it above open(3rd) and c5 puts close(2nd) below close(1st)");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(125,126,116,120);
+  pb_bar(118,119,109,115);
+  pb_bar(114,115,105,110);
+  pb_bar(108,110,103,104);
+  int v5=pb_bar(109,113,108,112);
+  pb_control(v5,100,1,"restore c1: the 2nd candle is black, same layout");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(110,113,103,112);
+  pb_bar(112,114,107,108);
+  int v6=pb_bar(113,117,112,116);
+  pb_flip(v6,2,"break c2: the 3rd candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v7=pb_bar(113,117,112,116);
+  pb_control(v7,100,2,"restore c2: the 3rd candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(118,119,109,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v8=pb_bar(113,117,112,116);
+  pb_flip(v8,3,"break c3: 1st opens 118 == the 2nd open, the descent is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(119,120,110,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v9=pb_bar(113,117,112,116);
+  pb_control(v9,100,3,"restore c3: 1st opens 119 > the 2nd open 118");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(116,117,107,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v10=pb_bar(113,117,112,116);
+  pb_flip(v10,4,"break c4: 2nd opens 116 == the 3rd open, the descent is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v11=pb_bar(113,117,112,116);
+  pb_control(v11,100,4,"restore c4: 2nd opens 118 > the 3rd open 116");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,113);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v12=pb_bar(113,117,112,116);
+  pb_flip(v12,5,"break c5: 1st closes 113 == the 2nd close, the descent is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,114);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v13=pb_bar(113,117,112,116);
+  pb_control(v13,100,5,"restore c5: 1st closes 114 > the 2nd close 113");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,111);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v14=pb_bar(113,117,112,116);
+  pb_flip(v14,6,"break c6: 2nd closes 111 == the 3rd close, the descent is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v15=pb_bar(113,117,112,116);
+  pb_control(v15,100,6,"restore c6: 2nd closes 113 > the 3rd close 111");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(108,114,107,112);
+  int v16=pb_bar(113,117,112,116);
+  pb_flip(v16,7,"break c7: the 4th candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v17=pb_bar(113,117,112,116);
+  pb_control(v17,100,7,"restore c7: the 4th candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,113,107,108);
+  int v18=pb_bar(113,117,112,116);
+  pb_flip(v18,8,"break c8: 4th upper shadow 1 == avg 1, and this test is strict in the OTHER direction -- the shadow must exceed the average, not fall under it");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v19=pb_bar(113,117,112,116);
+  pb_control(v19,100,8,"restore c8: 4th upper shadow 2 > avg 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v20=pb_bar(117,118,114,115);
+  pb_flip(v20,9,"break c9: the 5th candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v21=pb_bar(113,117,112,116);
+  pb_control(v21,100,9,"restore c9: the 5th candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v22=pb_bar(112,117,111,116);
+  pb_flip(v22,10,"break c10: 5th opens 112 == the 4th open, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v23=pb_bar(113,117,112,116);
+  pb_control(v23,100,10,"restore c10: 5th opens 113 > the 4th open 112");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v24=pb_bar(113,115,112,114);
+  pb_flip(v24,11,"break c11: 5th closes 114 == the 4th high, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(120,121,111,115);
+  pb_bar(118,119,109,113);
+  pb_bar(116,117,107,111);
+  pb_bar(112,114,107,108);
+  int v25=pb_bar(113,117,112,116);
+  pb_control(v25,100,11,"restore c11: 5th closes 116 > the 4th high 114");
+  pb_flat(8);
+
+}
+
 static ErrorNumber test_marquee_predicate_coverage( void )
 {
    ErrorNumber e;
@@ -7927,6 +8202,7 @@ static ErrorNumber test_marquee_predicate_coverage( void )
    pb_reset(); build_stalledpattern();      e = pb_check_mcdc("CDLSTALLEDPATTERN",     TA_CDLSTALLEDPATTERN,      cond_stalledpattern);      if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_3linestrike();         e = pb_check_mcdc("CDL3LINESTRIKE",        TA_CDL3LINESTRIKE,         cond_3linestrike);         if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_identical3crows();     e = pb_check_mcdc("CDLIDENTICAL3CROWS",   TA_CDLIDENTICAL3CROWS,     cond_identical3crows);     if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_ladderbottom();        e = pb_check_mcdc("CDLLADDERBOTTOM",       TA_CDLLADDERBOTTOM,        cond_ladderbottom);        if( e != TA_TEST_PASS ) return e;
    pb_report_totals();
    return TA_TEST_PASS;
 }
