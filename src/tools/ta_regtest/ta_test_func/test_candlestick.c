@@ -7651,6 +7651,236 @@ static void build_3linestrike( void )
 
 }
 
+/* ---- Hard tier: CDLIDENTICAL3CROWS --------------------------------------- *
+ *
+ * Three declining black candles with no lower shadow, each opening at very
+ * nearly the previous close. Twelve conditions over three bars, five settings
+ * reads, and FOUR of the twelve inclusive -- two Equal bands, each spelled as a
+ * <= and a >=, so four of the controls sit on their own edge.
+ *
+ *   c0,c2,c4   the three candles are black
+ *   c1,c3,c5   each has a lower shadow under ShadowVeryShort
+ *   c6,c7      the closes decline
+ *   c8,c9      the 2nd opens within Equal of close(1st)
+ *   c10,c11    the 3rd opens within Equal of close(2nd)
+ *
+ * NOTHING IS WAIVED HERE, which is unusual for a twelve-condition pattern and
+ * worth knowing why: the three colour tests are INDEPENDENT. Unlike
+ * CDL3LINESTRIKE, where c0..c2 compare adjacent colours and each candle sits in
+ * two of them, these each assert one candle's colour on its own. So each flips
+ * by recolouring one bar, and none is entangled with its neighbours.
+ *
+ * The geometry is the easiest in the hard tier once one thing is seen: holding
+ * HighLow at 10 on the 1st and 2nd candles puts ALL FIVE reads on exact values
+ * -- ShadowVeryShort 1 at each of the three bars, Equal 0.5 at both. The bodies
+ * are then free, because no body test exists in this pattern at all. Bars with
+ * the low ON the close (lower shadow 0) satisfy c1/c3/c5 with room to spare and
+ * leave the high as the only degree of freedom needed to hold HighLow at 10.
+ *
+ * c0's flip is the one that moves three bars rather than one. Recolouring the
+ * 1st candle moves close(1st), which is the centre of the band c8/c9 hold
+ * open(2nd) in -- so the 2nd has to follow it, and the 3rd follows the 2nd
+ * through c10/c11. The colour tests are independent of each other; they are not
+ * independent of the bands.
+ */
+static void cond_identical3crows( int i, int *c )
+{
+   c[0]  = !pb_white(i-2);
+   c[1]  = pb_losh(i-2) < pb_avg(TA_ShadowVeryShort, i-2);
+   c[2]  = !pb_white(i-1);
+   c[3]  = pb_losh(i-1) < pb_avg(TA_ShadowVeryShort, i-1);
+   c[4]  = !pb_white(i);
+   c[5]  = pb_losh(i)   < pb_avg(TA_ShadowVeryShort, i);
+   c[6]  = pbC[i-2] > pbC[i-1];
+   c[7]  = pbC[i-1] > pbC[i];
+   c[8]  = pbO[i-1] <= pbC[i-2] + pb_avg(TA_Equal, i-2);
+   c[9]  = pbO[i-1] >= pbC[i-2] - pb_avg(TA_Equal, i-2);
+   c[10] = pbO[i]   <= pbC[i-1] + pb_avg(TA_Equal, i-1);
+   c[11] = pbO[i]   >= pbC[i-1] - pb_avg(TA_Equal, i-1);
+}
+
+static void build_identical3crows( void )
+{
+  pb_conditions(12);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,109,99,99);
+  int u1=pb_bar(99,104,94,94);
+  pb_detect(u1,-100,"detect: three black candles, each with no lower shadow, declining, each opening within Equal of the previous close");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,114,104,110);
+  pb_bar(110,115,105,105);
+  int u2=pb_bar(105,110,100,100);
+  pb_flip(u2,0,"break c0: the 1st candle is white -- the other two move with it, because close(1st) is the centre of the band c8/c9 hold open(2nd) in");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,109,99,99);
+  int u3=pb_bar(99,104,94,94);
+  pb_control(u3,-100,0,"restore c0: the 1st candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,113,103,104);
+  pb_bar(104,109,99,99);
+  int u4=pb_bar(99,104,94,94);
+  pb_flip(u4,1,"break c1: 1st lower shadow 1 == avg 1, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,109,99,99);
+  int u5=pb_bar(99,104,94,94);
+  pb_control(u5,-100,1,"restore c1: 1st lower shadow 0 < avg 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(103.5,113,103,103.75);
+  int u6=pb_bar(103.5,108.5,98.5,98.5);
+  pb_flip(u6,2,"break c2: the 2nd candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,109,99,99);
+  int u7=pb_bar(99,104,94,94);
+  pb_control(u7,-100,2,"restore c2: the 2nd candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,108,98,99);
+  int u8=pb_bar(99,104,94,94);
+  pb_flip(u8,3,"break c3: 2nd lower shadow 1 == avg 1, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,109,99,99);
+  int u9=pb_bar(99,104,94,94);
+  pb_control(u9,-100,3,"restore c3: 2nd lower shadow 0 < avg 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,109,99,99);
+  int u10=pb_bar(98.5,108,98,98.75);
+  pb_flip(u10,4,"break c4: the 3rd candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,109,99,99);
+  int u11=pb_bar(99,104,94,94);
+  pb_control(u11,-100,4,"restore c4: the 3rd candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,109,99,99);
+  int u12=pb_bar(99,103,93,94);
+  pb_flip(u12,5,"break c5: 3rd lower shadow 1 == avg 1, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,109,99,99);
+  int u13=pb_bar(99,104,94,94);
+  pb_control(u13,-100,5,"restore c5: 3rd lower shadow 0 < avg 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104.5,114,104,104);
+  int u14=pb_bar(104,109,99,99);
+  pb_flip(u14,6,"break c6: 2nd close 104 == the 1st close, the decline is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104.5,114,103.5,103.5);
+  int u15=pb_bar(103.5,109,99,99);
+  pb_control(u15,-100,6,"restore c6: 2nd close 103.5 < the 1st close 104");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,109,99,99);
+  int u16=pb_bar(99.5,109,99,99);
+  pb_flip(u16,7,"break c7: 3rd close 99 == the 2nd close, the decline is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,109,99,99);
+  int u17=pb_bar(99.5,109,98.5,98.5);
+  pb_control(u17,-100,7,"restore c7: 3rd close 98.5 < the 2nd close 99");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(105,109,99,99);
+  int u18=pb_bar(99,104,94,94);
+  pb_flip(u18,8,"break c8: 2nd opens 105, above close(1st) 104 + Equal 0.5");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104.5,109,99,99);
+  int u19=pb_bar(99,104,94,94);
+  pb_control(u19,-100,8,"restore c8: 2nd opens 104.5 == 104 + Equal 0.5, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(103,109,99,99);
+  int u20=pb_bar(99,104,94,94);
+  pb_flip(u20,9,"break c9: 2nd opens 103, below close(1st) 104 - Equal 0.5");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(103.5,109,99,99);
+  int u21=pb_bar(99,104,94,94);
+  pb_control(u21,-100,9,"restore c9: 2nd opens 103.5 == 104 - Equal 0.5, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,109,99,99);
+  int u22=pb_bar(100,104,94,94);
+  pb_flip(u22,10,"break c10: 3rd opens 100, above close(2nd) 99 + Equal 0.5");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,109,99,99);
+  int u23=pb_bar(99.5,104,94,94);
+  pb_control(u23,-100,10,"restore c10: 3rd opens 99.5 == 99 + Equal 0.5, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,109,99,99);
+  int u24=pb_bar(98,104,94,94);
+  pb_flip(u24,11,"break c11: 3rd opens 98, below close(2nd) 99 - Equal 0.5");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,114,104,104);
+  pb_bar(104,109,99,99);
+  int u25=pb_bar(98.5,104,94,94);
+  pb_control(u25,-100,11,"restore c11: 3rd opens 98.5 == 99 - Equal 0.5, inclusive");
+  pb_flat(8);
+
+}
+
 static ErrorNumber test_marquee_predicate_coverage( void )
 {
    ErrorNumber e;
@@ -7696,6 +7926,7 @@ static ErrorNumber test_marquee_predicate_coverage( void )
    pb_reset(); build_mathold();             e = pb_check_mcdc_p("CDLMATHOLD",           TA_CDLMATHOLD,           0.5, cond_mathold);         if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_stalledpattern();      e = pb_check_mcdc("CDLSTALLEDPATTERN",     TA_CDLSTALLEDPATTERN,      cond_stalledpattern);      if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_3linestrike();         e = pb_check_mcdc("CDL3LINESTRIKE",        TA_CDL3LINESTRIKE,         cond_3linestrike);         if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_identical3crows();     e = pb_check_mcdc("CDLIDENTICAL3CROWS",   TA_CDLIDENTICAL3CROWS,     cond_identical3crows);     if( e != TA_TEST_PASS ) return e;
    pb_report_totals();
    return TA_TEST_PASS;
 }
