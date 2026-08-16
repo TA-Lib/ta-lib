@@ -1,5 +1,20 @@
 # C# streaming tier — implementation plan
 
+> **Executed 2026-08-16.** The tier is complete and gated: all 172 functions
+> stream in C#, `ta_regtest --codegen` reports `Stream verify: 172 functions,
+> 17272 legs bit-exact vs batch` alongside the other three languages, and
+> `regen-check` is green. The durable content has been folded into
+> `docs/streaming-api-design.md`, so **this file should be deleted** once you
+> have read it — it is kept only as the record of what was decided and why,
+> including the places where the plan was wrong (see the S5 correction).
+>
+> Where the plan and the tree disagree, the tree is right. Known divergences:
+> the `ArgumentNullException.ThrowIfNull` sweep was cut from S0 entirely
+> (§8 explains why), and S1–S8 were collapsed into one emitter pass rather than
+> run as separate stages, because the tier boundaries are branches within the
+> same functions rather than separable deliverables.
+
+
 The .NET streaming API is the last unbuilt piece of the streaming campaign.
 C, Rust and Java each stream all 172 functions and are verified bit-exact
 against their own batch tier by a generated in-server harness; C# has no
