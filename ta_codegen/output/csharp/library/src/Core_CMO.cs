@@ -483,4 +483,418 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>CMO</c> stream: one value per closed bar, bit-identical to
+   /// <c>CMO</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.CMO_Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class CMO_Stream
+   {
+      internal Core core;
+      internal int optInTimePeriod;
+      internal double prevGain;
+      internal double prevLoss;
+      internal double prevValue;
+      internal double cur_outReal;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal CMO_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>CMO_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
+      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal CMO_Stream( CMO_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.prevGain = other.prevGain;
+         this.prevLoss = other.prevLoss;
+         this.prevValue = other.prevValue;
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( CMO_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.prevGain = other.prevGain;
+         this.prevLoss = other.prevLoss;
+         this.prevValue = other.prevValue;
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inReal">Source price/value series.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public double Update( double inReal )
+      {
+         core.CMO_StreamStep(this, inReal);
+         return cur_outReal;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a throwaway copy, which for this handle's shape is cheaper than
+      /// reusing one.</para>
+      /// </remarks>
+      /// <param name="inReal">Source price/value series.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public double Peek( double inReal )
+      {
+         CMO_Stream scratch = new CMO_Stream(this);
+         core.CMO_StreamStep(scratch, inReal);
+         return scratch.cur_outReal;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public double Value => cur_outReal;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public CMO_Stream Clone()
+      {
+         return new CMO_Stream(this);
+      }
+   }
+
+   internal void CMO_StreamStep( CMO_Stream sp, double inReal )
+   {
+      double tempValue1 = 0.0;
+      double tempValue2 = 0.0;
+      if( sp.optInTimePeriod == 1 ) {
+         sp.cur_outReal = inReal;
+         return ;
+      }
+      tempValue1 = inReal;
+      tempValue2 = tempValue1 - sp.prevValue;
+      sp.prevValue = tempValue1;
+      sp.prevLoss *= sp.optInTimePeriod - 1;
+      sp.prevGain *= sp.optInTimePeriod - 1;
+      if( tempValue2 < 0 ) {
+         sp.prevLoss -= tempValue2;
+      } else {
+         sp.prevGain += tempValue2;
+      }
+      sp.prevLoss /= sp.optInTimePeriod;
+      sp.prevGain /= sp.optInTimePeriod;
+      tempValue1 = sp.prevGain + sp.prevLoss;
+      if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
+         sp.cur_outReal = 100.0 * ((sp.prevGain - sp.prevLoss) / tempValue1);
+      } else {
+         sp.cur_outReal = 0.0;
+      }
+   }
+
+   private RetCode CMO_OpenCore( CMO_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      int outIdx = 0;
+      int today = 0;
+      int lookbackTotal = 0;
+      int unstablePeriod = 0;
+      int i = 0;
+      double prevGain = 0;
+      double prevLoss = 0;
+      double prevValue = 0;
+      double savePrevValue = 0;
+      double tempValue1 = 0;
+      double tempValue2 = 0;
+      double tempValue3 = 0;
+      double tempValue4 = 0;
+      int historyLen = inReal.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInTimePeriod == int.MinValue ) {
+         optInTimePeriod = 14;
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( optInTimePeriod == 1 ) {
+         if( historyLen < CMO_Lookback(optInTimePeriod) + 1 ) {
+            return RetCode.OutOfRangeEndIndex;
+         }
+         sp.optInTimePeriod = optInTimePeriod;
+         sp.prevGain = 0.0;
+         sp.prevLoss = 0.0;
+         sp.prevValue = 0.0;
+         int fillLb = CMO_Lookback(optInTimePeriod);
+         outBegIdx = fillLb;
+         outNBElement = historyLen - fillLb;
+         if( outStride == 0 ) {
+            outReal[0] = inReal[historyLen - 1];
+         } else {
+            for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+               outReal[fillIdx] = inReal[fillLb + fillIdx];
+            }
+         }
+         sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+         return RetCode.Success;
+      }
+      /* CMO calculation is mostly identical to RSI.
+       *
+       * The only difference is in the last step of calculation:
+       *
+       *   RSI = gain / (gain+loss)
+       *   CMO = (gain-loss) / (gain+loss)
+       *
+       * See the RSI function for potentially some more info
+       * on this algo.
+       */
+      outBegIdx = 0;
+      outNBElement = 0;
+      /* Adjust startIdx to account for the lookback period. */
+      lookbackTotal = CMO_Lookback(optInTimePeriod);
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      outIdx = 0;
+      /* Index into the output. */
+      /* Accumulate Wilder's "Average Gain" and "Average Loss"
+       * among the initial period.
+       */
+      today = startIdx - lookbackTotal;
+      prevValue = inReal[today];
+      unstablePeriod = this.unstablePeriod[(int)FuncUnstId.CMO];
+      /* If there is no unstable period,
+       * calculate the 'additional' initial
+       * price bar who is particuliar to
+       * metastock.
+       * If there is an unstable period,
+       * no need to calculate since this
+       * first value will be surely skip.
+       */
+      /* Remaining of the processing is identical
+       * for both Classic calculation and Metastock.
+       */
+      prevGain = 0.0;
+      prevLoss = 0.0;
+      today += 1;
+      for( i = optInTimePeriod; i > 0; i -= 1 ) {
+         tempValue1 = inReal[today++];
+         tempValue2 = tempValue1 - prevValue;
+         prevValue = tempValue1;
+         if( tempValue2 < 0 ) {
+            prevLoss -= tempValue2;
+         } else {
+            prevGain += tempValue2;
+         }
+      }
+      /* Subsequent prevLoss and prevGain are smoothed
+       * using the previous values (Wilder's approach).
+       *  1) Multiply the previous by 'period-1'.
+       *  2) Add today value.
+       *  3) Divide by 'period'.
+       */
+      prevLoss /= optInTimePeriod;
+      prevGain /= optInTimePeriod;
+      /* Often documentation present the RSI calculation as follow:
+       *    RSI = 100 - (100 / 1 + (prevGain/prevLoss))
+       *
+       * The following is equivalent:
+       *    RSI = 100 * (prevGain/(prevGain+prevLoss))
+       *
+       * The second equation is used here for speed optimization.
+       */
+      if( today > startIdx ) {
+         tempValue1 = prevGain + prevLoss;
+         if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
+            outReal[outIdx++ * outStride] = 100.0 * ((prevGain - prevLoss) / tempValue1);
+         } else {
+            outReal[outIdx++ * outStride] = 0.0;
+         }
+      } else {
+         /* Skip the unstable period. Do the processing
+          * but do not write it in the output.
+          */
+         while( today < startIdx ) {
+            tempValue1 = inReal[today];
+            tempValue2 = tempValue1 - prevValue;
+            prevValue = tempValue1;
+            prevLoss *= optInTimePeriod - 1;
+            prevGain *= optInTimePeriod - 1;
+            if( tempValue2 < 0 ) {
+               prevLoss -= tempValue2;
+            } else {
+               prevGain += tempValue2;
+            }
+            prevLoss /= optInTimePeriod;
+            prevGain /= optInTimePeriod;
+            today += 1;
+         }
+      }
+      /* Unstable period skipped... now continue
+       * processing if needed.
+       */
+      while( today <= endIdx ) {
+         tempValue1 = inReal[today++];
+         tempValue2 = tempValue1 - prevValue;
+         prevValue = tempValue1;
+         prevLoss *= optInTimePeriod - 1;
+         prevGain *= optInTimePeriod - 1;
+         if( tempValue2 < 0 ) {
+            prevLoss -= tempValue2;
+         } else {
+            prevGain += tempValue2;
+         }
+         prevLoss /= optInTimePeriod;
+         prevGain /= optInTimePeriod;
+         tempValue1 = prevGain + prevLoss;
+         if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
+            outReal[outIdx++ * outStride] = 100.0 * ((prevGain - prevLoss) / tempValue1);
+         } else {
+            outReal[outIdx++ * outStride] = 0.0;
+         }
+      }
+      outBegIdx = startIdx;
+      outNBElement = outIdx;
+      /* Capture the live batch state into the handle. */
+      sp.optInTimePeriod = optInTimePeriod;
+      sp.prevGain = prevGain;
+      sp.prevLoss = prevLoss;
+      sp.prevValue = prevValue;
+      sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode CMO_OpenBody( CMO_Stream sp, double[] inReal, int startIdx, int optInTimePeriod )
+   {
+      double[] sink_outReal = new double[1];
+      return CMO_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+   }
+
+   private RetCode CMO_OpenAndFillBody( CMO_Stream sp, double[] inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outReal, inReal) ) {
+         return RetCode.BadParam;
+      }
+      return CMO_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+   }
+
+   private RetCode CMO_OpenAndFillInternalBody( CMO_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      return CMO_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+   }
+
+   /* CMO_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal CMO_Stream CMO_OpenAndFillInternal( double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      CMO_Stream sp = new CMO_Stream(this);
+      RetCode retCode = CMO_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("CMO", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind CMO_Open (composition seam). */
+   internal CMO_Stream CMO_OpenInternal( double[] inReal, int startIdx, int optInTimePeriod )
+   {
+      CMO_Stream sp = new CMO_Stream(this);
+      RetCode retCode = CMO_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("CMO", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>CMO</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="CMO_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>CMO</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>CMO_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>CMO_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inReal">Source price/value series. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="CMO_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CMO_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public CMO_Stream CMO_Open( double[] inReal, int optInTimePeriod )
+   {
+      return CMO_OpenInternal(inReal, 0, optInTimePeriod);
+   }
+
+   /// <summary><c>CMO_Open</c> that also fills the output array(s) over the whole history
+   /// in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>CMO</c> produces over the
+   /// same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - CMO_Lookback(...)</c> values and
+   /// must not alias the inputs or each other — this path writes the outputs and
+   /// then reads the input tail to seed its rings, so the batch tier's in-place
+   /// allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="CMO_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inReal">Source price/value series. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="CMO_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="outReal">CMO oscillator value. Must hold at least <c>historyLen -
+   /// CMO_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CMO_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public CMO_Stream CMO_OpenAndFill( double[] inReal, int optInTimePeriod, double[] outReal )
+   {
+      CMO_Stream sp = new CMO_Stream(this);
+      RetCode retCode = CMO_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("CMO", "openAndFill", retCode);
+   }
 }

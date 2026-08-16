@@ -477,4 +477,442 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>CMF</c> stream: one value per closed bar, bit-identical to
+   /// <c>CMF</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.CMF_Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class CMF_Stream
+   {
+      internal Core core;
+      internal int optInTimePeriod;
+      internal double sumMFV;
+      internal double sumVol;
+      internal double high;
+      internal double low;
+      internal double close;
+      internal double tmp;
+      internal double mfv;
+      internal int mfv_Idx;
+      internal int maxIdx_mfv;
+      internal int cbSize_mfv;
+      internal double[] cb_mfv_flow = [];
+      internal double[] cb_mfv_volume = [];
+      internal double cur_outReal;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal CMF_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>CMF_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
+      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal CMF_Stream( CMF_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.sumMFV = other.sumMFV;
+         this.sumVol = other.sumVol;
+         this.high = other.high;
+         this.low = other.low;
+         this.close = other.close;
+         this.tmp = other.tmp;
+         this.mfv = other.mfv;
+         this.mfv_Idx = other.mfv_Idx;
+         this.maxIdx_mfv = other.maxIdx_mfv;
+         this.cbSize_mfv = other.cbSize_mfv;
+         this.cb_mfv_flow = new double[other.cb_mfv_flow.Length];
+         Array.Copy( other.cb_mfv_flow, this.cb_mfv_flow, other.cb_mfv_flow.Length );
+         this.cb_mfv_volume = new double[other.cb_mfv_volume.Length];
+         Array.Copy( other.cb_mfv_volume, this.cb_mfv_volume, other.cb_mfv_volume.Length );
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( CMF_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.sumMFV = other.sumMFV;
+         this.sumVol = other.sumVol;
+         this.high = other.high;
+         this.low = other.low;
+         this.close = other.close;
+         this.tmp = other.tmp;
+         this.mfv = other.mfv;
+         this.mfv_Idx = other.mfv_Idx;
+         this.maxIdx_mfv = other.maxIdx_mfv;
+         this.cbSize_mfv = other.cbSize_mfv;
+         if( this.cb_mfv_flow.Length != other.cb_mfv_flow.Length ) {
+            this.cb_mfv_flow = new double[other.cb_mfv_flow.Length];
+         }
+         Array.Copy( other.cb_mfv_flow, this.cb_mfv_flow, other.cb_mfv_flow.Length );
+         if( this.cb_mfv_volume.Length != other.cb_mfv_volume.Length ) {
+            this.cb_mfv_volume = new double[other.cb_mfv_volume.Length];
+         }
+         Array.Copy( other.cb_mfv_volume, this.cb_mfv_volume, other.cb_mfv_volume.Length );
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /* Peek's reusable scratch — one per thread, see CopyFrom. */
+      [ThreadStatic] private static CMF_Stream? peekScratch;
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <param name="inClose">Close price of each bar.</param>
+      /// <param name="inVolume">Volume of each bar.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public double Update( double inHigh, double inLow, double inClose, double inVolume )
+      {
+         core.CMF_StreamStep(this, inHigh, inLow, inClose, inVolume);
+         return cur_outReal;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a scratch handle held per thread and reused, so the copy
+      /// allocates nothing after the first peek of this indicator on this thread.
+      /// That scratch is retained for the life of the thread.</para>
+      /// </remarks>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <param name="inClose">Close price of each bar.</param>
+      /// <param name="inVolume">Volume of each bar.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public double Peek( double inHigh, double inLow, double inClose, double inVolume )
+      {
+         CMF_Stream? scratch = peekScratch;
+         if( scratch is null ) {
+            scratch = new CMF_Stream(this);
+            peekScratch = scratch;
+         } else {
+            scratch.CopyFrom(this);
+         }
+         core.CMF_StreamStep(scratch, inHigh, inLow, inClose, inVolume);
+         return scratch.cur_outReal;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public double Value => cur_outReal;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public CMF_Stream Clone()
+      {
+         return new CMF_Stream(this);
+      }
+   }
+
+   internal void CMF_StreamStep( CMF_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
+   {
+      sp.sumMFV -= sp.cb_mfv_flow[sp.mfv_Idx];
+      sp.sumVol -= sp.cb_mfv_volume[sp.mfv_Idx];
+      sp.high = inHigh;
+      sp.low = inLow;
+      sp.close = inClose;
+      sp.tmp = sp.high - sp.low;
+      if( sp.tmp > 0.0 ) {
+         sp.mfv = (sp.close - sp.low - (sp.high - sp.close)) / sp.tmp * inVolume;
+      } else {
+         sp.mfv = 0.0;
+      }
+      sp.cb_mfv_flow[sp.mfv_Idx] = sp.mfv;
+      sp.cb_mfv_volume[sp.mfv_Idx] = inVolume;
+      sp.sumMFV += sp.mfv;
+      sp.sumVol += inVolume;
+      if( sp.sumVol > 0.0 ) {
+         sp.cur_outReal = sp.sumMFV / sp.sumVol;
+      } else {
+         sp.cur_outReal = 0.0;
+      }
+      sp.mfv_Idx = sp.mfv_Idx + 1;
+      if( sp.mfv_Idx > sp.maxIdx_mfv ) {
+         sp.mfv_Idx = 0;
+      }
+   }
+
+   private RetCode CMF_OpenCore( CMF_Stream sp, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      double sumMFV = 0;
+      double sumVol = 0;
+      double high = 0;
+      double low = 0;
+      double close = 0;
+      double tmp = 0;
+      double mfv = 0;
+      int lookbackTotal = 0;
+      int outIdx = 0;
+      int i = 0;
+      int today = 0;
+      double[] mfv_flow = [];
+      double[] mfv_volume = [];
+      int mfv_Idx = 0;
+      int maxIdx_mfv = (50)-1;
+      int historyLen = inHigh.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 || inLow.Length != inHigh.Length || inClose.Length != inHigh.Length || inVolume.Length != inHigh.Length ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInTimePeriod == int.MinValue ) {
+         optInTimePeriod = 20;
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      /* Both the per-bar money flow volume and the volume that produced it are
+       * carried in the circular buffer. Keeping the volume here rather than
+       * re-reading inVolume[] at the trailing index is what makes outReal safe to
+       * alias any input: once a bar has been consumed it is never read again.
+       */
+      /* Id, Type, Static Size */
+      outBegIdx = 0;
+      outNBElement = 0;
+      /* Identify the minimum number of price bar needed
+       * to calculate at least one output.
+       */
+      lookbackTotal = optInTimePeriod - 1;
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      if( optInTimePeriod < 1 ) return RetCode.InternalError;
+      mfv_flow = new double[optInTimePeriod];
+      mfv_volume = new double[optInTimePeriod];
+      maxIdx_mfv = (optInTimePeriod)-1;
+      mfv_Idx = 0;
+      outIdx = 0;
+      /* Accumulate the money flow volume and the volume over the first
+       * complete window, filling the circular buffer as we go.
+       *
+       * The per-bar multiplier is written exactly as in ta_AD.c so that the
+       * Chaikin money flow volume has one definition in the library.
+       */
+      today = startIdx - lookbackTotal;
+      sumMFV = 0.0;
+      sumVol = 0.0;
+      for( i = optInTimePeriod; i > 0; i -= 1 ) {
+         high = inHigh[today];
+         low = inLow[today];
+         close = inClose[today];
+         tmp = high - low;
+         if( tmp > 0.0 ) {
+            mfv = (close - low - (high - close)) / tmp * inVolume[today];
+         } else {
+            mfv = 0.0;
+         }
+         mfv_flow[mfv_Idx] = mfv;
+         mfv_volume[mfv_Idx] = inVolume[today];
+         sumMFV += mfv;
+         sumVol += inVolume[today];
+         today += 1;
+         mfv_Idx++;
+         if( mfv_Idx > maxIdx_mfv ) { mfv_Idx = 0; }
+      }
+      /* The first full window is complete: emit its output for startIdx here,
+       * then slide the window over the remaining bars below.
+       *
+       * A window whose volume is entirely zero has no money flow to distribute;
+       * report 0.0 rather than propagating a division by zero (issue #112).
+       */
+      if( sumVol > 0.0 ) {
+         outReal[outIdx++ * outStride] = sumMFV / sumVol;
+      } else {
+         outReal[outIdx++ * outStride] = 0.0;
+      }
+      /* Now continue processing the remaining bars. */
+      while( today <= endIdx ) {
+         sumMFV -= mfv_flow[mfv_Idx];
+         sumVol -= mfv_volume[mfv_Idx];
+         high = inHigh[today];
+         low = inLow[today];
+         close = inClose[today];
+         tmp = high - low;
+         if( tmp > 0.0 ) {
+            mfv = (close - low - (high - close)) / tmp * inVolume[today];
+         } else {
+            mfv = 0.0;
+         }
+         mfv_flow[mfv_Idx] = mfv;
+         mfv_volume[mfv_Idx] = inVolume[today];
+         sumMFV += mfv;
+         sumVol += inVolume[today];
+         today += 1;
+         if( sumVol > 0.0 ) {
+            outReal[outIdx++ * outStride] = sumMFV / sumVol;
+         } else {
+            outReal[outIdx++ * outStride] = 0.0;
+         }
+         mfv_Idx++;
+         if( mfv_Idx > maxIdx_mfv ) { mfv_Idx = 0; }
+      }
+      outBegIdx = startIdx;
+      outNBElement = outIdx;
+      /* Capture the live batch state into the handle. */
+      int capCb_mfv = maxIdx_mfv + 1;
+      if( capCb_mfv > historyLen + 1 ) {
+         return RetCode.InternalError;
+      }
+      sp.optInTimePeriod = optInTimePeriod;
+      sp.sumMFV = sumMFV;
+      sp.sumVol = sumVol;
+      sp.high = high;
+      sp.low = low;
+      sp.close = close;
+      sp.tmp = tmp;
+      sp.mfv = mfv;
+      sp.mfv_Idx = mfv_Idx;
+      sp.maxIdx_mfv = maxIdx_mfv;
+      sp.cbSize_mfv = capCb_mfv;
+      sp.cb_mfv_flow = mfv_flow;
+      sp.cb_mfv_volume = mfv_volume;
+      sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode CMF_OpenBody( CMF_Stream sp, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int startIdx, int optInTimePeriod )
+   {
+      double[] sink_outReal = new double[1];
+      return CMF_OpenCore( sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+   }
+
+   private RetCode CMF_OpenAndFillBody( CMF_Stream sp, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outReal, inHigh) || ReferenceEquals(outReal, inLow) || ReferenceEquals(outReal, inClose) || ReferenceEquals(outReal, inVolume) ) {
+         return RetCode.BadParam;
+      }
+      return CMF_OpenCore( sp, inHigh, inLow, inClose, inVolume, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+   }
+
+   private RetCode CMF_OpenAndFillInternalBody( CMF_Stream sp, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      return CMF_OpenCore(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+   }
+
+   /* CMF_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal CMF_Stream CMF_OpenAndFillInternal( double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      CMF_Stream sp = new CMF_Stream(this);
+      RetCode retCode = CMF_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("CMF", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind CMF_Open (composition seam). */
+   internal CMF_Stream CMF_OpenInternal( double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int startIdx, int optInTimePeriod )
+   {
+      CMF_Stream sp = new CMF_Stream(this);
+      RetCode retCode = CMF_OpenBody(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("CMF", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>CMF</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="CMF_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>CMF</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>CMF_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>CMF_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inVolume">Volume of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="CMF_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CMF_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public CMF_Stream CMF_Open( double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInTimePeriod )
+   {
+      return CMF_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod);
+   }
+
+   /// <summary><c>CMF_Open</c> that also fills the output array(s) over the whole history
+   /// in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>CMF</c> produces over the
+   /// same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - CMF_Lookback(...)</c> values and
+   /// must not alias the inputs or each other — this path writes the outputs and
+   /// then reads the input tail to seed its rings, so the batch tier's in-place
+   /// allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="CMF_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inVolume">Volume of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="CMF_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="outReal">Chaikin money flow, in the range -1 to +1. Must hold at least
+   /// <c>historyLen - CMF_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CMF_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public CMF_Stream CMF_OpenAndFill( double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInTimePeriod, double[] outReal )
+   {
+      CMF_Stream sp = new CMF_Stream(this);
+      RetCode retCode = CMF_OpenAndFillBody(sp, inHigh, inLow, inClose, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("CMF", "openAndFill", retCode);
+   }
 }

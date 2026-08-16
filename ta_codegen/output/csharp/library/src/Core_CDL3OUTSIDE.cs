@@ -287,4 +287,307 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>CDL3OUTSIDE</c> stream: one value per closed bar, bit-identical
+   /// to <c>CDL3OUTSIDE</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.CDL3OUTSIDE_Open"/>. There is no close and
+   /// nothing to dispose — the handle is ordinary managed state, and an
+   /// unreferenced handle is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class CDL3OUTSIDE_Stream
+   {
+      internal Core core;
+      internal double lag1_inOpen;
+      internal double lag2_inOpen;
+      internal double lag1_inClose;
+      internal double lag2_inClose;
+      internal int cur_outInteger;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal CDL3OUTSIDE_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>CDL3OUTSIDE_OpenAndFill</c> filled, or
+      /// <see cref="OutRange.Empty"/> when this handle came from a plain open
+      /// (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal CDL3OUTSIDE_Stream( CDL3OUTSIDE_Stream other )
+      {
+         this.core = other.core;
+         this.lag1_inOpen = other.lag1_inOpen;
+         this.lag2_inOpen = other.lag2_inOpen;
+         this.lag1_inClose = other.lag1_inClose;
+         this.lag2_inClose = other.lag2_inClose;
+         this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( CDL3OUTSIDE_Stream other )
+      {
+         this.core = other.core;
+         this.lag1_inOpen = other.lag1_inOpen;
+         this.lag2_inOpen = other.lag2_inOpen;
+         this.lag1_inClose = other.lag1_inClose;
+         this.lag2_inClose = other.lag2_inClose;
+         this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
+      }
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inOpen">Open price of each bar.</param>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <param name="inClose">Close price of each bar.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public int Update( double inOpen, double inHigh, double inLow, double inClose )
+      {
+         core.CDL3OUTSIDE_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         return cur_outInteger;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a throwaway copy, which for this handle's shape is cheaper than
+      /// reusing one.</para>
+      /// </remarks>
+      /// <param name="inOpen">Open price of each bar.</param>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <param name="inClose">Close price of each bar.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public int Peek( double inOpen, double inHigh, double inLow, double inClose )
+      {
+         CDL3OUTSIDE_Stream scratch = new CDL3OUTSIDE_Stream(this);
+         core.CDL3OUTSIDE_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         return scratch.cur_outInteger;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public int Value => cur_outInteger;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public CDL3OUTSIDE_Stream Clone()
+      {
+         return new CDL3OUTSIDE_Stream(this);
+      }
+   }
+
+   internal void CDL3OUTSIDE_StreamStep( CDL3OUTSIDE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   {
+      if( ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 1 && ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && sp.lag1_inClose > sp.lag2_inOpen && sp.lag1_inOpen < sp.lag2_inClose && inClose > sp.lag1_inClose || ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 1 && sp.lag1_inOpen > sp.lag2_inClose && sp.lag1_inClose < sp.lag2_inOpen && inClose < sp.lag1_inClose ) {
+         /* white engulfs black */
+         /* third candle higher */
+         /* black engulfs white */
+         /* third candle lower */
+         sp.cur_outInteger = ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) * 100;
+      } else {
+         sp.cur_outInteger = 0;
+      }
+      sp.lag2_inOpen = sp.lag1_inOpen;
+      sp.lag1_inOpen = inOpen;
+      sp.lag2_inClose = sp.lag1_inClose;
+      sp.lag1_inClose = inClose;
+   }
+
+   private RetCode CDL3OUTSIDE_OpenCore( CDL3OUTSIDE_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      int i = 0;
+      int outIdx = 0;
+      int lookbackTotal = 0;
+      int historyLen = inOpen.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 || inHigh.Length != inOpen.Length || inLow.Length != inOpen.Length || inClose.Length != inOpen.Length ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      /* Identify the minimum number of price bar needed
+       * to calculate at least one output.
+       */
+      lookbackTotal = CDL3OUTSIDE_Lookback();
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      /* Do the calculation using tight loops. */
+      /* Add-up the initial period, except for the last value. */
+      i = startIdx;
+      /* Proceed with the calculation for the requested range.
+       * Must have:
+       * - first: black (white) real body
+       * - second: white (black) real body that engulfs the prior real body
+       * - third: candle that closes higher (lower) than the second candle
+       * outInteger is positive (1 to 100) for the three outside up or negative (-1 to -100) for the three outside down;
+       * the user should consider that a three outside up must appear in a downtrend and three outside down must appear
+       * in an uptrend, while this function does not consider it
+       */
+      outIdx = 0;
+      do {
+         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && inClose[i - 1] > inOpen[i - 2] && inOpen[i - 1] < inClose[i - 2] && inClose[i] > inClose[i - 1] || ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 && inOpen[i - 1] > inClose[i - 2] && inClose[i - 1] < inOpen[i - 2] && inClose[i] < inClose[i - 1] ) {
+            /* white engulfs black */
+            /* third candle higher */
+            /* black engulfs white */
+            /* third candle lower */
+            outInteger[outIdx++ * outStride] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) * 100;
+         } else {
+            outInteger[outIdx++ * outStride] = 0;
+         }
+         i += 1;
+      } while( i <= endIdx );
+      /* All done. Indicate the output limits and return. */
+      outNBElement = outIdx;
+      outBegIdx = startIdx;
+      /* Capture the live batch state into the handle. */
+      sp.lag1_inOpen = inOpen[historyLen - 1];
+      sp.lag2_inOpen = inOpen[historyLen - 2];
+      sp.lag1_inClose = inClose[historyLen - 1];
+      sp.lag2_inClose = inClose[historyLen - 2];
+      sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode CDL3OUTSIDE_OpenBody( CDL3OUTSIDE_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx )
+   {
+      int[] sink_outInteger = new int[1];
+      return CDL3OUTSIDE_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
+   }
+
+   private RetCode CDL3OUTSIDE_OpenAndFillBody( CDL3OUTSIDE_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, out int outBegIdx, out int outNBElement, int[] outInteger )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outInteger, inOpen) || ReferenceEquals(outInteger, inHigh) || ReferenceEquals(outInteger, inLow) || ReferenceEquals(outInteger, inClose) ) {
+         return RetCode.BadParam;
+      }
+      return CDL3OUTSIDE_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
+   }
+
+   private RetCode CDL3OUTSIDE_OpenAndFillInternalBody( CDL3OUTSIDE_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger )
+   {
+      return CDL3OUTSIDE_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+   }
+
+   /* CDL3OUTSIDE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal CDL3OUTSIDE_Stream CDL3OUTSIDE_OpenAndFillInternal( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger )
+   {
+      CDL3OUTSIDE_Stream sp = new CDL3OUTSIDE_Stream(this);
+      RetCode retCode = CDL3OUTSIDE_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("CDL3OUTSIDE", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind CDL3OUTSIDE_Open (composition seam). */
+   internal CDL3OUTSIDE_Stream CDL3OUTSIDE_OpenInternal( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx )
+   {
+      CDL3OUTSIDE_Stream sp = new CDL3OUTSIDE_Stream(this);
+      RetCode retCode = CDL3OUTSIDE_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("CDL3OUTSIDE", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>CDL3OUTSIDE</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="CDL3OUTSIDE_Stream.Value"/> starts at the last
+   /// history bar's value — bit-identical to what <c>CDL3OUTSIDE</c> reports for
+   /// that bar.</para>
+   /// <para>The history must hold at least <c>CDL3OUTSIDE_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>CDL3OUTSIDE_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CDL3OUTSIDE_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public CDL3OUTSIDE_Stream CDL3OUTSIDE_Open( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose )
+   {
+      return CDL3OUTSIDE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+   }
+
+   /// <summary><c>CDL3OUTSIDE_Open</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>CDL3OUTSIDE</c> produces
+   /// over the same series, so no separate batch call is needed for the warm-up
+   /// plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - CDL3OUTSIDE_Lookback(...)</c>
+   /// values and must not alias the inputs or each other — this path writes the
+   /// outputs and then reads the input tail to seed its rings, so the batch
+   /// tier's in-place allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="CDL3OUTSIDE_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="outInteger">+100 for Three Outside Up (bullish), -100 for Three Outside Down
+   /// (bearish), 0 when no pattern. Emits both signs; value is candle i-1's
+   /// color * 100. Must hold at least <c>historyLen -
+   /// CDL3OUTSIDE_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CDL3OUTSIDE_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public CDL3OUTSIDE_Stream CDL3OUTSIDE_OpenAndFill( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int[] outInteger )
+   {
+      CDL3OUTSIDE_Stream sp = new CDL3OUTSIDE_Stream(this);
+      RetCode retCode = CDL3OUTSIDE_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("CDL3OUTSIDE", "openAndFill", retCode);
+   }
 }

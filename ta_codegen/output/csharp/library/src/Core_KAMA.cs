@@ -514,4 +514,486 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>KAMA</c> stream: one value per closed bar, bit-identical to
+   /// <c>KAMA</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.KAMA_Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class KAMA_Stream
+   {
+      internal Core core;
+      internal int optInTimePeriod;
+      internal double constMax;
+      internal double constDiff;
+      internal double sumROC1;
+      internal double prevKAMA;
+      internal double trailingValue;
+      internal double lag1_inReal;
+      internal int ringPos_trailingIdx;
+      internal int ringCap_trailingIdx;
+      internal double[] ring_trailingIdx_inReal = [];
+      internal double cur_outReal;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal KAMA_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>KAMA_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
+      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal KAMA_Stream( KAMA_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.constMax = other.constMax;
+         this.constDiff = other.constDiff;
+         this.sumROC1 = other.sumROC1;
+         this.prevKAMA = other.prevKAMA;
+         this.trailingValue = other.trailingValue;
+         this.lag1_inReal = other.lag1_inReal;
+         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
+         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
+         this.ring_trailingIdx_inReal = new double[other.ring_trailingIdx_inReal.Length];
+         Array.Copy( other.ring_trailingIdx_inReal, this.ring_trailingIdx_inReal, other.ring_trailingIdx_inReal.Length );
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( KAMA_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.constMax = other.constMax;
+         this.constDiff = other.constDiff;
+         this.sumROC1 = other.sumROC1;
+         this.prevKAMA = other.prevKAMA;
+         this.trailingValue = other.trailingValue;
+         this.lag1_inReal = other.lag1_inReal;
+         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
+         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
+         if( this.ring_trailingIdx_inReal.Length != other.ring_trailingIdx_inReal.Length ) {
+            this.ring_trailingIdx_inReal = new double[other.ring_trailingIdx_inReal.Length];
+         }
+         Array.Copy( other.ring_trailingIdx_inReal, this.ring_trailingIdx_inReal, other.ring_trailingIdx_inReal.Length );
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inReal">Source price series.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public double Update( double inReal )
+      {
+         core.KAMA_StreamStep(this, inReal);
+         return cur_outReal;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a throwaway copy, which for this handle's shape is cheaper than
+      /// reusing one.</para>
+      /// </remarks>
+      /// <param name="inReal">Source price series.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public double Peek( double inReal )
+      {
+         KAMA_Stream scratch = new KAMA_Stream(this);
+         core.KAMA_StreamStep(scratch, inReal);
+         return scratch.cur_outReal;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public double Value => cur_outReal;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public KAMA_Stream Clone()
+      {
+         return new KAMA_Stream(this);
+      }
+   }
+
+   internal void KAMA_StreamStep( KAMA_Stream sp, double inReal )
+   {
+      double tempReal = 0.0;
+      double tempReal2 = 0.0;
+      double periodROC = 0.0;
+      if( sp.optInTimePeriod == 1 ) {
+         sp.cur_outReal = inReal;
+         return ;
+      }
+      if( sp.ringCap_trailingIdx == 0 ) {
+         sp.ring_trailingIdx_inReal[0] = inReal;
+      }
+      tempReal = inReal;
+      tempReal2 = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
+      periodROC = tempReal - tempReal2;
+      /* Adjust sumROC1:
+       *  - Remove trailing ROC1
+       *  - Add new ROC1
+       */
+      sp.sumROC1 -= Math.Abs(sp.trailingValue - tempReal2);
+      sp.sumROC1 += Math.Abs(tempReal - sp.lag1_inReal);
+      /* Save the trailing value. Do this because inReal
+       * and outReal can be pointers to the same buffer.
+       */
+      sp.trailingValue = tempReal2;
+      /* Calculate the efficiency ratio */
+      if( sp.sumROC1 <= periodROC || ((-0.00000000000001 < sp.sumROC1) && (sp.sumROC1 < 0.00000000000001)) ) {
+         tempReal = 1.0;
+      } else {
+         tempReal = Math.Abs(periodROC / sp.sumROC1);
+      }
+      /* Calculate the smoothing constant */
+      tempReal = Math.FusedMultiplyAdd(tempReal, sp.constDiff, sp.constMax);
+      tempReal *= tempReal;
+      /* Calculate the KAMA like an EMA, using the
+       * smoothing constant as the adaptive factor.
+       */
+      sp.prevKAMA = Math.FusedMultiplyAdd(inReal - sp.prevKAMA, tempReal, sp.prevKAMA);
+      sp.cur_outReal = sp.prevKAMA;
+      sp.lag1_inReal = inReal;
+      sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
+      sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
+      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+         sp.ringPos_trailingIdx = 0;
+      }
+   }
+
+   private RetCode KAMA_OpenCore( KAMA_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      double constMax = 0;
+      double constDiff = 0;
+      double tempReal = 0;
+      double tempReal2 = 0;
+      double sumROC1 = 0;
+      double periodROC = 0;
+      double prevKAMA = 0;
+      int i = 0;
+      int today = 0;
+      int outIdx = 0;
+      int lookbackTotal = 0;
+      int trailingIdx = 0;
+      double trailingValue = 0;
+      int historyLen = inReal.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInTimePeriod == int.MinValue ) {
+         optInTimePeriod = 30;
+      } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( optInTimePeriod == 1 ) {
+         if( historyLen < KAMA_Lookback(optInTimePeriod) + 1 ) {
+            return RetCode.OutOfRangeEndIndex;
+         }
+         sp.optInTimePeriod = optInTimePeriod;
+         sp.constMax = 0.0;
+         sp.constDiff = 0.0;
+         sp.sumROC1 = 0.0;
+         sp.prevKAMA = 0.0;
+         sp.trailingValue = 0.0;
+         sp.lag1_inReal = 0.0;
+         sp.ringPos_trailingIdx = 0;
+         sp.ringCap_trailingIdx = 0;
+         sp.ring_trailingIdx_inReal = new double[1];
+         int fillLb = KAMA_Lookback(optInTimePeriod);
+         outBegIdx = fillLb;
+         outNBElement = historyLen - fillLb;
+         if( outStride == 0 ) {
+            outReal[0] = inReal[historyLen - 1];
+         } else {
+            for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+               outReal[fillIdx] = inReal[fillLb + fillIdx];
+            }
+         }
+         sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+         return RetCode.Success;
+      }
+      constMax = 2.0 / (30.0 + 1.0);
+      constDiff = 2.0 / (2.0 + 1.0) - constMax;
+      /* Default return values */
+      outBegIdx = 0;
+      outNBElement = 0;
+      /* Identify the minimum number of price bar needed
+       * to calculate at least one output.
+       */
+      lookbackTotal = optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.KAMA];
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      /* Initialize the variables by going through
+       * the lookback period.
+       */
+      sumROC1 = 0.0;
+      today = startIdx - lookbackTotal;
+      trailingIdx = today;
+      i = optInTimePeriod;
+      while( i-- > 0 ) {
+         tempReal = inReal[today++];
+         tempReal -= inReal[today];
+         sumROC1 += Math.Abs(tempReal);
+      }
+      /* At this point sumROC1 represent the
+       * summation of the 1-day price difference
+       * over the (optInTimePeriod-1)
+       */
+      /* Calculate the first KAMA */
+      /* The yesterday price is used here as the previous KAMA. */
+      prevKAMA = inReal[today - 1];
+      tempReal = inReal[today];
+      tempReal2 = inReal[trailingIdx++];
+      periodROC = tempReal - tempReal2;
+      /* Save the trailing value. Do this because inReal
+       * and outReal can be pointers to the same buffer.
+       */
+      trailingValue = tempReal2;
+      /* Calculate the efficiency ratio */
+      if( sumROC1 <= periodROC || ((-0.00000000000001 < sumROC1) && (sumROC1 < 0.00000000000001)) ) {
+         tempReal = 1.0;
+      } else {
+         tempReal = Math.Abs(periodROC / sumROC1);
+      }
+      /* Calculate the smoothing constant */
+      tempReal = Math.FusedMultiplyAdd(tempReal, constDiff, constMax);
+      tempReal *= tempReal;
+      /* Calculate the KAMA like an EMA, using the
+       * smoothing constant as the adaptive factor.
+       */
+      prevKAMA = Math.FusedMultiplyAdd(inReal[today++] - prevKAMA, tempReal, prevKAMA);
+      /* 'today' keep track of where the processing is within the
+       * input.
+       */
+      /* Skip the unstable period. Do the whole processing
+       * needed for KAMA, but do not write it in the output.
+       */
+      while( today <= startIdx ) {
+         tempReal = inReal[today];
+         tempReal2 = inReal[trailingIdx++];
+         periodROC = tempReal - tempReal2;
+         /* Adjust sumROC1:
+          *  - Remove trailing ROC1
+          *  - Add new ROC1
+          */
+         sumROC1 -= Math.Abs(trailingValue - tempReal2);
+         sumROC1 += Math.Abs(tempReal - inReal[today - 1]);
+         /* Save the trailing value. Do this because inReal
+          * and outReal can be pointers to the same buffer.
+          */
+         trailingValue = tempReal2;
+         /* Calculate the efficiency ratio */
+         if( sumROC1 <= periodROC || ((-0.00000000000001 < sumROC1) && (sumROC1 < 0.00000000000001)) ) {
+            tempReal = 1.0;
+         } else {
+            tempReal = Math.Abs(periodROC / sumROC1);
+         }
+         /* Calculate the smoothing constant */
+         tempReal = Math.FusedMultiplyAdd(tempReal, constDiff, constMax);
+         tempReal *= tempReal;
+         /* Calculate the KAMA like an EMA, using the
+          * smoothing constant as the adaptive factor.
+          */
+         prevKAMA = Math.FusedMultiplyAdd(inReal[today++] - prevKAMA, tempReal, prevKAMA);
+      }
+      /* Write the first value. */
+      outReal[0 * outStride] = prevKAMA;
+      outIdx = 1;
+      outBegIdx = today - 1;
+      /* Do the KAMA calculation for the requested range. */
+      while( today <= endIdx ) {
+         tempReal = inReal[today];
+         tempReal2 = inReal[trailingIdx++];
+         periodROC = tempReal - tempReal2;
+         /* Adjust sumROC1:
+          *  - Remove trailing ROC1
+          *  - Add new ROC1
+          */
+         sumROC1 -= Math.Abs(trailingValue - tempReal2);
+         sumROC1 += Math.Abs(tempReal - inReal[today - 1]);
+         /* Save the trailing value. Do this because inReal
+          * and outReal can be pointers to the same buffer.
+          */
+         trailingValue = tempReal2;
+         /* Calculate the efficiency ratio */
+         if( sumROC1 <= periodROC || ((-0.00000000000001 < sumROC1) && (sumROC1 < 0.00000000000001)) ) {
+            tempReal = 1.0;
+         } else {
+            tempReal = Math.Abs(periodROC / sumROC1);
+         }
+         /* Calculate the smoothing constant */
+         tempReal = Math.FusedMultiplyAdd(tempReal, constDiff, constMax);
+         tempReal *= tempReal;
+         /* Calculate the KAMA like an EMA, using the
+          * smoothing constant as the adaptive factor.
+          */
+         prevKAMA = Math.FusedMultiplyAdd(inReal[today++] - prevKAMA, tempReal, prevKAMA);
+         outReal[outIdx++ * outStride] = prevKAMA;
+      }
+      outNBElement = outIdx;
+      /* Capture the live batch state into the handle. */
+      int cap_trailingIdx = today - trailingIdx;
+      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+         return RetCode.InternalError;
+      }
+      int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
+      double[] capRing_trailingIdx_inReal = new double[allocN_trailingIdx];
+      Array.Copy(inReal, historyLen - cap_trailingIdx, capRing_trailingIdx_inReal, 0, cap_trailingIdx);
+      sp.optInTimePeriod = optInTimePeriod;
+      sp.constMax = constMax;
+      sp.constDiff = constDiff;
+      sp.sumROC1 = sumROC1;
+      sp.prevKAMA = prevKAMA;
+      sp.trailingValue = trailingValue;
+      sp.lag1_inReal = inReal[historyLen - 1];
+      sp.ringPos_trailingIdx = 0;
+      sp.ringCap_trailingIdx = cap_trailingIdx;
+      sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
+      sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode KAMA_OpenBody( KAMA_Stream sp, double[] inReal, int startIdx, int optInTimePeriod )
+   {
+      double[] sink_outReal = new double[1];
+      return KAMA_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+   }
+
+   private RetCode KAMA_OpenAndFillBody( KAMA_Stream sp, double[] inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outReal, inReal) ) {
+         return RetCode.BadParam;
+      }
+      return KAMA_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+   }
+
+   private RetCode KAMA_OpenAndFillInternalBody( KAMA_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      return KAMA_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+   }
+
+   /* KAMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal KAMA_Stream KAMA_OpenAndFillInternal( double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      KAMA_Stream sp = new KAMA_Stream(this);
+      RetCode retCode = KAMA_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("KAMA", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind KAMA_Open (composition seam). */
+   internal KAMA_Stream KAMA_OpenInternal( double[] inReal, int startIdx, int optInTimePeriod )
+   {
+      KAMA_Stream sp = new KAMA_Stream(this);
+      RetCode retCode = KAMA_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("KAMA", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>KAMA</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="KAMA_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>KAMA</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>KAMA_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>KAMA_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inReal">Source price series. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="KAMA_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>KAMA_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public KAMA_Stream KAMA_Open( double[] inReal, int optInTimePeriod )
+   {
+      return KAMA_OpenInternal(inReal, 0, optInTimePeriod);
+   }
+
+   /// <summary><c>KAMA_Open</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>KAMA</c> produces over the
+   /// same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - KAMA_Lookback(...)</c> values and
+   /// must not alias the inputs or each other — this path writes the outputs and
+   /// then reads the input tail to seed its rings, so the batch tier's in-place
+   /// allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="KAMA_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inReal">Source price series. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="KAMA_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="outReal">Adaptive moving average line. Must hold at least <c>historyLen -
+   /// KAMA_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>KAMA_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public KAMA_Stream KAMA_OpenAndFill( double[] inReal, int optInTimePeriod, double[] outReal )
+   {
+      KAMA_Stream sp = new KAMA_Stream(this);
+      RetCode retCode = KAMA_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("KAMA", "openAndFill", retCode);
+   }
 }

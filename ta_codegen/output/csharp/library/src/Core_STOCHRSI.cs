@@ -430,4 +430,406 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>One <c>STOCHRSI</c> output set, in batch output order.</summary>
+   /// <remarks>
+   /// <para>Equality is the compiler-generated record-struct equality, which compares
+   /// the components with <c>==</c>: <c>NaN</c> does not equal <c>NaN</c>, and
+   /// <c>0.0</c> equals <c>-0.0</c>. That is deliberately <em>not</em> the Java
+   /// <c>Value</c> contract, which compares bitwise — compare
+   /// <see cref="System.BitConverter.DoubleToInt64Bits(double)"/> per component
+   /// when bit-level identity is what you mean.</para>
+   /// </remarks>
+   /// <param name="FastK">Unsmoothed stochastic of the RSI (raw %K)</param>
+   /// <param name="FastD">%K smoothed over FastD_Period (signal line)</param>
+   public readonly record struct STOCHRSI_Value( double FastK, double FastD );
+
+   /// <summary>A live <c>STOCHRSI</c> stream: one value per closed bar, bit-identical to
+   /// <c>STOCHRSI</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.STOCHRSI_Open"/>. There is no close and nothing
+   /// to dispose — the handle is ordinary managed state, and an unreferenced
+   /// handle is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class STOCHRSI_Stream
+   {
+      internal Core core;
+      internal int optInTimePeriod;
+      internal int optInFastK_Period;
+      internal int optInFastD_Period;
+      internal MAType optInFastD_MAType;
+      internal double cur_outFastK;
+      internal double cur_outFastD;
+      internal RSI_Stream sub0 = null!;
+      internal STOCHF_Stream sub1 = null!;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal STOCHRSI_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>STOCHRSI_OpenAndFill</c> filled, or
+      /// <see cref="OutRange.Empty"/> when this handle came from a plain open
+      /// (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal STOCHRSI_Stream( STOCHRSI_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.optInFastK_Period = other.optInFastK_Period;
+         this.optInFastD_Period = other.optInFastD_Period;
+         this.optInFastD_MAType = other.optInFastD_MAType;
+         this.cur_outFastK = other.cur_outFastK;
+         this.cur_outFastD = other.cur_outFastD;
+         this.sub0 = new RSI_Stream(other.sub0);
+         this.sub1 = new STOCHF_Stream(other.sub1);
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( STOCHRSI_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.optInFastK_Period = other.optInFastK_Period;
+         this.optInFastD_Period = other.optInFastD_Period;
+         this.optInFastD_MAType = other.optInFastD_MAType;
+         this.cur_outFastK = other.cur_outFastK;
+         this.cur_outFastD = other.cur_outFastD;
+         if( this.sub0 is null ) {
+            this.sub0 = new RSI_Stream(other.sub0);
+         } else {
+            this.sub0.CopyFrom(other.sub0);
+         }
+         if( this.sub1 is null ) {
+            this.sub1 = new STOCHF_Stream(other.sub1);
+         } else {
+            this.sub1.CopyFrom(other.sub1);
+         }
+         this.fillRange = other.fillRange;
+      }
+
+      /* Peek's reusable scratch — one per thread, see CopyFrom. */
+      [ThreadStatic] private static STOCHRSI_Stream? peekScratch;
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inReal">Source series fed into the RSI calculation.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public STOCHRSI_Value Update( double inReal )
+      {
+         core.STOCHRSI_StreamStep(this, inReal);
+         return new STOCHRSI_Value(cur_outFastK, cur_outFastD);
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a scratch handle held per thread and reused, so the copy
+      /// allocates nothing after the first peek of this indicator on this thread.
+      /// That scratch is retained for the life of the thread.</para>
+      /// </remarks>
+      /// <param name="inReal">Source series fed into the RSI calculation.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public STOCHRSI_Value Peek( double inReal )
+      {
+         STOCHRSI_Stream? scratch = peekScratch;
+         if( scratch is null ) {
+            scratch = new STOCHRSI_Stream(this);
+            peekScratch = scratch;
+         } else {
+            scratch.CopyFrom(this);
+         }
+         core.STOCHRSI_StreamStep(scratch, inReal);
+         return new STOCHRSI_Value(scratch.cur_outFastK, scratch.cur_outFastD);
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public STOCHRSI_Value Value => new STOCHRSI_Value(cur_outFastK, cur_outFastD);
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public STOCHRSI_Stream Clone()
+      {
+         return new STOCHRSI_Stream(this);
+      }
+   }
+
+   internal void STOCHRSI_StreamStep( STOCHRSI_Stream sp, double inReal )
+   {
+      double cur_tempRSIBuffer = 0.0;
+      double cur_outFastK = 0.0;
+      double cur_outFastD = 0.0;
+      /* Pipeline the new bar through the sub-streams (batch tail order). */
+      cur_tempRSIBuffer = sp.sub0.Update(inReal);
+      {
+         STOCHF_Value subOut1 = sp.sub1.Update(cur_tempRSIBuffer, cur_tempRSIBuffer, cur_tempRSIBuffer);
+         cur_outFastK = subOut1.FastK;
+         cur_outFastD = subOut1.FastD;
+      }
+      sp.cur_outFastK = cur_outFastK;
+      sp.cur_outFastD = cur_outFastD;
+   }
+
+   private RetCode STOCHRSI_OpenCore( STOCHRSI_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, double[] outFastK, double[] outFastD, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      double[] tempRSIBuffer;
+      RetCode retCode;
+      int lookbackTotal = 0;
+      int lookbackSTOCHF = 0;
+      int tempArraySize = 0;
+      int outBegIdx1 = 0;
+      int outBegIdx2 = 0;
+      int outNbElement1 = 0;
+      int historyLen = inReal.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInTimePeriod == int.MinValue ) {
+         optInTimePeriod = 14;
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( optInFastK_Period == int.MinValue ) {
+         optInFastK_Period = 5;
+      } else if( optInFastK_Period < 1 || optInFastK_Period > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( optInFastD_Period == int.MinValue ) {
+         optInFastD_Period = 3;
+      } else if( optInFastD_Period < 1 || optInFastD_Period > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( (int)optInFastD_MAType == int.MinValue || optInFastD_MAType == MAType.DEFAULT ) {
+         optInFastD_MAType = MAType.SMA;
+      } else if( (int)optInFastD_MAType < MATypes.Min || (int)optInFastD_MAType > MATypes.Max ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen < STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType) + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      double[] sc_outFastK = outStride == 1 ? outFastK : new double[historyLen];
+      double[] sc_outFastD = outStride == 1 ? outFastD : new double[historyLen];
+      /* Stochastic RSI
+       *
+       * Reference: "Stochastic RSI and Dynamic Momentum Index"
+       *            by Tushar Chande and Stanley Kroll
+       *            Stock&Commodities V.11:5 (189-199)
+       *
+       * The TA-Lib version offer flexibility beyond what is explain
+       * in the Stock&Commodities article.
+       *
+       * To calculate the "Unsmoothed stochastic RSI" with symetry like
+       * explain in the article, keep the optInTimePeriod and optInFastK_Period
+       * equal. Example:
+       *
+       *    unsmoothed stoch RSI 14 : optInTimePeriod   = 14
+       *                              optInFastK_Period = 14
+       *                              optInFastD_Period = 'x'
+       *
+       * The outFastK is the unsmoothed RSI discuss in the article.
+       *
+       * You can set the optInFastD_Period to smooth the RSI. The smooth
+       * version will be found in outFastD. The outFastK will still contain
+       * the unsmoothed stoch RSI. If you do not care about the smoothing of
+       * the StochRSI, just leave optInFastD_Period to 1 and ignore outFastD.
+       */
+      outBegIdx = 0;
+      outNBElement = 0;
+      /* Adjust startIdx to account for the lookback period. */
+      lookbackSTOCHF = STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+      lookbackTotal = RSI_Lookback(optInTimePeriod) + lookbackSTOCHF;
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      outBegIdx = startIdx;
+      tempArraySize = endIdx - startIdx + 1 + lookbackSTOCHF;
+      tempRSIBuffer = new double[(int)(tempArraySize * 1)];
+      /* Sub-stream 0: rsi over `inReal`, warmed from bar 0 up to the
+       * sub-call's own startIdx (the seeding point). */
+      RSI_Stream sub0 = RSI_OpenAndFillInternal(inReal, startIdx - lookbackSTOCHF, optInTimePeriod, out outBegIdx1, out outNbElement1, tempRSIBuffer);
+      retCode = RetCode.Success;
+      if( retCode != RetCode.Success || outNbElement1 == 0 ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return retCode ;
+      }
+      /* Sub-stream 1: stochf over `tempRSIBuffer, tempRSIBuffer, tempRSIBuffer`, warmed from bar 0 up to the
+       * sub-call's own startIdx (the seeding point). */
+      int subLen1 = (tempArraySize - 1) + 1;
+      double[] subSrc1_0 = new double[subLen1];
+      Array.Copy(tempRSIBuffer, subSrc1_0, subLen1);
+      STOCHF_Stream sub1 = STOCHF_OpenAndFillInternal(subSrc1_0, subSrc1_0, subSrc1_0, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx2, out outNBElement, sc_outFastK, sc_outFastD);
+      retCode = RetCode.Success;
+      if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return retCode ;
+      }
+      /* Capture the live producer state + sub handles. */
+      if( outNBElement < 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      sp.optInTimePeriod = optInTimePeriod;
+      sp.optInFastK_Period = optInFastK_Period;
+      sp.optInFastD_Period = optInFastD_Period;
+      sp.optInFastD_MAType = optInFastD_MAType;
+      sp.sub0 = sub0;
+      sp.sub1 = sub1;
+      sp.cur_outFastK = sc_outFastK[outNBElement - 1];
+      sp.cur_outFastD = sc_outFastD[outNBElement - 1];
+      return RetCode.Success;
+   }
+
+   private RetCode STOCHRSI_OpenBody( STOCHRSI_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
+   {
+      double[] sink_outFastK = new double[1];
+      double[] sink_outFastD = new double[1];
+      return STOCHRSI_OpenCore( sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out _, out _, sink_outFastK, sink_outFastD, 0 );
+   }
+
+   private RetCode STOCHRSI_OpenAndFillBody( STOCHRSI_Stream sp, double[] inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, double[] outFastK, double[] outFastD )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outFastK, inReal) || ReferenceEquals(outFastD, inReal) || ReferenceEquals(outFastK, outFastD) ) {
+         return RetCode.BadParam;
+      }
+      return STOCHRSI_OpenCore( sp, inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastK, outFastD, 1 );
+   }
+
+   private RetCode STOCHRSI_OpenAndFillInternalBody( STOCHRSI_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, double[] outFastK, double[] outFastD )
+   {
+      return STOCHRSI_OpenCore(sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastK, outFastD, 1);
+   }
+
+   /* STOCHRSI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal STOCHRSI_Stream STOCHRSI_OpenAndFillInternal( double[] inReal, int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, double[] outFastK, double[] outFastD )
+   {
+      STOCHRSI_Stream sp = new STOCHRSI_Stream(this);
+      RetCode retCode = STOCHRSI_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastK, outFastD);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("STOCHRSI", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind STOCHRSI_Open (composition seam). */
+   internal STOCHRSI_Stream STOCHRSI_OpenInternal( double[] inReal, int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
+   {
+      STOCHRSI_Stream sp = new STOCHRSI_Stream(this);
+      RetCode retCode = STOCHRSI_OpenBody(sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("STOCHRSI", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>STOCHRSI</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="STOCHRSI_Stream.Value"/> starts at the last
+   /// history bar's value — bit-identical to what <c>STOCHRSI</c> reports for
+   /// that bar.</para>
+   /// <para>The history must hold at least <c>STOCHRSI_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>STOCHRSI_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inReal">Source series fed into the RSI calculation. The warm-up history, oldest
+   /// bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="STOCHRSI_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInFastK_Period">As in the batch call; see <see cref="STOCHRSI_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInFastD_Period">As in the batch call; see <see cref="STOCHRSI_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInFastD_MAType">As in the batch call; see <see cref="STOCHRSI_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>STOCHRSI_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public STOCHRSI_Stream STOCHRSI_Open( double[] inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
+   {
+      return STOCHRSI_OpenInternal(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+   }
+
+   /// <summary><c>STOCHRSI_Open</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>STOCHRSI</c> produces over
+   /// the same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - STOCHRSI_Lookback(...)</c> values
+   /// and must not alias the inputs or each other — this path writes the outputs
+   /// and then reads the input tail to seed its rings, so the batch tier's
+   /// in-place allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="STOCHRSI_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inReal">Source series fed into the RSI calculation. The warm-up history, oldest
+   /// bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="STOCHRSI_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInFastK_Period">As in the batch call; see <see cref="STOCHRSI_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInFastD_Period">As in the batch call; see <see cref="STOCHRSI_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInFastD_MAType">As in the batch call; see <see cref="STOCHRSI_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="outFastK">Unsmoothed stochastic of the RSI (raw %K) Must hold at least <c>historyLen
+   /// - STOCHRSI_Lookback(...)</c> values.</param>
+   /// <param name="outFastD">%K smoothed over FastD_Period (signal line) Must hold at least
+   /// <c>historyLen - STOCHRSI_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>STOCHRSI_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public STOCHRSI_Stream STOCHRSI_OpenAndFill( double[] inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, double[] outFastK, double[] outFastD )
+   {
+      STOCHRSI_Stream sp = new STOCHRSI_Stream(this);
+      RetCode retCode = STOCHRSI_OpenAndFillBody(sp, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out int outBegIdx, out int outNBElement, outFastK, outFastD);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("STOCHRSI", "openAndFill", retCode);
+   }
 }

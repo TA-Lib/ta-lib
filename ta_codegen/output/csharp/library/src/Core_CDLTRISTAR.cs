@@ -336,4 +336,462 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>CDLTRISTAR</c> stream: one value per closed bar, bit-identical
+   /// to <c>CDLTRISTAR</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.CDLTRISTAR_Open"/>. There is no close and
+   /// nothing to dispose — the handle is ordinary managed state, and an
+   /// unreferenced handle is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class CDLTRISTAR_Stream
+   {
+      internal Core core;
+      internal double BodyPeriodTotal;
+      internal double lag1_inOpen;
+      internal double lag2_inOpen;
+      internal double lag1_inHigh;
+      internal double lag2_inHigh;
+      internal double lag1_inLow;
+      internal double lag2_inLow;
+      internal double lag1_inClose;
+      internal double lag2_inClose;
+      internal int ringPos_BodyTrailingIdx;
+      internal int ringCap_BodyTrailingIdx;
+      internal double[] ring_BodyTrailingIdx_inOpen = [];
+      internal double[] ring_BodyTrailingIdx_inHigh = [];
+      internal double[] ring_BodyTrailingIdx_inLow = [];
+      internal double[] ring_BodyTrailingIdx_inClose = [];
+      internal int cs_BodyDoji_rangeType;
+      internal int cs_BodyDoji_avgPeriod;
+      internal double cs_BodyDoji_factor;
+      internal int cur_outInteger;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal CDLTRISTAR_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>CDLTRISTAR_OpenAndFill</c> filled, or
+      /// <see cref="OutRange.Empty"/> when this handle came from a plain open
+      /// (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal CDLTRISTAR_Stream( CDLTRISTAR_Stream other )
+      {
+         this.core = other.core;
+         this.BodyPeriodTotal = other.BodyPeriodTotal;
+         this.lag1_inOpen = other.lag1_inOpen;
+         this.lag2_inOpen = other.lag2_inOpen;
+         this.lag1_inHigh = other.lag1_inHigh;
+         this.lag2_inHigh = other.lag2_inHigh;
+         this.lag1_inLow = other.lag1_inLow;
+         this.lag2_inLow = other.lag2_inLow;
+         this.lag1_inClose = other.lag1_inClose;
+         this.lag2_inClose = other.lag2_inClose;
+         this.ringPos_BodyTrailingIdx = other.ringPos_BodyTrailingIdx;
+         this.ringCap_BodyTrailingIdx = other.ringCap_BodyTrailingIdx;
+         this.ring_BodyTrailingIdx_inOpen = new double[other.ring_BodyTrailingIdx_inOpen.Length];
+         Array.Copy( other.ring_BodyTrailingIdx_inOpen, this.ring_BodyTrailingIdx_inOpen, other.ring_BodyTrailingIdx_inOpen.Length );
+         this.ring_BodyTrailingIdx_inHigh = new double[other.ring_BodyTrailingIdx_inHigh.Length];
+         Array.Copy( other.ring_BodyTrailingIdx_inHigh, this.ring_BodyTrailingIdx_inHigh, other.ring_BodyTrailingIdx_inHigh.Length );
+         this.ring_BodyTrailingIdx_inLow = new double[other.ring_BodyTrailingIdx_inLow.Length];
+         Array.Copy( other.ring_BodyTrailingIdx_inLow, this.ring_BodyTrailingIdx_inLow, other.ring_BodyTrailingIdx_inLow.Length );
+         this.ring_BodyTrailingIdx_inClose = new double[other.ring_BodyTrailingIdx_inClose.Length];
+         Array.Copy( other.ring_BodyTrailingIdx_inClose, this.ring_BodyTrailingIdx_inClose, other.ring_BodyTrailingIdx_inClose.Length );
+         this.cs_BodyDoji_rangeType = other.cs_BodyDoji_rangeType;
+         this.cs_BodyDoji_avgPeriod = other.cs_BodyDoji_avgPeriod;
+         this.cs_BodyDoji_factor = other.cs_BodyDoji_factor;
+         this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( CDLTRISTAR_Stream other )
+      {
+         this.core = other.core;
+         this.BodyPeriodTotal = other.BodyPeriodTotal;
+         this.lag1_inOpen = other.lag1_inOpen;
+         this.lag2_inOpen = other.lag2_inOpen;
+         this.lag1_inHigh = other.lag1_inHigh;
+         this.lag2_inHigh = other.lag2_inHigh;
+         this.lag1_inLow = other.lag1_inLow;
+         this.lag2_inLow = other.lag2_inLow;
+         this.lag1_inClose = other.lag1_inClose;
+         this.lag2_inClose = other.lag2_inClose;
+         this.ringPos_BodyTrailingIdx = other.ringPos_BodyTrailingIdx;
+         this.ringCap_BodyTrailingIdx = other.ringCap_BodyTrailingIdx;
+         if( this.ring_BodyTrailingIdx_inOpen.Length != other.ring_BodyTrailingIdx_inOpen.Length ) {
+            this.ring_BodyTrailingIdx_inOpen = new double[other.ring_BodyTrailingIdx_inOpen.Length];
+         }
+         Array.Copy( other.ring_BodyTrailingIdx_inOpen, this.ring_BodyTrailingIdx_inOpen, other.ring_BodyTrailingIdx_inOpen.Length );
+         if( this.ring_BodyTrailingIdx_inHigh.Length != other.ring_BodyTrailingIdx_inHigh.Length ) {
+            this.ring_BodyTrailingIdx_inHigh = new double[other.ring_BodyTrailingIdx_inHigh.Length];
+         }
+         Array.Copy( other.ring_BodyTrailingIdx_inHigh, this.ring_BodyTrailingIdx_inHigh, other.ring_BodyTrailingIdx_inHigh.Length );
+         if( this.ring_BodyTrailingIdx_inLow.Length != other.ring_BodyTrailingIdx_inLow.Length ) {
+            this.ring_BodyTrailingIdx_inLow = new double[other.ring_BodyTrailingIdx_inLow.Length];
+         }
+         Array.Copy( other.ring_BodyTrailingIdx_inLow, this.ring_BodyTrailingIdx_inLow, other.ring_BodyTrailingIdx_inLow.Length );
+         if( this.ring_BodyTrailingIdx_inClose.Length != other.ring_BodyTrailingIdx_inClose.Length ) {
+            this.ring_BodyTrailingIdx_inClose = new double[other.ring_BodyTrailingIdx_inClose.Length];
+         }
+         Array.Copy( other.ring_BodyTrailingIdx_inClose, this.ring_BodyTrailingIdx_inClose, other.ring_BodyTrailingIdx_inClose.Length );
+         this.cs_BodyDoji_rangeType = other.cs_BodyDoji_rangeType;
+         this.cs_BodyDoji_avgPeriod = other.cs_BodyDoji_avgPeriod;
+         this.cs_BodyDoji_factor = other.cs_BodyDoji_factor;
+         this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
+      }
+
+      /* Peek's reusable scratch — one per thread, see CopyFrom. */
+      [ThreadStatic] private static CDLTRISTAR_Stream? peekScratch;
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inOpen">Open price of each bar.</param>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <param name="inClose">Close price of each bar.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public int Update( double inOpen, double inHigh, double inLow, double inClose )
+      {
+         core.CDLTRISTAR_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         return cur_outInteger;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a scratch handle held per thread and reused, so the copy
+      /// allocates nothing after the first peek of this indicator on this thread.
+      /// That scratch is retained for the life of the thread.</para>
+      /// </remarks>
+      /// <param name="inOpen">Open price of each bar.</param>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <param name="inClose">Close price of each bar.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public int Peek( double inOpen, double inHigh, double inLow, double inClose )
+      {
+         CDLTRISTAR_Stream? scratch = peekScratch;
+         if( scratch is null ) {
+            scratch = new CDLTRISTAR_Stream(this);
+            peekScratch = scratch;
+         } else {
+            scratch.CopyFrom(this);
+         }
+         core.CDLTRISTAR_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         return scratch.cur_outInteger;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public int Value => cur_outInteger;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public CDLTRISTAR_Stream Clone()
+      {
+         return new CDLTRISTAR_Stream(this);
+      }
+   }
+
+   internal void CDLTRISTAR_StreamStep( CDLTRISTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   {
+      int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
+      int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
+      double BodyDoji_factor = sp.cs_BodyDoji_factor;
+      if( sp.ringCap_BodyTrailingIdx == 0 ) {
+         sp.ring_BodyTrailingIdx_inOpen[0] = inOpen;
+         sp.ring_BodyTrailingIdx_inHigh[0] = inHigh;
+         sp.ring_BodyTrailingIdx_inLow[0] = inLow;
+         sp.ring_BodyTrailingIdx_inClose[0] = inClose;
+      }
+      if( Math.Abs(sp.lag2_inClose - sp.lag2_inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (sp.BodyPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(sp.lag2_inClose - sp.lag2_inOpen)) : ((BodyDoji_rangeType == 1) ? (sp.lag2_inHigh - sp.lag2_inLow) : ((BodyDoji_rangeType == 2) ? ((sp.lag2_inHigh - (((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inClose) : (sp.lag2_inOpen))) + ((((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inOpen) : (sp.lag2_inClose)) - sp.lag2_inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: doji */
+          Math.Abs(sp.lag1_inClose - sp.lag1_inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (sp.BodyPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(sp.lag2_inClose - sp.lag2_inOpen)) : ((BodyDoji_rangeType == 1) ? (sp.lag2_inHigh - sp.lag2_inLow) : ((BodyDoji_rangeType == 2) ? ((sp.lag2_inHigh - (((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inClose) : (sp.lag2_inOpen))) + ((((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inOpen) : (sp.lag2_inClose)) - sp.lag2_inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: doji */
+          Math.Abs(inClose - inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (sp.BodyPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(sp.lag2_inClose - sp.lag2_inOpen)) : ((BodyDoji_rangeType == 1) ? (sp.lag2_inHigh - sp.lag2_inLow) : ((BodyDoji_rangeType == 2) ? ((sp.lag2_inHigh - (((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inClose) : (sp.lag2_inOpen))) + ((((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inOpen) : (sp.lag2_inClose)) - sp.lag2_inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) )
+      {
+         /* 3rd: doji */
+         sp.cur_outInteger = 0;
+         if( (Math.Min(sp.lag1_inOpen, sp.lag1_inClose) > Math.Max(sp.lag2_inOpen, sp.lag2_inClose)) && /* 2nd gaps up */
+             Math.Max(inOpen, inClose) < Math.Max(sp.lag1_inOpen, sp.lag1_inClose) ) /* 3rd is not higher than 2nd */
+         {
+            sp.cur_outInteger = 0 - 100;
+         }
+         if( (Math.Max(sp.lag1_inOpen, sp.lag1_inClose) < Math.Min(sp.lag2_inOpen, sp.lag2_inClose)) && /* 2nd gaps down */
+             Math.Min(inOpen, inClose) > Math.Min(sp.lag1_inOpen, sp.lag1_inClose) ) /* 3rd is not lower than 2nd */
+         {
+            sp.cur_outInteger = 100;
+         }
+      } else {
+         sp.cur_outInteger = 0;
+      }
+      /* add the current range and subtract the first range: this is done after the pattern recognition
+       * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+       */
+      sp.BodyPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.Abs(sp.lag2_inClose - sp.lag2_inOpen)) : ((BodyDoji_rangeType == 1) ? (sp.lag2_inHigh - sp.lag2_inLow) : ((BodyDoji_rangeType == 2) ? ((sp.lag2_inHigh - (((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inClose) : (sp.lag2_inOpen))) + ((((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inOpen) : (sp.lag2_inClose)) - sp.lag2_inLow)) : 0.0))) - ((BodyDoji_rangeType == 0) ? (Math.Abs(sp.ring_BodyTrailingIdx_inClose[sp.ringPos_BodyTrailingIdx] - sp.ring_BodyTrailingIdx_inOpen[sp.ringPos_BodyTrailingIdx])) : ((BodyDoji_rangeType == 1) ? (sp.ring_BodyTrailingIdx_inHigh[sp.ringPos_BodyTrailingIdx] - sp.ring_BodyTrailingIdx_inLow[sp.ringPos_BodyTrailingIdx]) : ((BodyDoji_rangeType == 2) ? ((sp.ring_BodyTrailingIdx_inHigh[sp.ringPos_BodyTrailingIdx] - (((sp.ring_BodyTrailingIdx_inClose[sp.ringPos_BodyTrailingIdx]) >= (sp.ring_BodyTrailingIdx_inOpen[sp.ringPos_BodyTrailingIdx])) ? (sp.ring_BodyTrailingIdx_inClose[sp.ringPos_BodyTrailingIdx]) : (sp.ring_BodyTrailingIdx_inOpen[sp.ringPos_BodyTrailingIdx]))) + ((((sp.ring_BodyTrailingIdx_inClose[sp.ringPos_BodyTrailingIdx]) >= (sp.ring_BodyTrailingIdx_inOpen[sp.ringPos_BodyTrailingIdx])) ? (sp.ring_BodyTrailingIdx_inOpen[sp.ringPos_BodyTrailingIdx]) : (sp.ring_BodyTrailingIdx_inClose[sp.ringPos_BodyTrailingIdx])) - sp.ring_BodyTrailingIdx_inLow[sp.ringPos_BodyTrailingIdx])) : 0.0)));
+      sp.lag2_inOpen = sp.lag1_inOpen;
+      sp.lag1_inOpen = inOpen;
+      sp.lag2_inHigh = sp.lag1_inHigh;
+      sp.lag1_inHigh = inHigh;
+      sp.lag2_inLow = sp.lag1_inLow;
+      sp.lag1_inLow = inLow;
+      sp.lag2_inClose = sp.lag1_inClose;
+      sp.lag1_inClose = inClose;
+      sp.ring_BodyTrailingIdx_inOpen[sp.ringPos_BodyTrailingIdx] = inOpen;
+      sp.ring_BodyTrailingIdx_inHigh[sp.ringPos_BodyTrailingIdx] = inHigh;
+      sp.ring_BodyTrailingIdx_inLow[sp.ringPos_BodyTrailingIdx] = inLow;
+      sp.ring_BodyTrailingIdx_inClose[sp.ringPos_BodyTrailingIdx] = inClose;
+      sp.ringPos_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx + 1;
+      if( sp.ringPos_BodyTrailingIdx >= sp.ringCap_BodyTrailingIdx ) {
+         sp.ringPos_BodyTrailingIdx = 0;
+      }
+   }
+
+   private RetCode CDLTRISTAR_OpenCore( CDLTRISTAR_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      double BodyPeriodTotal = 0;
+      int i = 0;
+      int outIdx = 0;
+      int BodyTrailingIdx = 0;
+      int lookbackTotal = 0;
+      int historyLen = inOpen.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 || inHigh.Length != inOpen.Length || inLow.Length != inOpen.Length || inClose.Length != inOpen.Length ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      int BodyDoji_rangeType = (int)this.candleSettings[(int)CandleSettingType.BodyDoji].rangeType;
+      int BodyDoji_avgPeriod = this.candleSettings[(int)CandleSettingType.BodyDoji].avgPeriod;
+      double BodyDoji_factor = this.candleSettings[(int)CandleSettingType.BodyDoji].factor;
+      /* Identify the minimum number of price bar needed
+       * to calculate at least one output.
+       */
+      lookbackTotal = CDLTRISTAR_Lookback();
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      /* Do the calculation using tight loops. */
+      /* Add-up the initial period, except for the last value. */
+      BodyPeriodTotal = 0;
+      BodyTrailingIdx = startIdx - 2 - BodyDoji_avgPeriod;
+      i = BodyTrailingIdx;
+      while( i < startIdx - 2 ) {
+         BodyPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyDoji_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)));
+         i += 1;
+      }
+      /* Proceed with the calculation for the requested range.
+       * Must have:
+       * - 3 consecutive doji days
+       * - the second doji is a star
+       * The meaning of "doji" is specified with TA_SetCandleSettings
+       * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish
+       */
+      i = startIdx;
+      outIdx = 0;
+      do {
+         if( Math.Abs(inClose[i - 2] - inOpen[i - 2]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyDoji_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: doji */
+             Math.Abs(inClose[i - 1] - inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyDoji_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: doji */
+             Math.Abs(inClose[i] - inOpen[i]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyDoji_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) )
+         {
+            /* 3rd: doji */
+            outInteger[outIdx * outStride] = 0;
+            if( (Math.Min(inOpen[i - 1], inClose[i - 1]) > Math.Max(inOpen[i - 2], inClose[i - 2])) && /* 2nd gaps up */
+                Math.Max(inOpen[i], inClose[i]) < Math.Max(inOpen[i - 1], inClose[i - 1]) ) /* 3rd is not higher than 2nd */
+            {
+               outInteger[outIdx * outStride] = 0 - 100;
+            }
+            if( (Math.Max(inOpen[i - 1], inClose[i - 1]) < Math.Min(inOpen[i - 2], inClose[i - 2])) && /* 2nd gaps down */
+                Math.Min(inOpen[i], inClose[i]) > Math.Min(inOpen[i - 1], inClose[i - 1]) ) /* 3rd is not lower than 2nd */
+            {
+               outInteger[outIdx * outStride] = 100;
+            }
+            outIdx += 1;
+         } else {
+            outInteger[outIdx++ * outStride] = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyDoji_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i - 2] - (((inClose[i - 2]) >= (inOpen[i - 2])) ? (inClose[i - 2]) : (inOpen[i - 2]))) + ((((inClose[i - 2]) >= (inOpen[i - 2])) ? (inOpen[i - 2]) : (inClose[i - 2])) - inLow[i - 2])) : 0.0))) - ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx])) : ((BodyDoji_rangeType == 1) ? (inHigh[BodyTrailingIdx] - inLow[BodyTrailingIdx]) : ((BodyDoji_rangeType == 2) ? ((inHigh[BodyTrailingIdx] - (((inClose[BodyTrailingIdx]) >= (inOpen[BodyTrailingIdx])) ? (inClose[BodyTrailingIdx]) : (inOpen[BodyTrailingIdx]))) + ((((inClose[BodyTrailingIdx]) >= (inOpen[BodyTrailingIdx])) ? (inOpen[BodyTrailingIdx]) : (inClose[BodyTrailingIdx])) - inLow[BodyTrailingIdx])) : 0.0)));
+         i += 1;
+         BodyTrailingIdx += 1;
+      } while( i <= endIdx );
+      /* All done. Indicate the output limits and return. */
+      outNBElement = outIdx;
+      outBegIdx = startIdx;
+      /* Capture the live batch state into the handle. */
+      int cap_BodyTrailingIdx = i - BodyTrailingIdx;
+      if( cap_BodyTrailingIdx < 0 || cap_BodyTrailingIdx > historyLen ) {
+         return RetCode.InternalError;
+      }
+      int allocN_BodyTrailingIdx = (cap_BodyTrailingIdx > 0)? cap_BodyTrailingIdx : 1;
+      double[] capRing_BodyTrailingIdx_inOpen = new double[allocN_BodyTrailingIdx];
+      Array.Copy(inOpen, historyLen - cap_BodyTrailingIdx, capRing_BodyTrailingIdx_inOpen, 0, cap_BodyTrailingIdx);
+      double[] capRing_BodyTrailingIdx_inHigh = new double[allocN_BodyTrailingIdx];
+      Array.Copy(inHigh, historyLen - cap_BodyTrailingIdx, capRing_BodyTrailingIdx_inHigh, 0, cap_BodyTrailingIdx);
+      double[] capRing_BodyTrailingIdx_inLow = new double[allocN_BodyTrailingIdx];
+      Array.Copy(inLow, historyLen - cap_BodyTrailingIdx, capRing_BodyTrailingIdx_inLow, 0, cap_BodyTrailingIdx);
+      double[] capRing_BodyTrailingIdx_inClose = new double[allocN_BodyTrailingIdx];
+      Array.Copy(inClose, historyLen - cap_BodyTrailingIdx, capRing_BodyTrailingIdx_inClose, 0, cap_BodyTrailingIdx);
+      sp.BodyPeriodTotal = BodyPeriodTotal;
+      sp.lag1_inOpen = inOpen[historyLen - 1];
+      sp.lag2_inOpen = inOpen[historyLen - 2];
+      sp.lag1_inHigh = inHigh[historyLen - 1];
+      sp.lag2_inHigh = inHigh[historyLen - 2];
+      sp.lag1_inLow = inLow[historyLen - 1];
+      sp.lag2_inLow = inLow[historyLen - 2];
+      sp.lag1_inClose = inClose[historyLen - 1];
+      sp.lag2_inClose = inClose[historyLen - 2];
+      sp.ringPos_BodyTrailingIdx = 0;
+      sp.ringCap_BodyTrailingIdx = cap_BodyTrailingIdx;
+      sp.ring_BodyTrailingIdx_inOpen = capRing_BodyTrailingIdx_inOpen;
+      sp.ring_BodyTrailingIdx_inHigh = capRing_BodyTrailingIdx_inHigh;
+      sp.ring_BodyTrailingIdx_inLow = capRing_BodyTrailingIdx_inLow;
+      sp.ring_BodyTrailingIdx_inClose = capRing_BodyTrailingIdx_inClose;
+      sp.cs_BodyDoji_rangeType = BodyDoji_rangeType;
+      sp.cs_BodyDoji_avgPeriod = BodyDoji_avgPeriod;
+      sp.cs_BodyDoji_factor = BodyDoji_factor;
+      sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode CDLTRISTAR_OpenBody( CDLTRISTAR_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx )
+   {
+      int[] sink_outInteger = new int[1];
+      return CDLTRISTAR_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
+   }
+
+   private RetCode CDLTRISTAR_OpenAndFillBody( CDLTRISTAR_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, out int outBegIdx, out int outNBElement, int[] outInteger )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outInteger, inOpen) || ReferenceEquals(outInteger, inHigh) || ReferenceEquals(outInteger, inLow) || ReferenceEquals(outInteger, inClose) ) {
+         return RetCode.BadParam;
+      }
+      return CDLTRISTAR_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
+   }
+
+   private RetCode CDLTRISTAR_OpenAndFillInternalBody( CDLTRISTAR_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger )
+   {
+      return CDLTRISTAR_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+   }
+
+   /* CDLTRISTAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal CDLTRISTAR_Stream CDLTRISTAR_OpenAndFillInternal( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger )
+   {
+      CDLTRISTAR_Stream sp = new CDLTRISTAR_Stream(this);
+      RetCode retCode = CDLTRISTAR_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("CDLTRISTAR", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind CDLTRISTAR_Open (composition seam). */
+   internal CDLTRISTAR_Stream CDLTRISTAR_OpenInternal( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx )
+   {
+      CDLTRISTAR_Stream sp = new CDLTRISTAR_Stream(this);
+      RetCode retCode = CDLTRISTAR_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("CDLTRISTAR", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>CDLTRISTAR</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="CDLTRISTAR_Stream.Value"/> starts at the last
+   /// history bar's value — bit-identical to what <c>CDLTRISTAR</c> reports for
+   /// that bar.</para>
+   /// <para>The history must hold at least <c>CDLTRISTAR_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>CDLTRISTAR_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CDLTRISTAR_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public CDLTRISTAR_Stream CDLTRISTAR_Open( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose )
+   {
+      return CDLTRISTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+   }
+
+   /// <summary><c>CDLTRISTAR_Open</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>CDLTRISTAR</c> produces
+   /// over the same series, so no separate batch call is needed for the warm-up
+   /// plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - CDLTRISTAR_Lookback(...)</c>
+   /// values and must not alias the inputs or each other — this path writes the
+   /// outputs and then reads the input tail to seed its rings, so the batch
+   /// tier's in-place allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="CDLTRISTAR_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="outInteger">+100 (bullish, star gapped down), -100 (bearish, star gapped up), or 0
+   /// when no pattern. Both signs are emitted. Must hold at least <c>historyLen
+   /// - CDLTRISTAR_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CDLTRISTAR_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public CDLTRISTAR_Stream CDLTRISTAR_OpenAndFill( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int[] outInteger )
+   {
+      CDLTRISTAR_Stream sp = new CDLTRISTAR_Stream(this);
+      RetCode retCode = CDLTRISTAR_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("CDLTRISTAR", "openAndFill", retCode);
+   }
 }

@@ -388,4 +388,412 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>WMA</c> stream: one value per closed bar, bit-identical to
+   /// <c>WMA</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.WMA_Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class WMA_Stream
+   {
+      internal Core core;
+      internal int optInTimePeriod;
+      internal double periodSum;
+      internal double periodSub;
+      internal double trailingValue;
+      internal double divider;
+      internal int ringPos_trailingIdx;
+      internal int ringCap_trailingIdx;
+      internal double[] ring_trailingIdx_inReal = [];
+      internal double cur_outReal;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal WMA_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>WMA_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
+      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal WMA_Stream( WMA_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.periodSum = other.periodSum;
+         this.periodSub = other.periodSub;
+         this.trailingValue = other.trailingValue;
+         this.divider = other.divider;
+         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
+         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
+         this.ring_trailingIdx_inReal = new double[other.ring_trailingIdx_inReal.Length];
+         Array.Copy( other.ring_trailingIdx_inReal, this.ring_trailingIdx_inReal, other.ring_trailingIdx_inReal.Length );
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( WMA_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.periodSum = other.periodSum;
+         this.periodSub = other.periodSub;
+         this.trailingValue = other.trailingValue;
+         this.divider = other.divider;
+         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
+         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
+         if( this.ring_trailingIdx_inReal.Length != other.ring_trailingIdx_inReal.Length ) {
+            this.ring_trailingIdx_inReal = new double[other.ring_trailingIdx_inReal.Length];
+         }
+         Array.Copy( other.ring_trailingIdx_inReal, this.ring_trailingIdx_inReal, other.ring_trailingIdx_inReal.Length );
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inReal">Source price/data series.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public double Update( double inReal )
+      {
+         core.WMA_StreamStep(this, inReal);
+         return cur_outReal;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a throwaway copy, which for this handle's shape is cheaper than
+      /// reusing one.</para>
+      /// </remarks>
+      /// <param name="inReal">Source price/data series.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public double Peek( double inReal )
+      {
+         WMA_Stream scratch = new WMA_Stream(this);
+         core.WMA_StreamStep(scratch, inReal);
+         return scratch.cur_outReal;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public double Value => cur_outReal;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public WMA_Stream Clone()
+      {
+         return new WMA_Stream(this);
+      }
+   }
+
+   internal void WMA_StreamStep( WMA_Stream sp, double inReal )
+   {
+      double tempReal = 0.0;
+      if( sp.optInTimePeriod == 1 ) {
+         sp.cur_outReal = inReal;
+         return ;
+      }
+      if( sp.ringCap_trailingIdx == 0 ) {
+         sp.ring_trailingIdx_inReal[0] = inReal;
+      }
+      /* Add the current price bar to the sum
+       * who are carried through the iterations.
+       */
+      tempReal = inReal;
+      sp.periodSub += tempReal;
+      sp.periodSub -= sp.trailingValue;
+      sp.periodSum += tempReal * sp.optInTimePeriod;
+      /* Save the trailing value for being substract at
+       * the next iteration.
+       * (must be saved here just in case outReal and
+       *  inReal are the same buffer).
+       */
+      sp.trailingValue = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
+      /* Calculate the WMA for this price bar. */
+      sp.cur_outReal = sp.periodSum / sp.divider;
+      /* Prepare the periodSum for the next iteration. */
+      sp.periodSum -= sp.periodSub;
+      sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
+      sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
+      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+         sp.ringPos_trailingIdx = 0;
+      }
+   }
+
+   private RetCode WMA_OpenCore( WMA_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      int inIdx = 0;
+      int outIdx = 0;
+      int i = 0;
+      int trailingIdx = 0;
+      double periodSum = 0;
+      double periodSub = 0;
+      double tempReal = 0;
+      double trailingValue = 0;
+      double divider = 0;
+      int lookbackTotal = 0;
+      int historyLen = inReal.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInTimePeriod == int.MinValue ) {
+         optInTimePeriod = 30;
+      } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( optInTimePeriod == 1 ) {
+         if( historyLen < WMA_Lookback(optInTimePeriod) + 1 ) {
+            return RetCode.OutOfRangeEndIndex;
+         }
+         sp.optInTimePeriod = optInTimePeriod;
+         sp.periodSum = 0.0;
+         sp.periodSub = 0.0;
+         sp.trailingValue = 0.0;
+         sp.divider = 0.0;
+         sp.ringPos_trailingIdx = 0;
+         sp.ringCap_trailingIdx = 0;
+         sp.ring_trailingIdx_inReal = new double[1];
+         int fillLb = WMA_Lookback(optInTimePeriod);
+         outBegIdx = fillLb;
+         outNBElement = historyLen - fillLb;
+         if( outStride == 0 ) {
+            outReal[0] = inReal[historyLen - 1];
+         } else {
+            for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+               outReal[fillIdx] = inReal[fillLb + fillIdx];
+            }
+         }
+         sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+         return RetCode.Success;
+      }
+      lookbackTotal = optInTimePeriod - 1;
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      /* Weighted denominator 1+2+...+n = n(n+1)/2. Computed in double: the
+       * int product n*(n+1) overflows int32 at n>=46341 (#142).
+       */
+      divider = (double)optInTimePeriod * (optInTimePeriod + 1) / 2.0;
+      /* The algo used here use a very basic property of
+       * multiplication/addition: (x*2) = x+x
+       *
+       * As an example, a 3 period weighted can be
+       * interpreted in two way:
+       *  (x1*1)+(x2*2)+(x3*3)
+       *      OR
+       *  x1+x2+x2+x3+x3+x3 (this is the periodSum)
+       *
+       * When you move forward in the time serie
+       * you can quickly adjust the periodSum for the
+       * period by substracting:
+       *   x1+x2+x3 (This is the periodSub)
+       * Making the new periodSum equals to:
+       *   x2+x3+x3
+       *
+       * You can then add the new price bar
+       * which is x4+x4+x4 giving:
+       *   x2+x3+x3+x4+x4+x4
+       *
+       * At this point one iteration is completed and you can
+       * see that we are back to the step 1 of this example.
+       *
+       * Why making it so un-intuitive? The number of memory
+       * access and floating point operations are kept to a
+       * minimum with this algo.
+       */
+      outIdx = 0;
+      trailingIdx = startIdx - lookbackTotal;
+      /* Evaluate the initial periodSum/periodSub and trailingValue. */
+      periodSub = (double)0.0;
+      periodSum = periodSub;
+      inIdx = trailingIdx;
+      i = 1;
+      while( inIdx < startIdx ) {
+         tempReal = inReal[inIdx++];
+         periodSub += tempReal;
+         periodSum += tempReal * i;
+         i += 1;
+      }
+      trailingValue = 0.0;
+      /* Tight loop for the requested range. */
+      while( inIdx <= endIdx ) {
+         /* Add the current price bar to the sum
+          * who are carried through the iterations.
+          */
+         tempReal = inReal[inIdx++];
+         periodSub += tempReal;
+         periodSub -= trailingValue;
+         periodSum += tempReal * optInTimePeriod;
+         /* Save the trailing value for being substract at
+          * the next iteration.
+          * (must be saved here just in case outReal and
+          *  inReal are the same buffer).
+          */
+         trailingValue = inReal[trailingIdx++];
+         /* Calculate the WMA for this price bar. */
+         outReal[outIdx++ * outStride] = periodSum / divider;
+         /* Prepare the periodSum for the next iteration. */
+         periodSum -= periodSub;
+      }
+      /* Set output limits. */
+      outNBElement = outIdx;
+      outBegIdx = startIdx;
+      /* Capture the live batch state into the handle. */
+      int cap_trailingIdx = inIdx - trailingIdx;
+      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+         return RetCode.InternalError;
+      }
+      int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
+      double[] capRing_trailingIdx_inReal = new double[allocN_trailingIdx];
+      Array.Copy(inReal, historyLen - cap_trailingIdx, capRing_trailingIdx_inReal, 0, cap_trailingIdx);
+      sp.optInTimePeriod = optInTimePeriod;
+      sp.periodSum = periodSum;
+      sp.periodSub = periodSub;
+      sp.trailingValue = trailingValue;
+      sp.divider = divider;
+      sp.ringPos_trailingIdx = 0;
+      sp.ringCap_trailingIdx = cap_trailingIdx;
+      sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
+      sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode WMA_OpenBody( WMA_Stream sp, double[] inReal, int startIdx, int optInTimePeriod )
+   {
+      double[] sink_outReal = new double[1];
+      return WMA_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+   }
+
+   private RetCode WMA_OpenAndFillBody( WMA_Stream sp, double[] inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outReal, inReal) ) {
+         return RetCode.BadParam;
+      }
+      return WMA_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+   }
+
+   private RetCode WMA_OpenAndFillInternalBody( WMA_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      return WMA_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+   }
+
+   /* WMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal WMA_Stream WMA_OpenAndFillInternal( double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      WMA_Stream sp = new WMA_Stream(this);
+      RetCode retCode = WMA_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("WMA", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind WMA_Open (composition seam). */
+   internal WMA_Stream WMA_OpenInternal( double[] inReal, int startIdx, int optInTimePeriod )
+   {
+      WMA_Stream sp = new WMA_Stream(this);
+      RetCode retCode = WMA_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("WMA", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>WMA</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="WMA_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>WMA</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>WMA_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>WMA_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inReal">Source price/data series. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="WMA_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>WMA_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public WMA_Stream WMA_Open( double[] inReal, int optInTimePeriod )
+   {
+      return WMA_OpenInternal(inReal, 0, optInTimePeriod);
+   }
+
+   /// <summary><c>WMA_Open</c> that also fills the output array(s) over the whole history
+   /// in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>WMA</c> produces over the
+   /// same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - WMA_Lookback(...)</c> values and
+   /// must not alias the inputs or each other — this path writes the outputs and
+   /// then reads the input tail to seed its rings, so the batch tier's in-place
+   /// allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="WMA_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inReal">Source price/data series. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="WMA_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="outReal">Weighted moving average series. Must hold at least <c>historyLen -
+   /// WMA_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>WMA_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public WMA_Stream WMA_OpenAndFill( double[] inReal, int optInTimePeriod, double[] outReal )
+   {
+      WMA_Stream sp = new WMA_Stream(this);
+      RetCode retCode = WMA_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("WMA", "openAndFill", retCode);
+   }
 }

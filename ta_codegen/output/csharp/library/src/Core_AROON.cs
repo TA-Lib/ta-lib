@@ -401,4 +401,470 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>One <c>AROON</c> output set, in batch output order.</summary>
+   /// <remarks>
+   /// <para>Equality is the compiler-generated record-struct equality, which compares
+   /// the components with <c>==</c>: <c>NaN</c> does not equal <c>NaN</c>, and
+   /// <c>0.0</c> equals <c>-0.0</c>. That is deliberately <em>not</em> the Java
+   /// <c>Value</c> contract, which compares bitwise — compare
+   /// <see cref="System.BitConverter.DoubleToInt64Bits(double)"/> per component
+   /// when bit-level identity is what you mean.</para>
+   /// </remarks>
+   /// <param name="AroonDown">Recency of the lowest low (100 = it is the current bar, decaying as it
+   /// ages)</param>
+   /// <param name="AroonUp">Recency of the highest high (100 = it is the current bar, decaying as it
+   /// ages)</param>
+   public readonly record struct AROON_Value( double AroonDown, double AroonUp );
+
+   /// <summary>A live <c>AROON</c> stream: one value per closed bar, bit-identical to
+   /// <c>AROON</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.AROON_Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class AROON_Stream
+   {
+      internal Core core;
+      internal int optInTimePeriod;
+      internal double lowest;
+      internal double highest;
+      internal double factor;
+      internal int trailingIdx;
+      internal int lowestIdx;
+      internal int highestIdx;
+      internal int i;
+      internal int today;
+      internal int xMask;
+      internal double[] x_inHigh = [];
+      internal double[] x_inLow = [];
+      internal double cur_outAroonDown;
+      internal double cur_outAroonUp;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal AROON_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>AROON_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
+      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal AROON_Stream( AROON_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.lowest = other.lowest;
+         this.highest = other.highest;
+         this.factor = other.factor;
+         this.trailingIdx = other.trailingIdx;
+         this.lowestIdx = other.lowestIdx;
+         this.highestIdx = other.highestIdx;
+         this.i = other.i;
+         this.today = other.today;
+         this.xMask = other.xMask;
+         this.x_inHigh = new double[other.x_inHigh.Length];
+         Array.Copy( other.x_inHigh, this.x_inHigh, other.x_inHigh.Length );
+         this.x_inLow = new double[other.x_inLow.Length];
+         Array.Copy( other.x_inLow, this.x_inLow, other.x_inLow.Length );
+         this.cur_outAroonDown = other.cur_outAroonDown;
+         this.cur_outAroonUp = other.cur_outAroonUp;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( AROON_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.lowest = other.lowest;
+         this.highest = other.highest;
+         this.factor = other.factor;
+         this.trailingIdx = other.trailingIdx;
+         this.lowestIdx = other.lowestIdx;
+         this.highestIdx = other.highestIdx;
+         this.i = other.i;
+         this.today = other.today;
+         this.xMask = other.xMask;
+         if( this.x_inHigh.Length != other.x_inHigh.Length ) {
+            this.x_inHigh = new double[other.x_inHigh.Length];
+         }
+         Array.Copy( other.x_inHigh, this.x_inHigh, other.x_inHigh.Length );
+         if( this.x_inLow.Length != other.x_inLow.Length ) {
+            this.x_inLow = new double[other.x_inLow.Length];
+         }
+         Array.Copy( other.x_inLow, this.x_inLow, other.x_inLow.Length );
+         this.cur_outAroonDown = other.cur_outAroonDown;
+         this.cur_outAroonUp = other.cur_outAroonUp;
+         this.fillRange = other.fillRange;
+      }
+
+      /* Peek's reusable scratch — one per thread, see CopyFrom. */
+      [ThreadStatic] private static AROON_Stream? peekScratch;
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public AROON_Value Update( double inHigh, double inLow )
+      {
+         core.AROON_StreamStep(this, inHigh, inLow);
+         return new AROON_Value(cur_outAroonDown, cur_outAroonUp);
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a scratch handle held per thread and reused, so the copy
+      /// allocates nothing after the first peek of this indicator on this thread.
+      /// That scratch is retained for the life of the thread.</para>
+      /// </remarks>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public AROON_Value Peek( double inHigh, double inLow )
+      {
+         AROON_Stream? scratch = peekScratch;
+         if( scratch is null ) {
+            scratch = new AROON_Stream(this);
+            peekScratch = scratch;
+         } else {
+            scratch.CopyFrom(this);
+         }
+         core.AROON_StreamStep(scratch, inHigh, inLow);
+         return new AROON_Value(scratch.cur_outAroonDown, scratch.cur_outAroonUp);
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public AROON_Value Value => new AROON_Value(cur_outAroonDown, cur_outAroonUp);
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public AROON_Stream Clone()
+      {
+         return new AROON_Stream(this);
+      }
+   }
+
+   internal void AROON_StreamStep( AROON_Stream sp, double inHigh, double inLow )
+   {
+      double tmp = 0.0;
+      if( sp.today >= 1073741824 ) {
+         int rebaseShift = sp.trailingIdx & ~sp.xMask;
+         sp.today -= rebaseShift;
+         sp.trailingIdx -= rebaseShift;
+         sp.highestIdx -= rebaseShift;
+         sp.i -= rebaseShift;
+         sp.lowestIdx -= rebaseShift;
+      }
+      sp.x_inHigh[sp.today & sp.xMask] = inHigh;
+      sp.x_inLow[sp.today & sp.xMask] = inLow;
+      /* Keep track of the lowestIdx */
+      tmp = sp.x_inLow[sp.today & sp.xMask];
+      if( sp.lowestIdx < sp.trailingIdx ) {
+         sp.lowestIdx = sp.trailingIdx;
+         sp.lowest = sp.x_inLow[sp.lowestIdx & sp.xMask];
+         sp.i = sp.lowestIdx;
+         while( ++sp.i <= sp.today ) {
+            tmp = sp.x_inLow[sp.i & sp.xMask];
+            if( tmp <= sp.lowest ) {
+               sp.lowestIdx = sp.i;
+               sp.lowest = tmp;
+            }
+         }
+      } else if( tmp <= sp.lowest ) {
+         sp.lowestIdx = sp.today;
+         sp.lowest = tmp;
+      }
+      /* Keep track of the highestIdx */
+      tmp = sp.x_inHigh[sp.today & sp.xMask];
+      if( sp.highestIdx < sp.trailingIdx ) {
+         sp.highestIdx = sp.trailingIdx;
+         sp.highest = sp.x_inHigh[sp.highestIdx & sp.xMask];
+         sp.i = sp.highestIdx;
+         while( ++sp.i <= sp.today ) {
+            tmp = sp.x_inHigh[sp.i & sp.xMask];
+            if( tmp >= sp.highest ) {
+               sp.highestIdx = sp.i;
+               sp.highest = tmp;
+            }
+         }
+      } else if( tmp >= sp.highest ) {
+         sp.highestIdx = sp.today;
+         sp.highest = tmp;
+      }
+      /* Note: Do not forget that input and output buffer can be the same,
+       *       so writing to the output is the last thing being done here.
+       */
+      sp.cur_outAroonUp = sp.factor * (sp.optInTimePeriod - (sp.today - sp.highestIdx));
+      sp.cur_outAroonDown = sp.factor * (sp.optInTimePeriod - (sp.today - sp.lowestIdx));
+      sp.trailingIdx += 1;
+      sp.today += 1;
+   }
+
+   private RetCode AROON_OpenCore( AROON_Stream sp, double[] inHigh, double[] inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outAroonDown, double[] outAroonUp, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      double lowest = 0;
+      double highest = 0;
+      double tmp = 0;
+      double factor = 0;
+      int outIdx = 0;
+      int trailingIdx = 0;
+      int lowestIdx = 0;
+      int highestIdx = 0;
+      int today = 0;
+      int i = 0;
+      int historyLen = inHigh.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 || inLow.Length != inHigh.Length ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInTimePeriod == int.MinValue ) {
+         optInTimePeriod = 14;
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      /* This function is using a speed optimized algorithm
+       * for the min/max logic.
+       *
+       * You might want to first look at how TA_MIN/TA_MAX works
+       * and this function will become easier to understand.
+       */
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < optInTimePeriod ) {
+         startIdx = optInTimePeriod;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      /* Proceed with the calculation for the requested range.
+       * Note that this algorithm allows the input and
+       * output to be the same buffer.
+       */
+      outIdx = 0;
+      today = startIdx;
+      trailingIdx = startIdx - optInTimePeriod;
+      lowestIdx = 0 - 1;
+      highestIdx = 0 - 1;
+      lowest = 0.0;
+      highest = 0.0;
+      factor = (double)100.0 / (double)optInTimePeriod;
+      while( today <= endIdx ) {
+         /* Keep track of the lowestIdx */
+         tmp = inLow[today];
+         if( lowestIdx < trailingIdx ) {
+            lowestIdx = trailingIdx;
+            lowest = inLow[lowestIdx];
+            i = lowestIdx;
+            while( ++i <= today ) {
+               tmp = inLow[i];
+               if( tmp <= lowest ) {
+                  lowestIdx = i;
+                  lowest = tmp;
+               }
+            }
+         } else if( tmp <= lowest ) {
+            lowestIdx = today;
+            lowest = tmp;
+         }
+         /* Keep track of the highestIdx */
+         tmp = inHigh[today];
+         if( highestIdx < trailingIdx ) {
+            highestIdx = trailingIdx;
+            highest = inHigh[highestIdx];
+            i = highestIdx;
+            while( ++i <= today ) {
+               tmp = inHigh[i];
+               if( tmp >= highest ) {
+                  highestIdx = i;
+                  highest = tmp;
+               }
+            }
+         } else if( tmp >= highest ) {
+            highestIdx = today;
+            highest = tmp;
+         }
+         /* Note: Do not forget that input and output buffer can be the same,
+          *       so writing to the output is the last thing being done here.
+          */
+         outAroonUp[outIdx * outStride] = factor * (optInTimePeriod - (today - highestIdx));
+         outAroonDown[outIdx * outStride] = factor * (optInTimePeriod - (today - lowestIdx));
+         outIdx += 1;
+         trailingIdx += 1;
+         today += 1;
+      }
+      /* Keep the outBegIdx relative to the
+       * caller input before returning.
+       */
+      outBegIdx = startIdx;
+      outNBElement = outIdx;
+      /* Capture the live batch state into the handle. */
+      int capX = today - trailingIdx + 1;
+      if( capX < 1 || capX > historyLen ) {
+         return RetCode.InternalError;
+      }
+      int physX = 1;
+      while( physX < capX ) {
+         physX <<= 1;
+      }
+      double[] capX_inHigh = new double[physX];
+      double[] capX_inLow = new double[physX];
+      for( int fillJ = historyLen - capX; fillJ < historyLen; fillJ++ ) {
+         capX_inHigh[fillJ & (physX - 1)] = inHigh[fillJ];
+         capX_inLow[fillJ & (physX - 1)] = inLow[fillJ];
+      }
+      sp.optInTimePeriod = optInTimePeriod;
+      sp.lowest = lowest;
+      sp.highest = highest;
+      sp.factor = factor;
+      sp.trailingIdx = trailingIdx;
+      sp.lowestIdx = lowestIdx;
+      sp.highestIdx = highestIdx;
+      sp.i = i;
+      sp.today = today;
+      sp.xMask = physX - 1;
+      sp.x_inHigh = capX_inHigh;
+      sp.x_inLow = capX_inLow;
+      sp.cur_outAroonDown = outAroonDown[(outNBElement - 1) * outStride];
+      sp.cur_outAroonUp = outAroonUp[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode AROON_OpenBody( AROON_Stream sp, double[] inHigh, double[] inLow, int startIdx, int optInTimePeriod )
+   {
+      double[] sink_outAroonDown = new double[1];
+      double[] sink_outAroonUp = new double[1];
+      return AROON_OpenCore( sp, inHigh, inLow, startIdx, optInTimePeriod, out _, out _, sink_outAroonDown, sink_outAroonUp, 0 );
+   }
+
+   private RetCode AROON_OpenAndFillBody( AROON_Stream sp, double[] inHigh, double[] inLow, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outAroonDown, double[] outAroonUp )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outAroonDown, inHigh) || ReferenceEquals(outAroonDown, inLow) || ReferenceEquals(outAroonUp, inHigh) || ReferenceEquals(outAroonUp, inLow) || ReferenceEquals(outAroonDown, outAroonUp) ) {
+         return RetCode.BadParam;
+      }
+      return AROON_OpenCore( sp, inHigh, inLow, 0, optInTimePeriod, out outBegIdx, out outNBElement, outAroonDown, outAroonUp, 1 );
+   }
+
+   private RetCode AROON_OpenAndFillInternalBody( AROON_Stream sp, double[] inHigh, double[] inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outAroonDown, double[] outAroonUp )
+   {
+      return AROON_OpenCore(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outAroonDown, outAroonUp, 1);
+   }
+
+   /* AROON_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal AROON_Stream AROON_OpenAndFillInternal( double[] inHigh, double[] inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outAroonDown, double[] outAroonUp )
+   {
+      AROON_Stream sp = new AROON_Stream(this);
+      RetCode retCode = AROON_OpenAndFillInternalBody(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outAroonDown, outAroonUp);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("AROON", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind AROON_Open (composition seam). */
+   internal AROON_Stream AROON_OpenInternal( double[] inHigh, double[] inLow, int startIdx, int optInTimePeriod )
+   {
+      AROON_Stream sp = new AROON_Stream(this);
+      RetCode retCode = AROON_OpenBody(sp, inHigh, inLow, startIdx, optInTimePeriod);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("AROON", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>AROON</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="AROON_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>AROON</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>AROON_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>AROON_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="AROON_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>AROON_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public AROON_Stream AROON_Open( double[] inHigh, double[] inLow, int optInTimePeriod )
+   {
+      return AROON_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
+   }
+
+   /// <summary><c>AROON_Open</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>AROON</c> produces over
+   /// the same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - AROON_Lookback(...)</c> values and
+   /// must not alias the inputs or each other — this path writes the outputs and
+   /// then reads the input tail to seed its rings, so the batch tier's in-place
+   /// allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="AROON_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="AROON_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="outAroonDown">Recency of the lowest low (100 = it is the current bar, decaying as it
+   /// ages) Must hold at least <c>historyLen - AROON_Lookback(...)</c> values.</param>
+   /// <param name="outAroonUp">Recency of the highest high (100 = it is the current bar, decaying as it
+   /// ages) Must hold at least <c>historyLen - AROON_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>AROON_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public AROON_Stream AROON_OpenAndFill( double[] inHigh, double[] inLow, int optInTimePeriod, double[] outAroonDown, double[] outAroonUp )
+   {
+      AROON_Stream sp = new AROON_Stream(this);
+      RetCode retCode = AROON_OpenAndFillBody(sp, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outAroonDown, outAroonUp);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("AROON", "openAndFill", retCode);
+   }
 }

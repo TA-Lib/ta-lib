@@ -861,4 +861,757 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>SAREXT</c> stream: one value per closed bar, bit-identical to
+   /// <c>SAREXT</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.SAREXT_Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class SAREXT_Stream
+   {
+      internal Core core;
+      internal double optInStartValue;
+      internal double optInOffsetOnReverse;
+      internal double optInAccelerationInitLong;
+      internal double optInAccelerationLong;
+      internal double optInAccelerationMaxLong;
+      internal double optInAccelerationInitShort;
+      internal double optInAccelerationShort;
+      internal double optInAccelerationMaxShort;
+      internal int isLong;
+      internal double newHigh;
+      internal double newLow;
+      internal double afLong;
+      internal double afShort;
+      internal double ep;
+      internal double sar;
+      internal double cur_outReal;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal SAREXT_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>SAREXT_OpenAndFill</c> filled, or
+      /// <see cref="OutRange.Empty"/> when this handle came from a plain open
+      /// (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal SAREXT_Stream( SAREXT_Stream other )
+      {
+         this.core = other.core;
+         this.optInStartValue = other.optInStartValue;
+         this.optInOffsetOnReverse = other.optInOffsetOnReverse;
+         this.optInAccelerationInitLong = other.optInAccelerationInitLong;
+         this.optInAccelerationLong = other.optInAccelerationLong;
+         this.optInAccelerationMaxLong = other.optInAccelerationMaxLong;
+         this.optInAccelerationInitShort = other.optInAccelerationInitShort;
+         this.optInAccelerationShort = other.optInAccelerationShort;
+         this.optInAccelerationMaxShort = other.optInAccelerationMaxShort;
+         this.isLong = other.isLong;
+         this.newHigh = other.newHigh;
+         this.newLow = other.newLow;
+         this.afLong = other.afLong;
+         this.afShort = other.afShort;
+         this.ep = other.ep;
+         this.sar = other.sar;
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( SAREXT_Stream other )
+      {
+         this.core = other.core;
+         this.optInStartValue = other.optInStartValue;
+         this.optInOffsetOnReverse = other.optInOffsetOnReverse;
+         this.optInAccelerationInitLong = other.optInAccelerationInitLong;
+         this.optInAccelerationLong = other.optInAccelerationLong;
+         this.optInAccelerationMaxLong = other.optInAccelerationMaxLong;
+         this.optInAccelerationInitShort = other.optInAccelerationInitShort;
+         this.optInAccelerationShort = other.optInAccelerationShort;
+         this.optInAccelerationMaxShort = other.optInAccelerationMaxShort;
+         this.isLong = other.isLong;
+         this.newHigh = other.newHigh;
+         this.newLow = other.newLow;
+         this.afLong = other.afLong;
+         this.afShort = other.afShort;
+         this.ep = other.ep;
+         this.sar = other.sar;
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public double Update( double inHigh, double inLow )
+      {
+         core.SAREXT_StreamStep(this, inHigh, inLow);
+         return cur_outReal;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a throwaway copy, which for this handle's shape is cheaper than
+      /// reusing one.</para>
+      /// </remarks>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public double Peek( double inHigh, double inLow )
+      {
+         SAREXT_Stream scratch = new SAREXT_Stream(this);
+         core.SAREXT_StreamStep(scratch, inHigh, inLow);
+         return scratch.cur_outReal;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public double Value => cur_outReal;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public SAREXT_Stream Clone()
+      {
+         return new SAREXT_Stream(this);
+      }
+   }
+
+   internal void SAREXT_StreamStep( SAREXT_Stream sp, double inHigh, double inLow )
+   {
+      double prevHigh = 0.0;
+      double prevLow = 0.0;
+      prevLow = sp.newLow;
+      prevHigh = sp.newHigh;
+      sp.newLow = inLow;
+      sp.newHigh = inHigh;
+      if( sp.isLong == 1 ) {
+         /* Switch to short if the low penetrates the SAR value. */
+         if( sp.newLow <= sp.sar ) {
+            /* Switch and Overide the SAR with the ep */
+            sp.isLong = 0;
+            sp.sar = sp.ep;
+            /* Make sure the overide SAR is within
+             * yesterday's and today's range.
+             */
+            if( sp.sar < prevHigh ) {
+               sp.sar = prevHigh;
+            }
+            if( sp.sar < sp.newHigh ) {
+               sp.sar = sp.newHigh;
+            }
+            /* Output the overide SAR */
+            if( sp.optInOffsetOnReverse != 0.0 ) {
+               sp.sar += sp.sar * sp.optInOffsetOnReverse;
+            }
+            sp.cur_outReal = 0 - sp.sar;
+            /* Adjust afShort and ep */
+            sp.afShort = sp.optInAccelerationInitShort;
+            sp.ep = sp.newLow;
+            /* Calculate the new SAR */
+            sp.sar = Math.FusedMultiplyAdd(sp.afShort, sp.ep - sp.sar, sp.sar);
+            /* Make sure the new SAR is within
+             * yesterday's and today's range.
+             */
+            if( sp.sar < prevHigh ) {
+               sp.sar = prevHigh;
+            }
+            if( sp.sar < sp.newHigh ) {
+               sp.sar = sp.newHigh;
+            }
+         } else {
+            /* No switch */
+            /* Output the SAR (was calculated in the previous iteration) */
+            sp.cur_outReal = sp.sar;
+            /* Adjust afLong and ep. */
+            if( sp.newHigh > sp.ep ) {
+               sp.ep = sp.newHigh;
+               sp.afLong += sp.optInAccelerationLong;
+               if( sp.afLong > sp.optInAccelerationMaxLong ) {
+                  sp.afLong = sp.optInAccelerationMaxLong;
+               }
+            }
+            /* Calculate the new SAR */
+            sp.sar = Math.FusedMultiplyAdd(sp.afLong, sp.ep - sp.sar, sp.sar);
+            /* Make sure the new SAR is within
+             * yesterday's and today's range.
+             */
+            if( sp.sar > prevLow ) {
+               sp.sar = prevLow;
+            }
+            if( sp.sar > sp.newLow ) {
+               sp.sar = sp.newLow;
+            }
+         }
+      /* Switch to long if the high penetrates the SAR value. */
+      } else if( sp.newHigh >= sp.sar ) {
+         /* Switch and Overide the SAR with the ep */
+         sp.isLong = 1;
+         sp.sar = sp.ep;
+         /* Make sure the overide SAR is within
+          * yesterday's and today's range.
+          */
+         if( sp.sar > prevLow ) {
+            sp.sar = prevLow;
+         }
+         if( sp.sar > sp.newLow ) {
+            sp.sar = sp.newLow;
+         }
+         /* Output the overide SAR */
+         if( sp.optInOffsetOnReverse != 0.0 ) {
+            sp.sar -= sp.sar * sp.optInOffsetOnReverse;
+         }
+         sp.cur_outReal = sp.sar;
+         /* Adjust afLong and ep */
+         sp.afLong = sp.optInAccelerationInitLong;
+         sp.ep = sp.newHigh;
+         /* Calculate the new SAR */
+         sp.sar = Math.FusedMultiplyAdd(sp.afLong, sp.ep - sp.sar, sp.sar);
+         /* Make sure the new SAR is within
+          * yesterday's and today's range.
+          */
+         if( sp.sar > prevLow ) {
+            sp.sar = prevLow;
+         }
+         if( sp.sar > sp.newLow ) {
+            sp.sar = sp.newLow;
+         }
+      } else {
+         /* No switch */
+         /* Output the SAR (was calculated in the previous iteration) */
+         sp.cur_outReal = 0 - sp.sar;
+         /* Adjust afShort and ep. */
+         if( sp.newLow < sp.ep ) {
+            sp.ep = sp.newLow;
+            sp.afShort += sp.optInAccelerationShort;
+            if( sp.afShort > sp.optInAccelerationMaxShort ) {
+               sp.afShort = sp.optInAccelerationMaxShort;
+            }
+         }
+         /* Calculate the new SAR */
+         sp.sar = Math.FusedMultiplyAdd(sp.afShort, sp.ep - sp.sar, sp.sar);
+         /* Make sure the new SAR is within
+          * yesterday's and today's range.
+          */
+         if( sp.sar < prevHigh ) {
+            sp.sar = prevHigh;
+         }
+         if( sp.sar < sp.newHigh ) {
+            sp.sar = sp.newHigh;
+         }
+      }
+   }
+
+   private RetCode SAREXT_OpenCore( SAREXT_Stream sp, double[] inHigh, double[] inLow, int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      RetCode retCode;
+      int isLong = 0;
+      int todayIdx = 0;
+      int outIdx = 0;
+      int tempInt = 0;
+      double newHigh = 0;
+      double newLow = 0;
+      double prevHigh = 0;
+      double prevLow = 0;
+      double afLong = 0;
+      double afShort = 0;
+      double ep = 0;
+      double sar = 0;
+      double[] ep_temp = new double[1];
+      int historyLen = inHigh.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 || inLow.Length != inHigh.Length ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInStartValue == TA_REAL_DEFAULT ) {
+         optInStartValue = 0e0;
+      } else if( optInStartValue < TA_REAL_MIN || optInStartValue > TA_REAL_MAX ) {
+         return RetCode.BadParam;
+      }
+      if( optInOffsetOnReverse == TA_REAL_DEFAULT ) {
+         optInOffsetOnReverse = 0e0;
+      } else if( optInOffsetOnReverse < 0e0 || optInOffsetOnReverse > TA_REAL_MAX ) {
+         return RetCode.BadParam;
+      }
+      if( optInAccelerationInitLong == TA_REAL_DEFAULT ) {
+         optInAccelerationInitLong = 2e-2;
+      } else if( optInAccelerationInitLong < 0e0 || optInAccelerationInitLong > TA_REAL_MAX ) {
+         return RetCode.BadParam;
+      }
+      if( optInAccelerationLong == TA_REAL_DEFAULT ) {
+         optInAccelerationLong = 2e-2;
+      } else if( optInAccelerationLong < 0e0 || optInAccelerationLong > TA_REAL_MAX ) {
+         return RetCode.BadParam;
+      }
+      if( optInAccelerationMaxLong == TA_REAL_DEFAULT ) {
+         optInAccelerationMaxLong = 2e-1;
+      } else if( optInAccelerationMaxLong < 0e0 || optInAccelerationMaxLong > TA_REAL_MAX ) {
+         return RetCode.BadParam;
+      }
+      if( optInAccelerationInitShort == TA_REAL_DEFAULT ) {
+         optInAccelerationInitShort = 2e-2;
+      } else if( optInAccelerationInitShort < 0e0 || optInAccelerationInitShort > TA_REAL_MAX ) {
+         return RetCode.BadParam;
+      }
+      if( optInAccelerationShort == TA_REAL_DEFAULT ) {
+         optInAccelerationShort = 2e-2;
+      } else if( optInAccelerationShort < 0e0 || optInAccelerationShort > TA_REAL_MAX ) {
+         return RetCode.BadParam;
+      }
+      if( optInAccelerationMaxShort == TA_REAL_DEFAULT ) {
+         optInAccelerationMaxShort = 2e-1;
+      } else if( optInAccelerationMaxShort < 0e0 || optInAccelerationMaxShort > TA_REAL_MAX ) {
+         return RetCode.BadParam;
+      }
+      /* > 0 indicates long. == 0 indicates short */
+      /* This function is the same as TA_SAR, except that the caller has
+       * greater control on the SAR dynamic and initial state.
+       *
+       * In additon, the TA_SAREXT returns negative values when the position
+       * is short. This allow to distinguish when the SAR do actually reverse.
+       */
+      /* Implementation of the SAR has been a little bit open to interpretation
+       * since Wilder (the original author) did not define a precise algorithm
+       * on how to bootstrap the algorithm. Take any existing software application
+       * and you will see slight variation on how the algorithm was adapted.
+       *
+       * What is the initial trade direction? Long or short?
+       * ===================================================
+       * The interpretation of what should be the initial SAR values is
+       * open to interpretation, particularly since the caller to the function
+       * does not specify the initial direction of the trade.
+       *
+       * In TA-Lib, the following default logic is used:
+       *  - Calculate +DM and -DM between the first and
+       *    second bar. The highest directional indication will
+       *    indicate the assumed direction of the trade for the second
+       *    price bar.
+       *  - In the case of a tie between +DM and -DM,
+       *    the direction is LONG by default.
+       *
+       * What is the initial "extreme point" and thus SAR?
+       * =================================================
+       * The following shows how different people took different approach:
+       *  - Metastock use the first price bar high/low depending of
+       *    the direction. No SAR is calculated for the first price
+       *    bar.
+       *  - Tradestation use the closing price of the second bar. No
+       *    SAR are calculated for the first price bar.
+       *  - Wilder (the original author) use the SIP from the
+       *    previous trade (cannot be implement here since the
+       *    direction and length of the previous trade is unknonw).
+       *  - The Magazine TASC seems to follow Wilder approach which
+       *    is not practical here.
+       *
+       * TA-Lib "consume" the first price bar and use its high/low as the
+       * initial SAR of the second price bar. I found that approach to be
+       * the closest to Wilders idea of having the first entry day use
+       * the previous extreme point, except that here the extreme point is
+       * derived solely from the first price bar. I found the same approach
+       * to be used by Metastock.
+       *
+       *
+       * Can I force the initial SAR?
+       * ============================
+       * Yes. Using the optInStartValue_0 parameter:
+       *  optInStartValue_0 >  0 : SAR is long at optInStartValue_0.
+       *  optInStartValue_0 <  0 : SAR is short at fabs(optInStartValue_0).
+       *
+       * And when optInStartValue_0 == 0, the logic is the same as for TA_SAR
+       * (See previous two sections).
+       */
+      /* Identify the minimum number of price bar needed
+       * to calculate at least one output.
+       *
+       * Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < 1 ) {
+         startIdx = 1;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      /* Check if the acceleration factors are being defined by the user.
+       * Make sure the acceleration and maximum are coherent.
+       * If not, correct the acceleration.
+       * Default afLong = 0.02
+       * Default afShort = 0.02
+       */
+      afLong = optInAccelerationInitLong;
+      afShort = optInAccelerationInitShort;
+      if( afLong > optInAccelerationMaxLong ) {
+         optInAccelerationInitLong = optInAccelerationMaxLong;
+         afLong = optInAccelerationInitLong;
+      }
+      if( optInAccelerationLong > optInAccelerationMaxLong ) {
+         optInAccelerationLong = optInAccelerationMaxLong;
+      }
+      if( afShort > optInAccelerationMaxShort ) {
+         optInAccelerationInitShort = optInAccelerationMaxShort;
+         afShort = optInAccelerationInitShort;
+      }
+      if( optInAccelerationShort > optInAccelerationMaxShort ) {
+         optInAccelerationShort = optInAccelerationMaxShort;
+      }
+      /* Initialise SAR calculations */
+      if( optInStartValue == 0 ) {
+         /* Default action */
+         /* Identify if the initial direction is long or short.
+          * (ep is just used as a temp buffer here, the name
+          *  of the parameter is not significant).
+          */
+         retCode = MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, out tempInt, out tempInt, ep_temp);
+         if( ep_temp[0] > 0 ) {
+            isLong = 0;
+         } else {
+            isLong = 1;
+         }
+         if( retCode != RetCode.Success ) {
+            outBegIdx = 0;
+            outNBElement = 0;
+            return retCode ;
+         }
+      } else if( optInStartValue > 0 ) {
+         /* Start Long */
+         isLong = 1;
+      } else {
+         /* optInStartValue_0 < 0 => Start Short */
+         isLong = 0;
+      }
+      outBegIdx = startIdx;
+      outIdx = 0;
+      /* Write the first SAR. */
+      todayIdx = startIdx;
+      newHigh = inHigh[todayIdx - 1];
+      newLow = inLow[todayIdx - 1];
+      if( optInStartValue == 0 ) {
+         /* Default action */
+         if( isLong == 1 ) {
+            ep = inHigh[todayIdx];
+            sar = newLow;
+         } else {
+            ep = inLow[todayIdx];
+            sar = newHigh;
+         }
+      } else if( optInStartValue > 0 ) {
+         /* Start Long at specified value. */
+         ep = inHigh[todayIdx];
+         sar = optInStartValue;
+      } else {
+         /* if optInStartValue < 0 => Start Short at specified value. */
+         ep = inLow[todayIdx];
+         sar = Math.Abs(optInStartValue);
+      }
+      /* Cheat on the newLow and newHigh for the
+       * first iteration.
+       */
+      newLow = inLow[todayIdx];
+      newHigh = inHigh[todayIdx];
+      while( todayIdx <= endIdx ) {
+         prevLow = newLow;
+         prevHigh = newHigh;
+         newLow = inLow[todayIdx];
+         newHigh = inHigh[todayIdx];
+         todayIdx += 1;
+         if( isLong == 1 ) {
+            /* Switch to short if the low penetrates the SAR value. */
+            if( newLow <= sar ) {
+               /* Switch and Overide the SAR with the ep */
+               isLong = 0;
+               sar = ep;
+               /* Make sure the overide SAR is within
+                * yesterday's and today's range.
+                */
+               if( sar < prevHigh ) {
+                  sar = prevHigh;
+               }
+               if( sar < newHigh ) {
+                  sar = newHigh;
+               }
+               /* Output the overide SAR */
+               if( optInOffsetOnReverse != 0.0 ) {
+                  sar += sar * optInOffsetOnReverse;
+               }
+               outReal[outIdx++ * outStride] = 0 - sar;
+               /* Adjust afShort and ep */
+               afShort = optInAccelerationInitShort;
+               ep = newLow;
+               /* Calculate the new SAR */
+               sar = Math.FusedMultiplyAdd(afShort, ep - sar, sar);
+               /* Make sure the new SAR is within
+                * yesterday's and today's range.
+                */
+               if( sar < prevHigh ) {
+                  sar = prevHigh;
+               }
+               if( sar < newHigh ) {
+                  sar = newHigh;
+               }
+            } else {
+               /* No switch */
+               /* Output the SAR (was calculated in the previous iteration) */
+               outReal[outIdx++ * outStride] = sar;
+               /* Adjust afLong and ep. */
+               if( newHigh > ep ) {
+                  ep = newHigh;
+                  afLong += optInAccelerationLong;
+                  if( afLong > optInAccelerationMaxLong ) {
+                     afLong = optInAccelerationMaxLong;
+                  }
+               }
+               /* Calculate the new SAR */
+               sar = Math.FusedMultiplyAdd(afLong, ep - sar, sar);
+               /* Make sure the new SAR is within
+                * yesterday's and today's range.
+                */
+               if( sar > prevLow ) {
+                  sar = prevLow;
+               }
+               if( sar > newLow ) {
+                  sar = newLow;
+               }
+            }
+         /* Switch to long if the high penetrates the SAR value. */
+         } else if( newHigh >= sar ) {
+            /* Switch and Overide the SAR with the ep */
+            isLong = 1;
+            sar = ep;
+            /* Make sure the overide SAR is within
+             * yesterday's and today's range.
+             */
+            if( sar > prevLow ) {
+               sar = prevLow;
+            }
+            if( sar > newLow ) {
+               sar = newLow;
+            }
+            /* Output the overide SAR */
+            if( optInOffsetOnReverse != 0.0 ) {
+               sar -= sar * optInOffsetOnReverse;
+            }
+            outReal[outIdx++ * outStride] = sar;
+            /* Adjust afLong and ep */
+            afLong = optInAccelerationInitLong;
+            ep = newHigh;
+            /* Calculate the new SAR */
+            sar = Math.FusedMultiplyAdd(afLong, ep - sar, sar);
+            /* Make sure the new SAR is within
+             * yesterday's and today's range.
+             */
+            if( sar > prevLow ) {
+               sar = prevLow;
+            }
+            if( sar > newLow ) {
+               sar = newLow;
+            }
+         } else {
+            /* No switch */
+            /* Output the SAR (was calculated in the previous iteration) */
+            outReal[outIdx++ * outStride] = 0 - sar;
+            /* Adjust afShort and ep. */
+            if( newLow < ep ) {
+               ep = newLow;
+               afShort += optInAccelerationShort;
+               if( afShort > optInAccelerationMaxShort ) {
+                  afShort = optInAccelerationMaxShort;
+               }
+            }
+            /* Calculate the new SAR */
+            sar = Math.FusedMultiplyAdd(afShort, ep - sar, sar);
+            /* Make sure the new SAR is within
+             * yesterday's and today's range.
+             */
+            if( sar < prevHigh ) {
+               sar = prevHigh;
+            }
+            if( sar < newHigh ) {
+               sar = newHigh;
+            }
+         }
+      }
+      outNBElement = outIdx;
+      /* Capture the live batch state into the handle. */
+      sp.optInStartValue = optInStartValue;
+      sp.optInOffsetOnReverse = optInOffsetOnReverse;
+      sp.optInAccelerationInitLong = optInAccelerationInitLong;
+      sp.optInAccelerationLong = optInAccelerationLong;
+      sp.optInAccelerationMaxLong = optInAccelerationMaxLong;
+      sp.optInAccelerationInitShort = optInAccelerationInitShort;
+      sp.optInAccelerationShort = optInAccelerationShort;
+      sp.optInAccelerationMaxShort = optInAccelerationMaxShort;
+      sp.isLong = isLong;
+      sp.newHigh = newHigh;
+      sp.newLow = newLow;
+      sp.afLong = afLong;
+      sp.afShort = afShort;
+      sp.ep = ep;
+      sp.sar = sar;
+      sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode SAREXT_OpenBody( SAREXT_Stream sp, double[] inHigh, double[] inLow, int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
+   {
+      double[] sink_outReal = new double[1];
+      return SAREXT_OpenCore( sp, inHigh, inLow, startIdx, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out _, out _, sink_outReal, 0 );
+   }
+
+   private RetCode SAREXT_OpenAndFillBody( SAREXT_Stream sp, double[] inHigh, double[] inLow, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outReal, inHigh) || ReferenceEquals(outReal, inLow) ) {
+         return RetCode.BadParam;
+      }
+      return SAREXT_OpenCore( sp, inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out outBegIdx, out outNBElement, outReal, 1 );
+   }
+
+   private RetCode SAREXT_OpenAndFillInternalBody( SAREXT_Stream sp, double[] inHigh, double[] inLow, int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      return SAREXT_OpenCore(sp, inHigh, inLow, startIdx, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out outBegIdx, out outNBElement, outReal, 1);
+   }
+
+   /* SAREXT_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal SAREXT_Stream SAREXT_OpenAndFillInternal( double[] inHigh, double[] inLow, int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      SAREXT_Stream sp = new SAREXT_Stream(this);
+      RetCode retCode = SAREXT_OpenAndFillInternalBody(sp, inHigh, inLow, startIdx, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out outBegIdx, out outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("SAREXT", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind SAREXT_Open (composition seam). */
+   internal SAREXT_Stream SAREXT_OpenInternal( double[] inHigh, double[] inLow, int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
+   {
+      SAREXT_Stream sp = new SAREXT_Stream(this);
+      RetCode retCode = SAREXT_OpenBody(sp, inHigh, inLow, startIdx, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("SAREXT", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>SAREXT</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="SAREXT_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>SAREXT</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>SAREXT_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>SAREXT_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="optInStartValue">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
+   /// and range (<c>-4e37</c> selects the default).</param>
+   /// <param name="optInOffsetOnReverse">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
+   /// and range (<c>-4e37</c> selects the default).</param>
+   /// <param name="optInAccelerationInitLong">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
+   /// and range (<c>-4e37</c> selects the default).</param>
+   /// <param name="optInAccelerationLong">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
+   /// and range (<c>-4e37</c> selects the default).</param>
+   /// <param name="optInAccelerationMaxLong">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
+   /// and range (<c>-4e37</c> selects the default).</param>
+   /// <param name="optInAccelerationInitShort">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
+   /// and range (<c>-4e37</c> selects the default).</param>
+   /// <param name="optInAccelerationShort">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
+   /// and range (<c>-4e37</c> selects the default).</param>
+   /// <param name="optInAccelerationMaxShort">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
+   /// and range (<c>-4e37</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>SAREXT_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public SAREXT_Stream SAREXT_Open( double[] inHigh, double[] inLow, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
+   {
+      return SAREXT_OpenInternal(inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
+   }
+
+   /// <summary><c>SAREXT_Open</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>SAREXT</c> produces over
+   /// the same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - SAREXT_Lookback(...)</c> values
+   /// and must not alias the inputs or each other — this path writes the outputs
+   /// and then reads the input tail to seed its rings, so the batch tier's
+   /// in-place allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="SAREXT_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="optInStartValue">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
+   /// and range (<c>-4e37</c> selects the default).</param>
+   /// <param name="optInOffsetOnReverse">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
+   /// and range (<c>-4e37</c> selects the default).</param>
+   /// <param name="optInAccelerationInitLong">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
+   /// and range (<c>-4e37</c> selects the default).</param>
+   /// <param name="optInAccelerationLong">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
+   /// and range (<c>-4e37</c> selects the default).</param>
+   /// <param name="optInAccelerationMaxLong">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
+   /// and range (<c>-4e37</c> selects the default).</param>
+   /// <param name="optInAccelerationInitShort">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
+   /// and range (<c>-4e37</c> selects the default).</param>
+   /// <param name="optInAccelerationShort">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
+   /// and range (<c>-4e37</c> selects the default).</param>
+   /// <param name="optInAccelerationMaxShort">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
+   /// and range (<c>-4e37</c> selects the default).</param>
+   /// <param name="outReal">SAR stop level; positive while long, negative while short. Must hold at
+   /// least <c>historyLen - SAREXT_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>SAREXT_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public SAREXT_Stream SAREXT_OpenAndFill( double[] inHigh, double[] inLow, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, double[] outReal )
+   {
+      SAREXT_Stream sp = new SAREXT_Stream(this);
+      RetCode retCode = SAREXT_OpenAndFillBody(sp, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out int outBegIdx, out int outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("SAREXT", "openAndFill", retCode);
+   }
 }

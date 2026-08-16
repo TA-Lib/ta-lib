@@ -355,4 +355,337 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>APO</c> stream: one value per closed bar, bit-identical to
+   /// <c>APO</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.APO_Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class APO_Stream
+   {
+      internal Core core;
+      internal int optInFastPeriod;
+      internal int optInSlowPeriod;
+      internal MAType optInMAType;
+      internal double cur_outReal;
+      internal MA_Stream sub0 = null!;
+      internal MA_Stream sub1 = null!;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal APO_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>APO_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
+      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal APO_Stream( APO_Stream other )
+      {
+         this.core = other.core;
+         this.optInFastPeriod = other.optInFastPeriod;
+         this.optInSlowPeriod = other.optInSlowPeriod;
+         this.optInMAType = other.optInMAType;
+         this.cur_outReal = other.cur_outReal;
+         this.sub0 = new MA_Stream(other.sub0);
+         this.sub1 = new MA_Stream(other.sub1);
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( APO_Stream other )
+      {
+         this.core = other.core;
+         this.optInFastPeriod = other.optInFastPeriod;
+         this.optInSlowPeriod = other.optInSlowPeriod;
+         this.optInMAType = other.optInMAType;
+         this.cur_outReal = other.cur_outReal;
+         if( this.sub0 is null ) {
+            this.sub0 = new MA_Stream(other.sub0);
+         } else {
+            this.sub0.CopyFrom(other.sub0);
+         }
+         if( this.sub1 is null ) {
+            this.sub1 = new MA_Stream(other.sub1);
+         } else {
+            this.sub1.CopyFrom(other.sub1);
+         }
+         this.fillRange = other.fillRange;
+      }
+
+      /* Peek's reusable scratch — one per thread, see CopyFrom. */
+      [ThreadStatic] private static APO_Stream? peekScratch;
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inReal">Source data series.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public double Update( double inReal )
+      {
+         core.APO_StreamStep(this, inReal);
+         return cur_outReal;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a scratch handle held per thread and reused, so the copy
+      /// allocates nothing after the first peek of this indicator on this thread.
+      /// That scratch is retained for the life of the thread.</para>
+      /// </remarks>
+      /// <param name="inReal">Source data series.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public double Peek( double inReal )
+      {
+         APO_Stream? scratch = peekScratch;
+         if( scratch is null ) {
+            scratch = new APO_Stream(this);
+            peekScratch = scratch;
+         } else {
+            scratch.CopyFrom(this);
+         }
+         core.APO_StreamStep(scratch, inReal);
+         return scratch.cur_outReal;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public double Value => cur_outReal;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public APO_Stream Clone()
+      {
+         return new APO_Stream(this);
+      }
+   }
+
+   internal void APO_StreamStep( APO_Stream sp, double inReal )
+   {
+      double cur_tempBuffer = 0.0;
+      double cur_outReal = 0.0;
+      /* Pipeline the new bar through the sub-streams (batch tail order). */
+      cur_tempBuffer = sp.sub0.Update(inReal);
+      cur_outReal = sp.sub1.Update(inReal);
+      /* Combine map (batch tail, per bar). */
+      cur_outReal = cur_tempBuffer - cur_outReal;
+      sp.cur_outReal = cur_outReal;
+   }
+
+   private RetCode APO_OpenCore( APO_Stream sp, double[] inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      double[] tempBuffer;
+      RetCode retCode;
+      int tempInteger = 0;
+      int fastBeg = 0;
+      int fastNb = 0;
+      int offset = 0;
+      int i = 0;
+      int historyLen = inReal.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInFastPeriod == int.MinValue ) {
+         optInFastPeriod = 12;
+      } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( optInSlowPeriod == int.MinValue ) {
+         optInSlowPeriod = 26;
+      } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
+         optInMAType = MAType.EMA;
+      } else if( (int)optInMAType < MATypes.Min || (int)optInMAType > MATypes.Max ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen < APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      double[] sc_outReal = outStride == 1 ? outReal : new double[historyLen];
+      /* Allocate an intermediate buffer. */
+      tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
+      /* Make sure slow is really slower than
+       * the fast period! if not, swap...
+       */
+      if( optInSlowPeriod < optInFastPeriod ) {
+         /* swap */
+         tempInteger = optInSlowPeriod;
+         optInSlowPeriod = optInFastPeriod;
+         optInFastPeriod = tempInteger;
+      }
+      /* Calculate the fast MA into the tempBuffer. */
+      /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
+       * sub-call's own startIdx (the seeding point). */
+      MA_Stream sub0 = MA_OpenAndFillInternal(inReal, startIdx, optInFastPeriod, optInMAType, out fastBeg, out fastNb, tempBuffer);
+      retCode = RetCode.Success;
+      if( retCode != RetCode.Success ) {
+         return retCode ;
+      }
+      /* Calculate the slow MA into the output. */
+      /* Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
+       * sub-call's own startIdx (the seeding point). */
+      MA_Stream sub1 = MA_OpenAndFillInternal(inReal, startIdx, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, sc_outReal);
+      retCode = RetCode.Success;
+      if( retCode != RetCode.Success ) {
+         return retCode ;
+      }
+      /* fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
+       * many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
+       * outReal[i], with a non-negative index. An empty slow MA skips the loop.
+       */
+      offset = fastNb - outNBElement;
+      /* Calculate (fast MA)-(slow MA) in the output. */
+      for( i = 0; i < (int)outNBElement; i += 1 ) {
+         sc_outReal[i] = tempBuffer[i + offset] - sc_outReal[i];
+      }
+      /* Capture the live producer state + sub handles. */
+      if( outNBElement < 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      sp.optInFastPeriod = optInFastPeriod;
+      sp.optInSlowPeriod = optInSlowPeriod;
+      sp.optInMAType = optInMAType;
+      sp.sub0 = sub0;
+      sp.sub1 = sub1;
+      sp.cur_outReal = sc_outReal[outNBElement - 1];
+      return RetCode.Success;
+   }
+
+   private RetCode APO_OpenBody( APO_Stream sp, double[] inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
+   {
+      double[] sink_outReal = new double[1];
+      return APO_OpenCore( sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, out _, out _, sink_outReal, 0 );
+   }
+
+   private RetCode APO_OpenAndFillBody( APO_Stream sp, double[] inReal, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outReal, inReal) ) {
+         return RetCode.BadParam;
+      }
+      return APO_OpenCore( sp, inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal, 1 );
+   }
+
+   private RetCode APO_OpenAndFillInternalBody( APO_Stream sp, double[] inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      return APO_OpenCore(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal, 1);
+   }
+
+   /* APO_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal APO_Stream APO_OpenAndFillInternal( double[] inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      APO_Stream sp = new APO_Stream(this);
+      RetCode retCode = APO_OpenAndFillInternalBody(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("APO", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind APO_Open (composition seam). */
+   internal APO_Stream APO_OpenInternal( double[] inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
+   {
+      APO_Stream sp = new APO_Stream(this);
+      RetCode retCode = APO_OpenBody(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("APO", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>APO</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="APO_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>APO</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>APO_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>APO_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inReal">Source data series. The warm-up history, oldest bar first.</param>
+   /// <param name="optInFastPeriod">As in the batch call; see <see cref="APO_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSlowPeriod">As in the batch call; see <see cref="APO_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInMAType">As in the batch call; see <see cref="APO_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>APO_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public APO_Stream APO_Open( double[] inReal, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
+   {
+      return APO_OpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType);
+   }
+
+   /// <summary><c>APO_Open</c> that also fills the output array(s) over the whole history
+   /// in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>APO</c> produces over the
+   /// same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - APO_Lookback(...)</c> values and
+   /// must not alias the inputs or each other — this path writes the outputs and
+   /// then reads the input tail to seed its rings, so the batch tier's in-place
+   /// allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="APO_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inReal">Source data series. The warm-up history, oldest bar first.</param>
+   /// <param name="optInFastPeriod">As in the batch call; see <see cref="APO_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSlowPeriod">As in the batch call; see <see cref="APO_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInMAType">As in the batch call; see <see cref="APO_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="outReal">Fast MA minus slow MA. Must hold at least <c>historyLen -
+   /// APO_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>APO_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public APO_Stream APO_OpenAndFill( double[] inReal, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, double[] outReal )
+   {
+      APO_Stream sp = new APO_Stream(this);
+      RetCode retCode = APO_OpenAndFillBody(sp, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("APO", "openAndFill", retCode);
+   }
 }

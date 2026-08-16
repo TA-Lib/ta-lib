@@ -530,4 +530,586 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>MINUS_DM</c> stream: one value per closed bar, bit-identical to
+   /// <c>MINUS_DM</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.MINUS_DM_Open"/>. There is no close and nothing
+   /// to dispose — the handle is ordinary managed state, and an unreferenced
+   /// handle is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class MINUS_DM_Stream
+   {
+      internal Core core;
+      internal int optInTimePeriod;
+      internal double prevHigh;
+      internal double prevLow;
+      internal double tempReal;
+      internal double diffP;
+      internal double diffM;
+      internal double prevMinusDM;
+      internal double cur_outReal;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal MINUS_DM_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>MINUS_DM_OpenAndFill</c> filled, or
+      /// <see cref="OutRange.Empty"/> when this handle came from a plain open
+      /// (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal MINUS_DM_Stream( MINUS_DM_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.prevHigh = other.prevHigh;
+         this.prevLow = other.prevLow;
+         this.tempReal = other.tempReal;
+         this.diffP = other.diffP;
+         this.diffM = other.diffM;
+         this.prevMinusDM = other.prevMinusDM;
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( MINUS_DM_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.prevHigh = other.prevHigh;
+         this.prevLow = other.prevLow;
+         this.tempReal = other.tempReal;
+         this.diffP = other.diffP;
+         this.diffM = other.diffM;
+         this.prevMinusDM = other.prevMinusDM;
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public double Update( double inHigh, double inLow )
+      {
+         core.MINUS_DM_StreamStep(this, inHigh, inLow);
+         return cur_outReal;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a throwaway copy, which for this handle's shape is cheaper than
+      /// reusing one.</para>
+      /// </remarks>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public double Peek( double inHigh, double inLow )
+      {
+         MINUS_DM_Stream scratch = new MINUS_DM_Stream(this);
+         core.MINUS_DM_StreamStep(scratch, inHigh, inLow);
+         return scratch.cur_outReal;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public double Value => cur_outReal;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public MINUS_DM_Stream Clone()
+      {
+         return new MINUS_DM_Stream(this);
+      }
+   }
+
+   internal void MINUS_DM_StreamStep( MINUS_DM_Stream sp, double inHigh, double inLow )
+   {
+      if( sp.optInTimePeriod <= 1 ) {
+         sp.tempReal = inHigh;
+         sp.diffP = sp.tempReal - sp.prevHigh;
+         /* Plus Delta */
+         sp.prevHigh = sp.tempReal;
+         sp.tempReal = inLow;
+         sp.diffM = sp.prevLow - sp.tempReal;
+         /* Minus Delta */
+         sp.prevLow = sp.tempReal;
+         if( sp.diffM > 0 && sp.diffP < sp.diffM ) {
+            /* Case 2 and 4: +DM=0,-DM=diffM */
+            sp.cur_outReal = sp.diffM;
+         } else {
+            sp.cur_outReal = 0;
+         }
+      } else {
+         sp.tempReal = inHigh;
+         sp.diffP = sp.tempReal - sp.prevHigh;
+         /* Plus Delta */
+         sp.prevHigh = sp.tempReal;
+         sp.tempReal = inLow;
+         sp.diffM = sp.prevLow - sp.tempReal;
+         /* Minus Delta */
+         sp.prevLow = sp.tempReal;
+         if( sp.diffM > 0 && sp.diffP < sp.diffM ) {
+            /* Case 2 and 4: +DM=0,-DM=diffM */
+            sp.prevMinusDM = sp.prevMinusDM - sp.prevMinusDM / sp.optInTimePeriod + sp.diffM;
+         } else {
+            /* Case 1,3,5 and 7 */
+            sp.prevMinusDM = sp.prevMinusDM - sp.prevMinusDM / sp.optInTimePeriod;
+         }
+         sp.cur_outReal = sp.prevMinusDM;
+      }
+   }
+
+   private RetCode MINUS_DM_OpenCore( MINUS_DM_Stream sp, double[] inHigh, double[] inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      int historyLen = inHigh.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 || inLow.Length != inHigh.Length ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInTimePeriod == int.MinValue ) {
+         optInTimePeriod = 14;
+      } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( optInTimePeriod <= 1 ) {
+         int today = 0;
+         int lookbackTotal = 0;
+         int outIdx = 0;
+         double prevHigh = 0;
+         double prevLow = 0;
+         double tempReal = 0;
+         double prevMinusDM = 0;
+         double diffP = 0;
+         double diffM = 0;
+         int i = 0;
+         /*
+          * The DM1 (one period) is base on the largest part of
+          * today's range that is outside of yesterdays range.
+          *
+          * The following 7 cases explain how the +DM and -DM are
+          * calculated on one period:
+          *
+          * Case 1:                       Case 2:
+          *    C|                        A|
+          *     |                         | C|
+          *     | +DM1 = (C-A)           B|  | +DM1 = 0
+          *     | -DM1 = 0                   | -DM1 = (B-D)
+          * A|  |                           D|
+          *  | D|
+          * B|
+          *
+          * Case 3:                       Case 4:
+          *    C|                           C|
+          *     |                        A|  |
+          *     | +DM1 = (C-A)            |  | +DM1 = 0
+          *     | -DM1 = 0               B|  | -DM1 = (B-D)
+          * A|  |                            |
+          *  |  |                           D|
+          * B|  |
+          *    D|
+          *
+          * Case 5:                      Case 6:
+          * A|                           A| C|
+          *  | C| +DM1 = 0                |  |  +DM1 = 0
+          *  |  | -DM1 = 0                |  |  -DM1 = 0
+          *  | D|                         |  |
+          * B|                           B| D|
+          *
+          *
+          * Case 7:
+          *
+          *    C|
+          * A|  |
+          *  |  | +DM=0
+          * B|  | -DM=0
+          *    D|
+          *
+          * In case 3 and 4, the rule is that the smallest delta between
+          * (C-A) and (B-D) determine which of +DM or -DM is zero.
+          *
+          * In case 7, (C-A) and (B-D) are equal, so both +DM and -DM are
+          * zero.
+          *
+          * The rules remain the same when A=B and C=D (when the highs
+          * equal the lows).
+          *
+          * When calculating the DM over a period > 1, the one-period DM
+          * for the desired period are initialy sum. In other word,
+          * for a -DM14, sum the -DM1 for the first 14 days (that's
+          * 13 values because there is no DM for the first day!)
+          * Subsequent DM are calculated using the Wilder's
+          * smoothing approach:
+          *
+          *                                    Previous -DM14
+          *  Today's -DM14 = Previous -DM14 -  -------------- + Today's -DM1
+          *                                         14
+          *
+          * Reference:
+          *    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
+          */
+         if( optInTimePeriod > 1 ) {
+            lookbackTotal = optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.MINUS_DM] - 1;
+         } else {
+            lookbackTotal = 1;
+         }
+         /* Adjust startIdx to account for the lookback period. */
+         if( startIdx < lookbackTotal ) {
+            startIdx = lookbackTotal;
+         }
+         /* Make sure there is still something to evaluate. */
+         if( startIdx > endIdx ) {
+            outBegIdx = 0;
+            outNBElement = 0;
+            return RetCode.OutOfRangeEndIndex ;
+         }
+         /* Indicate where the next output should be put
+          * in the outReal.
+          */
+         outIdx = 0;
+         /* Trap the case where no smoothing is needed. */
+         /* No smoothing needed. Just do a simple DM1
+          * for each price bar.
+          */
+         outBegIdx = startIdx;
+         today = startIdx - 1;
+         prevHigh = inHigh[today];
+         prevLow = inLow[today];
+         while( today < endIdx ) {
+            today += 1;
+            tempReal = inHigh[today];
+            diffP = tempReal - prevHigh;
+            /* Plus Delta */
+            prevHigh = tempReal;
+            tempReal = inLow[today];
+            diffM = prevLow - tempReal;
+            /* Minus Delta */
+            prevLow = tempReal;
+            if( diffM > 0 && diffP < diffM ) {
+               /* Case 2 and 4: +DM=0,-DM=diffM */
+               outReal[outIdx++ * outStride] = diffM;
+            } else {
+               outReal[outIdx++ * outStride] = 0;
+            }
+         }
+         outNBElement = outIdx;
+         /* Capture the live batch state into the handle. */
+         sp.optInTimePeriod = optInTimePeriod;
+         sp.prevHigh = prevHigh;
+         sp.prevLow = prevLow;
+         sp.tempReal = tempReal;
+         sp.diffP = diffP;
+         sp.diffM = diffM;
+         sp.prevMinusDM = prevMinusDM;
+         sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+         return RetCode.Success;
+      } else {
+         int today = 0;
+         int lookbackTotal = 0;
+         int outIdx = 0;
+         double prevHigh = 0;
+         double prevLow = 0;
+         double tempReal = 0;
+         double prevMinusDM = 0;
+         double diffP = 0;
+         double diffM = 0;
+         int i = 0;
+         /*
+          * The DM1 (one period) is base on the largest part of
+          * today's range that is outside of yesterdays range.
+          *
+          * The following 7 cases explain how the +DM and -DM are
+          * calculated on one period:
+          *
+          * Case 1:                       Case 2:
+          *    C|                        A|
+          *     |                         | C|
+          *     | +DM1 = (C-A)           B|  | +DM1 = 0
+          *     | -DM1 = 0                   | -DM1 = (B-D)
+          * A|  |                           D|
+          *  | D|
+          * B|
+          *
+          * Case 3:                       Case 4:
+          *    C|                           C|
+          *     |                        A|  |
+          *     | +DM1 = (C-A)            |  | +DM1 = 0
+          *     | -DM1 = 0               B|  | -DM1 = (B-D)
+          * A|  |                            |
+          *  |  |                           D|
+          * B|  |
+          *    D|
+          *
+          * Case 5:                      Case 6:
+          * A|                           A| C|
+          *  | C| +DM1 = 0                |  |  +DM1 = 0
+          *  |  | -DM1 = 0                |  |  -DM1 = 0
+          *  | D|                         |  |
+          * B|                           B| D|
+          *
+          *
+          * Case 7:
+          *
+          *    C|
+          * A|  |
+          *  |  | +DM=0
+          * B|  | -DM=0
+          *    D|
+          *
+          * In case 3 and 4, the rule is that the smallest delta between
+          * (C-A) and (B-D) determine which of +DM or -DM is zero.
+          *
+          * In case 7, (C-A) and (B-D) are equal, so both +DM and -DM are
+          * zero.
+          *
+          * The rules remain the same when A=B and C=D (when the highs
+          * equal the lows).
+          *
+          * When calculating the DM over a period > 1, the one-period DM
+          * for the desired period are initialy sum. In other word,
+          * for a -DM14, sum the -DM1 for the first 14 days (that's
+          * 13 values because there is no DM for the first day!)
+          * Subsequent DM are calculated using the Wilder's
+          * smoothing approach:
+          *
+          *                                    Previous -DM14
+          *  Today's -DM14 = Previous -DM14 -  -------------- + Today's -DM1
+          *                                         14
+          *
+          * Reference:
+          *    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
+          */
+         if( optInTimePeriod > 1 ) {
+            lookbackTotal = optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.MINUS_DM] - 1;
+         } else {
+            lookbackTotal = 1;
+         }
+         /* Adjust startIdx to account for the lookback period. */
+         if( startIdx < lookbackTotal ) {
+            startIdx = lookbackTotal;
+         }
+         /* Make sure there is still something to evaluate. */
+         if( startIdx > endIdx ) {
+            outBegIdx = 0;
+            outNBElement = 0;
+            return RetCode.OutOfRangeEndIndex ;
+         }
+         /* Indicate where the next output should be put
+          * in the outReal.
+          */
+         outIdx = 0;
+         /* Trap the case where no smoothing is needed. */
+         /* Process the initial DM */
+         outBegIdx = startIdx;
+         prevMinusDM = 0.0;
+         today = startIdx - lookbackTotal;
+         prevHigh = inHigh[today];
+         prevLow = inLow[today];
+         i = optInTimePeriod - 1;
+         while( i-- > 0 ) {
+            today += 1;
+            tempReal = inHigh[today];
+            diffP = tempReal - prevHigh;
+            /* Plus Delta */
+            prevHigh = tempReal;
+            tempReal = inLow[today];
+            diffM = prevLow - tempReal;
+            /* Minus Delta */
+            prevLow = tempReal;
+            if( diffM > 0 && diffP < diffM ) {
+               /* Case 2 and 4: +DM=0,-DM=diffM */
+               prevMinusDM += diffM;
+            }
+         }
+         /* Process subsequent DM */
+         /* Skip the unstable period. */
+         i = this.unstablePeriod[(int)FuncUnstId.MINUS_DM];
+         while( i-- != 0 ) {
+            today += 1;
+            tempReal = inHigh[today];
+            diffP = tempReal - prevHigh;
+            /* Plus Delta */
+            prevHigh = tempReal;
+            tempReal = inLow[today];
+            diffM = prevLow - tempReal;
+            /* Minus Delta */
+            prevLow = tempReal;
+            if( diffM > 0 && diffP < diffM ) {
+               /* Case 2 and 4: +DM=0,-DM=diffM */
+               prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod + diffM;
+            } else {
+               /* Case 1,3,5 and 7 */
+               prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod;
+            }
+         }
+         /* Now start to write the output in
+          * the caller provided outReal.
+          */
+         outReal[0 * outStride] = prevMinusDM;
+         outIdx = 1;
+         while( today < endIdx ) {
+            today += 1;
+            tempReal = inHigh[today];
+            diffP = tempReal - prevHigh;
+            /* Plus Delta */
+            prevHigh = tempReal;
+            tempReal = inLow[today];
+            diffM = prevLow - tempReal;
+            /* Minus Delta */
+            prevLow = tempReal;
+            if( diffM > 0 && diffP < diffM ) {
+               /* Case 2 and 4: +DM=0,-DM=diffM */
+               prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod + diffM;
+            } else {
+               /* Case 1,3,5 and 7 */
+               prevMinusDM = prevMinusDM - prevMinusDM / optInTimePeriod;
+            }
+            outReal[outIdx++ * outStride] = prevMinusDM;
+         }
+         outNBElement = outIdx;
+         /* Capture the live batch state into the handle. */
+         sp.optInTimePeriod = optInTimePeriod;
+         sp.prevHigh = prevHigh;
+         sp.prevLow = prevLow;
+         sp.tempReal = tempReal;
+         sp.diffP = diffP;
+         sp.diffM = diffM;
+         sp.prevMinusDM = prevMinusDM;
+         sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+         return RetCode.Success;
+      }
+   }
+
+   private RetCode MINUS_DM_OpenBody( MINUS_DM_Stream sp, double[] inHigh, double[] inLow, int startIdx, int optInTimePeriod )
+   {
+      double[] sink_outReal = new double[1];
+      return MINUS_DM_OpenCore( sp, inHigh, inLow, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+   }
+
+   private RetCode MINUS_DM_OpenAndFillBody( MINUS_DM_Stream sp, double[] inHigh, double[] inLow, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outReal, inHigh) || ReferenceEquals(outReal, inLow) ) {
+         return RetCode.BadParam;
+      }
+      return MINUS_DM_OpenCore( sp, inHigh, inLow, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+   }
+
+   private RetCode MINUS_DM_OpenAndFillInternalBody( MINUS_DM_Stream sp, double[] inHigh, double[] inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      return MINUS_DM_OpenCore(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+   }
+
+   /* MINUS_DM_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal MINUS_DM_Stream MINUS_DM_OpenAndFillInternal( double[] inHigh, double[] inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      MINUS_DM_Stream sp = new MINUS_DM_Stream(this);
+      RetCode retCode = MINUS_DM_OpenAndFillInternalBody(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("MINUS_DM", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind MINUS_DM_Open (composition seam). */
+   internal MINUS_DM_Stream MINUS_DM_OpenInternal( double[] inHigh, double[] inLow, int startIdx, int optInTimePeriod )
+   {
+      MINUS_DM_Stream sp = new MINUS_DM_Stream(this);
+      RetCode retCode = MINUS_DM_OpenBody(sp, inHigh, inLow, startIdx, optInTimePeriod);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("MINUS_DM", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>MINUS_DM</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="MINUS_DM_Stream.Value"/> starts at the last
+   /// history bar's value — bit-identical to what <c>MINUS_DM</c> reports for
+   /// that bar.</para>
+   /// <para>The history must hold at least <c>MINUS_DM_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>MINUS_DM_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="MINUS_DM_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MINUS_DM_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public MINUS_DM_Stream MINUS_DM_Open( double[] inHigh, double[] inLow, int optInTimePeriod )
+   {
+      return MINUS_DM_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
+   }
+
+   /// <summary><c>MINUS_DM_Open</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>MINUS_DM</c> produces over
+   /// the same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - MINUS_DM_Lookback(...)</c> values
+   /// and must not alias the inputs or each other — this path writes the outputs
+   /// and then reads the input tail to seed its rings, so the batch tier's
+   /// in-place allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="MINUS_DM_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="MINUS_DM_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="outReal">Smoothed minus directional movement. Must hold at least <c>historyLen -
+   /// MINUS_DM_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MINUS_DM_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public MINUS_DM_Stream MINUS_DM_OpenAndFill( double[] inHigh, double[] inLow, int optInTimePeriod, double[] outReal )
+   {
+      MINUS_DM_Stream sp = new MINUS_DM_Stream(this);
+      RetCode retCode = MINUS_DM_OpenAndFillBody(sp, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("MINUS_DM", "openAndFill", retCode);
+   }
 }

@@ -437,4 +437,487 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>One <c>ACCBANDS</c> output set, in batch output order.</summary>
+   /// <remarks>
+   /// <para>Equality is the compiler-generated record-struct equality, which compares
+   /// the components with <c>==</c>: <c>NaN</c> does not equal <c>NaN</c>, and
+   /// <c>0.0</c> equals <c>-0.0</c>. That is deliberately <em>not</em> the Java
+   /// <c>Value</c> contract, which compares bitwise — compare
+   /// <see cref="System.BitConverter.DoubleToInt64Bits(double)"/> per component
+   /// when bit-level identity is what you mean.</para>
+   /// </remarks>
+   /// <param name="RealUpperBand">SMA of the range-scaled high band.</param>
+   /// <param name="RealMiddleBand">SMA of the close.</param>
+   /// <param name="RealLowerBand">SMA of the range-scaled low band.</param>
+   public readonly record struct ACCBANDS_Value( double RealUpperBand, double RealMiddleBand, double RealLowerBand );
+
+   /// <summary>A live <c>ACCBANDS</c> stream: one value per closed bar, bit-identical to
+   /// <c>ACCBANDS</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.ACCBANDS_Open"/>. There is no close and nothing
+   /// to dispose — the handle is ordinary managed state, and an unreferenced
+   /// handle is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class ACCBANDS_Stream
+   {
+      internal Core core;
+      internal int optInTimePeriod;
+      internal double periodTotalUpper;
+      internal double periodTotalMiddle;
+      internal double periodTotalLower;
+      internal double tempUpper;
+      internal double tempMiddle;
+      internal double tempLower;
+      internal int ringPos_trailingIdx;
+      internal int ringCap_trailingIdx;
+      internal double[] ring_trailingIdx_inHigh = [];
+      internal double[] ring_trailingIdx_inLow = [];
+      internal double[] ring_trailingIdx_inClose = [];
+      internal double cur_outRealUpperBand;
+      internal double cur_outRealMiddleBand;
+      internal double cur_outRealLowerBand;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal ACCBANDS_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>ACCBANDS_OpenAndFill</c> filled, or
+      /// <see cref="OutRange.Empty"/> when this handle came from a plain open
+      /// (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal ACCBANDS_Stream( ACCBANDS_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.periodTotalUpper = other.periodTotalUpper;
+         this.periodTotalMiddle = other.periodTotalMiddle;
+         this.periodTotalLower = other.periodTotalLower;
+         this.tempUpper = other.tempUpper;
+         this.tempMiddle = other.tempMiddle;
+         this.tempLower = other.tempLower;
+         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
+         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
+         this.ring_trailingIdx_inHigh = new double[other.ring_trailingIdx_inHigh.Length];
+         Array.Copy( other.ring_trailingIdx_inHigh, this.ring_trailingIdx_inHigh, other.ring_trailingIdx_inHigh.Length );
+         this.ring_trailingIdx_inLow = new double[other.ring_trailingIdx_inLow.Length];
+         Array.Copy( other.ring_trailingIdx_inLow, this.ring_trailingIdx_inLow, other.ring_trailingIdx_inLow.Length );
+         this.ring_trailingIdx_inClose = new double[other.ring_trailingIdx_inClose.Length];
+         Array.Copy( other.ring_trailingIdx_inClose, this.ring_trailingIdx_inClose, other.ring_trailingIdx_inClose.Length );
+         this.cur_outRealUpperBand = other.cur_outRealUpperBand;
+         this.cur_outRealMiddleBand = other.cur_outRealMiddleBand;
+         this.cur_outRealLowerBand = other.cur_outRealLowerBand;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( ACCBANDS_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.periodTotalUpper = other.periodTotalUpper;
+         this.periodTotalMiddle = other.periodTotalMiddle;
+         this.periodTotalLower = other.periodTotalLower;
+         this.tempUpper = other.tempUpper;
+         this.tempMiddle = other.tempMiddle;
+         this.tempLower = other.tempLower;
+         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
+         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
+         if( this.ring_trailingIdx_inHigh.Length != other.ring_trailingIdx_inHigh.Length ) {
+            this.ring_trailingIdx_inHigh = new double[other.ring_trailingIdx_inHigh.Length];
+         }
+         Array.Copy( other.ring_trailingIdx_inHigh, this.ring_trailingIdx_inHigh, other.ring_trailingIdx_inHigh.Length );
+         if( this.ring_trailingIdx_inLow.Length != other.ring_trailingIdx_inLow.Length ) {
+            this.ring_trailingIdx_inLow = new double[other.ring_trailingIdx_inLow.Length];
+         }
+         Array.Copy( other.ring_trailingIdx_inLow, this.ring_trailingIdx_inLow, other.ring_trailingIdx_inLow.Length );
+         if( this.ring_trailingIdx_inClose.Length != other.ring_trailingIdx_inClose.Length ) {
+            this.ring_trailingIdx_inClose = new double[other.ring_trailingIdx_inClose.Length];
+         }
+         Array.Copy( other.ring_trailingIdx_inClose, this.ring_trailingIdx_inClose, other.ring_trailingIdx_inClose.Length );
+         this.cur_outRealUpperBand = other.cur_outRealUpperBand;
+         this.cur_outRealMiddleBand = other.cur_outRealMiddleBand;
+         this.cur_outRealLowerBand = other.cur_outRealLowerBand;
+         this.fillRange = other.fillRange;
+      }
+
+      /* Peek's reusable scratch — one per thread, see CopyFrom. */
+      [ThreadStatic] private static ACCBANDS_Stream? peekScratch;
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <param name="inClose">Close price of each bar.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public ACCBANDS_Value Update( double inHigh, double inLow, double inClose )
+      {
+         core.ACCBANDS_StreamStep(this, inHigh, inLow, inClose);
+         return new ACCBANDS_Value(cur_outRealUpperBand, cur_outRealMiddleBand, cur_outRealLowerBand);
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a scratch handle held per thread and reused, so the copy
+      /// allocates nothing after the first peek of this indicator on this thread.
+      /// That scratch is retained for the life of the thread.</para>
+      /// </remarks>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <param name="inClose">Close price of each bar.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public ACCBANDS_Value Peek( double inHigh, double inLow, double inClose )
+      {
+         ACCBANDS_Stream? scratch = peekScratch;
+         if( scratch is null ) {
+            scratch = new ACCBANDS_Stream(this);
+            peekScratch = scratch;
+         } else {
+            scratch.CopyFrom(this);
+         }
+         core.ACCBANDS_StreamStep(scratch, inHigh, inLow, inClose);
+         return new ACCBANDS_Value(scratch.cur_outRealUpperBand, scratch.cur_outRealMiddleBand, scratch.cur_outRealLowerBand);
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public ACCBANDS_Value Value => new ACCBANDS_Value(cur_outRealUpperBand, cur_outRealMiddleBand, cur_outRealLowerBand);
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public ACCBANDS_Stream Clone()
+      {
+         return new ACCBANDS_Stream(this);
+      }
+   }
+
+   internal void ACCBANDS_StreamStep( ACCBANDS_Stream sp, double inHigh, double inLow, double inClose )
+   {
+      double tempReal = 0.0;
+      if( sp.ringCap_trailingIdx == 0 ) {
+         sp.ring_trailingIdx_inHigh[0] = inHigh;
+         sp.ring_trailingIdx_inLow[0] = inLow;
+         sp.ring_trailingIdx_inClose[0] = inClose;
+      }
+      /* Add the incoming bar to each running sum. */
+      tempReal = inHigh + inLow;
+      if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+         tempReal = 4 * (inHigh - inLow) / tempReal;
+         sp.periodTotalUpper += inHigh * (1 + tempReal);
+         sp.periodTotalLower += inLow * (1 - tempReal);
+      } else {
+         sp.periodTotalUpper += inHigh;
+         sp.periodTotalLower += inLow;
+      }
+      sp.periodTotalMiddle += inClose;
+      /* Record the current window sums. */
+      sp.tempUpper = sp.periodTotalUpper;
+      sp.tempMiddle = sp.periodTotalMiddle;
+      sp.tempLower = sp.periodTotalLower;
+      /* Remove the trailing bar from each running sum. */
+      tempReal = sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] + sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx];
+      if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+         tempReal = 4 * (sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] - sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx]) / tempReal;
+         sp.periodTotalUpper -= sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] * (1 + tempReal);
+         sp.periodTotalLower -= sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] * (1 - tempReal);
+      } else {
+         sp.periodTotalUpper -= sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx];
+         sp.periodTotalLower -= sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx];
+      }
+      sp.periodTotalMiddle -= sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx];
+      /* Write the three bands. */
+      sp.cur_outRealUpperBand = sp.tempUpper / (double)sp.optInTimePeriod;
+      sp.cur_outRealMiddleBand = sp.tempMiddle / (double)sp.optInTimePeriod;
+      sp.cur_outRealLowerBand = sp.tempLower / (double)sp.optInTimePeriod;
+      sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] = inHigh;
+      sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] = inLow;
+      sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] = inClose;
+      sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
+      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+         sp.ringPos_trailingIdx = 0;
+      }
+   }
+
+   private RetCode ACCBANDS_OpenCore( ACCBANDS_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outRealUpperBand, double[] outRealMiddleBand, double[] outRealLowerBand, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      double periodTotalUpper = 0;
+      double periodTotalMiddle = 0;
+      double periodTotalLower = 0;
+      double tempUpper = 0;
+      double tempMiddle = 0;
+      double tempLower = 0;
+      double tempReal = 0;
+      int i = 0;
+      int outIdx = 0;
+      int trailingIdx = 0;
+      int lookbackTotal = 0;
+      int historyLen = inHigh.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 || inLow.Length != inHigh.Length || inClose.Length != inHigh.Length ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInTimePeriod == int.MinValue ) {
+         optInTimePeriod = 20;
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      /* Identify the minimum number of price bar needed
+       * to calculate at least one output.
+       */
+      lookbackTotal = SMA_Lookback(optInTimePeriod);
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      /* Each band is a simple moving average maintained as a running sum over a
+       * shared trailing window (all three share optInTimePeriod, so one trailing
+       * index walks all three windows in lockstep):
+       *    middle = SMA( close )
+       *    upper  = SMA( high * (1 + 4*(high-low)/(high+low)) )
+       *    lower  = SMA( low  * (1 - 4*(high-low)/(high+low)) )
+       * When high+low is zero the upper/lower map degenerates to high/low.
+       * Fusing the three moving averages into one loop is bit-identical to the
+       * former "two scratch buffers + three sma() calls": each accumulator's
+       * add/record/subtract order is unchanged, and the High/Low map is a pure
+       * function recomputed from the raw trailing bar.
+       */
+      periodTotalUpper = 0.0;
+      periodTotalMiddle = 0.0;
+      periodTotalLower = 0.0;
+      trailingIdx = startIdx - lookbackTotal;
+      /* Warm up the running sums with the initial period,
+       * except for the last value.
+       */
+      i = trailingIdx;
+      while( i < startIdx ) {
+         tempReal = inHigh[i] + inLow[i];
+         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+            tempReal = 4 * (inHigh[i] - inLow[i]) / tempReal;
+            periodTotalUpper += inHigh[i] * (1 + tempReal);
+            periodTotalLower += inLow[i] * (1 - tempReal);
+         } else {
+            periodTotalUpper += inHigh[i];
+            periodTotalLower += inLow[i];
+         }
+         periodTotalMiddle += inClose[i];
+         i = i + 1;
+      }
+      /* Proceed with the calculation for the requested range.
+       * Note that this algorithm allows the input and output to be the
+       * same buffer: every trailing bar is read before any output is written.
+       */
+      outIdx = 0;
+      while( i <= endIdx ) {
+         /* Add the incoming bar to each running sum. */
+         tempReal = inHigh[i] + inLow[i];
+         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+            tempReal = 4 * (inHigh[i] - inLow[i]) / tempReal;
+            periodTotalUpper += inHigh[i] * (1 + tempReal);
+            periodTotalLower += inLow[i] * (1 - tempReal);
+         } else {
+            periodTotalUpper += inHigh[i];
+            periodTotalLower += inLow[i];
+         }
+         periodTotalMiddle += inClose[i];
+         i = i + 1;
+         /* Record the current window sums. */
+         tempUpper = periodTotalUpper;
+         tempMiddle = periodTotalMiddle;
+         tempLower = periodTotalLower;
+         /* Remove the trailing bar from each running sum. */
+         tempReal = inHigh[trailingIdx] + inLow[trailingIdx];
+         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+            tempReal = 4 * (inHigh[trailingIdx] - inLow[trailingIdx]) / tempReal;
+            periodTotalUpper -= inHigh[trailingIdx] * (1 + tempReal);
+            periodTotalLower -= inLow[trailingIdx] * (1 - tempReal);
+         } else {
+            periodTotalUpper -= inHigh[trailingIdx];
+            periodTotalLower -= inLow[trailingIdx];
+         }
+         periodTotalMiddle -= inClose[trailingIdx];
+         trailingIdx = trailingIdx + 1;
+         /* Write the three bands. */
+         outRealUpperBand[outIdx * outStride] = tempUpper / (double)optInTimePeriod;
+         outRealMiddleBand[outIdx * outStride] = tempMiddle / (double)optInTimePeriod;
+         outRealLowerBand[outIdx * outStride] = tempLower / (double)optInTimePeriod;
+         outIdx = outIdx + 1;
+      }
+      outBegIdx = startIdx;
+      outNBElement = outIdx;
+      /* Capture the live batch state into the handle. */
+      int cap_trailingIdx = i - trailingIdx;
+      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+         return RetCode.InternalError;
+      }
+      int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
+      double[] capRing_trailingIdx_inHigh = new double[allocN_trailingIdx];
+      Array.Copy(inHigh, historyLen - cap_trailingIdx, capRing_trailingIdx_inHigh, 0, cap_trailingIdx);
+      double[] capRing_trailingIdx_inLow = new double[allocN_trailingIdx];
+      Array.Copy(inLow, historyLen - cap_trailingIdx, capRing_trailingIdx_inLow, 0, cap_trailingIdx);
+      double[] capRing_trailingIdx_inClose = new double[allocN_trailingIdx];
+      Array.Copy(inClose, historyLen - cap_trailingIdx, capRing_trailingIdx_inClose, 0, cap_trailingIdx);
+      sp.optInTimePeriod = optInTimePeriod;
+      sp.periodTotalUpper = periodTotalUpper;
+      sp.periodTotalMiddle = periodTotalMiddle;
+      sp.periodTotalLower = periodTotalLower;
+      sp.tempUpper = tempUpper;
+      sp.tempMiddle = tempMiddle;
+      sp.tempLower = tempLower;
+      sp.ringPos_trailingIdx = 0;
+      sp.ringCap_trailingIdx = cap_trailingIdx;
+      sp.ring_trailingIdx_inHigh = capRing_trailingIdx_inHigh;
+      sp.ring_trailingIdx_inLow = capRing_trailingIdx_inLow;
+      sp.ring_trailingIdx_inClose = capRing_trailingIdx_inClose;
+      sp.cur_outRealUpperBand = outRealUpperBand[(outNBElement - 1) * outStride];
+      sp.cur_outRealMiddleBand = outRealMiddleBand[(outNBElement - 1) * outStride];
+      sp.cur_outRealLowerBand = outRealLowerBand[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode ACCBANDS_OpenBody( ACCBANDS_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod )
+   {
+      double[] sink_outRealUpperBand = new double[1];
+      double[] sink_outRealMiddleBand = new double[1];
+      double[] sink_outRealLowerBand = new double[1];
+      return ACCBANDS_OpenCore( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out _, out _, sink_outRealUpperBand, sink_outRealMiddleBand, sink_outRealLowerBand, 0 );
+   }
+
+   private RetCode ACCBANDS_OpenAndFillBody( ACCBANDS_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outRealUpperBand, double[] outRealMiddleBand, double[] outRealLowerBand )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outRealUpperBand, inHigh) || ReferenceEquals(outRealUpperBand, inLow) || ReferenceEquals(outRealUpperBand, inClose) || ReferenceEquals(outRealMiddleBand, inHigh) || ReferenceEquals(outRealMiddleBand, inLow) || ReferenceEquals(outRealMiddleBand, inClose) || ReferenceEquals(outRealLowerBand, inHigh) || ReferenceEquals(outRealLowerBand, inLow) || ReferenceEquals(outRealLowerBand, inClose) || ReferenceEquals(outRealUpperBand, outRealMiddleBand) || ReferenceEquals(outRealUpperBand, outRealLowerBand) || ReferenceEquals(outRealMiddleBand, outRealLowerBand) ) {
+         return RetCode.BadParam;
+      }
+      return ACCBANDS_OpenCore( sp, inHigh, inLow, inClose, 0, optInTimePeriod, out outBegIdx, out outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1 );
+   }
+
+   private RetCode ACCBANDS_OpenAndFillInternalBody( ACCBANDS_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outRealUpperBand, double[] outRealMiddleBand, double[] outRealLowerBand )
+   {
+      return ACCBANDS_OpenCore(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1);
+   }
+
+   /* ACCBANDS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal ACCBANDS_Stream ACCBANDS_OpenAndFillInternal( double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outRealUpperBand, double[] outRealMiddleBand, double[] outRealLowerBand )
+   {
+      ACCBANDS_Stream sp = new ACCBANDS_Stream(this);
+      RetCode retCode = ACCBANDS_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("ACCBANDS", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind ACCBANDS_Open (composition seam). */
+   internal ACCBANDS_Stream ACCBANDS_OpenInternal( double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod )
+   {
+      ACCBANDS_Stream sp = new ACCBANDS_Stream(this);
+      RetCode retCode = ACCBANDS_OpenBody(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("ACCBANDS", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>ACCBANDS</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="ACCBANDS_Stream.Value"/> starts at the last
+   /// history bar's value — bit-identical to what <c>ACCBANDS</c> reports for
+   /// that bar.</para>
+   /// <para>The history must hold at least <c>ACCBANDS_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>ACCBANDS_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="ACCBANDS_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>ACCBANDS_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public ACCBANDS_Stream ACCBANDS_Open( double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod )
+   {
+      return ACCBANDS_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
+   }
+
+   /// <summary><c>ACCBANDS_Open</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>ACCBANDS</c> produces over
+   /// the same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - ACCBANDS_Lookback(...)</c> values
+   /// and must not alias the inputs or each other — this path writes the outputs
+   /// and then reads the input tail to seed its rings, so the batch tier's
+   /// in-place allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="ACCBANDS_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="ACCBANDS_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="outRealUpperBand">SMA of the range-scaled high band. Must hold at least <c>historyLen -
+   /// ACCBANDS_Lookback(...)</c> values.</param>
+   /// <param name="outRealMiddleBand">SMA of the close. Must hold at least <c>historyLen -
+   /// ACCBANDS_Lookback(...)</c> values.</param>
+   /// <param name="outRealLowerBand">SMA of the range-scaled low band. Must hold at least <c>historyLen -
+   /// ACCBANDS_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>ACCBANDS_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public ACCBANDS_Stream ACCBANDS_OpenAndFill( double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, double[] outRealUpperBand, double[] outRealMiddleBand, double[] outRealLowerBand )
+   {
+      ACCBANDS_Stream sp = new ACCBANDS_Stream(this);
+      RetCode retCode = ACCBANDS_OpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("ACCBANDS", "openAndFill", retCode);
+   }
 }

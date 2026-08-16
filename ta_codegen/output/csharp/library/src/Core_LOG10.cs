@@ -211,4 +211,222 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>LOG10</c> stream: one value per closed bar, bit-identical to
+   /// <c>LOG10</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.LOG10_Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class LOG10_Stream
+   {
+      internal Core core;
+      internal double cur_outReal;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal LOG10_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>LOG10_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
+      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal LOG10_Stream( LOG10_Stream other )
+      {
+         this.core = other.core;
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( LOG10_Stream other )
+      {
+         this.core = other.core;
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inReal">Input values.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public double Update( double inReal )
+      {
+         core.LOG10_StreamStep(this, inReal);
+         return cur_outReal;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a throwaway copy, which for this handle's shape is cheaper than
+      /// reusing one.</para>
+      /// </remarks>
+      /// <param name="inReal">Input values.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public double Peek( double inReal )
+      {
+         LOG10_Stream scratch = new LOG10_Stream(this);
+         core.LOG10_StreamStep(scratch, inReal);
+         return scratch.cur_outReal;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public double Value => cur_outReal;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public LOG10_Stream Clone()
+      {
+         return new LOG10_Stream(this);
+      }
+   }
+
+   internal void LOG10_StreamStep( LOG10_Stream sp, double inReal )
+   {
+      sp.cur_outReal = Math.Log10(inReal);
+   }
+
+   private RetCode LOG10_OpenCore( LOG10_Stream sp, double[] inReal, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      int outIdx = 0;
+      int i = 0;
+      int historyLen = inReal.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 ) {
+         outReal[outIdx * outStride] = Math.Log10(inReal[i]);
+      }
+      outNBElement = outIdx;
+      outBegIdx = startIdx;
+      /* Capture the live batch state into the handle. */
+      sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode LOG10_OpenBody( LOG10_Stream sp, double[] inReal, int startIdx )
+   {
+      double[] sink_outReal = new double[1];
+      return LOG10_OpenCore( sp, inReal, startIdx, out _, out _, sink_outReal, 0 );
+   }
+
+   private RetCode LOG10_OpenAndFillBody( LOG10_Stream sp, double[] inReal, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outReal, inReal) ) {
+         return RetCode.BadParam;
+      }
+      return LOG10_OpenCore( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
+   }
+
+   private RetCode LOG10_OpenAndFillInternalBody( LOG10_Stream sp, double[] inReal, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      return LOG10_OpenCore(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+   }
+
+   /* LOG10_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal LOG10_Stream LOG10_OpenAndFillInternal( double[] inReal, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      LOG10_Stream sp = new LOG10_Stream(this);
+      RetCode retCode = LOG10_OpenAndFillInternalBody(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("LOG10", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind LOG10_Open (composition seam). */
+   internal LOG10_Stream LOG10_OpenInternal( double[] inReal, int startIdx )
+   {
+      LOG10_Stream sp = new LOG10_Stream(this);
+      RetCode retCode = LOG10_OpenBody(sp, inReal, startIdx);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("LOG10", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>LOG10</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="LOG10_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>LOG10</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>LOG10_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>LOG10_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inReal">Input values. The warm-up history, oldest bar first.</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>LOG10_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public LOG10_Stream LOG10_Open( double[] inReal )
+   {
+      return LOG10_OpenInternal(inReal, 0);
+   }
+
+   /// <summary><c>LOG10_Open</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>LOG10</c> produces over
+   /// the same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - LOG10_Lookback(...)</c> values and
+   /// must not alias the inputs or each other — this path writes the outputs and
+   /// then reads the input tail to seed its rings, so the batch tier's in-place
+   /// allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="LOG10_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inReal">Input values. The warm-up history, oldest bar first.</param>
+   /// <param name="outReal">Base-10 logarithm of each input. Must hold at least <c>historyLen -
+   /// LOG10_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>LOG10_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public LOG10_Stream LOG10_OpenAndFill( double[] inReal, double[] outReal )
+   {
+      LOG10_Stream sp = new LOG10_Stream(this);
+      RetCode retCode = LOG10_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("LOG10", "openAndFill", retCode);
+   }
 }

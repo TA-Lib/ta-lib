@@ -329,4 +329,361 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>MAXINDEX</c> stream: one value per closed bar, bit-identical to
+   /// <c>MAXINDEX</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.MAXINDEX_Open"/>. There is no close and nothing
+   /// to dispose — the handle is ordinary managed state, and an unreferenced
+   /// handle is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class MAXINDEX_Stream
+   {
+      internal Core core;
+      internal int optInTimePeriod;
+      internal double highest;
+      internal int trailingIdx;
+      internal int i;
+      internal int highestIdx;
+      internal int today;
+      internal int xMask;
+      internal double[] x_inReal = [];
+      internal int cur_outInteger;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal MAXINDEX_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>MAXINDEX_OpenAndFill</c> filled, or
+      /// <see cref="OutRange.Empty"/> when this handle came from a plain open
+      /// (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal MAXINDEX_Stream( MAXINDEX_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.highest = other.highest;
+         this.trailingIdx = other.trailingIdx;
+         this.i = other.i;
+         this.highestIdx = other.highestIdx;
+         this.today = other.today;
+         this.xMask = other.xMask;
+         this.x_inReal = new double[other.x_inReal.Length];
+         Array.Copy( other.x_inReal, this.x_inReal, other.x_inReal.Length );
+         this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( MAXINDEX_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.highest = other.highest;
+         this.trailingIdx = other.trailingIdx;
+         this.i = other.i;
+         this.highestIdx = other.highestIdx;
+         this.today = other.today;
+         this.xMask = other.xMask;
+         if( this.x_inReal.Length != other.x_inReal.Length ) {
+            this.x_inReal = new double[other.x_inReal.Length];
+         }
+         Array.Copy( other.x_inReal, this.x_inReal, other.x_inReal.Length );
+         this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
+      }
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inReal">Input series to scan.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public int Update( double inReal )
+      {
+         core.MAXINDEX_StreamStep(this, inReal);
+         return cur_outInteger;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a throwaway copy, which for this handle's shape is cheaper than
+      /// reusing one.</para>
+      /// </remarks>
+      /// <param name="inReal">Input series to scan.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public int Peek( double inReal )
+      {
+         MAXINDEX_Stream scratch = new MAXINDEX_Stream(this);
+         core.MAXINDEX_StreamStep(scratch, inReal);
+         return scratch.cur_outInteger;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public int Value => cur_outInteger;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public MAXINDEX_Stream Clone()
+      {
+         return new MAXINDEX_Stream(this);
+      }
+   }
+
+   internal void MAXINDEX_StreamStep( MAXINDEX_Stream sp, double inReal )
+   {
+      double tmp = 0.0;
+      if( sp.today >= 1073741824 ) {
+         int rebaseShift = sp.trailingIdx & ~sp.xMask;
+         sp.today -= rebaseShift;
+         sp.trailingIdx -= rebaseShift;
+         sp.highestIdx -= rebaseShift;
+         sp.i -= rebaseShift;
+      }
+      sp.x_inReal[sp.today & sp.xMask] = inReal;
+      tmp = sp.x_inReal[sp.today & sp.xMask];
+      if( sp.highestIdx < sp.trailingIdx ) {
+         sp.highestIdx = sp.trailingIdx;
+         sp.highest = sp.x_inReal[sp.highestIdx & sp.xMask];
+         sp.i = sp.highestIdx;
+         while( ++sp.i <= sp.today ) {
+            tmp = sp.x_inReal[sp.i & sp.xMask];
+            if( tmp > sp.highest ) {
+               sp.highestIdx = sp.i;
+               sp.highest = tmp;
+            }
+         }
+      } else if( tmp >= sp.highest ) {
+         sp.highestIdx = sp.today;
+         sp.highest = tmp;
+      }
+      sp.cur_outInteger = sp.highestIdx;
+      sp.trailingIdx += 1;
+      sp.today += 1;
+   }
+
+   private RetCode MAXINDEX_OpenCore( MAXINDEX_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, int[] outInteger, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      double highest = 0;
+      double tmp = 0;
+      int outIdx = 0;
+      int nbInitialElementNeeded = 0;
+      int trailingIdx = 0;
+      int today = 0;
+      int i = 0;
+      int highestIdx = 0;
+      int historyLen = inReal.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInTimePeriod == int.MinValue ) {
+         optInTimePeriod = 30;
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      /* Identify the minimum number of price bar needed
+       * to identify at least one output over the specified
+       * period.
+       */
+      nbInitialElementNeeded = optInTimePeriod - 1;
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < nbInitialElementNeeded ) {
+         startIdx = nbInitialElementNeeded;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      /* Proceed with the calculation for the requested range.
+       * (The integer output can never share the real input's buffer —
+       * different element type; issue #130.)
+       */
+      outIdx = 0;
+      today = startIdx;
+      trailingIdx = startIdx - nbInitialElementNeeded;
+      highestIdx = 0 - 1;
+      highest = 0.0;
+      while( today <= endIdx ) {
+         tmp = inReal[today];
+         if( highestIdx < trailingIdx ) {
+            highestIdx = trailingIdx;
+            highest = inReal[highestIdx];
+            i = highestIdx;
+            while( ++i <= today ) {
+               tmp = inReal[i];
+               if( tmp > highest ) {
+                  highestIdx = i;
+                  highest = tmp;
+               }
+            }
+         } else if( tmp >= highest ) {
+            highestIdx = today;
+            highest = tmp;
+         }
+         outInteger[outIdx++ * outStride] = highestIdx;
+         trailingIdx += 1;
+         today += 1;
+      }
+      /* Keep the outBegIdx relative to the
+       * caller input before returning.
+       */
+      outBegIdx = startIdx;
+      outNBElement = outIdx;
+      /* Capture the live batch state into the handle. */
+      int capX = today - trailingIdx + 1;
+      if( capX < 1 || capX > historyLen ) {
+         return RetCode.InternalError;
+      }
+      int physX = 1;
+      while( physX < capX ) {
+         physX <<= 1;
+      }
+      double[] capX_inReal = new double[physX];
+      for( int fillJ = historyLen - capX; fillJ < historyLen; fillJ++ ) {
+         capX_inReal[fillJ & (physX - 1)] = inReal[fillJ];
+      }
+      sp.optInTimePeriod = optInTimePeriod;
+      sp.highest = highest;
+      sp.trailingIdx = trailingIdx;
+      sp.i = i;
+      sp.highestIdx = highestIdx;
+      sp.today = today;
+      sp.xMask = physX - 1;
+      sp.x_inReal = capX_inReal;
+      sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode MAXINDEX_OpenBody( MAXINDEX_Stream sp, double[] inReal, int startIdx, int optInTimePeriod )
+   {
+      int[] sink_outInteger = new int[1];
+      return MAXINDEX_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outInteger, 0 );
+   }
+
+   private RetCode MAXINDEX_OpenAndFillBody( MAXINDEX_Stream sp, double[] inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, int[] outInteger )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outInteger, inReal) ) {
+         return RetCode.BadParam;
+      }
+      return MAXINDEX_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outInteger, 1 );
+   }
+
+   private RetCode MAXINDEX_OpenAndFillInternalBody( MAXINDEX_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, int[] outInteger )
+   {
+      return MAXINDEX_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outInteger, 1);
+   }
+
+   /* MAXINDEX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal MAXINDEX_Stream MAXINDEX_OpenAndFillInternal( double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, int[] outInteger )
+   {
+      MAXINDEX_Stream sp = new MAXINDEX_Stream(this);
+      RetCode retCode = MAXINDEX_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outInteger);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("MAXINDEX", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind MAXINDEX_Open (composition seam). */
+   internal MAXINDEX_Stream MAXINDEX_OpenInternal( double[] inReal, int startIdx, int optInTimePeriod )
+   {
+      MAXINDEX_Stream sp = new MAXINDEX_Stream(this);
+      RetCode retCode = MAXINDEX_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("MAXINDEX", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>MAXINDEX</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="MAXINDEX_Stream.Value"/> starts at the last
+   /// history bar's value — bit-identical to what <c>MAXINDEX</c> reports for
+   /// that bar.</para>
+   /// <para>The history must hold at least <c>MAXINDEX_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>MAXINDEX_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inReal">Input series to scan. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="MAXINDEX_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MAXINDEX_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public MAXINDEX_Stream MAXINDEX_Open( double[] inReal, int optInTimePeriod )
+   {
+      return MAXINDEX_OpenInternal(inReal, 0, optInTimePeriod);
+   }
+
+   /// <summary><c>MAXINDEX_Open</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>MAXINDEX</c> produces over
+   /// the same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - MAXINDEX_Lookback(...)</c> values
+   /// and must not alias the inputs or each other — this path writes the outputs
+   /// and then reads the input tail to seed its rings, so the batch tier's
+   /// in-place allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="MAXINDEX_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inReal">Input series to scan. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="MAXINDEX_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="outInteger">Absolute index (into inReal) of the highest value in each window. Must
+   /// hold at least <c>historyLen - MAXINDEX_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MAXINDEX_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public MAXINDEX_Stream MAXINDEX_OpenAndFill( double[] inReal, int optInTimePeriod, int[] outInteger )
+   {
+      MAXINDEX_Stream sp = new MAXINDEX_Stream(this);
+      RetCode retCode = MAXINDEX_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("MAXINDEX", "openAndFill", retCode);
+   }
 }

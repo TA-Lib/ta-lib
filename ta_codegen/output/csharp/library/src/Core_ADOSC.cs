@@ -466,4 +466,408 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>ADOSC</c> stream: one value per closed bar, bit-identical to
+   /// <c>ADOSC</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.ADOSC_Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class ADOSC_Stream
+   {
+      internal Core core;
+      internal int optInFastPeriod;
+      internal int optInSlowPeriod;
+      internal double slowEMA;
+      internal double slowk;
+      internal double one_minus_slowk;
+      internal double fastEMA;
+      internal double fastk;
+      internal double one_minus_fastk;
+      internal double ad;
+      internal double cur_outReal;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal ADOSC_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>ADOSC_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
+      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal ADOSC_Stream( ADOSC_Stream other )
+      {
+         this.core = other.core;
+         this.optInFastPeriod = other.optInFastPeriod;
+         this.optInSlowPeriod = other.optInSlowPeriod;
+         this.slowEMA = other.slowEMA;
+         this.slowk = other.slowk;
+         this.one_minus_slowk = other.one_minus_slowk;
+         this.fastEMA = other.fastEMA;
+         this.fastk = other.fastk;
+         this.one_minus_fastk = other.one_minus_fastk;
+         this.ad = other.ad;
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( ADOSC_Stream other )
+      {
+         this.core = other.core;
+         this.optInFastPeriod = other.optInFastPeriod;
+         this.optInSlowPeriod = other.optInSlowPeriod;
+         this.slowEMA = other.slowEMA;
+         this.slowk = other.slowk;
+         this.one_minus_slowk = other.one_minus_slowk;
+         this.fastEMA = other.fastEMA;
+         this.fastk = other.fastk;
+         this.one_minus_fastk = other.one_minus_fastk;
+         this.ad = other.ad;
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <param name="inClose">Close price of each bar.</param>
+      /// <param name="inVolume">Volume of each bar.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public double Update( double inHigh, double inLow, double inClose, double inVolume )
+      {
+         core.ADOSC_StreamStep(this, inHigh, inLow, inClose, inVolume);
+         return cur_outReal;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a throwaway copy, which for this handle's shape is cheaper than
+      /// reusing one.</para>
+      /// </remarks>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <param name="inClose">Close price of each bar.</param>
+      /// <param name="inVolume">Volume of each bar.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public double Peek( double inHigh, double inLow, double inClose, double inVolume )
+      {
+         ADOSC_Stream scratch = new ADOSC_Stream(this);
+         core.ADOSC_StreamStep(scratch, inHigh, inLow, inClose, inVolume);
+         return scratch.cur_outReal;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public double Value => cur_outReal;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public ADOSC_Stream Clone()
+      {
+         return new ADOSC_Stream(this);
+      }
+   }
+
+   internal void ADOSC_StreamStep( ADOSC_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
+   {
+      double high = 0.0;
+      double low = 0.0;
+      double close = 0.0;
+      double tmp = 0.0;
+      high = inHigh;
+      low = inLow;
+      tmp = high - low;
+      close = inClose;
+      if( tmp > 0.0 ) {
+         sp.ad += (close - low - (high - close)) / tmp * (double)inVolume;
+      }
+      sp.fastEMA = Math.FusedMultiplyAdd(sp.one_minus_fastk, sp.fastEMA, sp.fastk * sp.ad);
+      sp.slowEMA = Math.FusedMultiplyAdd(sp.one_minus_slowk, sp.slowEMA, sp.slowk * sp.ad);
+      sp.cur_outReal = sp.fastEMA - sp.slowEMA;
+   }
+
+   private RetCode ADOSC_OpenCore( ADOSC_Stream sp, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      int today = 0;
+      int outIdx = 0;
+      int lookbackTotal = 0;
+      int slowestPeriod = 0;
+      double high = 0;
+      double low = 0;
+      double close = 0;
+      double tmp = 0;
+      double slowEMA = 0;
+      double slowk = 0;
+      double one_minus_slowk = 0;
+      double fastEMA = 0;
+      double fastk = 0;
+      double one_minus_fastk = 0;
+      double ad = 0;
+      int historyLen = inHigh.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 || inLow.Length != inHigh.Length || inClose.Length != inHigh.Length || inVolume.Length != inHigh.Length ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInFastPeriod == int.MinValue ) {
+         optInFastPeriod = 3;
+      } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( optInSlowPeriod == int.MinValue ) {
+         optInSlowPeriod = 10;
+      } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      /* Implementation Note:
+       *     The fastEMA varaible is not neceseraly the
+       *     fastest EMA.
+       *     In the same way, slowEMA is not neceseraly the
+       *     slowest EMA.
+       *
+       *     The ADOSC is always the (fastEMA - slowEMA) regardless
+       *     of the period specified. In other word:
+       *
+       *     ADOSC(3,10) = EMA(3,AD) - EMA(10,AD)
+       *
+       *        while
+       *
+       *     ADOSC(10,3) = EMA(10,AD)- EMA(3,AD)
+       *
+       *     In the first case the EMA(3) is truly a faster EMA,
+       *     while in the second case, the EMA(10) is still call
+       *     fastEMA in the algorithm, even if it is in fact slower.
+       *
+       *     This gives more flexibility to the user if they want to
+       *     experiment with unusual parameter settings.
+       */
+      /* Identify the slowest period.
+       * This infomration is used soleley to bootstrap
+       * the algorithm (skip the lookback period).
+       */
+      if( optInFastPeriod < optInSlowPeriod ) {
+         slowestPeriod = optInSlowPeriod;
+      } else {
+         slowestPeriod = optInFastPeriod;
+      }
+      /* Adjust startIdx to account for the lookback period. */
+      lookbackTotal = EMA_Lookback(slowestPeriod);
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      outBegIdx = startIdx;
+      today = startIdx - lookbackTotal;
+      /* The following variables are used to
+       * calculate the "ad".
+       */
+      ad = 0.0;
+      /* Constants for EMA */
+      fastk = 2.0 / ((double)optInFastPeriod + 1.0);
+      one_minus_fastk = 1.0 - fastk;
+      slowk = 2.0 / ((double)optInSlowPeriod + 1.0);
+      one_minus_slowk = 1.0 - slowk;
+      /* Initialize the two EMA
+       *
+       * Use the same range of initialization inputs for
+       * both EMA and simply seed with the first A/D value.
+       *
+       * Note: Metastock do the same.
+       */
+      high = inHigh[today];
+      low = inLow[today];
+      tmp = high - low;
+      close = inClose[today];
+      if( tmp > 0.0 ) {
+         ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
+      }
+      today += 1;
+      fastEMA = ad;
+      slowEMA = ad;
+      /* Initialize the EMA and skip the unstable period. */
+      while( today < startIdx ) {
+         high = inHigh[today];
+         low = inLow[today];
+         tmp = high - low;
+         close = inClose[today];
+         if( tmp > 0.0 ) {
+            ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
+         }
+         today += 1;
+         fastEMA = Math.FusedMultiplyAdd(one_minus_fastk, fastEMA, fastk * ad);
+         slowEMA = Math.FusedMultiplyAdd(one_minus_slowk, slowEMA, slowk * ad);
+      }
+      /* Perform the calculation for the requested range */
+      outIdx = 0;
+      while( today <= endIdx ) {
+         high = inHigh[today];
+         low = inLow[today];
+         tmp = high - low;
+         close = inClose[today];
+         if( tmp > 0.0 ) {
+            ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
+         }
+         today += 1;
+         fastEMA = Math.FusedMultiplyAdd(one_minus_fastk, fastEMA, fastk * ad);
+         slowEMA = Math.FusedMultiplyAdd(one_minus_slowk, slowEMA, slowk * ad);
+         outReal[outIdx++ * outStride] = fastEMA - slowEMA;
+      }
+      outNBElement = outIdx;
+      /* Capture the live batch state into the handle. */
+      sp.optInFastPeriod = optInFastPeriod;
+      sp.optInSlowPeriod = optInSlowPeriod;
+      sp.slowEMA = slowEMA;
+      sp.slowk = slowk;
+      sp.one_minus_slowk = one_minus_slowk;
+      sp.fastEMA = fastEMA;
+      sp.fastk = fastk;
+      sp.one_minus_fastk = one_minus_fastk;
+      sp.ad = ad;
+      sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode ADOSC_OpenBody( ADOSC_Stream sp, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod )
+   {
+      double[] sink_outReal = new double[1];
+      return ADOSC_OpenCore( sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, out _, out _, sink_outReal, 0 );
+   }
+
+   private RetCode ADOSC_OpenAndFillBody( ADOSC_Stream sp, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInFastPeriod, int optInSlowPeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outReal, inHigh) || ReferenceEquals(outReal, inLow) || ReferenceEquals(outReal, inClose) || ReferenceEquals(outReal, inVolume) ) {
+         return RetCode.BadParam;
+      }
+      return ADOSC_OpenCore( sp, inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outReal, 1 );
+   }
+
+   private RetCode ADOSC_OpenAndFillInternalBody( ADOSC_Stream sp, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      return ADOSC_OpenCore(sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outReal, 1);
+   }
+
+   /* ADOSC_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal ADOSC_Stream ADOSC_OpenAndFillInternal( double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      ADOSC_Stream sp = new ADOSC_Stream(this);
+      RetCode retCode = ADOSC_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("ADOSC", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind ADOSC_Open (composition seam). */
+   internal ADOSC_Stream ADOSC_OpenInternal( double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod )
+   {
+      ADOSC_Stream sp = new ADOSC_Stream(this);
+      RetCode retCode = ADOSC_OpenBody(sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("ADOSC", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>ADOSC</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="ADOSC_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>ADOSC</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>ADOSC_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>ADOSC_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inVolume">Volume of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="optInFastPeriod">As in the batch call; see <see cref="ADOSC_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSlowPeriod">As in the batch call; see <see cref="ADOSC_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>ADOSC_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public ADOSC_Stream ADOSC_Open( double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInFastPeriod, int optInSlowPeriod )
+   {
+      return ADOSC_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod);
+   }
+
+   /// <summary><c>ADOSC_Open</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>ADOSC</c> produces over
+   /// the same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - ADOSC_Lookback(...)</c> values and
+   /// must not alias the inputs or each other — this path writes the outputs and
+   /// then reads the input tail to seed its rings, so the batch tier's in-place
+   /// allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="ADOSC_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inVolume">Volume of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="optInFastPeriod">As in the batch call; see <see cref="ADOSC_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSlowPeriod">As in the batch call; see <see cref="ADOSC_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="outReal">Fast-EMA minus slow-EMA of the A/D line. Must hold at least <c>historyLen
+   /// - ADOSC_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>ADOSC_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public ADOSC_Stream ADOSC_OpenAndFill( double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInFastPeriod, int optInSlowPeriod, double[] outReal )
+   {
+      ADOSC_Stream sp = new ADOSC_Stream(this);
+      RetCode retCode = ADOSC_OpenAndFillBody(sp, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, out int outBegIdx, out int outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("ADOSC", "openAndFill", retCode);
+   }
 }

@@ -490,4 +490,528 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>BETA</c> stream: one value per closed bar, bit-identical to
+   /// <c>BETA</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.BETA_Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class BETA_Stream
+   {
+      internal Core core;
+      internal int optInTimePeriod;
+      internal double S_xx;
+      internal double S_xy;
+      internal double S_x;
+      internal double S_y;
+      internal double last_price_x;
+      internal double last_price_y;
+      internal double trailing_last_price_x;
+      internal double trailing_last_price_y;
+      internal double x;
+      internal double y;
+      internal double n;
+      internal int ringPos_trailingIdx;
+      internal int ringCap_trailingIdx;
+      internal double[] ring_trailingIdx_inReal0 = [];
+      internal double[] ring_trailingIdx_inReal1 = [];
+      internal double cur_outReal;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal BETA_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>BETA_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
+      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal BETA_Stream( BETA_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.S_xx = other.S_xx;
+         this.S_xy = other.S_xy;
+         this.S_x = other.S_x;
+         this.S_y = other.S_y;
+         this.last_price_x = other.last_price_x;
+         this.last_price_y = other.last_price_y;
+         this.trailing_last_price_x = other.trailing_last_price_x;
+         this.trailing_last_price_y = other.trailing_last_price_y;
+         this.x = other.x;
+         this.y = other.y;
+         this.n = other.n;
+         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
+         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
+         this.ring_trailingIdx_inReal0 = new double[other.ring_trailingIdx_inReal0.Length];
+         Array.Copy( other.ring_trailingIdx_inReal0, this.ring_trailingIdx_inReal0, other.ring_trailingIdx_inReal0.Length );
+         this.ring_trailingIdx_inReal1 = new double[other.ring_trailingIdx_inReal1.Length];
+         Array.Copy( other.ring_trailingIdx_inReal1, this.ring_trailingIdx_inReal1, other.ring_trailingIdx_inReal1.Length );
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( BETA_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.S_xx = other.S_xx;
+         this.S_xy = other.S_xy;
+         this.S_x = other.S_x;
+         this.S_y = other.S_y;
+         this.last_price_x = other.last_price_x;
+         this.last_price_y = other.last_price_y;
+         this.trailing_last_price_x = other.trailing_last_price_x;
+         this.trailing_last_price_y = other.trailing_last_price_y;
+         this.x = other.x;
+         this.y = other.y;
+         this.n = other.n;
+         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
+         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
+         if( this.ring_trailingIdx_inReal0.Length != other.ring_trailingIdx_inReal0.Length ) {
+            this.ring_trailingIdx_inReal0 = new double[other.ring_trailingIdx_inReal0.Length];
+         }
+         Array.Copy( other.ring_trailingIdx_inReal0, this.ring_trailingIdx_inReal0, other.ring_trailingIdx_inReal0.Length );
+         if( this.ring_trailingIdx_inReal1.Length != other.ring_trailingIdx_inReal1.Length ) {
+            this.ring_trailingIdx_inReal1 = new double[other.ring_trailingIdx_inReal1.Length];
+         }
+         Array.Copy( other.ring_trailingIdx_inReal1, this.ring_trailingIdx_inReal1, other.ring_trailingIdx_inReal1.Length );
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /* Peek's reusable scratch — one per thread, see CopyFrom. */
+      [ThreadStatic] private static BETA_Stream? peekScratch;
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inReal0">Series whose returns are the regression x (market/index)</param>
+      /// <param name="inReal1">Series whose returns are the regression y (security)</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public double Update( double inReal0, double inReal1 )
+      {
+         core.BETA_StreamStep(this, inReal0, inReal1);
+         return cur_outReal;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a scratch handle held per thread and reused, so the copy
+      /// allocates nothing after the first peek of this indicator on this thread.
+      /// That scratch is retained for the life of the thread.</para>
+      /// </remarks>
+      /// <param name="inReal0">Series whose returns are the regression x (market/index)</param>
+      /// <param name="inReal1">Series whose returns are the regression y (security)</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public double Peek( double inReal0, double inReal1 )
+      {
+         BETA_Stream? scratch = peekScratch;
+         if( scratch is null ) {
+            scratch = new BETA_Stream(this);
+            peekScratch = scratch;
+         } else {
+            scratch.CopyFrom(this);
+         }
+         core.BETA_StreamStep(scratch, inReal0, inReal1);
+         return scratch.cur_outReal;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public double Value => cur_outReal;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public BETA_Stream Clone()
+      {
+         return new BETA_Stream(this);
+      }
+   }
+
+   internal void BETA_StreamStep( BETA_Stream sp, double inReal0, double inReal1 )
+   {
+      double tmp_real = 0.0;
+      if( sp.ringCap_trailingIdx == 0 ) {
+         sp.ring_trailingIdx_inReal0[0] = inReal0;
+         sp.ring_trailingIdx_inReal1[0] = inReal1;
+      }
+      tmp_real = inReal0;
+      if( !((-0.00000000000001 < sp.last_price_x) && (sp.last_price_x < 0.00000000000001)) ) {
+         sp.x = (tmp_real - sp.last_price_x) / sp.last_price_x;
+      } else {
+         sp.x = 0.0;
+      }
+      sp.last_price_x = tmp_real;
+      tmp_real = inReal1;
+      if( !((-0.00000000000001 < sp.last_price_y) && (sp.last_price_y < 0.00000000000001)) ) {
+         sp.y = (tmp_real - sp.last_price_y) / sp.last_price_y;
+      } else {
+         sp.y = 0.0;
+      }
+      sp.last_price_y = tmp_real;
+      sp.S_xx += sp.x * sp.x;
+      sp.S_xy += sp.x * sp.y;
+      sp.S_x += sp.x;
+      sp.S_y += sp.y;
+      /* Always read the trailing before writing the output because the input and output
+       * buffer can be the same.
+       */
+      tmp_real = sp.ring_trailingIdx_inReal0[sp.ringPos_trailingIdx];
+      if( !((-0.00000000000001 < sp.trailing_last_price_x) && (sp.trailing_last_price_x < 0.00000000000001)) ) {
+         sp.x = (tmp_real - sp.trailing_last_price_x) / sp.trailing_last_price_x;
+      } else {
+         sp.x = 0.0;
+      }
+      sp.trailing_last_price_x = tmp_real;
+      tmp_real = sp.ring_trailingIdx_inReal1[sp.ringPos_trailingIdx];
+      if( !((-0.00000000000001 < sp.trailing_last_price_y) && (sp.trailing_last_price_y < 0.00000000000001)) ) {
+         sp.y = (tmp_real - sp.trailing_last_price_y) / sp.trailing_last_price_y;
+      } else {
+         sp.y = 0.0;
+      }
+      sp.trailing_last_price_y = tmp_real;
+      /* Write the output */
+      tmp_real = sp.n * sp.S_xx - sp.S_x * sp.S_x;
+      if( !((-0.00000000000001 < tmp_real) && (tmp_real < 0.00000000000001)) ) {
+         sp.cur_outReal = (sp.n * sp.S_xy - sp.S_x * sp.S_y) / tmp_real;
+      } else {
+         sp.cur_outReal = 0.0;
+      }
+      /* Remove the calculation starting with the trailingIdx. */
+      sp.S_xx -= sp.x * sp.x;
+      sp.S_xy -= sp.x * sp.y;
+      sp.S_x -= sp.x;
+      sp.S_y -= sp.y;
+      sp.ring_trailingIdx_inReal0[sp.ringPos_trailingIdx] = inReal0;
+      sp.ring_trailingIdx_inReal1[sp.ringPos_trailingIdx] = inReal1;
+      sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
+      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+         sp.ringPos_trailingIdx = 0;
+      }
+   }
+
+   private RetCode BETA_OpenCore( BETA_Stream sp, double[] inReal0, double[] inReal1, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      double S_xx = 0;
+      double S_xy = 0;
+      double S_x = 0;
+      double S_y = 0;
+      double last_price_x = 0;
+      double last_price_y = 0;
+      double trailing_last_price_x = 0;
+      double trailing_last_price_y = 0;
+      double tmp_real = 0;
+      double x = 0;
+      double y = 0;
+      double n = 0;
+      int i = 0;
+      int outIdx = 0;
+      int trailingIdx = 0;
+      int nbInitialElementNeeded = 0;
+      int historyLen = inReal0.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 || inReal1.Length != inReal0.Length ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInTimePeriod == int.MinValue ) {
+         optInTimePeriod = 5;
+      } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      S_xx = 0.0;
+      S_xy = 0.0;
+      S_x = 0.0;
+      S_y = 0.0;
+      last_price_x = 0.0;
+      last_price_y = 0.0;
+      trailing_last_price_x = 0.0;
+      trailing_last_price_y = 0.0;
+      tmp_real = 0.0;
+      n = 0.0;
+      /* sum of x * x */
+      /* sum of x * y */
+      /* sum of x */
+      /* sum of y */
+      /* the last price read from inReal0 */
+      /* the last price read from inReal1 */
+      /* same as last_price_x except used to remove elements from the trailing summation */
+      /* same as last_price_y except used to remove elements from the trailing summation */
+      /* temporary variable */
+      /* the 'x' value, which is the last change between values in inReal0 */
+      /* the 'y' value, which is the last change between values in inReal1 */
+      /* DESCRIPTION OF ALGORITHM:
+       *   The Beta 'algorithm' is a measure of a stocks volatility vs from index. The index prices
+       *   are given in inReal0 and the stock prices are given in inReal1. The size of these vectors
+       *   should be equal. The algorithm is to calculate the change between prices in both vectors
+       *   and then 'plot' these changes are points in the Euclidean plane. The x value of the point
+       *   is market return and the y value is the security return. The beta value is the slope of a
+       *   linear regression through these points. A beta of 1 is simple the line y=x, so the stock
+       *   varies percisely with the market. A beta of less than one means the stock varies less than
+       *   the market and a beta of more than one means the stock varies more than market. A related
+       *   value is the Alpha value (see TA_ALPHA) which is the Y-intercept of the same linear regression.
+       */
+      /* Validate the calculation method type and
+       * identify the minimum number of input
+       * consume before the first value is output..
+       */
+      nbInitialElementNeeded = optInTimePeriod;
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < nbInitialElementNeeded ) {
+         startIdx = nbInitialElementNeeded;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      /* Consume first input. */
+      trailingIdx = startIdx - nbInitialElementNeeded;
+      trailing_last_price_x = inReal0[trailingIdx];
+      last_price_x = trailing_last_price_x;
+      trailing_last_price_y = inReal1[trailingIdx];
+      last_price_y = trailing_last_price_y;
+      /* Process remaining of lookback until ready to output the first value. */
+      i = ++trailingIdx;
+      while( i < startIdx ) {
+         tmp_real = inReal0[i];
+         if( !((-0.00000000000001 < last_price_x) && (last_price_x < 0.00000000000001)) ) {
+            x = (tmp_real - last_price_x) / last_price_x;
+         } else {
+            x = 0.0;
+         }
+         last_price_x = tmp_real;
+         tmp_real = inReal1[i++];
+         if( !((-0.00000000000001 < last_price_y) && (last_price_y < 0.00000000000001)) ) {
+            y = (tmp_real - last_price_y) / last_price_y;
+         } else {
+            y = 0.0;
+         }
+         last_price_y = tmp_real;
+         S_xx += x * x;
+         S_xy += x * y;
+         S_x += x;
+         S_y += y;
+      }
+      outIdx = 0;
+      /* First output always start at index zero */
+      n = (double)optInTimePeriod;
+      do {
+         tmp_real = inReal0[i];
+         if( !((-0.00000000000001 < last_price_x) && (last_price_x < 0.00000000000001)) ) {
+            x = (tmp_real - last_price_x) / last_price_x;
+         } else {
+            x = 0.0;
+         }
+         last_price_x = tmp_real;
+         tmp_real = inReal1[i++];
+         if( !((-0.00000000000001 < last_price_y) && (last_price_y < 0.00000000000001)) ) {
+            y = (tmp_real - last_price_y) / last_price_y;
+         } else {
+            y = 0.0;
+         }
+         last_price_y = tmp_real;
+         S_xx += x * x;
+         S_xy += x * y;
+         S_x += x;
+         S_y += y;
+         /* Always read the trailing before writing the output because the input and output
+          * buffer can be the same.
+          */
+         tmp_real = inReal0[trailingIdx];
+         if( !((-0.00000000000001 < trailing_last_price_x) && (trailing_last_price_x < 0.00000000000001)) ) {
+            x = (tmp_real - trailing_last_price_x) / trailing_last_price_x;
+         } else {
+            x = 0.0;
+         }
+         trailing_last_price_x = tmp_real;
+         tmp_real = inReal1[trailingIdx++];
+         if( !((-0.00000000000001 < trailing_last_price_y) && (trailing_last_price_y < 0.00000000000001)) ) {
+            y = (tmp_real - trailing_last_price_y) / trailing_last_price_y;
+         } else {
+            y = 0.0;
+         }
+         trailing_last_price_y = tmp_real;
+         /* Write the output */
+         tmp_real = n * S_xx - S_x * S_x;
+         if( !((-0.00000000000001 < tmp_real) && (tmp_real < 0.00000000000001)) ) {
+            outReal[outIdx++ * outStride] = (n * S_xy - S_x * S_y) / tmp_real;
+         } else {
+            outReal[outIdx++ * outStride] = 0.0;
+         }
+         /* Remove the calculation starting with the trailingIdx. */
+         S_xx -= x * x;
+         S_xy -= x * y;
+         S_x -= x;
+         S_y -= y;
+      } while( i <= endIdx );
+      /* All done. Indicate the output limits and return. */
+      outNBElement = outIdx;
+      outBegIdx = startIdx;
+      /* Capture the live batch state into the handle. */
+      int cap_trailingIdx = i - trailingIdx;
+      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+         return RetCode.InternalError;
+      }
+      int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
+      double[] capRing_trailingIdx_inReal0 = new double[allocN_trailingIdx];
+      Array.Copy(inReal0, historyLen - cap_trailingIdx, capRing_trailingIdx_inReal0, 0, cap_trailingIdx);
+      double[] capRing_trailingIdx_inReal1 = new double[allocN_trailingIdx];
+      Array.Copy(inReal1, historyLen - cap_trailingIdx, capRing_trailingIdx_inReal1, 0, cap_trailingIdx);
+      sp.optInTimePeriod = optInTimePeriod;
+      sp.S_xx = S_xx;
+      sp.S_xy = S_xy;
+      sp.S_x = S_x;
+      sp.S_y = S_y;
+      sp.last_price_x = last_price_x;
+      sp.last_price_y = last_price_y;
+      sp.trailing_last_price_x = trailing_last_price_x;
+      sp.trailing_last_price_y = trailing_last_price_y;
+      sp.x = x;
+      sp.y = y;
+      sp.n = n;
+      sp.ringPos_trailingIdx = 0;
+      sp.ringCap_trailingIdx = cap_trailingIdx;
+      sp.ring_trailingIdx_inReal0 = capRing_trailingIdx_inReal0;
+      sp.ring_trailingIdx_inReal1 = capRing_trailingIdx_inReal1;
+      sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode BETA_OpenBody( BETA_Stream sp, double[] inReal0, double[] inReal1, int startIdx, int optInTimePeriod )
+   {
+      double[] sink_outReal = new double[1];
+      return BETA_OpenCore( sp, inReal0, inReal1, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+   }
+
+   private RetCode BETA_OpenAndFillBody( BETA_Stream sp, double[] inReal0, double[] inReal1, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outReal, inReal0) || ReferenceEquals(outReal, inReal1) ) {
+         return RetCode.BadParam;
+      }
+      return BETA_OpenCore( sp, inReal0, inReal1, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+   }
+
+   private RetCode BETA_OpenAndFillInternalBody( BETA_Stream sp, double[] inReal0, double[] inReal1, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      return BETA_OpenCore(sp, inReal0, inReal1, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+   }
+
+   /* BETA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal BETA_Stream BETA_OpenAndFillInternal( double[] inReal0, double[] inReal1, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      BETA_Stream sp = new BETA_Stream(this);
+      RetCode retCode = BETA_OpenAndFillInternalBody(sp, inReal0, inReal1, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("BETA", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind BETA_Open (composition seam). */
+   internal BETA_Stream BETA_OpenInternal( double[] inReal0, double[] inReal1, int startIdx, int optInTimePeriod )
+   {
+      BETA_Stream sp = new BETA_Stream(this);
+      RetCode retCode = BETA_OpenBody(sp, inReal0, inReal1, startIdx, optInTimePeriod);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("BETA", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>BETA</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="BETA_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>BETA</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>BETA_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>BETA_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inReal0">Series whose returns are the regression x (market/index) The warm-up
+   /// history, oldest bar first.</param>
+   /// <param name="inReal1">Series whose returns are the regression y (security) The warm-up history,
+   /// oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="BETA_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>BETA_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public BETA_Stream BETA_Open( double[] inReal0, double[] inReal1, int optInTimePeriod )
+   {
+      return BETA_OpenInternal(inReal0, inReal1, 0, optInTimePeriod);
+   }
+
+   /// <summary><c>BETA_Open</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>BETA</c> produces over the
+   /// same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - BETA_Lookback(...)</c> values and
+   /// must not alias the inputs or each other — this path writes the outputs and
+   /// then reads the input tail to seed its rings, so the batch tier's in-place
+   /// allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="BETA_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inReal0">Series whose returns are the regression x (market/index) The warm-up
+   /// history, oldest bar first.</param>
+   /// <param name="inReal1">Series whose returns are the regression y (security) The warm-up history,
+   /// oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="BETA_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="outReal">Beta: regression slope of inReal1-returns on inReal0-returns. Must hold at
+   /// least <c>historyLen - BETA_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>BETA_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public BETA_Stream BETA_OpenAndFill( double[] inReal0, double[] inReal1, int optInTimePeriod, double[] outReal )
+   {
+      BETA_Stream sp = new BETA_Stream(this);
+      RetCode retCode = BETA_OpenAndFillBody(sp, inReal0, inReal1, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("BETA", "openAndFill", retCode);
+   }
 }

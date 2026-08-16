@@ -310,4 +310,312 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>STDDEV</c> stream: one value per closed bar, bit-identical to
+   /// <c>STDDEV</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.STDDEV_Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class STDDEV_Stream
+   {
+      internal Core core;
+      internal int optInTimePeriod;
+      internal double optInNbDev;
+      internal double cur_outReal;
+      internal VAR_Stream sub0 = null!;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal STDDEV_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>STDDEV_OpenAndFill</c> filled, or
+      /// <see cref="OutRange.Empty"/> when this handle came from a plain open
+      /// (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal STDDEV_Stream( STDDEV_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.optInNbDev = other.optInNbDev;
+         this.cur_outReal = other.cur_outReal;
+         this.sub0 = new VAR_Stream(other.sub0);
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( STDDEV_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.optInNbDev = other.optInNbDev;
+         this.cur_outReal = other.cur_outReal;
+         if( this.sub0 is null ) {
+            this.sub0 = new VAR_Stream(other.sub0);
+         } else {
+            this.sub0.CopyFrom(other.sub0);
+         }
+         this.fillRange = other.fillRange;
+      }
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inReal">Series to measure dispersion of.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public double Update( double inReal )
+      {
+         core.STDDEV_StreamStep(this, inReal);
+         return cur_outReal;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a throwaway copy, which for this handle's shape is cheaper than
+      /// reusing one.</para>
+      /// </remarks>
+      /// <param name="inReal">Series to measure dispersion of.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public double Peek( double inReal )
+      {
+         STDDEV_Stream scratch = new STDDEV_Stream(this);
+         core.STDDEV_StreamStep(scratch, inReal);
+         return scratch.cur_outReal;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public double Value => cur_outReal;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public STDDEV_Stream Clone()
+      {
+         return new STDDEV_Stream(this);
+      }
+   }
+
+   internal void STDDEV_StreamStep( STDDEV_Stream sp, double inReal )
+   {
+      double tempReal = 0.0;
+      double cur_outReal = 0.0;
+      /* Pipeline the new bar through the sub-streams (batch tail order). */
+      cur_outReal = sp.sub0.Update(inReal);
+      /* Combine map (batch tail, per bar). */
+      if( sp.optInNbDev != 1.0 ) {
+         tempReal = cur_outReal;
+         if( !(tempReal < 0.00000000000001) ) {
+            cur_outReal = Math.Sqrt(tempReal) * sp.optInNbDev;
+         } else {
+            cur_outReal = (double)0.0;
+         }
+      } else {
+         tempReal = cur_outReal;
+         if( !(tempReal < 0.00000000000001) ) {
+            cur_outReal = Math.Sqrt(tempReal);
+         } else {
+            cur_outReal = (double)0.0;
+         }
+      }
+      sp.cur_outReal = cur_outReal;
+   }
+
+   private RetCode STDDEV_OpenCore( STDDEV_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, double optInNbDev, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      int i = 0;
+      RetCode retCode;
+      double tempReal = 0;
+      int historyLen = inReal.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInTimePeriod == int.MinValue ) {
+         optInTimePeriod = 5;
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( optInNbDev == TA_REAL_DEFAULT ) {
+         optInNbDev = 1e0;
+      } else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen < STDDEV_Lookback(optInTimePeriod, optInNbDev) + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      double[] sc_outReal = outStride == 1 ? outReal : new double[historyLen];
+      /* Calculate the variance. */
+      /* Sub-stream 0: var over `inReal`, warmed from bar 0 up to the
+       * sub-call's own startIdx (the seeding point). */
+      VAR_Stream sub0 = VAR_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, sc_outReal);
+      retCode = RetCode.Success;
+      if( retCode != RetCode.Success ) {
+         return retCode ;
+      }
+      /* Calculate the square root of each variance, this
+       * is the standard deviation.
+       *
+       * Multiply also by the ratio specified.
+       */
+      if( optInNbDev != 1.0 ) {
+         for( i = 0; i < (int)outNBElement; i += 1 ) {
+            tempReal = sc_outReal[i];
+            if( !(tempReal < 0.00000000000001) ) {
+               sc_outReal[i] = Math.Sqrt(tempReal) * optInNbDev;
+            } else {
+               sc_outReal[i] = (double)0.0;
+            }
+         }
+      } else {
+         for( i = 0; i < (int)outNBElement; i += 1 ) {
+            tempReal = sc_outReal[i];
+            if( !(tempReal < 0.00000000000001) ) {
+               sc_outReal[i] = Math.Sqrt(tempReal);
+            } else {
+               sc_outReal[i] = (double)0.0;
+            }
+         }
+      }
+      /* Capture the live producer state + sub handles. */
+      if( outNBElement < 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      sp.optInTimePeriod = optInTimePeriod;
+      sp.optInNbDev = optInNbDev;
+      sp.sub0 = sub0;
+      sp.cur_outReal = sc_outReal[outNBElement - 1];
+      return RetCode.Success;
+   }
+
+   private RetCode STDDEV_OpenBody( STDDEV_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, double optInNbDev )
+   {
+      double[] sink_outReal = new double[1];
+      return STDDEV_OpenCore( sp, inReal, startIdx, optInTimePeriod, optInNbDev, out _, out _, sink_outReal, 0 );
+   }
+
+   private RetCode STDDEV_OpenAndFillBody( STDDEV_Stream sp, double[] inReal, int optInTimePeriod, double optInNbDev, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outReal, inReal) ) {
+         return RetCode.BadParam;
+      }
+      return STDDEV_OpenCore( sp, inReal, 0, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal, 1 );
+   }
+
+   private RetCode STDDEV_OpenAndFillInternalBody( STDDEV_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, double optInNbDev, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      return STDDEV_OpenCore(sp, inReal, startIdx, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal, 1);
+   }
+
+   /* STDDEV_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal STDDEV_Stream STDDEV_OpenAndFillInternal( double[] inReal, int startIdx, int optInTimePeriod, double optInNbDev, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      STDDEV_Stream sp = new STDDEV_Stream(this);
+      RetCode retCode = STDDEV_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("STDDEV", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind STDDEV_Open (composition seam). */
+   internal STDDEV_Stream STDDEV_OpenInternal( double[] inReal, int startIdx, int optInTimePeriod, double optInNbDev )
+   {
+      STDDEV_Stream sp = new STDDEV_Stream(this);
+      RetCode retCode = STDDEV_OpenBody(sp, inReal, startIdx, optInTimePeriod, optInNbDev);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("STDDEV", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>STDDEV</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="STDDEV_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>STDDEV</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>STDDEV_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>STDDEV_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inReal">Series to measure dispersion of. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="STDDEV_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInNbDev">As in the batch call; see <see cref="STDDEV_Lookback"/> for its default
+   /// and range (<c>-4e37</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>STDDEV_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public STDDEV_Stream STDDEV_Open( double[] inReal, int optInTimePeriod, double optInNbDev )
+   {
+      return STDDEV_OpenInternal(inReal, 0, optInTimePeriod, optInNbDev);
+   }
+
+   /// <summary><c>STDDEV_Open</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>STDDEV</c> produces over
+   /// the same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - STDDEV_Lookback(...)</c> values
+   /// and must not alias the inputs or each other — this path writes the outputs
+   /// and then reads the input tail to seed its rings, so the batch tier's
+   /// in-place allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="STDDEV_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inReal">Series to measure dispersion of. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="STDDEV_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInNbDev">As in the batch call; see <see cref="STDDEV_Lookback"/> for its default
+   /// and range (<c>-4e37</c> selects the default).</param>
+   /// <param name="outReal">Standard deviation at each bar, scaled by optInNbDev. Must hold at least
+   /// <c>historyLen - STDDEV_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>STDDEV_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public STDDEV_Stream STDDEV_OpenAndFill( double[] inReal, int optInTimePeriod, double optInNbDev, double[] outReal )
+   {
+      STDDEV_Stream sp = new STDDEV_Stream(this);
+      RetCode retCode = STDDEV_OpenAndFillBody(sp, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("STDDEV", "openAndFill", retCode);
+   }
 }

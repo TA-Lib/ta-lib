@@ -284,4 +284,283 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>AD</c> stream: one value per closed bar, bit-identical to
+   /// <c>AD</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.AD_Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class AD_Stream
+   {
+      internal Core core;
+      internal double ad;
+      internal double cur_outReal;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal AD_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>AD_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
+      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal AD_Stream( AD_Stream other )
+      {
+         this.core = other.core;
+         this.ad = other.ad;
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( AD_Stream other )
+      {
+         this.core = other.core;
+         this.ad = other.ad;
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <param name="inClose">Close price of each bar.</param>
+      /// <param name="inVolume">Volume of each bar.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public double Update( double inHigh, double inLow, double inClose, double inVolume )
+      {
+         core.AD_StreamStep(this, inHigh, inLow, inClose, inVolume);
+         return cur_outReal;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a throwaway copy, which for this handle's shape is cheaper than
+      /// reusing one.</para>
+      /// </remarks>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <param name="inClose">Close price of each bar.</param>
+      /// <param name="inVolume">Volume of each bar.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public double Peek( double inHigh, double inLow, double inClose, double inVolume )
+      {
+         AD_Stream scratch = new AD_Stream(this);
+         core.AD_StreamStep(scratch, inHigh, inLow, inClose, inVolume);
+         return scratch.cur_outReal;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public double Value => cur_outReal;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public AD_Stream Clone()
+      {
+         return new AD_Stream(this);
+      }
+   }
+
+   internal void AD_StreamStep( AD_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
+   {
+      double high = 0.0;
+      double low = 0.0;
+      double close = 0.0;
+      double tmp = 0.0;
+      high = inHigh;
+      low = inLow;
+      tmp = high - low;
+      close = inClose;
+      if( tmp > 0.0 ) {
+         sp.ad += (close - low - (high - close)) / tmp * (double)inVolume;
+      }
+      sp.cur_outReal = sp.ad;
+   }
+
+   private RetCode AD_OpenCore( AD_Stream sp, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      int nbBar = 0;
+      int currentBar = 0;
+      int outIdx = 0;
+      double high = 0;
+      double low = 0;
+      double close = 0;
+      double tmp = 0;
+      double ad = 0;
+      int historyLen = inHigh.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 || inLow.Length != inHigh.Length || inClose.Length != inHigh.Length || inVolume.Length != inHigh.Length ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      /* Note: Results from this function might vary slightly
+       *       from Metastock outputs. The reason being that
+       *       Metastock use float instead of double and this
+       *       cause a different floating-point precision to
+       *       be used.
+       *
+       *       For most function, this is not an apparent difference
+       *       but for function using large cummulative values (like
+       *       this AD function), minor imprecision adds up and becomes
+       *       significative.
+       *
+       *       For better precision, TA-Lib use double in all its
+       *       its calculations.
+       */
+      /* Default return values */
+      nbBar = endIdx - startIdx + 1;
+      outNBElement = nbBar;
+      outBegIdx = startIdx;
+      currentBar = startIdx;
+      outIdx = 0;
+      ad = 0.0;
+      while( nbBar != 0 ) {
+         high = inHigh[currentBar];
+         low = inLow[currentBar];
+         tmp = high - low;
+         close = inClose[currentBar];
+         if( tmp > 0.0 ) {
+            ad += (close - low - (high - close)) / tmp * (double)inVolume[currentBar];
+         }
+         outReal[outIdx++ * outStride] = ad;
+         currentBar += 1;
+         nbBar -= 1;
+      }
+      /* Capture the live batch state into the handle. */
+      sp.ad = ad;
+      sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode AD_OpenBody( AD_Stream sp, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int startIdx )
+   {
+      double[] sink_outReal = new double[1];
+      return AD_OpenCore( sp, inHigh, inLow, inClose, inVolume, startIdx, out _, out _, sink_outReal, 0 );
+   }
+
+   private RetCode AD_OpenAndFillBody( AD_Stream sp, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outReal, inHigh) || ReferenceEquals(outReal, inLow) || ReferenceEquals(outReal, inClose) || ReferenceEquals(outReal, inVolume) ) {
+         return RetCode.BadParam;
+      }
+      return AD_OpenCore( sp, inHigh, inLow, inClose, inVolume, 0, out outBegIdx, out outNBElement, outReal, 1 );
+   }
+
+   private RetCode AD_OpenAndFillInternalBody( AD_Stream sp, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      return AD_OpenCore(sp, inHigh, inLow, inClose, inVolume, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+   }
+
+   /* AD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal AD_Stream AD_OpenAndFillInternal( double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      AD_Stream sp = new AD_Stream(this);
+      RetCode retCode = AD_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, inVolume, startIdx, out outBegIdx, out outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("AD", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind AD_Open (composition seam). */
+   internal AD_Stream AD_OpenInternal( double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int startIdx )
+   {
+      AD_Stream sp = new AD_Stream(this);
+      RetCode retCode = AD_OpenBody(sp, inHigh, inLow, inClose, inVolume, startIdx);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("AD", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>AD</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="AD_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>AD</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>AD_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>AD_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inVolume">Volume of each bar. The warm-up history, oldest bar first.</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>AD_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public AD_Stream AD_Open( double[] inHigh, double[] inLow, double[] inClose, double[] inVolume )
+   {
+      return AD_OpenInternal(inHigh, inLow, inClose, inVolume, 0);
+   }
+
+   /// <summary><c>AD_Open</c> that also fills the output array(s) over the whole history
+   /// in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>AD</c> produces over the
+   /// same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - AD_Lookback(...)</c> values and
+   /// must not alias the inputs or each other — this path writes the outputs and
+   /// then reads the input tail to seed its rings, so the batch tier's in-place
+   /// allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="AD_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inVolume">Volume of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="outReal">Cumulative A/D line value per bar. Must hold at least <c>historyLen -
+   /// AD_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>AD_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public AD_Stream AD_OpenAndFill( double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, double[] outReal )
+   {
+      AD_Stream sp = new AD_Stream(this);
+      RetCode retCode = AD_OpenAndFillBody(sp, inHigh, inLow, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("AD", "openAndFill", retCode);
+   }
 }

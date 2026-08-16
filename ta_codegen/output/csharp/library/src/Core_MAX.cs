@@ -434,4 +434,373 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /* Using max_ALT1 for TA_ALT={STREAM,ALL_LANGUAGES} */
+
+   /// <summary>A live <c>MAX</c> stream: one value per closed bar, bit-identical to
+   /// <c>MAX</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.MAX_Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class MAX_Stream
+   {
+      internal Core core;
+      internal int optInTimePeriod;
+      internal double highest;
+      internal int trailingIdx;
+      internal int i;
+      internal int highestIdx;
+      internal int today;
+      internal int xMask;
+      internal double[] x_inReal = [];
+      internal double cur_outReal;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal MAX_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>MAX_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
+      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal MAX_Stream( MAX_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.highest = other.highest;
+         this.trailingIdx = other.trailingIdx;
+         this.i = other.i;
+         this.highestIdx = other.highestIdx;
+         this.today = other.today;
+         this.xMask = other.xMask;
+         this.x_inReal = new double[other.x_inReal.Length];
+         Array.Copy( other.x_inReal, this.x_inReal, other.x_inReal.Length );
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( MAX_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.highest = other.highest;
+         this.trailingIdx = other.trailingIdx;
+         this.i = other.i;
+         this.highestIdx = other.highestIdx;
+         this.today = other.today;
+         this.xMask = other.xMask;
+         if( this.x_inReal.Length != other.x_inReal.Length ) {
+            this.x_inReal = new double[other.x_inReal.Length];
+         }
+         Array.Copy( other.x_inReal, this.x_inReal, other.x_inReal.Length );
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inReal">Series to take the rolling maximum of.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public double Update( double inReal )
+      {
+         core.MAX_StreamStep(this, inReal);
+         return cur_outReal;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a throwaway copy, which for this handle's shape is cheaper than
+      /// reusing one.</para>
+      /// </remarks>
+      /// <param name="inReal">Series to take the rolling maximum of.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public double Peek( double inReal )
+      {
+         MAX_Stream scratch = new MAX_Stream(this);
+         core.MAX_StreamStep(scratch, inReal);
+         return scratch.cur_outReal;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public double Value => cur_outReal;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public MAX_Stream Clone()
+      {
+         return new MAX_Stream(this);
+      }
+   }
+
+   internal void MAX_StreamStep( MAX_Stream sp, double inReal )
+   {
+      double tmp = 0.0;
+      if( sp.today >= 1073741824 ) {
+         int rebaseShift = sp.trailingIdx & ~sp.xMask;
+         sp.today -= rebaseShift;
+         sp.trailingIdx -= rebaseShift;
+         sp.highestIdx -= rebaseShift;
+         sp.i -= rebaseShift;
+      }
+      sp.x_inReal[sp.today & sp.xMask] = inReal;
+      tmp = sp.x_inReal[sp.today & sp.xMask];
+      if( sp.highestIdx < sp.trailingIdx ) {
+         sp.highestIdx = sp.trailingIdx;
+         sp.highest = sp.x_inReal[sp.highestIdx & sp.xMask];
+         sp.i = sp.highestIdx;
+         while( ++sp.i <= sp.today ) {
+            tmp = sp.x_inReal[sp.i & sp.xMask];
+            if( tmp > sp.highest ) {
+               sp.highestIdx = sp.i;
+               sp.highest = tmp;
+            }
+         }
+      } else if( tmp >= sp.highest ) {
+         sp.highestIdx = sp.today;
+         sp.highest = tmp;
+      }
+      sp.cur_outReal = sp.highest;
+      sp.trailingIdx += 1;
+      sp.today += 1;
+   }
+
+   private RetCode MAX_OpenCore( MAX_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      double highest = 0;
+      double tmp = 0;
+      int outIdx = 0;
+      int nbInitialElementNeeded = 0;
+      int trailingIdx = 0;
+      int today = 0;
+      int i = 0;
+      int highestIdx = 0;
+      int historyLen = inReal.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInTimePeriod == int.MinValue ) {
+         optInTimePeriod = 30;
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      /* Identify the minimum number of price bar needed
+       * to identify at least one output over the specified
+       * period.
+       */
+      nbInitialElementNeeded = optInTimePeriod - 1;
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < nbInitialElementNeeded ) {
+         startIdx = nbInitialElementNeeded;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      /* Proceed with the calculation for the requested range.
+       * Note that this algorithm allows the input and
+       * output to be the same buffer.
+       *
+       * The highest value of the window is cached with its index; the window is
+       * rescanned only when the cached extremum drops out of it. That is O(1)
+       * per bar while the extremum sits away from the trailing edge, but it is
+       * not amortized O(1): an extremum on the oldest in-window bar drops out
+       * on the very next bar, so the rescan repeats and the cost stays
+       * O(period) per bar for as long as that persists.
+       *
+       * Slower than the block scan the batch tier runs; it is here because one
+       * bar at a time is exactly what the streaming tier needs. See issue #147.
+       */
+      outIdx = 0;
+      today = startIdx;
+      trailingIdx = startIdx - nbInitialElementNeeded;
+      highestIdx = 0 - 1;
+      highest = 0.0;
+      while( today <= endIdx ) {
+         tmp = inReal[today];
+         if( highestIdx < trailingIdx ) {
+            highestIdx = trailingIdx;
+            highest = inReal[highestIdx];
+            i = highestIdx;
+            while( ++i <= today ) {
+               tmp = inReal[i];
+               if( tmp > highest ) {
+                  highestIdx = i;
+                  highest = tmp;
+               }
+            }
+         } else if( tmp >= highest ) {
+            highestIdx = today;
+            highest = tmp;
+         }
+         outReal[outIdx++ * outStride] = highest;
+         trailingIdx += 1;
+         today += 1;
+      }
+      /* Keep the outBegIdx relative to the
+       * caller input before returning.
+       */
+      outBegIdx = startIdx;
+      outNBElement = outIdx;
+      /* Capture the live batch state into the handle. */
+      int capX = today - trailingIdx + 1;
+      if( capX < 1 || capX > historyLen ) {
+         return RetCode.InternalError;
+      }
+      int physX = 1;
+      while( physX < capX ) {
+         physX <<= 1;
+      }
+      double[] capX_inReal = new double[physX];
+      for( int fillJ = historyLen - capX; fillJ < historyLen; fillJ++ ) {
+         capX_inReal[fillJ & (physX - 1)] = inReal[fillJ];
+      }
+      sp.optInTimePeriod = optInTimePeriod;
+      sp.highest = highest;
+      sp.trailingIdx = trailingIdx;
+      sp.i = i;
+      sp.highestIdx = highestIdx;
+      sp.today = today;
+      sp.xMask = physX - 1;
+      sp.x_inReal = capX_inReal;
+      sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode MAX_OpenBody( MAX_Stream sp, double[] inReal, int startIdx, int optInTimePeriod )
+   {
+      double[] sink_outReal = new double[1];
+      return MAX_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+   }
+
+   private RetCode MAX_OpenAndFillBody( MAX_Stream sp, double[] inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outReal, inReal) ) {
+         return RetCode.BadParam;
+      }
+      return MAX_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+   }
+
+   private RetCode MAX_OpenAndFillInternalBody( MAX_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      return MAX_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+   }
+
+   /* MAX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal MAX_Stream MAX_OpenAndFillInternal( double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      MAX_Stream sp = new MAX_Stream(this);
+      RetCode retCode = MAX_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("MAX", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind MAX_Open (composition seam). */
+   internal MAX_Stream MAX_OpenInternal( double[] inReal, int startIdx, int optInTimePeriod )
+   {
+      MAX_Stream sp = new MAX_Stream(this);
+      RetCode retCode = MAX_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("MAX", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>MAX</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="MAX_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>MAX</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>MAX_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>MAX_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inReal">Series to take the rolling maximum of. The warm-up history, oldest bar
+   /// first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="MAX_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MAX_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public MAX_Stream MAX_Open( double[] inReal, int optInTimePeriod )
+   {
+      return MAX_OpenInternal(inReal, 0, optInTimePeriod);
+   }
+
+   /// <summary><c>MAX_Open</c> that also fills the output array(s) over the whole history
+   /// in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>MAX</c> produces over the
+   /// same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - MAX_Lookback(...)</c> values and
+   /// must not alias the inputs or each other — this path writes the outputs and
+   /// then reads the input tail to seed its rings, so the batch tier's in-place
+   /// allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="MAX_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inReal">Series to take the rolling maximum of. The warm-up history, oldest bar
+   /// first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="MAX_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="outReal">Highest value within each trailing window. Must hold at least
+   /// <c>historyLen - MAX_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MAX_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public MAX_Stream MAX_OpenAndFill( double[] inReal, int optInTimePeriod, double[] outReal )
+   {
+      MAX_Stream sp = new MAX_Stream(this);
+      RetCode retCode = MAX_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("MAX", "openAndFill", retCode);
+   }
 }

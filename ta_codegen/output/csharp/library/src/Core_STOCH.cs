@@ -683,4 +683,696 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>One <c>STOCH</c> output set, in batch output order.</summary>
+   /// <remarks>
+   /// <para>Equality is the compiler-generated record-struct equality, which compares
+   /// the components with <c>==</c>: <c>NaN</c> does not equal <c>NaN</c>, and
+   /// <c>0.0</c> equals <c>-0.0</c>. That is deliberately <em>not</em> the Java
+   /// <c>Value</c> contract, which compares bitwise — compare
+   /// <see cref="System.BitConverter.DoubleToInt64Bits(double)"/> per component
+   /// when bit-level identity is what you mean.</para>
+   /// </remarks>
+   /// <param name="SlowK">Raw FastK smoothed by SlowK_Period MA.</param>
+   /// <param name="SlowD">Signal line: SlowK smoothed by SlowD_Period MA.</param>
+   public readonly record struct STOCH_Value( double SlowK, double SlowD );
+
+   /// <summary>A live <c>STOCH</c> stream: one value per closed bar, bit-identical to
+   /// <c>STOCH</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.STOCH_Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class STOCH_Stream
+   {
+      internal Core core;
+      internal int optInFastK_Period;
+      internal int optInSlowK_Period;
+      internal MAType optInSlowK_MAType;
+      internal int optInSlowD_Period;
+      internal MAType optInSlowD_MAType;
+      internal double lowest;
+      internal double highest;
+      internal double diff;
+      internal int lowestIdx;
+      internal int highestIdx;
+      internal int trailingIdx;
+      internal int i;
+      internal int today;
+      internal int xMask;
+      internal double[] x_inHigh = [];
+      internal double[] x_inLow = [];
+      internal double[] x_inClose = [];
+      internal double cur_outSlowK;
+      internal double cur_outSlowD;
+      internal MA_Stream sub0 = null!;
+      internal MA_Stream sub1 = null!;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal STOCH_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>STOCH_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
+      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal STOCH_Stream( STOCH_Stream other )
+      {
+         this.core = other.core;
+         this.optInFastK_Period = other.optInFastK_Period;
+         this.optInSlowK_Period = other.optInSlowK_Period;
+         this.optInSlowK_MAType = other.optInSlowK_MAType;
+         this.optInSlowD_Period = other.optInSlowD_Period;
+         this.optInSlowD_MAType = other.optInSlowD_MAType;
+         this.lowest = other.lowest;
+         this.highest = other.highest;
+         this.diff = other.diff;
+         this.lowestIdx = other.lowestIdx;
+         this.highestIdx = other.highestIdx;
+         this.trailingIdx = other.trailingIdx;
+         this.i = other.i;
+         this.today = other.today;
+         this.xMask = other.xMask;
+         this.x_inHigh = new double[other.x_inHigh.Length];
+         Array.Copy( other.x_inHigh, this.x_inHigh, other.x_inHigh.Length );
+         this.x_inLow = new double[other.x_inLow.Length];
+         Array.Copy( other.x_inLow, this.x_inLow, other.x_inLow.Length );
+         this.x_inClose = new double[other.x_inClose.Length];
+         Array.Copy( other.x_inClose, this.x_inClose, other.x_inClose.Length );
+         this.cur_outSlowK = other.cur_outSlowK;
+         this.cur_outSlowD = other.cur_outSlowD;
+         this.sub0 = new MA_Stream(other.sub0);
+         this.sub1 = new MA_Stream(other.sub1);
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( STOCH_Stream other )
+      {
+         this.core = other.core;
+         this.optInFastK_Period = other.optInFastK_Period;
+         this.optInSlowK_Period = other.optInSlowK_Period;
+         this.optInSlowK_MAType = other.optInSlowK_MAType;
+         this.optInSlowD_Period = other.optInSlowD_Period;
+         this.optInSlowD_MAType = other.optInSlowD_MAType;
+         this.lowest = other.lowest;
+         this.highest = other.highest;
+         this.diff = other.diff;
+         this.lowestIdx = other.lowestIdx;
+         this.highestIdx = other.highestIdx;
+         this.trailingIdx = other.trailingIdx;
+         this.i = other.i;
+         this.today = other.today;
+         this.xMask = other.xMask;
+         if( this.x_inHigh.Length != other.x_inHigh.Length ) {
+            this.x_inHigh = new double[other.x_inHigh.Length];
+         }
+         Array.Copy( other.x_inHigh, this.x_inHigh, other.x_inHigh.Length );
+         if( this.x_inLow.Length != other.x_inLow.Length ) {
+            this.x_inLow = new double[other.x_inLow.Length];
+         }
+         Array.Copy( other.x_inLow, this.x_inLow, other.x_inLow.Length );
+         if( this.x_inClose.Length != other.x_inClose.Length ) {
+            this.x_inClose = new double[other.x_inClose.Length];
+         }
+         Array.Copy( other.x_inClose, this.x_inClose, other.x_inClose.Length );
+         this.cur_outSlowK = other.cur_outSlowK;
+         this.cur_outSlowD = other.cur_outSlowD;
+         if( this.sub0 is null ) {
+            this.sub0 = new MA_Stream(other.sub0);
+         } else {
+            this.sub0.CopyFrom(other.sub0);
+         }
+         if( this.sub1 is null ) {
+            this.sub1 = new MA_Stream(other.sub1);
+         } else {
+            this.sub1.CopyFrom(other.sub1);
+         }
+         this.fillRange = other.fillRange;
+      }
+
+      /* Peek's reusable scratch — one per thread, see CopyFrom. */
+      [ThreadStatic] private static STOCH_Stream? peekScratch;
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <param name="inClose">Close price of each bar.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public STOCH_Value Update( double inHigh, double inLow, double inClose )
+      {
+         core.STOCH_StreamStep(this, inHigh, inLow, inClose);
+         return new STOCH_Value(cur_outSlowK, cur_outSlowD);
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a scratch handle held per thread and reused, so the copy
+      /// allocates nothing after the first peek of this indicator on this thread.
+      /// That scratch is retained for the life of the thread.</para>
+      /// </remarks>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <param name="inClose">Close price of each bar.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public STOCH_Value Peek( double inHigh, double inLow, double inClose )
+      {
+         STOCH_Stream? scratch = peekScratch;
+         if( scratch is null ) {
+            scratch = new STOCH_Stream(this);
+            peekScratch = scratch;
+         } else {
+            scratch.CopyFrom(this);
+         }
+         core.STOCH_StreamStep(scratch, inHigh, inLow, inClose);
+         return new STOCH_Value(scratch.cur_outSlowK, scratch.cur_outSlowD);
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public STOCH_Value Value => new STOCH_Value(cur_outSlowK, cur_outSlowD);
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public STOCH_Stream Clone()
+      {
+         return new STOCH_Stream(this);
+      }
+   }
+
+   internal void STOCH_StreamStep( STOCH_Stream sp, double inHigh, double inLow, double inClose )
+   {
+      double tmp = 0.0;
+      double cur_tempBuffer = 0.0;
+      double cur_outSlowD = 0.0;
+      if( sp.today >= 1073741824 ) {
+         int rebaseShift = sp.trailingIdx & ~sp.xMask;
+         sp.today -= rebaseShift;
+         sp.trailingIdx -= rebaseShift;
+         sp.highestIdx -= rebaseShift;
+         sp.i -= rebaseShift;
+         sp.lowestIdx -= rebaseShift;
+      }
+      sp.x_inHigh[sp.today & sp.xMask] = inHigh;
+      sp.x_inLow[sp.today & sp.xMask] = inLow;
+      sp.x_inClose[sp.today & sp.xMask] = inClose;
+      /* Set the lowest low */
+      tmp = sp.x_inLow[sp.today & sp.xMask];
+      if( sp.lowestIdx < sp.trailingIdx ) {
+         sp.lowestIdx = sp.trailingIdx;
+         sp.lowest = sp.x_inLow[sp.lowestIdx & sp.xMask];
+         sp.i = sp.lowestIdx;
+         while( ++sp.i <= sp.today ) {
+            tmp = sp.x_inLow[sp.i & sp.xMask];
+            if( tmp < sp.lowest ) {
+               sp.lowestIdx = sp.i;
+               sp.lowest = tmp;
+            }
+         }
+         sp.diff = (sp.highest - sp.lowest) / 100.0;
+      } else if( tmp <= sp.lowest ) {
+         sp.lowestIdx = sp.today;
+         sp.lowest = tmp;
+         sp.diff = (sp.highest - sp.lowest) / 100.0;
+      }
+      /* Set the highest high */
+      tmp = sp.x_inHigh[sp.today & sp.xMask];
+      if( sp.highestIdx < sp.trailingIdx ) {
+         sp.highestIdx = sp.trailingIdx;
+         sp.highest = sp.x_inHigh[sp.highestIdx & sp.xMask];
+         sp.i = sp.highestIdx;
+         while( ++sp.i <= sp.today ) {
+            tmp = sp.x_inHigh[sp.i & sp.xMask];
+            if( tmp > sp.highest ) {
+               sp.highestIdx = sp.i;
+               sp.highest = tmp;
+            }
+         }
+         sp.diff = (sp.highest - sp.lowest) / 100.0;
+      } else if( tmp >= sp.highest ) {
+         sp.highestIdx = sp.today;
+         sp.highest = tmp;
+         sp.diff = (sp.highest - sp.lowest) / 100.0;
+      }
+      /* Calculate stochastic. Guard with TA_IS_ZERO, not an exact `diff != 0.0`:
+       * a machine-flat window leaves a sub-epsilon residue that an exact check
+       * would divide into [0,100] noise (issue #107 / STOCHRSI).
+       */
+      if( !((-0.00000000000001 < sp.diff) && (sp.diff < 0.00000000000001)) ) {
+         cur_tempBuffer = (sp.x_inClose[sp.today & sp.xMask] - sp.lowest) / sp.diff;
+      } else {
+         cur_tempBuffer = 0.0;
+      }
+      sp.trailingIdx += 1;
+      sp.today += 1;
+      /* Pipeline the new bar through the sub-streams (batch tail order). */
+      cur_tempBuffer = sp.sub0.Update(cur_tempBuffer);
+      cur_outSlowD = sp.sub1.Update(cur_tempBuffer);
+      sp.cur_outSlowK = cur_tempBuffer;
+      sp.cur_outSlowD = cur_outSlowD;
+   }
+
+   private RetCode STOCH_OpenCore( STOCH_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, out int outBegIdx, out int outNBElement, double[] outSlowK, double[] outSlowD, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      RetCode retCode;
+      double lowest = 0;
+      double highest = 0;
+      double tmp = 0;
+      double diff = 0;
+      double[] tempBuffer;
+      int outIdx = 0;
+      int lowestIdx = 0;
+      int highestIdx = 0;
+      int lookbackTotal = 0;
+      int lookbackK = 0;
+      int lookbackKSlow = 0;
+      int lookbackDSlow = 0;
+      int trailingIdx = 0;
+      int today = 0;
+      int i = 0;
+      int bufferIsAllocated = 0;
+      int historyLen = inHigh.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 || inLow.Length != inHigh.Length || inClose.Length != inHigh.Length ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInFastK_Period == int.MinValue ) {
+         optInFastK_Period = 5;
+      } else if( optInFastK_Period < 1 || optInFastK_Period > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( optInSlowK_Period == int.MinValue ) {
+         optInSlowK_Period = 3;
+      } else if( optInSlowK_Period < 1 || optInSlowK_Period > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( (int)optInSlowK_MAType == int.MinValue || optInSlowK_MAType == MAType.DEFAULT ) {
+         optInSlowK_MAType = MAType.SMA;
+      } else if( (int)optInSlowK_MAType < MATypes.Min || (int)optInSlowK_MAType > MATypes.Max ) {
+         return RetCode.BadParam;
+      }
+      if( optInSlowD_Period == int.MinValue ) {
+         optInSlowD_Period = 3;
+      } else if( optInSlowD_Period < 1 || optInSlowD_Period > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( (int)optInSlowD_MAType == int.MinValue || optInSlowD_MAType == MAType.DEFAULT ) {
+         optInSlowD_MAType = MAType.SMA;
+      } else if( (int)optInSlowD_MAType < MATypes.Min || (int)optInSlowD_MAType > MATypes.Max ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen < STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      double[] sc_outSlowK = outStride == 1 ? outSlowK : new double[historyLen];
+      double[] sc_outSlowD = outStride == 1 ? outSlowD : new double[historyLen];
+      /* With stochastic, there is a total of 4 different lines that
+       * are defined: FASTK, FASTD, SLOWK and SLOWD.
+       *
+       * The D is the signal line usually drawn over its
+       * corresponding K function.
+       *
+       *                    (Today's Close - LowestLow)
+       *  FASTK(Kperiod) =  --------------------------- * 100
+       *                     (HighestHigh - LowestLow)
+       *
+       *  FASTD(FastDperiod, MA type) = MA Smoothed FASTK over FastDperiod
+       *
+       *  SLOWK(SlowKperiod, MA type) = MA Smoothed FASTK over SlowKperiod
+       *
+       *  SLOWD(SlowDperiod, MA Type) = MA Smoothed SLOWK over SlowDperiod
+       *
+       * The HighestHigh and LowestLow are the extreme values among the
+       * last 'Kperiod'.
+       *
+       * SLOWK and FASTD are equivalent when using the same period.
+       *
+       * The following shows how these four lines are made available in TA-LIB:
+       *
+       *  TA_STOCH  : Returns the SLOWK and SLOWD
+       *  TA_STOCHF : Returns the FASTK and FASTD
+       *
+       * The TA_STOCH function correspond to the more widely implemented version
+       * found in many software/charting package. The TA_STOCHF is more rarely
+       * used because its higher volatility cause often whipsaws.
+       */
+      /* Identify the lookback needed. */
+      lookbackK = optInFastK_Period - 1;
+      lookbackKSlow = MA_Lookback(optInSlowK_Period, optInSlowK_MAType);
+      lookbackDSlow = MA_Lookback(optInSlowD_Period, optInSlowD_MAType);
+      lookbackTotal = lookbackK + lookbackDSlow + lookbackKSlow;
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         /* Succeed... but no data in the output. */
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      /* Do the K calculation:
+       *
+       *    Kt = 100 x ((Ct-Lt)/(Ht-Lt))
+       *
+       * Kt is today stochastic
+       * Ct is today closing price.
+       * Lt is the lowest price of the last K Period (including today)
+       * Ht is the highest price of the last K Period (including today)
+       */
+      /* Proceed with the calculation for the requested range.
+       * Note that this algorithm allows the input and
+       * output to be the same buffer.
+       */
+      outIdx = 0;
+      /* Calculate just enough K for ending up with the caller
+       * requested range. (The range of k must consider all
+       * the lookback involve with the smoothing).
+       */
+      trailingIdx = startIdx - lookbackTotal;
+      today = trailingIdx + lookbackK;
+      highestIdx = 0 - 1;
+      lowestIdx = highestIdx;
+      lowest = 0.0;
+      highest = lowest;
+      diff = highest;
+      /* Allocate a temporary buffer large enough to
+       * store the K.
+       *
+       * When outSlowK aliases a price input the caller buffer doubles as the
+       * scratch, saving one allocation: the K writes trail the min/max window
+       * reads, and the final memmove is overlap-safe. outSlowD must NOT be
+       * elected: the %D ma() below would then run in place over the smoothed K
+       * that the memmove into outSlowK still needs (issue #130).
+       */
+      bufferIsAllocated = 0;
+      if( sc_outSlowK == inHigh || sc_outSlowK == inLow || sc_outSlowK == inClose ) {
+         tempBuffer = sc_outSlowK;
+      } else {
+         bufferIsAllocated = 1;
+         tempBuffer = new double[(int)((endIdx - today + 1) * 1)];
+      }
+      /* Do the K calculation */
+      while( today <= endIdx ) {
+         /* Set the lowest low */
+         tmp = inLow[today];
+         if( lowestIdx < trailingIdx ) {
+            lowestIdx = trailingIdx;
+            lowest = inLow[lowestIdx];
+            i = lowestIdx;
+            while( ++i <= today ) {
+               tmp = inLow[i];
+               if( tmp < lowest ) {
+                  lowestIdx = i;
+                  lowest = tmp;
+               }
+            }
+            diff = (highest - lowest) / 100.0;
+         } else if( tmp <= lowest ) {
+            lowestIdx = today;
+            lowest = tmp;
+            diff = (highest - lowest) / 100.0;
+         }
+         /* Set the highest high */
+         tmp = inHigh[today];
+         if( highestIdx < trailingIdx ) {
+            highestIdx = trailingIdx;
+            highest = inHigh[highestIdx];
+            i = highestIdx;
+            while( ++i <= today ) {
+               tmp = inHigh[i];
+               if( tmp > highest ) {
+                  highestIdx = i;
+                  highest = tmp;
+               }
+            }
+            diff = (highest - lowest) / 100.0;
+         } else if( tmp >= highest ) {
+            highestIdx = today;
+            highest = tmp;
+            diff = (highest - lowest) / 100.0;
+         }
+         /* Calculate stochastic. Guard with TA_IS_ZERO, not an exact `diff != 0.0`:
+          * a machine-flat window leaves a sub-epsilon residue that an exact check
+          * would divide into [0,100] noise (issue #107 / STOCHRSI).
+          */
+         if( !((-0.00000000000001 < diff) && (diff < 0.00000000000001)) ) {
+            tempBuffer[outIdx++] = (inClose[today] - lowest) / diff;
+         } else {
+            tempBuffer[outIdx++] = 0.0;
+         }
+         trailingIdx += 1;
+         today += 1;
+      }
+      /* Un-smoothed K calculation completed. This K calculation is not returned
+       * to the caller. It is always smoothed and then return.
+       * Some documentation will refer to the smoothed version as being
+       * "K-Slow", but often this end up to be shorten to "K".
+       */
+      /* Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
+       * sub-call's own startIdx (the seeding point). */
+      int subLen0 = (outIdx - 1) + 1;
+      double[] subSrc0_0 = new double[subLen0];
+      Array.Copy(tempBuffer, subSrc0_0, subLen0);
+      MA_Stream sub0 = MA_OpenInternal(subSrc0_0, 0, optInSlowK_Period, optInSlowK_MAType);
+      retCode = MA(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, out outBegIdx, out outNBElement, tempBuffer);
+      if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
+         if( (bufferIsAllocated) != 0 ) {
+         }
+         /* Something wrong happen? No further data? */
+         outBegIdx = 0;
+         outNBElement = 0;
+         return retCode ;
+      }
+      /* Calculate the %D which is simply a moving average of
+       * the already smoothed %K.
+       */
+      /* Sub-stream 1: ma over `tempBuffer`, warmed from bar 0 up to the
+       * sub-call's own startIdx (the seeding point). */
+      int subLen1 = ((int)outNBElement - 1) + 1;
+      double[] subSrc1_0 = new double[subLen1];
+      Array.Copy(tempBuffer, subSrc1_0, subLen1);
+      MA_Stream sub1 = MA_OpenAndFillInternal(subSrc1_0, 0, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, sc_outSlowD);
+      retCode = RetCode.Success;
+      /* Copy tempBuffer into the caller buffer.
+       * (Calculation could not be done directly in the
+       *  caller buffer because more input data then the
+       *  requested range was needed for doing %D).
+       */
+      /* memmove, not memcpy: tempBuffer aliases outSlowK when the caller buffer is
+       * reused as scratch, so source and destination overlap (issue #94).
+       */
+      Array.Copy(tempBuffer, lookbackDSlow, sc_outSlowK, 0, (int)outNBElement * 1);
+      /* Don't need K anymore, free it if it was allocated here. */
+      if( (bufferIsAllocated) != 0 ) {
+      }
+      if( retCode != RetCode.Success ) {
+         /* Something wrong happen while processing %D? */
+         outBegIdx = 0;
+         outNBElement = 0;
+         return retCode ;
+      }
+      /* Note: Keep the outBegIdx relative to the
+       *       caller input before returning.
+       */
+      outBegIdx = startIdx;
+      /* Capture the live producer state + sub handles. */
+      if( outNBElement < 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      /* Capture the live batch state into the handle. */
+      int capX = today - trailingIdx + 1;
+      if( capX < 1 || capX > historyLen ) {
+         return RetCode.InternalError;
+      }
+      int physX = 1;
+      while( physX < capX ) {
+         physX <<= 1;
+      }
+      double[] capX_inHigh = new double[physX];
+      double[] capX_inLow = new double[physX];
+      double[] capX_inClose = new double[physX];
+      for( int fillJ = historyLen - capX; fillJ < historyLen; fillJ++ ) {
+         capX_inHigh[fillJ & (physX - 1)] = inHigh[fillJ];
+         capX_inLow[fillJ & (physX - 1)] = inLow[fillJ];
+         capX_inClose[fillJ & (physX - 1)] = inClose[fillJ];
+      }
+      sp.optInFastK_Period = optInFastK_Period;
+      sp.optInSlowK_Period = optInSlowK_Period;
+      sp.optInSlowK_MAType = optInSlowK_MAType;
+      sp.optInSlowD_Period = optInSlowD_Period;
+      sp.optInSlowD_MAType = optInSlowD_MAType;
+      sp.lowest = lowest;
+      sp.highest = highest;
+      sp.diff = diff;
+      sp.lowestIdx = lowestIdx;
+      sp.highestIdx = highestIdx;
+      sp.trailingIdx = trailingIdx;
+      sp.i = i;
+      sp.today = today;
+      sp.xMask = physX - 1;
+      sp.x_inHigh = capX_inHigh;
+      sp.x_inLow = capX_inLow;
+      sp.x_inClose = capX_inClose;
+      sp.sub0 = sub0;
+      sp.sub1 = sub1;
+      sp.cur_outSlowK = sc_outSlowK[outNBElement - 1];
+      sp.cur_outSlowD = sc_outSlowD[outNBElement - 1];
+      return RetCode.Success;
+   }
+
+   private RetCode STOCH_OpenBody( STOCH_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
+   {
+      double[] sink_outSlowK = new double[1];
+      double[] sink_outSlowD = new double[1];
+      return STOCH_OpenCore( sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out _, out _, sink_outSlowK, sink_outSlowD, 0 );
+   }
+
+   private RetCode STOCH_OpenAndFillBody( STOCH_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, out int outBegIdx, out int outNBElement, double[] outSlowK, double[] outSlowD )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outSlowK, inHigh) || ReferenceEquals(outSlowK, inLow) || ReferenceEquals(outSlowK, inClose) || ReferenceEquals(outSlowD, inHigh) || ReferenceEquals(outSlowD, inLow) || ReferenceEquals(outSlowD, inClose) || ReferenceEquals(outSlowK, outSlowD) ) {
+         return RetCode.BadParam;
+      }
+      return STOCH_OpenCore( sp, inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outSlowK, outSlowD, 1 );
+   }
+
+   private RetCode STOCH_OpenAndFillInternalBody( STOCH_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, out int outBegIdx, out int outNBElement, double[] outSlowK, double[] outSlowD )
+   {
+      return STOCH_OpenCore(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outSlowK, outSlowD, 1);
+   }
+
+   /* STOCH_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal STOCH_Stream STOCH_OpenAndFillInternal( double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, out int outBegIdx, out int outNBElement, double[] outSlowK, double[] outSlowD )
+   {
+      STOCH_Stream sp = new STOCH_Stream(this);
+      RetCode retCode = STOCH_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outSlowK, outSlowD);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("STOCH", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind STOCH_Open (composition seam). */
+   internal STOCH_Stream STOCH_OpenInternal( double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
+   {
+      STOCH_Stream sp = new STOCH_Stream(this);
+      RetCode retCode = STOCH_OpenBody(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("STOCH", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>STOCH</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="STOCH_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>STOCH</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>STOCH_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>STOCH_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="optInFastK_Period">As in the batch call; see <see cref="STOCH_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSlowK_Period">As in the batch call; see <see cref="STOCH_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSlowK_MAType">As in the batch call; see <see cref="STOCH_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSlowD_Period">As in the batch call; see <see cref="STOCH_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSlowD_MAType">As in the batch call; see <see cref="STOCH_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>STOCH_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public STOCH_Stream STOCH_Open( double[] inHigh, double[] inLow, double[] inClose, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
+   {
+      return STOCH_OpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+   }
+
+   /// <summary><c>STOCH_Open</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>STOCH</c> produces over
+   /// the same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - STOCH_Lookback(...)</c> values and
+   /// must not alias the inputs or each other — this path writes the outputs and
+   /// then reads the input tail to seed its rings, so the batch tier's in-place
+   /// allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="STOCH_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="optInFastK_Period">As in the batch call; see <see cref="STOCH_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSlowK_Period">As in the batch call; see <see cref="STOCH_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSlowK_MAType">As in the batch call; see <see cref="STOCH_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSlowD_Period">As in the batch call; see <see cref="STOCH_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSlowD_MAType">As in the batch call; see <see cref="STOCH_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="outSlowK">Raw FastK smoothed by SlowK_Period MA. Must hold at least <c>historyLen -
+   /// STOCH_Lookback(...)</c> values.</param>
+   /// <param name="outSlowD">Signal line: SlowK smoothed by SlowD_Period MA. Must hold at least
+   /// <c>historyLen - STOCH_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>STOCH_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public STOCH_Stream STOCH_OpenAndFill( double[] inHigh, double[] inLow, double[] inClose, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, double[] outSlowK, double[] outSlowD )
+   {
+      STOCH_Stream sp = new STOCH_Stream(this);
+      RetCode retCode = STOCH_OpenAndFillBody(sp, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out int outBegIdx, out int outNBElement, outSlowK, outSlowD);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("STOCH", "openAndFill", retCode);
+   }
 }

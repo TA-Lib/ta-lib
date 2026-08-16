@@ -244,4 +244,255 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>OBV</c> stream: one value per closed bar, bit-identical to
+   /// <c>OBV</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.OBV_Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class OBV_Stream
+   {
+      internal Core core;
+      internal double prevReal;
+      internal double prevOBV;
+      internal double cur_outReal;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal OBV_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>OBV_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
+      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal OBV_Stream( OBV_Stream other )
+      {
+         this.core = other.core;
+         this.prevReal = other.prevReal;
+         this.prevOBV = other.prevOBV;
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( OBV_Stream other )
+      {
+         this.core = other.core;
+         this.prevReal = other.prevReal;
+         this.prevOBV = other.prevOBV;
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inReal">Price series, typically close.</param>
+      /// <param name="inVolume">Volume of each bar.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public double Update( double inReal, double inVolume )
+      {
+         core.OBV_StreamStep(this, inReal, inVolume);
+         return cur_outReal;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a throwaway copy, which for this handle's shape is cheaper than
+      /// reusing one.</para>
+      /// </remarks>
+      /// <param name="inReal">Price series, typically close.</param>
+      /// <param name="inVolume">Volume of each bar.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public double Peek( double inReal, double inVolume )
+      {
+         OBV_Stream scratch = new OBV_Stream(this);
+         core.OBV_StreamStep(scratch, inReal, inVolume);
+         return scratch.cur_outReal;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public double Value => cur_outReal;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public OBV_Stream Clone()
+      {
+         return new OBV_Stream(this);
+      }
+   }
+
+   internal void OBV_StreamStep( OBV_Stream sp, double inReal, double inVolume )
+   {
+      double tempReal = 0.0;
+      tempReal = inReal;
+      if( tempReal > sp.prevReal ) {
+         sp.prevOBV += inVolume;
+      } else if( tempReal < sp.prevReal ) {
+         sp.prevOBV -= inVolume;
+      }
+      sp.cur_outReal = sp.prevOBV;
+      sp.prevReal = tempReal;
+   }
+
+   private RetCode OBV_OpenCore( OBV_Stream sp, double[] inReal, double[] inVolume, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      int i = 0;
+      int outIdx = 0;
+      double prevReal = 0;
+      double tempReal = 0;
+      double prevOBV = 0;
+      int historyLen = inReal.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 || inVolume.Length != inReal.Length ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      prevOBV = inVolume[startIdx];
+      prevReal = inReal[startIdx];
+      outIdx = 0;
+      for( i = startIdx; i <= endIdx; i += 1 ) {
+         tempReal = inReal[i];
+         if( tempReal > prevReal ) {
+            prevOBV += inVolume[i];
+         } else if( tempReal < prevReal ) {
+            prevOBV -= inVolume[i];
+         }
+         outReal[outIdx++ * outStride] = prevOBV;
+         prevReal = tempReal;
+      }
+      outBegIdx = startIdx;
+      outNBElement = outIdx;
+      /* Capture the live batch state into the handle. */
+      sp.prevReal = prevReal;
+      sp.prevOBV = prevOBV;
+      sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode OBV_OpenBody( OBV_Stream sp, double[] inReal, double[] inVolume, int startIdx )
+   {
+      double[] sink_outReal = new double[1];
+      return OBV_OpenCore( sp, inReal, inVolume, startIdx, out _, out _, sink_outReal, 0 );
+   }
+
+   private RetCode OBV_OpenAndFillBody( OBV_Stream sp, double[] inReal, double[] inVolume, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outReal, inReal) || ReferenceEquals(outReal, inVolume) ) {
+         return RetCode.BadParam;
+      }
+      return OBV_OpenCore( sp, inReal, inVolume, 0, out outBegIdx, out outNBElement, outReal, 1 );
+   }
+
+   private RetCode OBV_OpenAndFillInternalBody( OBV_Stream sp, double[] inReal, double[] inVolume, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      return OBV_OpenCore(sp, inReal, inVolume, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+   }
+
+   /* OBV_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal OBV_Stream OBV_OpenAndFillInternal( double[] inReal, double[] inVolume, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      OBV_Stream sp = new OBV_Stream(this);
+      RetCode retCode = OBV_OpenAndFillInternalBody(sp, inReal, inVolume, startIdx, out outBegIdx, out outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("OBV", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind OBV_Open (composition seam). */
+   internal OBV_Stream OBV_OpenInternal( double[] inReal, double[] inVolume, int startIdx )
+   {
+      OBV_Stream sp = new OBV_Stream(this);
+      RetCode retCode = OBV_OpenBody(sp, inReal, inVolume, startIdx);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("OBV", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>OBV</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="OBV_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>OBV</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>OBV_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>OBV_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inReal">Price series, typically close. The warm-up history, oldest bar first.</param>
+   /// <param name="inVolume">Volume of each bar. The warm-up history, oldest bar first.</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>OBV_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public OBV_Stream OBV_Open( double[] inReal, double[] inVolume )
+   {
+      return OBV_OpenInternal(inReal, inVolume, 0);
+   }
+
+   /// <summary><c>OBV_Open</c> that also fills the output array(s) over the whole history
+   /// in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>OBV</c> produces over the
+   /// same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - OBV_Lookback(...)</c> values and
+   /// must not alias the inputs or each other — this path writes the outputs and
+   /// then reads the input tail to seed its rings, so the batch tier's in-place
+   /// allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="OBV_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inReal">Price series, typically close. The warm-up history, oldest bar first.</param>
+   /// <param name="inVolume">Volume of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="outReal">Cumulative on-balance volume. Must hold at least <c>historyLen -
+   /// OBV_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>OBV_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public OBV_Stream OBV_OpenAndFill( double[] inReal, double[] inVolume, double[] outReal )
+   {
+      OBV_Stream sp = new OBV_Stream(this);
+      RetCode retCode = OBV_OpenAndFillBody(sp, inReal, inVolume, out int outBegIdx, out int outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("OBV", "openAndFill", retCode);
+   }
 }

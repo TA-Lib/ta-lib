@@ -367,4 +367,376 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>CDLHIKKAKE</c> stream: one value per closed bar, bit-identical
+   /// to <c>CDLHIKKAKE</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.CDLHIKKAKE_Open"/>. There is no close and
+   /// nothing to dispose — the handle is ordinary managed state, and an
+   /// unreferenced handle is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class CDLHIKKAKE_Stream
+   {
+      internal Core core;
+      internal int patternResult;
+      internal int cd;
+      internal double savedHigh;
+      internal double savedLow;
+      internal double lag1_inHigh;
+      internal double lag2_inHigh;
+      internal double lag1_inLow;
+      internal double lag2_inLow;
+      internal int cur_outInteger;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal CDLHIKKAKE_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>CDLHIKKAKE_OpenAndFill</c> filled, or
+      /// <see cref="OutRange.Empty"/> when this handle came from a plain open
+      /// (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal CDLHIKKAKE_Stream( CDLHIKKAKE_Stream other )
+      {
+         this.core = other.core;
+         this.patternResult = other.patternResult;
+         this.cd = other.cd;
+         this.savedHigh = other.savedHigh;
+         this.savedLow = other.savedLow;
+         this.lag1_inHigh = other.lag1_inHigh;
+         this.lag2_inHigh = other.lag2_inHigh;
+         this.lag1_inLow = other.lag1_inLow;
+         this.lag2_inLow = other.lag2_inLow;
+         this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( CDLHIKKAKE_Stream other )
+      {
+         this.core = other.core;
+         this.patternResult = other.patternResult;
+         this.cd = other.cd;
+         this.savedHigh = other.savedHigh;
+         this.savedLow = other.savedLow;
+         this.lag1_inHigh = other.lag1_inHigh;
+         this.lag2_inHigh = other.lag2_inHigh;
+         this.lag1_inLow = other.lag1_inLow;
+         this.lag2_inLow = other.lag2_inLow;
+         this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
+      }
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inOpen">Open price of each bar.</param>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <param name="inClose">Close price of each bar.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public int Update( double inOpen, double inHigh, double inLow, double inClose )
+      {
+         core.CDLHIKKAKE_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         return cur_outInteger;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a throwaway copy, which for this handle's shape is cheaper than
+      /// reusing one.</para>
+      /// </remarks>
+      /// <param name="inOpen">Open price of each bar.</param>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <param name="inClose">Close price of each bar.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public int Peek( double inOpen, double inHigh, double inLow, double inClose )
+      {
+         CDLHIKKAKE_Stream scratch = new CDLHIKKAKE_Stream(this);
+         core.CDLHIKKAKE_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         return scratch.cur_outInteger;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public int Value => cur_outInteger;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public CDLHIKKAKE_Stream Clone()
+      {
+         return new CDLHIKKAKE_Stream(this);
+      }
+   }
+
+   internal void CDLHIKKAKE_StreamStep( CDLHIKKAKE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   {
+      if( sp.lag1_inHigh < sp.lag2_inHigh &&
+          sp.lag1_inLow > sp.lag2_inLow &&   /* 1st + 2nd: lower high and higher low */
+          (inHigh < sp.lag1_inHigh && inLow < sp.lag1_inLow || inHigh > sp.lag1_inHigh && inLow > sp.lag1_inLow) ) /* (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low */
+      {
+         sp.patternResult = 100 * ((inHigh < sp.lag1_inHigh) ? 1 : 0 - 1);
+         sp.savedHigh = sp.lag1_inHigh;
+         sp.savedLow = sp.lag1_inLow;
+         sp.cd = 4;
+         sp.cur_outInteger = sp.patternResult;
+      } else if( sp.cd > 0 &&
+          (sp.patternResult > 0 && inClose > sp.savedHigh || sp.patternResult < 0 && inClose < sp.savedLow) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
+      {
+         sp.cur_outInteger = sp.patternResult + 100 * ((sp.patternResult > 0) ? 1 : 0 - 1);
+         sp.cd = 0;
+      } else {
+         sp.cur_outInteger = 0;
+      }
+      if( sp.cd > 0 ) {
+         sp.cd -= 1;
+      }
+      sp.lag2_inHigh = sp.lag1_inHigh;
+      sp.lag1_inHigh = inHigh;
+      sp.lag2_inLow = sp.lag1_inLow;
+      sp.lag1_inLow = inLow;
+   }
+
+   private RetCode CDLHIKKAKE_OpenCore( CDLHIKKAKE_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      int i = 0;
+      int outIdx = 0;
+      int lookbackTotal = 0;
+      int patternResult = 0;
+      int cd = 0;
+      double savedHigh = 0;
+      double savedLow = 0;
+      int historyLen = inOpen.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 || inHigh.Length != inOpen.Length || inLow.Length != inOpen.Length || inClose.Length != inOpen.Length ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      /* Confirmation-window countdown + cached 2nd-candle high/low: the pattern
+       * state carried without an absolute bar index.
+       */
+      /* Identify the minimum number of price bar needed
+       * to calculate at least one output.
+       */
+      lookbackTotal = CDLHIKKAKE_Lookback();
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      /* Do the calculation using tight loops. */
+      /* Add-up the initial period, except for the last value. */
+      cd = 0;
+      patternResult = 0;
+      i = startIdx - 3;
+      while( i < startIdx ) {
+         /* copy here the pattern recognition code below */
+         if( inHigh[i - 1] < inHigh[i - 2] &&
+             inLow[i - 1] > inLow[i - 2] &&   /* 1st + 2nd: lower high and higher low */
+             (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) ) /* (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low */
+         {
+            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
+            savedHigh = inHigh[i - 1];
+            savedLow = inLow[i - 1];
+            cd = 4;
+         } else if( cd > 0 &&
+             (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
+         {
+            cd = 0;
+         }
+         if( cd > 0 ) {
+            cd -= 1;
+         }
+         i += 1;
+      }
+      i = startIdx;
+      /* Proceed with the calculation for the requested range.
+       * Must have:
+       * - first and second candle: inside bar (2nd has lower high and higher low than 1st)
+       * - third candle: lower high and lower low than 2nd (higher high and higher low than 2nd)
+       * outInteger[hikkakebar] is positive (1 to 100) or negative (-1 to -100) meaning bullish or bearish hikkake
+       * Confirmation could come in the next 3 days with:
+       * - a day that closes higher than the high (lower than the low) of the 2nd candle
+       * outInteger[confirmationbar] is equal to 100 + the bullish hikkake result or -100 - the bearish hikkake result
+       * Note: if confirmation and a new hikkake come at the same bar, only the new hikkake is reported (the new hikkake
+       * overwrites the confirmation of the old hikkake)
+       */
+      outIdx = 0;
+      do {
+         if( inHigh[i - 1] < inHigh[i - 2] &&
+             inLow[i - 1] > inLow[i - 2] &&   /* 1st + 2nd: lower high and higher low */
+             (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) ) /* (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low */
+         {
+            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
+            savedHigh = inHigh[i - 1];
+            savedLow = inLow[i - 1];
+            cd = 4;
+            outInteger[outIdx++ * outStride] = patternResult;
+         } else if( cd > 0 &&
+             (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
+         {
+            outInteger[outIdx++ * outStride] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
+            cd = 0;
+         } else {
+            outInteger[outIdx++ * outStride] = 0;
+         }
+         if( cd > 0 ) {
+            cd -= 1;
+         }
+         i += 1;
+      } while( i <= endIdx );
+      /* All done. Indicate the output limits and return. */
+      outNBElement = outIdx;
+      outBegIdx = startIdx;
+      /* Capture the live batch state into the handle. */
+      sp.patternResult = patternResult;
+      sp.cd = cd;
+      sp.savedHigh = savedHigh;
+      sp.savedLow = savedLow;
+      sp.lag1_inHigh = inHigh[historyLen - 1];
+      sp.lag2_inHigh = inHigh[historyLen - 2];
+      sp.lag1_inLow = inLow[historyLen - 1];
+      sp.lag2_inLow = inLow[historyLen - 2];
+      sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode CDLHIKKAKE_OpenBody( CDLHIKKAKE_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx )
+   {
+      int[] sink_outInteger = new int[1];
+      return CDLHIKKAKE_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
+   }
+
+   private RetCode CDLHIKKAKE_OpenAndFillBody( CDLHIKKAKE_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, out int outBegIdx, out int outNBElement, int[] outInteger )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outInteger, inOpen) || ReferenceEquals(outInteger, inHigh) || ReferenceEquals(outInteger, inLow) || ReferenceEquals(outInteger, inClose) ) {
+         return RetCode.BadParam;
+      }
+      return CDLHIKKAKE_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
+   }
+
+   private RetCode CDLHIKKAKE_OpenAndFillInternalBody( CDLHIKKAKE_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger )
+   {
+      return CDLHIKKAKE_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+   }
+
+   /* CDLHIKKAKE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal CDLHIKKAKE_Stream CDLHIKKAKE_OpenAndFillInternal( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger )
+   {
+      CDLHIKKAKE_Stream sp = new CDLHIKKAKE_Stream(this);
+      RetCode retCode = CDLHIKKAKE_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("CDLHIKKAKE", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind CDLHIKKAKE_Open (composition seam). */
+   internal CDLHIKKAKE_Stream CDLHIKKAKE_OpenInternal( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx )
+   {
+      CDLHIKKAKE_Stream sp = new CDLHIKKAKE_Stream(this);
+      RetCode retCode = CDLHIKKAKE_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("CDLHIKKAKE", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>CDLHIKKAKE</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="CDLHIKKAKE_Stream.Value"/> starts at the last
+   /// history bar's value — bit-identical to what <c>CDLHIKKAKE</c> reports for
+   /// that bar.</para>
+   /// <para>The history must hold at least <c>CDLHIKKAKE_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>CDLHIKKAKE_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CDLHIKKAKE_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public CDLHIKKAKE_Stream CDLHIKKAKE_Open( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose )
+   {
+      return CDLHIKKAKE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+   }
+
+   /// <summary><c>CDLHIKKAKE_Open</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>CDLHIKKAKE</c> produces
+   /// over the same series, so no separate batch call is needed for the warm-up
+   /// plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - CDLHIKKAKE_Lookback(...)</c>
+   /// values and must not alias the inputs or each other — this path writes the
+   /// outputs and then reads the input tail to seed its rings, so the batch
+   /// tier's in-place allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="CDLHIKKAKE_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="outInteger">+100/-100 at the hikkake (breakout) bar for bull/bear; +200/-200 at a
+   /// later confirmation bar; 0 otherwise. Must hold at least <c>historyLen -
+   /// CDLHIKKAKE_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CDLHIKKAKE_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public CDLHIKKAKE_Stream CDLHIKKAKE_OpenAndFill( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int[] outInteger )
+   {
+      CDLHIKKAKE_Stream sp = new CDLHIKKAKE_Stream(this);
+      RetCode retCode = CDLHIKKAKE_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("CDLHIKKAKE", "openAndFill", retCode);
+   }
 }

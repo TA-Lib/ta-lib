@@ -413,4 +413,360 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>TRIX</c> stream: one value per closed bar, bit-identical to
+   /// <c>TRIX</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.TRIX_Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class TRIX_Stream
+   {
+      internal Core core;
+      internal int optInTimePeriod;
+      internal double prevEMA1;
+      internal double prevEMA2;
+      internal double prevEMA3;
+      internal double optInK_1;
+      internal double cur_outReal;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal TRIX_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>TRIX_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
+      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal TRIX_Stream( TRIX_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.prevEMA1 = other.prevEMA1;
+         this.prevEMA2 = other.prevEMA2;
+         this.prevEMA3 = other.prevEMA3;
+         this.optInK_1 = other.optInK_1;
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( TRIX_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.prevEMA1 = other.prevEMA1;
+         this.prevEMA2 = other.prevEMA2;
+         this.prevEMA3 = other.prevEMA3;
+         this.optInK_1 = other.optInK_1;
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inReal">Source series to smooth.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public double Update( double inReal )
+      {
+         core.TRIX_StreamStep(this, inReal);
+         return cur_outReal;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a throwaway copy, which for this handle's shape is cheaper than
+      /// reusing one.</para>
+      /// </remarks>
+      /// <param name="inReal">Source series to smooth.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public double Peek( double inReal )
+      {
+         TRIX_Stream scratch = new TRIX_Stream(this);
+         core.TRIX_StreamStep(scratch, inReal);
+         return scratch.cur_outReal;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public double Value => cur_outReal;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public TRIX_Stream Clone()
+      {
+         return new TRIX_Stream(this);
+      }
+   }
+
+   internal void TRIX_StreamStep( TRIX_Stream sp, double inReal )
+   {
+      double tempReal = 0.0;
+      tempReal = sp.prevEMA3;
+      sp.prevEMA1 = Math.FusedMultiplyAdd(inReal - sp.prevEMA1, sp.optInK_1, sp.prevEMA1);
+      sp.prevEMA2 = Math.FusedMultiplyAdd(sp.prevEMA1 - sp.prevEMA2, sp.optInK_1, sp.prevEMA2);
+      sp.prevEMA3 = Math.FusedMultiplyAdd(sp.prevEMA2 - sp.prevEMA3, sp.optInK_1, sp.prevEMA3);
+      if( tempReal != 0.0 ) {
+         sp.cur_outReal = (sp.prevEMA3 / tempReal - 1.0) * 100.0;
+      } else {
+         sp.cur_outReal = 0.0;
+      }
+   }
+
+   private RetCode TRIX_OpenCore( TRIX_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      double prevEMA1 = 0;
+      double prevEMA2 = 0;
+      double prevEMA3 = 0;
+      double tempReal = 0;
+      double optInK_1 = 0;
+      int i = 0;
+      int today = 0;
+      int outIdx = 0;
+      int lookbackEMA = 0;
+      int lookbackTotal = 0;
+      int historyLen = inReal.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInTimePeriod == int.MinValue ) {
+         optInTimePeriod = 30;
+      } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      /* TRIX = 1-day percent rate-of-change of a triple EMA. */
+      /* Will change only on success. */
+      outNBElement = 0;
+      outBegIdx = 0;
+      /* Adjust startIdx to account for the lookback period. */
+      lookbackEMA = EMA_Lookback(optInTimePeriod);
+      lookbackTotal = lookbackEMA * 3 + ROCR_Lookback(1);
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      /* Single lockstep pass: EMA1 feeds EMA2 feeds EMA3, output is the
+       * roc() of consecutive EMA3 values. Output element j is the TRIX
+       * of bar startIdx+j (fix #98). The arithmetic order below is the
+       * bit-exactness contract — do not reorder or fuse operations; the
+       * seed sums accumulate from 0.0 in production order (0.0+x is not
+       * x for x=-0.0). In-place safe: outReal[outIdx] is written after
+       * inReal[startIdx+outIdx] was read.
+       */
+      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      /* Seed EMA1 with a simple average of the first
+       * 'period' price bars.
+       */
+      today = startIdx - lookbackTotal;
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 ) {
+         tempReal += inReal[today++];
+      }
+      prevEMA1 = tempReal / optInTimePeriod;
+      /* Advance EMA1 alone through its unstable period, up to
+       * the bar where EMA2 seeding begins.
+       */
+      while( today <= startIdx - (lookbackEMA * 2 + 1) ) {
+         prevEMA1 = Math.FusedMultiplyAdd(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+      }
+      /* Seed EMA2 with a simple average of the first 'period'
+       * EMA1 values, accumulated as EMA1 produces them.
+       */
+      tempReal = 0.0;
+      tempReal += prevEMA1;
+      i = optInTimePeriod - 1;
+      while( i-- > 0 ) {
+         prevEMA1 = Math.FusedMultiplyAdd(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         tempReal += prevEMA1;
+      }
+      prevEMA2 = tempReal / optInTimePeriod;
+      /* Advance EMA1 and EMA2 in lockstep through the unstable
+       * period of EMA2, up to the bar where EMA3 seeding begins.
+       */
+      while( today <= startIdx - (lookbackEMA + 1) ) {
+         prevEMA1 = Math.FusedMultiplyAdd(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.FusedMultiplyAdd(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+      }
+      /* Seed EMA3 with a simple average of the first 'period'
+       * EMA2 values, accumulated as EMA2 produces them.
+       */
+      tempReal = 0.0;
+      tempReal += prevEMA2;
+      i = optInTimePeriod - 1;
+      while( i-- > 0 ) {
+         prevEMA1 = Math.FusedMultiplyAdd(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.FusedMultiplyAdd(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         tempReal += prevEMA2;
+      }
+      prevEMA3 = tempReal / optInTimePeriod;
+      /* Advance all three EMA in lockstep through the unstable
+       * period of EMA3, up to the bar before the first output.
+       */
+      while( today <= startIdx - 1 ) {
+         prevEMA1 = Math.FusedMultiplyAdd(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.FusedMultiplyAdd(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA3 = Math.FusedMultiplyAdd(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+      }
+      /* Stable zone: keep advancing the three EMA in lockstep and
+       * write the 1-day rate-of-change of EMA3 into the output.
+       */
+      outIdx = 0;
+      while( today <= endIdx ) {
+         tempReal = prevEMA3;
+         prevEMA1 = Math.FusedMultiplyAdd(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.FusedMultiplyAdd(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA3 = Math.FusedMultiplyAdd(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+         if( tempReal != 0.0 ) {
+            outReal[outIdx++ * outStride] = (prevEMA3 / tempReal - 1.0) * 100.0;
+         } else {
+            outReal[outIdx++ * outStride] = 0.0;
+         }
+      }
+      /* Succeed. Indicate where the output starts relative to
+       * the caller input.
+       */
+      outBegIdx = startIdx;
+      outNBElement = outIdx;
+      /* Capture the live batch state into the handle. */
+      sp.optInTimePeriod = optInTimePeriod;
+      sp.prevEMA1 = prevEMA1;
+      sp.prevEMA2 = prevEMA2;
+      sp.prevEMA3 = prevEMA3;
+      sp.optInK_1 = optInK_1;
+      sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode TRIX_OpenBody( TRIX_Stream sp, double[] inReal, int startIdx, int optInTimePeriod )
+   {
+      double[] sink_outReal = new double[1];
+      return TRIX_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+   }
+
+   private RetCode TRIX_OpenAndFillBody( TRIX_Stream sp, double[] inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outReal, inReal) ) {
+         return RetCode.BadParam;
+      }
+      return TRIX_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+   }
+
+   private RetCode TRIX_OpenAndFillInternalBody( TRIX_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      return TRIX_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+   }
+
+   /* TRIX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal TRIX_Stream TRIX_OpenAndFillInternal( double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      TRIX_Stream sp = new TRIX_Stream(this);
+      RetCode retCode = TRIX_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("TRIX", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind TRIX_Open (composition seam). */
+   internal TRIX_Stream TRIX_OpenInternal( double[] inReal, int startIdx, int optInTimePeriod )
+   {
+      TRIX_Stream sp = new TRIX_Stream(this);
+      RetCode retCode = TRIX_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("TRIX", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>TRIX</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="TRIX_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>TRIX</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>TRIX_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>TRIX_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inReal">Source series to smooth. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="TRIX_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>TRIX_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public TRIX_Stream TRIX_Open( double[] inReal, int optInTimePeriod )
+   {
+      return TRIX_OpenInternal(inReal, 0, optInTimePeriod);
+   }
+
+   /// <summary><c>TRIX_Open</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>TRIX</c> produces over the
+   /// same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - TRIX_Lookback(...)</c> values and
+   /// must not alias the inputs or each other — this path writes the outputs and
+   /// then reads the input tail to seed its rings, so the batch tier's in-place
+   /// allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="TRIX_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inReal">Source series to smooth. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="TRIX_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="outReal">1-day percent ROC of the triple EMA. Must hold at least <c>historyLen -
+   /// TRIX_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>TRIX_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public TRIX_Stream TRIX_OpenAndFill( double[] inReal, int optInTimePeriod, double[] outReal )
+   {
+      TRIX_Stream sp = new TRIX_Stream(this);
+      RetCode retCode = TRIX_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("TRIX", "openAndFill", retCode);
+   }
 }

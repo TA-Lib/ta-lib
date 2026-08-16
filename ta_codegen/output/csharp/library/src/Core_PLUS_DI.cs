@@ -734,4 +734,778 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>PLUS_DI</c> stream: one value per closed bar, bit-identical to
+   /// <c>PLUS_DI</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.PLUS_DI_Open"/>. There is no close and nothing
+   /// to dispose — the handle is ordinary managed state, and an unreferenced
+   /// handle is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class PLUS_DI_Stream
+   {
+      internal Core core;
+      internal int optInTimePeriod;
+      internal double prevHigh;
+      internal double prevLow;
+      internal double prevClose;
+      internal double tempReal;
+      internal double diffP;
+      internal double diffM;
+      internal double prevPlusDM;
+      internal double prevTR;
+      internal double cur_outReal;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal PLUS_DI_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>PLUS_DI_OpenAndFill</c> filled, or
+      /// <see cref="OutRange.Empty"/> when this handle came from a plain open
+      /// (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal PLUS_DI_Stream( PLUS_DI_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.prevHigh = other.prevHigh;
+         this.prevLow = other.prevLow;
+         this.prevClose = other.prevClose;
+         this.tempReal = other.tempReal;
+         this.diffP = other.diffP;
+         this.diffM = other.diffM;
+         this.prevPlusDM = other.prevPlusDM;
+         this.prevTR = other.prevTR;
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( PLUS_DI_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.prevHigh = other.prevHigh;
+         this.prevLow = other.prevLow;
+         this.prevClose = other.prevClose;
+         this.tempReal = other.tempReal;
+         this.diffP = other.diffP;
+         this.diffM = other.diffM;
+         this.prevPlusDM = other.prevPlusDM;
+         this.prevTR = other.prevTR;
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <param name="inClose">Close price of each bar.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public double Update( double inHigh, double inLow, double inClose )
+      {
+         core.PLUS_DI_StreamStep(this, inHigh, inLow, inClose);
+         return cur_outReal;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a throwaway copy, which for this handle's shape is cheaper than
+      /// reusing one.</para>
+      /// </remarks>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <param name="inClose">Close price of each bar.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public double Peek( double inHigh, double inLow, double inClose )
+      {
+         PLUS_DI_Stream scratch = new PLUS_DI_Stream(this);
+         core.PLUS_DI_StreamStep(scratch, inHigh, inLow, inClose);
+         return scratch.cur_outReal;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public double Value => cur_outReal;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public PLUS_DI_Stream Clone()
+      {
+         return new PLUS_DI_Stream(this);
+      }
+   }
+
+   internal void PLUS_DI_StreamStep( PLUS_DI_Stream sp, double inHigh, double inLow, double inClose )
+   {
+      if( sp.optInTimePeriod <= 1 ) {
+         sp.tempReal = inHigh;
+         sp.diffP = sp.tempReal - sp.prevHigh;
+         /* Plus Delta */
+         sp.prevHigh = sp.tempReal;
+         sp.tempReal = inLow;
+         sp.diffM = sp.prevLow - sp.tempReal;
+         /* Minus Delta */
+         sp.prevLow = sp.tempReal;
+         if( sp.diffP > 0 && sp.diffP > sp.diffM ) {
+            /* Case 1 and 3: +DM=diffP,-DM=0 */
+            double _true_range_0 = 0;
+            double range_0 = sp.prevHigh - sp.prevLow;
+            double tmp_0 = Math.Abs(sp.prevHigh - sp.prevClose);
+            if( tmp_0 > range_0 ) {
+               range_0 = tmp_0;
+            }
+            tmp_0 = Math.Abs(sp.prevLow - sp.prevClose);
+            if( tmp_0 > range_0 ) {
+               range_0 = tmp_0;
+            }
+            _true_range_0 = range_0;
+            sp.tempReal = _true_range_0;
+            if( ((-0.00000000000001 < sp.tempReal) && (sp.tempReal < 0.00000000000001)) ) {
+               sp.cur_outReal = (double)0.0;
+            } else {
+               sp.cur_outReal = sp.diffP / sp.tempReal;
+            }
+         } else {
+            sp.cur_outReal = (double)0.0;
+         }
+         sp.prevClose = inClose;
+      } else {
+         /* Calculate the prevPlusDM */
+         sp.tempReal = inHigh;
+         sp.diffP = sp.tempReal - sp.prevHigh;
+         /* Plus Delta */
+         sp.prevHigh = sp.tempReal;
+         sp.tempReal = inLow;
+         sp.diffM = sp.prevLow - sp.tempReal;
+         /* Minus Delta */
+         sp.prevLow = sp.tempReal;
+         if( sp.diffP > 0 && sp.diffP > sp.diffM ) {
+            /* Case 1 and 3: +DM=diffP,-DM=0 */
+            sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / sp.optInTimePeriod + sp.diffP;
+         } else {
+            /* Case 2,4,5 and 7 */
+            sp.prevPlusDM = sp.prevPlusDM - sp.prevPlusDM / sp.optInTimePeriod;
+         }
+         /* Calculate the prevTR */
+         double _true_range_1 = 0;
+         double range_1 = sp.prevHigh - sp.prevLow;
+         double tmp_1 = Math.Abs(sp.prevHigh - sp.prevClose);
+         if( tmp_1 > range_1 ) {
+            range_1 = tmp_1;
+         }
+         tmp_1 = Math.Abs(sp.prevLow - sp.prevClose);
+         if( tmp_1 > range_1 ) {
+            range_1 = tmp_1;
+         }
+         _true_range_1 = range_1;
+         sp.tempReal = _true_range_1;
+         sp.prevTR = sp.prevTR - sp.prevTR / sp.optInTimePeriod + sp.tempReal;
+         sp.prevClose = inClose;
+         /* Calculate the DI. The value is rounded (see Wilder book). */
+         if( !((-0.00000000000001 < sp.prevTR) && (sp.prevTR < 0.00000000000001)) ) {
+            sp.cur_outReal = (100.0 * (sp.prevPlusDM / sp.prevTR));
+         } else {
+            sp.cur_outReal = 0.0;
+         }
+      }
+   }
+
+   private RetCode PLUS_DI_OpenCore( PLUS_DI_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      int historyLen = inHigh.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 || inLow.Length != inHigh.Length || inClose.Length != inHigh.Length ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInTimePeriod == int.MinValue ) {
+         optInTimePeriod = 14;
+      } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( optInTimePeriod <= 1 ) {
+         int today = 0;
+         int lookbackTotal = 0;
+         int outIdx = 0;
+         double prevHigh = 0;
+         double prevLow = 0;
+         double prevClose = 0;
+         double prevPlusDM = 0;
+         double prevTR = 0;
+         double tempReal = 0;
+         double tempReal2 = 0;
+         double diffP = 0;
+         double diffM = 0;
+         int i = 0;
+         /*
+          * The DM1 (one period) is base on the largest part of
+          * today's range that is outside of yesterdays range.
+          *
+          * The following 7 cases explain how the +DM and -DM are
+          * calculated on one period:
+          *
+          * Case 1:                       Case 2:
+          *    C|                        A|
+          *     |                         | C|
+          *     | +DM1 = (C-A)           B|  | +DM1 = 0
+          *     | -DM1 = 0                   | -DM1 = (B-D)
+          * A|  |                           D|
+          *  | D|
+          * B|
+          *
+          * Case 3:                       Case 4:
+          *    C|                           C|
+          *     |                        A|  |
+          *     | +DM1 = (C-A)            |  | +DM1 = 0
+          *     | -DM1 = 0               B|  | -DM1 = (B-D)
+          * A|  |                            |
+          *  |  |                           D|
+          * B|  |
+          *    D|
+          *
+          * Case 5:                      Case 6:
+          * A|                           A| C|
+          *  | C| +DM1 = 0                |  |  +DM1 = 0
+          *  |  | -DM1 = 0                |  |  -DM1 = 0
+          *  | D|                         |  |
+          * B|                           B| D|
+          *
+          *
+          * Case 7:
+          *
+          *    C|
+          * A|  |
+          *  |  | +DM1=0
+          * B|  | -DM1=0
+          *    D|
+          *
+          * In case 3 and 4, the rule is that the smallest delta between
+          * (C-A) and (B-D) determine which of +DM or -DM is zero.
+          *
+          * In case 7, (C-A) and (B-D) are equal, so both +DM and -DM are
+          * zero.
+          *
+          * The rules remain the same when A=B and C=D (when the highs
+          * equal the lows).
+          *
+          * When calculating the DM over a period > 1, the one-period DM
+          * for the desired period are initialy sum. In other word,
+          * for a -DM14, sum the -DM1 for the first 14 days (that's
+          * 13 values because there is no DM for the first day!)
+          * Subsequent DM are calculated using the Wilder's
+          * smoothing approach:
+          *
+          *                                    Previous +DM14
+          *  Today's +DM14 = Previous +DM14 -  -------------- + Today's +DM1
+          *                                         14
+          *
+          * Calculation of a +DI14 is as follow:
+          *
+          *               +DM14
+          *     +DI14 =  --------
+          *                TR14
+          *
+          * Calculation of the TR14 is:
+          *
+          *                                   Previous TR14
+          *    Today's TR14 = Previous TR14 - -------------- + Today's TR1
+          *                                         14
+          *
+          *    The first TR14 is the summation of the first 14 TR1. See the
+          *    TA_TRANGE function on how to calculate the true range.
+          *
+          * Reference:
+          *    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
+          */
+         /* Original implementation from Wilder's book was doing some integer
+          * rounding in its calculations.
+          *
+          * This was understandable in the context that at the time the book
+          * was written, most user were doing the calculation by hand.
+          *
+          * For a computer, rounding is unnecessary (and even problematic when inputs
+          * are close to 1).
+          *
+          * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
+          * you can comment out the following #undef/#define and rebuild the library.
+          */
+         if( optInTimePeriod > 1 ) {
+            lookbackTotal = optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.PLUS_DI];
+         } else {
+            lookbackTotal = 1;
+         }
+         /* Adjust startIdx to account for the lookback period. */
+         if( startIdx < lookbackTotal ) {
+            startIdx = lookbackTotal;
+         }
+         /* Make sure there is still something to evaluate. */
+         if( startIdx > endIdx ) {
+            outBegIdx = 0;
+            outNBElement = 0;
+            return RetCode.OutOfRangeEndIndex ;
+         }
+         /* Indicate where the next output should be put
+          * in the outReal.
+          */
+         outIdx = 0;
+         /* Trap the case where no smoothing is needed. */
+         /* No smoothing needed. Just do the following:
+          * for each price bar.
+          *          +DM1
+          *   +DI1 = ----
+          *           TR1
+          */
+         outBegIdx = startIdx;
+         today = startIdx - 1;
+         prevHigh = inHigh[today];
+         prevLow = inLow[today];
+         prevClose = inClose[today];
+         while( today < endIdx ) {
+            today += 1;
+            tempReal = inHigh[today];
+            diffP = tempReal - prevHigh;
+            /* Plus Delta */
+            prevHigh = tempReal;
+            tempReal = inLow[today];
+            diffM = prevLow - tempReal;
+            /* Minus Delta */
+            prevLow = tempReal;
+            if( diffP > 0 && diffP > diffM ) {
+               /* Case 1 and 3: +DM=diffP,-DM=0 */
+               double _true_range_2 = 0;
+               double range_2 = prevHigh - prevLow;
+               double tmp_2 = Math.Abs(prevHigh - prevClose);
+               if( tmp_2 > range_2 ) {
+                  range_2 = tmp_2;
+               }
+               tmp_2 = Math.Abs(prevLow - prevClose);
+               if( tmp_2 > range_2 ) {
+                  range_2 = tmp_2;
+               }
+               _true_range_2 = range_2;
+               tempReal = _true_range_2;
+               if( ((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
+                  outReal[outIdx++ * outStride] = (double)0.0;
+               } else {
+                  outReal[outIdx++ * outStride] = diffP / tempReal;
+               }
+            } else {
+               outReal[outIdx++ * outStride] = (double)0.0;
+            }
+            prevClose = inClose[today];
+         }
+         outNBElement = outIdx;
+         /* Capture the live batch state into the handle. */
+         sp.optInTimePeriod = optInTimePeriod;
+         sp.prevHigh = prevHigh;
+         sp.prevLow = prevLow;
+         sp.prevClose = prevClose;
+         sp.tempReal = tempReal;
+         sp.diffP = diffP;
+         sp.diffM = diffM;
+         sp.prevPlusDM = prevPlusDM;
+         sp.prevTR = prevTR;
+         sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+         return RetCode.Success;
+      } else {
+         int today = 0;
+         int lookbackTotal = 0;
+         int outIdx = 0;
+         double prevHigh = 0;
+         double prevLow = 0;
+         double prevClose = 0;
+         double prevPlusDM = 0;
+         double prevTR = 0;
+         double tempReal = 0;
+         double tempReal2 = 0;
+         double diffP = 0;
+         double diffM = 0;
+         int i = 0;
+         /*
+          * The DM1 (one period) is base on the largest part of
+          * today's range that is outside of yesterdays range.
+          *
+          * The following 7 cases explain how the +DM and -DM are
+          * calculated on one period:
+          *
+          * Case 1:                       Case 2:
+          *    C|                        A|
+          *     |                         | C|
+          *     | +DM1 = (C-A)           B|  | +DM1 = 0
+          *     | -DM1 = 0                   | -DM1 = (B-D)
+          * A|  |                           D|
+          *  | D|
+          * B|
+          *
+          * Case 3:                       Case 4:
+          *    C|                           C|
+          *     |                        A|  |
+          *     | +DM1 = (C-A)            |  | +DM1 = 0
+          *     | -DM1 = 0               B|  | -DM1 = (B-D)
+          * A|  |                            |
+          *  |  |                           D|
+          * B|  |
+          *    D|
+          *
+          * Case 5:                      Case 6:
+          * A|                           A| C|
+          *  | C| +DM1 = 0                |  |  +DM1 = 0
+          *  |  | -DM1 = 0                |  |  -DM1 = 0
+          *  | D|                         |  |
+          * B|                           B| D|
+          *
+          *
+          * Case 7:
+          *
+          *    C|
+          * A|  |
+          *  |  | +DM1=0
+          * B|  | -DM1=0
+          *    D|
+          *
+          * In case 3 and 4, the rule is that the smallest delta between
+          * (C-A) and (B-D) determine which of +DM or -DM is zero.
+          *
+          * In case 7, (C-A) and (B-D) are equal, so both +DM and -DM are
+          * zero.
+          *
+          * The rules remain the same when A=B and C=D (when the highs
+          * equal the lows).
+          *
+          * When calculating the DM over a period > 1, the one-period DM
+          * for the desired period are initialy sum. In other word,
+          * for a -DM14, sum the -DM1 for the first 14 days (that's
+          * 13 values because there is no DM for the first day!)
+          * Subsequent DM are calculated using the Wilder's
+          * smoothing approach:
+          *
+          *                                    Previous +DM14
+          *  Today's +DM14 = Previous +DM14 -  -------------- + Today's +DM1
+          *                                         14
+          *
+          * Calculation of a +DI14 is as follow:
+          *
+          *               +DM14
+          *     +DI14 =  --------
+          *                TR14
+          *
+          * Calculation of the TR14 is:
+          *
+          *                                   Previous TR14
+          *    Today's TR14 = Previous TR14 - -------------- + Today's TR1
+          *                                         14
+          *
+          *    The first TR14 is the summation of the first 14 TR1. See the
+          *    TA_TRANGE function on how to calculate the true range.
+          *
+          * Reference:
+          *    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
+          */
+         /* Original implementation from Wilder's book was doing some integer
+          * rounding in its calculations.
+          *
+          * This was understandable in the context that at the time the book
+          * was written, most user were doing the calculation by hand.
+          *
+          * For a computer, rounding is unnecessary (and even problematic when inputs
+          * are close to 1).
+          *
+          * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
+          * you can comment out the following #undef/#define and rebuild the library.
+          */
+         if( optInTimePeriod > 1 ) {
+            lookbackTotal = optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.PLUS_DI];
+         } else {
+            lookbackTotal = 1;
+         }
+         /* Adjust startIdx to account for the lookback period. */
+         if( startIdx < lookbackTotal ) {
+            startIdx = lookbackTotal;
+         }
+         /* Make sure there is still something to evaluate. */
+         if( startIdx > endIdx ) {
+            outBegIdx = 0;
+            outNBElement = 0;
+            return RetCode.OutOfRangeEndIndex ;
+         }
+         /* Indicate where the next output should be put
+          * in the outReal.
+          */
+         outIdx = 0;
+         /* Trap the case where no smoothing is needed. */
+         /* Process the initial DM and TR */
+         today = startIdx;
+         outBegIdx = today;
+         prevPlusDM = 0.0;
+         prevTR = 0.0;
+         today = startIdx - lookbackTotal;
+         prevHigh = inHigh[today];
+         prevLow = inLow[today];
+         prevClose = inClose[today];
+         i = optInTimePeriod - 1;
+         while( i-- > 0 ) {
+            today += 1;
+            tempReal = inHigh[today];
+            diffP = tempReal - prevHigh;
+            /* Plus Delta */
+            prevHigh = tempReal;
+            tempReal = inLow[today];
+            diffM = prevLow - tempReal;
+            /* Minus Delta */
+            prevLow = tempReal;
+            if( diffP > 0 && diffP > diffM ) {
+               /* Case 1 and 3: +DM=diffP,-DM=0 */
+               prevPlusDM += diffP;
+            }
+            double _true_range_3 = 0;
+            double range_3 = prevHigh - prevLow;
+            double tmp_3 = Math.Abs(prevHigh - prevClose);
+            if( tmp_3 > range_3 ) {
+               range_3 = tmp_3;
+            }
+            tmp_3 = Math.Abs(prevLow - prevClose);
+            if( tmp_3 > range_3 ) {
+               range_3 = tmp_3;
+            }
+            _true_range_3 = range_3;
+            tempReal = _true_range_3;
+            prevTR += tempReal;
+            prevClose = inClose[today];
+         }
+         /* Process subsequent DI */
+         /* Skip the unstable period. Note that this loop must be executed
+          * at least ONCE to calculate the first DI.
+          */
+         i = this.unstablePeriod[(int)FuncUnstId.PLUS_DI] + 1;
+         while( i-- != 0 ) {
+            /* Calculate the prevPlusDM */
+            today += 1;
+            tempReal = inHigh[today];
+            diffP = tempReal - prevHigh;
+            /* Plus Delta */
+            prevHigh = tempReal;
+            tempReal = inLow[today];
+            diffM = prevLow - tempReal;
+            /* Minus Delta */
+            prevLow = tempReal;
+            if( diffP > 0 && diffP > diffM ) {
+               /* Case 1 and 3: +DM=diffP,-DM=0 */
+               prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod + diffP;
+            } else {
+               /* Case 2,4,5 and 7 */
+               prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod;
+            }
+            /* Calculate the prevTR */
+            double _true_range_4 = 0;
+            double range_4 = prevHigh - prevLow;
+            double tmp_4 = Math.Abs(prevHigh - prevClose);
+            if( tmp_4 > range_4 ) {
+               range_4 = tmp_4;
+            }
+            tmp_4 = Math.Abs(prevLow - prevClose);
+            if( tmp_4 > range_4 ) {
+               range_4 = tmp_4;
+            }
+            _true_range_4 = range_4;
+            tempReal = _true_range_4;
+            prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
+            prevClose = inClose[today];
+         }
+         /* Now start to write the output in
+          * the caller provided outReal.
+          */
+         if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+            outReal[0 * outStride] = (100.0 * (prevPlusDM / prevTR));
+         } else {
+            outReal[0 * outStride] = 0.0;
+         }
+         outIdx = 1;
+         while( today < endIdx ) {
+            /* Calculate the prevPlusDM */
+            today += 1;
+            tempReal = inHigh[today];
+            diffP = tempReal - prevHigh;
+            /* Plus Delta */
+            prevHigh = tempReal;
+            tempReal = inLow[today];
+            diffM = prevLow - tempReal;
+            /* Minus Delta */
+            prevLow = tempReal;
+            if( diffP > 0 && diffP > diffM ) {
+               /* Case 1 and 3: +DM=diffP,-DM=0 */
+               prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod + diffP;
+            } else {
+               /* Case 2,4,5 and 7 */
+               prevPlusDM = prevPlusDM - prevPlusDM / optInTimePeriod;
+            }
+            /* Calculate the prevTR */
+            double _true_range_5 = 0;
+            double range_5 = prevHigh - prevLow;
+            double tmp_5 = Math.Abs(prevHigh - prevClose);
+            if( tmp_5 > range_5 ) {
+               range_5 = tmp_5;
+            }
+            tmp_5 = Math.Abs(prevLow - prevClose);
+            if( tmp_5 > range_5 ) {
+               range_5 = tmp_5;
+            }
+            _true_range_5 = range_5;
+            tempReal = _true_range_5;
+            prevTR = prevTR - prevTR / optInTimePeriod + tempReal;
+            prevClose = inClose[today];
+            /* Calculate the DI. The value is rounded (see Wilder book). */
+            if( !((-0.00000000000001 < prevTR) && (prevTR < 0.00000000000001)) ) {
+               outReal[outIdx++ * outStride] = (100.0 * (prevPlusDM / prevTR));
+            } else {
+               outReal[outIdx++ * outStride] = 0.0;
+            }
+         }
+         outNBElement = outIdx;
+         /* Capture the live batch state into the handle. */
+         sp.optInTimePeriod = optInTimePeriod;
+         sp.prevHigh = prevHigh;
+         sp.prevLow = prevLow;
+         sp.prevClose = prevClose;
+         sp.tempReal = tempReal;
+         sp.diffP = diffP;
+         sp.diffM = diffM;
+         sp.prevPlusDM = prevPlusDM;
+         sp.prevTR = prevTR;
+         sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+         return RetCode.Success;
+      }
+   }
+
+   private RetCode PLUS_DI_OpenBody( PLUS_DI_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod )
+   {
+      double[] sink_outReal = new double[1];
+      return PLUS_DI_OpenCore( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+   }
+
+   private RetCode PLUS_DI_OpenAndFillBody( PLUS_DI_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outReal, inHigh) || ReferenceEquals(outReal, inLow) || ReferenceEquals(outReal, inClose) ) {
+         return RetCode.BadParam;
+      }
+      return PLUS_DI_OpenCore( sp, inHigh, inLow, inClose, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+   }
+
+   private RetCode PLUS_DI_OpenAndFillInternalBody( PLUS_DI_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      return PLUS_DI_OpenCore(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+   }
+
+   /* PLUS_DI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal PLUS_DI_Stream PLUS_DI_OpenAndFillInternal( double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      PLUS_DI_Stream sp = new PLUS_DI_Stream(this);
+      RetCode retCode = PLUS_DI_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("PLUS_DI", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind PLUS_DI_Open (composition seam). */
+   internal PLUS_DI_Stream PLUS_DI_OpenInternal( double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod )
+   {
+      PLUS_DI_Stream sp = new PLUS_DI_Stream(this);
+      RetCode retCode = PLUS_DI_OpenBody(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("PLUS_DI", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>PLUS_DI</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="PLUS_DI_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>PLUS_DI</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>PLUS_DI_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>PLUS_DI_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="PLUS_DI_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>PLUS_DI_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public PLUS_DI_Stream PLUS_DI_Open( double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod )
+   {
+      return PLUS_DI_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
+   }
+
+   /// <summary><c>PLUS_DI_Open</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>PLUS_DI</c> produces over
+   /// the same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - PLUS_DI_Lookback(...)</c> values
+   /// and must not alias the inputs or each other — this path writes the outputs
+   /// and then reads the input tail to seed its rings, so the batch tier's
+   /// in-place allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="PLUS_DI_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="PLUS_DI_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="outReal">Plus Directional Indicator. Must hold at least <c>historyLen -
+   /// PLUS_DI_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>PLUS_DI_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public PLUS_DI_Stream PLUS_DI_OpenAndFill( double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, double[] outReal )
+   {
+      PLUS_DI_Stream sp = new PLUS_DI_Stream(this);
+      RetCode retCode = PLUS_DI_OpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("PLUS_DI", "openAndFill", retCode);
+   }
 }

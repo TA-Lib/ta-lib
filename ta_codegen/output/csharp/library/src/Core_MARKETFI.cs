@@ -274,4 +274,275 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>MARKETFI</c> stream: one value per closed bar, bit-identical to
+   /// <c>MARKETFI</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.MARKETFI_Open"/>. There is no close and nothing
+   /// to dispose — the handle is ordinary managed state, and an unreferenced
+   /// handle is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class MARKETFI_Stream
+   {
+      internal Core core;
+      internal double cur_outReal;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal MARKETFI_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>MARKETFI_OpenAndFill</c> filled, or
+      /// <see cref="OutRange.Empty"/> when this handle came from a plain open
+      /// (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal MARKETFI_Stream( MARKETFI_Stream other )
+      {
+         this.core = other.core;
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( MARKETFI_Stream other )
+      {
+         this.core = other.core;
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <param name="inVolume">Volume of each bar.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public double Update( double inHigh, double inLow, double inVolume )
+      {
+         core.MARKETFI_StreamStep(this, inHigh, inLow, inVolume);
+         return cur_outReal;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a throwaway copy, which for this handle's shape is cheaper than
+      /// reusing one.</para>
+      /// </remarks>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <param name="inVolume">Volume of each bar.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public double Peek( double inHigh, double inLow, double inVolume )
+      {
+         MARKETFI_Stream scratch = new MARKETFI_Stream(this);
+         core.MARKETFI_StreamStep(scratch, inHigh, inLow, inVolume);
+         return scratch.cur_outReal;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public double Value => cur_outReal;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public MARKETFI_Stream Clone()
+      {
+         return new MARKETFI_Stream(this);
+      }
+   }
+
+   internal void MARKETFI_StreamStep( MARKETFI_Stream sp, double inHigh, double inLow, double inVolume )
+   {
+      /* A zero-volume bar would divide by zero. Neither reference guards
+       * it -- they emit +/-Inf, or NaN when the range is zero too -- but
+       * issue #112 settled that a successful call never emits NaN or Inf,
+       * so an untraded bar facilitated no movement and reports 0.
+       *
+       * The comparison is an exact != 0.0 rather than TA_IS_ZERO, whose
+       * 1e-14 band is an absolute threshold and meaningless against an
+       * unbounded volume scale. Same reasoning as the prevClose guard in
+       * ta_codegen/input/nvi/nvi.c.
+       */
+      if( inVolume != 0.0 ) {
+         sp.cur_outReal = (inHigh - inLow) / inVolume;
+      } else {
+         sp.cur_outReal = 0.0;
+      }
+   }
+
+   private RetCode MARKETFI_OpenCore( MARKETFI_Stream sp, double[] inHigh, double[] inLow, double[] inVolume, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      int outIdx = 0;
+      int i = 0;
+      int historyLen = inHigh.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 || inLow.Length != inHigh.Length || inVolume.Length != inHigh.Length ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      /* Bill Williams' Market Facilitation Index: the price range a bar
+       * travelled per unit of volume traded, i.e. how much movement the
+       * market "facilitated" per tick.
+       *
+       *      MARKETFI = ( High - Low ) / Volume
+       *
+       * Stateless and per-bar: no seeding, no smoothing, no accumulator and
+       * no unstable period, so the output for a bar never depends on where
+       * the caller started the range.
+       *
+       * Retail material often abbreviates this "MFI" or "BW MFI". TA_MFI is
+       * already the Money Flow Index, so this carries the name Tulip and
+       * pandas-ta-classic use.
+       */
+      outIdx = 0;
+      for( i = startIdx; i <= endIdx; i += 1 ) {
+         /* A zero-volume bar would divide by zero. Neither reference guards
+          * it -- they emit +/-Inf, or NaN when the range is zero too -- but
+          * issue #112 settled that a successful call never emits NaN or Inf,
+          * so an untraded bar facilitated no movement and reports 0.
+          *
+          * The comparison is an exact != 0.0 rather than TA_IS_ZERO, whose
+          * 1e-14 band is an absolute threshold and meaningless against an
+          * unbounded volume scale. Same reasoning as the prevClose guard in
+          * ta_codegen/input/nvi/nvi.c.
+          */
+         if( inVolume[i] != 0.0 ) {
+            outReal[outIdx++ * outStride] = (inHigh[i] - inLow[i]) / inVolume[i];
+         } else {
+            outReal[outIdx++ * outStride] = 0.0;
+         }
+      }
+      outBegIdx = startIdx;
+      outNBElement = outIdx;
+      /* Capture the live batch state into the handle. */
+      sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode MARKETFI_OpenBody( MARKETFI_Stream sp, double[] inHigh, double[] inLow, double[] inVolume, int startIdx )
+   {
+      double[] sink_outReal = new double[1];
+      return MARKETFI_OpenCore( sp, inHigh, inLow, inVolume, startIdx, out _, out _, sink_outReal, 0 );
+   }
+
+   private RetCode MARKETFI_OpenAndFillBody( MARKETFI_Stream sp, double[] inHigh, double[] inLow, double[] inVolume, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outReal, inHigh) || ReferenceEquals(outReal, inLow) || ReferenceEquals(outReal, inVolume) ) {
+         return RetCode.BadParam;
+      }
+      return MARKETFI_OpenCore( sp, inHigh, inLow, inVolume, 0, out outBegIdx, out outNBElement, outReal, 1 );
+   }
+
+   private RetCode MARKETFI_OpenAndFillInternalBody( MARKETFI_Stream sp, double[] inHigh, double[] inLow, double[] inVolume, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      return MARKETFI_OpenCore(sp, inHigh, inLow, inVolume, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+   }
+
+   /* MARKETFI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal MARKETFI_Stream MARKETFI_OpenAndFillInternal( double[] inHigh, double[] inLow, double[] inVolume, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      MARKETFI_Stream sp = new MARKETFI_Stream(this);
+      RetCode retCode = MARKETFI_OpenAndFillInternalBody(sp, inHigh, inLow, inVolume, startIdx, out outBegIdx, out outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("MARKETFI", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind MARKETFI_Open (composition seam). */
+   internal MARKETFI_Stream MARKETFI_OpenInternal( double[] inHigh, double[] inLow, double[] inVolume, int startIdx )
+   {
+      MARKETFI_Stream sp = new MARKETFI_Stream(this);
+      RetCode retCode = MARKETFI_OpenBody(sp, inHigh, inLow, inVolume, startIdx);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("MARKETFI", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>MARKETFI</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="MARKETFI_Stream.Value"/> starts at the last
+   /// history bar's value — bit-identical to what <c>MARKETFI</c> reports for
+   /// that bar.</para>
+   /// <para>The history must hold at least <c>MARKETFI_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>MARKETFI_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inVolume">Volume of each bar. The warm-up history, oldest bar first.</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MARKETFI_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public MARKETFI_Stream MARKETFI_Open( double[] inHigh, double[] inLow, double[] inVolume )
+   {
+      return MARKETFI_OpenInternal(inHigh, inLow, inVolume, 0);
+   }
+
+   /// <summary><c>MARKETFI_Open</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>MARKETFI</c> produces over
+   /// the same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - MARKETFI_Lookback(...)</c> values
+   /// and must not alias the inputs or each other — this path writes the outputs
+   /// and then reads the input tail to seed its rings, so the batch tier's
+   /// in-place allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="MARKETFI_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inVolume">Volume of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="outReal">Range travelled per unit of volume, per bar. Must hold at least
+   /// <c>historyLen - MARKETFI_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MARKETFI_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public MARKETFI_Stream MARKETFI_OpenAndFill( double[] inHigh, double[] inLow, double[] inVolume, double[] outReal )
+   {
+      MARKETFI_Stream sp = new MARKETFI_Stream(this);
+      RetCode retCode = MARKETFI_OpenAndFillBody(sp, inHigh, inLow, inVolume, out int outBegIdx, out int outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("MARKETFI", "openAndFill", retCode);
+   }
 }

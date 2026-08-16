@@ -387,4 +387,438 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>One <c>MINMAXINDEX</c> output set, in batch output order.</summary>
+   /// <remarks>
+   /// <para>Equality is the compiler-generated record-struct equality, which compares
+   /// the components with <c>==</c>: <c>NaN</c> does not equal <c>NaN</c>, and
+   /// <c>0.0</c> equals <c>-0.0</c>. That is deliberately <em>not</em> the Java
+   /// <c>Value</c> contract, which compares bitwise — compare
+   /// <see cref="System.BitConverter.DoubleToInt64Bits(double)"/> per component
+   /// when bit-level identity is what you mean.</para>
+   /// </remarks>
+   /// <param name="MinIdx">Absolute index (into inReal) of the window minimum.</param>
+   /// <param name="MaxIdx">Absolute index (into inReal) of the window maximum.</param>
+   public readonly record struct MINMAXINDEX_Value( int MinIdx, int MaxIdx );
+
+   /// <summary>A live <c>MINMAXINDEX</c> stream: one value per closed bar, bit-identical
+   /// to <c>MINMAXINDEX</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.MINMAXINDEX_Open"/>. There is no close and
+   /// nothing to dispose — the handle is ordinary managed state, and an
+   /// unreferenced handle is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class MINMAXINDEX_Stream
+   {
+      internal Core core;
+      internal int optInTimePeriod;
+      internal double highest;
+      internal double lowest;
+      internal double tmpHigh;
+      internal double tmpLow;
+      internal int trailingIdx;
+      internal int i;
+      internal int highestIdx;
+      internal int lowestIdx;
+      internal int today;
+      internal int xMask;
+      internal double[] x_inReal = [];
+      internal int cur_outMinIdx;
+      internal int cur_outMaxIdx;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal MINMAXINDEX_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>MINMAXINDEX_OpenAndFill</c> filled, or
+      /// <see cref="OutRange.Empty"/> when this handle came from a plain open
+      /// (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal MINMAXINDEX_Stream( MINMAXINDEX_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.highest = other.highest;
+         this.lowest = other.lowest;
+         this.tmpHigh = other.tmpHigh;
+         this.tmpLow = other.tmpLow;
+         this.trailingIdx = other.trailingIdx;
+         this.i = other.i;
+         this.highestIdx = other.highestIdx;
+         this.lowestIdx = other.lowestIdx;
+         this.today = other.today;
+         this.xMask = other.xMask;
+         this.x_inReal = new double[other.x_inReal.Length];
+         Array.Copy( other.x_inReal, this.x_inReal, other.x_inReal.Length );
+         this.cur_outMinIdx = other.cur_outMinIdx;
+         this.cur_outMaxIdx = other.cur_outMaxIdx;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( MINMAXINDEX_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.highest = other.highest;
+         this.lowest = other.lowest;
+         this.tmpHigh = other.tmpHigh;
+         this.tmpLow = other.tmpLow;
+         this.trailingIdx = other.trailingIdx;
+         this.i = other.i;
+         this.highestIdx = other.highestIdx;
+         this.lowestIdx = other.lowestIdx;
+         this.today = other.today;
+         this.xMask = other.xMask;
+         if( this.x_inReal.Length != other.x_inReal.Length ) {
+            this.x_inReal = new double[other.x_inReal.Length];
+         }
+         Array.Copy( other.x_inReal, this.x_inReal, other.x_inReal.Length );
+         this.cur_outMinIdx = other.cur_outMinIdx;
+         this.cur_outMaxIdx = other.cur_outMaxIdx;
+         this.fillRange = other.fillRange;
+      }
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inReal">Input series scanned for extremes.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public MINMAXINDEX_Value Update( double inReal )
+      {
+         core.MINMAXINDEX_StreamStep(this, inReal);
+         return new MINMAXINDEX_Value(cur_outMinIdx, cur_outMaxIdx);
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a throwaway copy, which for this handle's shape is cheaper than
+      /// reusing one.</para>
+      /// </remarks>
+      /// <param name="inReal">Input series scanned for extremes.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public MINMAXINDEX_Value Peek( double inReal )
+      {
+         MINMAXINDEX_Stream scratch = new MINMAXINDEX_Stream(this);
+         core.MINMAXINDEX_StreamStep(scratch, inReal);
+         return new MINMAXINDEX_Value(scratch.cur_outMinIdx, scratch.cur_outMaxIdx);
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public MINMAXINDEX_Value Value => new MINMAXINDEX_Value(cur_outMinIdx, cur_outMaxIdx);
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public MINMAXINDEX_Stream Clone()
+      {
+         return new MINMAXINDEX_Stream(this);
+      }
+   }
+
+   internal void MINMAXINDEX_StreamStep( MINMAXINDEX_Stream sp, double inReal )
+   {
+      if( sp.today >= 1073741824 ) {
+         int rebaseShift = sp.trailingIdx & ~sp.xMask;
+         sp.today -= rebaseShift;
+         sp.trailingIdx -= rebaseShift;
+         sp.highestIdx -= rebaseShift;
+         sp.i -= rebaseShift;
+         sp.lowestIdx -= rebaseShift;
+      }
+      sp.x_inReal[sp.today & sp.xMask] = inReal;
+      sp.tmpHigh = sp.x_inReal[sp.today & sp.xMask];
+      sp.tmpLow = sp.tmpHigh;
+      if( sp.highestIdx < sp.trailingIdx ) {
+         sp.highestIdx = sp.trailingIdx;
+         sp.highest = sp.x_inReal[sp.highestIdx & sp.xMask];
+         sp.i = sp.highestIdx;
+         while( ++sp.i <= sp.today ) {
+            sp.tmpHigh = sp.x_inReal[sp.i & sp.xMask];
+            if( sp.tmpHigh > sp.highest ) {
+               sp.highestIdx = sp.i;
+               sp.highest = sp.tmpHigh;
+            }
+         }
+      } else if( sp.tmpHigh >= sp.highest ) {
+         sp.highestIdx = sp.today;
+         sp.highest = sp.tmpHigh;
+      }
+      if( sp.lowestIdx < sp.trailingIdx ) {
+         sp.lowestIdx = sp.trailingIdx;
+         sp.lowest = sp.x_inReal[sp.lowestIdx & sp.xMask];
+         sp.i = sp.lowestIdx;
+         while( ++sp.i <= sp.today ) {
+            sp.tmpLow = sp.x_inReal[sp.i & sp.xMask];
+            if( sp.tmpLow < sp.lowest ) {
+               sp.lowestIdx = sp.i;
+               sp.lowest = sp.tmpLow;
+            }
+         }
+      } else if( sp.tmpLow <= sp.lowest ) {
+         sp.lowestIdx = sp.today;
+         sp.lowest = sp.tmpLow;
+      }
+      sp.cur_outMaxIdx = sp.highestIdx;
+      sp.cur_outMinIdx = sp.lowestIdx;
+      sp.trailingIdx += 1;
+      sp.today += 1;
+   }
+
+   private RetCode MINMAXINDEX_OpenCore( MINMAXINDEX_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, int[] outMinIdx, int[] outMaxIdx, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      double highest = 0;
+      double lowest = 0;
+      double tmpHigh = 0;
+      double tmpLow = 0;
+      int outIdx = 0;
+      int nbInitialElementNeeded = 0;
+      int trailingIdx = 0;
+      int today = 0;
+      int i = 0;
+      int highestIdx = 0;
+      int lowestIdx = 0;
+      int historyLen = inReal.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInTimePeriod == int.MinValue ) {
+         optInTimePeriod = 30;
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      /* Identify the minimum number of price bar needed
+       * to identify at least one output over the specified
+       * period.
+       */
+      nbInitialElementNeeded = optInTimePeriod - 1;
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < nbInitialElementNeeded ) {
+         startIdx = nbInitialElementNeeded;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      /* Proceed with the calculation for the requested range.
+       * (The integer outputs can never share the real input's buffer —
+       * different element type; issue #130.)
+       */
+      outIdx = 0;
+      today = startIdx;
+      trailingIdx = startIdx - nbInitialElementNeeded;
+      highestIdx = 0 - 1;
+      highest = 0.0;
+      lowestIdx = 0 - 1;
+      lowest = 0.0;
+      while( today <= endIdx ) {
+         tmpHigh = inReal[today];
+         tmpLow = tmpHigh;
+         if( highestIdx < trailingIdx ) {
+            highestIdx = trailingIdx;
+            highest = inReal[highestIdx];
+            i = highestIdx;
+            while( ++i <= today ) {
+               tmpHigh = inReal[i];
+               if( tmpHigh > highest ) {
+                  highestIdx = i;
+                  highest = tmpHigh;
+               }
+            }
+         } else if( tmpHigh >= highest ) {
+            highestIdx = today;
+            highest = tmpHigh;
+         }
+         if( lowestIdx < trailingIdx ) {
+            lowestIdx = trailingIdx;
+            lowest = inReal[lowestIdx];
+            i = lowestIdx;
+            while( ++i <= today ) {
+               tmpLow = inReal[i];
+               if( tmpLow < lowest ) {
+                  lowestIdx = i;
+                  lowest = tmpLow;
+               }
+            }
+         } else if( tmpLow <= lowest ) {
+            lowestIdx = today;
+            lowest = tmpLow;
+         }
+         outMaxIdx[outIdx * outStride] = highestIdx;
+         outMinIdx[outIdx * outStride] = lowestIdx;
+         outIdx += 1;
+         trailingIdx += 1;
+         today += 1;
+      }
+      /* Keep the outBegIdx relative to the
+       * caller input before returning.
+       */
+      outBegIdx = startIdx;
+      outNBElement = outIdx;
+      /* Capture the live batch state into the handle. */
+      int capX = today - trailingIdx + 1;
+      if( capX < 1 || capX > historyLen ) {
+         return RetCode.InternalError;
+      }
+      int physX = 1;
+      while( physX < capX ) {
+         physX <<= 1;
+      }
+      double[] capX_inReal = new double[physX];
+      for( int fillJ = historyLen - capX; fillJ < historyLen; fillJ++ ) {
+         capX_inReal[fillJ & (physX - 1)] = inReal[fillJ];
+      }
+      sp.optInTimePeriod = optInTimePeriod;
+      sp.highest = highest;
+      sp.lowest = lowest;
+      sp.tmpHigh = tmpHigh;
+      sp.tmpLow = tmpLow;
+      sp.trailingIdx = trailingIdx;
+      sp.i = i;
+      sp.highestIdx = highestIdx;
+      sp.lowestIdx = lowestIdx;
+      sp.today = today;
+      sp.xMask = physX - 1;
+      sp.x_inReal = capX_inReal;
+      sp.cur_outMinIdx = outMinIdx[(outNBElement - 1) * outStride];
+      sp.cur_outMaxIdx = outMaxIdx[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode MINMAXINDEX_OpenBody( MINMAXINDEX_Stream sp, double[] inReal, int startIdx, int optInTimePeriod )
+   {
+      int[] sink_outMinIdx = new int[1];
+      int[] sink_outMaxIdx = new int[1];
+      return MINMAXINDEX_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outMinIdx, sink_outMaxIdx, 0 );
+   }
+
+   private RetCode MINMAXINDEX_OpenAndFillBody( MINMAXINDEX_Stream sp, double[] inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, int[] outMinIdx, int[] outMaxIdx )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outMinIdx, inReal) || ReferenceEquals(outMaxIdx, inReal) || ReferenceEquals(outMinIdx, outMaxIdx) ) {
+         return RetCode.BadParam;
+      }
+      return MINMAXINDEX_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outMinIdx, outMaxIdx, 1 );
+   }
+
+   private RetCode MINMAXINDEX_OpenAndFillInternalBody( MINMAXINDEX_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, int[] outMinIdx, int[] outMaxIdx )
+   {
+      return MINMAXINDEX_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outMinIdx, outMaxIdx, 1);
+   }
+
+   /* MINMAXINDEX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal MINMAXINDEX_Stream MINMAXINDEX_OpenAndFillInternal( double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, int[] outMinIdx, int[] outMaxIdx )
+   {
+      MINMAXINDEX_Stream sp = new MINMAXINDEX_Stream(this);
+      RetCode retCode = MINMAXINDEX_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outMinIdx, outMaxIdx);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("MINMAXINDEX", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind MINMAXINDEX_Open (composition seam). */
+   internal MINMAXINDEX_Stream MINMAXINDEX_OpenInternal( double[] inReal, int startIdx, int optInTimePeriod )
+   {
+      MINMAXINDEX_Stream sp = new MINMAXINDEX_Stream(this);
+      RetCode retCode = MINMAXINDEX_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("MINMAXINDEX", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>MINMAXINDEX</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="MINMAXINDEX_Stream.Value"/> starts at the last
+   /// history bar's value — bit-identical to what <c>MINMAXINDEX</c> reports for
+   /// that bar.</para>
+   /// <para>The history must hold at least <c>MINMAXINDEX_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>MINMAXINDEX_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inReal">Input series scanned for extremes. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="MINMAXINDEX_Lookback"/> for its
+   /// default and range (<c>int.MinValue</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MINMAXINDEX_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public MINMAXINDEX_Stream MINMAXINDEX_Open( double[] inReal, int optInTimePeriod )
+   {
+      return MINMAXINDEX_OpenInternal(inReal, 0, optInTimePeriod);
+   }
+
+   /// <summary><c>MINMAXINDEX_Open</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>MINMAXINDEX</c> produces
+   /// over the same series, so no separate batch call is needed for the warm-up
+   /// plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - MINMAXINDEX_Lookback(...)</c>
+   /// values and must not alias the inputs or each other — this path writes the
+   /// outputs and then reads the input tail to seed its rings, so the batch
+   /// tier's in-place allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="MINMAXINDEX_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inReal">Input series scanned for extremes. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="MINMAXINDEX_Lookback"/> for its
+   /// default and range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="outMinIdx">Absolute index (into inReal) of the window minimum. Must hold at least
+   /// <c>historyLen - MINMAXINDEX_Lookback(...)</c> values.</param>
+   /// <param name="outMaxIdx">Absolute index (into inReal) of the window maximum. Must hold at least
+   /// <c>historyLen - MINMAXINDEX_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MINMAXINDEX_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public MINMAXINDEX_Stream MINMAXINDEX_OpenAndFill( double[] inReal, int optInTimePeriod, int[] outMinIdx, int[] outMaxIdx )
+   {
+      MINMAXINDEX_Stream sp = new MINMAXINDEX_Stream(this);
+      RetCode retCode = MINMAXINDEX_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outMinIdx, outMaxIdx);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("MINMAXINDEX", "openAndFill", retCode);
+   }
 }

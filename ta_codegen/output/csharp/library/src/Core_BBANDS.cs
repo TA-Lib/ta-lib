@@ -743,4 +743,418 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>One <c>BBANDS</c> output set, in batch output order.</summary>
+   /// <remarks>
+   /// <para>Equality is the compiler-generated record-struct equality, which compares
+   /// the components with <c>==</c>: <c>NaN</c> does not equal <c>NaN</c>, and
+   /// <c>0.0</c> equals <c>-0.0</c>. That is deliberately <em>not</em> the Java
+   /// <c>Value</c> contract, which compares bitwise — compare
+   /// <see cref="System.BitConverter.DoubleToInt64Bits(double)"/> per component
+   /// when bit-level identity is what you mean.</para>
+   /// </remarks>
+   /// <param name="RealUpperBand">Middle band plus nbDevUp standard deviations.</param>
+   /// <param name="RealMiddleBand">The moving average.</param>
+   /// <param name="RealLowerBand">Middle band minus nbDevDn standard deviations.</param>
+   public readonly record struct BBANDS_Value( double RealUpperBand, double RealMiddleBand, double RealLowerBand );
+
+   /// <summary>A live <c>BBANDS</c> stream: one value per closed bar, bit-identical to
+   /// <c>BBANDS</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.BBANDS_Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class BBANDS_Stream
+   {
+      internal Core core;
+      internal int optInTimePeriod;
+      internal double optInNbDevUp;
+      internal double optInNbDevDn;
+      internal MAType optInMAType;
+      internal double cur_outRealUpperBand;
+      internal double cur_outRealMiddleBand;
+      internal double cur_outRealLowerBand;
+      internal MA_Stream sub0 = null!;
+      internal STDDEV_Stream sub1 = null!;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal BBANDS_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>BBANDS_OpenAndFill</c> filled, or
+      /// <see cref="OutRange.Empty"/> when this handle came from a plain open
+      /// (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal BBANDS_Stream( BBANDS_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.optInNbDevUp = other.optInNbDevUp;
+         this.optInNbDevDn = other.optInNbDevDn;
+         this.optInMAType = other.optInMAType;
+         this.cur_outRealUpperBand = other.cur_outRealUpperBand;
+         this.cur_outRealMiddleBand = other.cur_outRealMiddleBand;
+         this.cur_outRealLowerBand = other.cur_outRealLowerBand;
+         this.sub0 = new MA_Stream(other.sub0);
+         this.sub1 = new STDDEV_Stream(other.sub1);
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( BBANDS_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.optInNbDevUp = other.optInNbDevUp;
+         this.optInNbDevDn = other.optInNbDevDn;
+         this.optInMAType = other.optInMAType;
+         this.cur_outRealUpperBand = other.cur_outRealUpperBand;
+         this.cur_outRealMiddleBand = other.cur_outRealMiddleBand;
+         this.cur_outRealLowerBand = other.cur_outRealLowerBand;
+         if( this.sub0 is null ) {
+            this.sub0 = new MA_Stream(other.sub0);
+         } else {
+            this.sub0.CopyFrom(other.sub0);
+         }
+         if( this.sub1 is null ) {
+            this.sub1 = new STDDEV_Stream(other.sub1);
+         } else {
+            this.sub1.CopyFrom(other.sub1);
+         }
+         this.fillRange = other.fillRange;
+      }
+
+      /* Peek's reusable scratch — one per thread, see CopyFrom. */
+      [ThreadStatic] private static BBANDS_Stream? peekScratch;
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inReal">Input data series.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public BBANDS_Value Update( double inReal )
+      {
+         core.BBANDS_StreamStep(this, inReal);
+         return new BBANDS_Value(cur_outRealUpperBand, cur_outRealMiddleBand, cur_outRealLowerBand);
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a scratch handle held per thread and reused, so the copy
+      /// allocates nothing after the first peek of this indicator on this thread.
+      /// That scratch is retained for the life of the thread.</para>
+      /// </remarks>
+      /// <param name="inReal">Input data series.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public BBANDS_Value Peek( double inReal )
+      {
+         BBANDS_Stream? scratch = peekScratch;
+         if( scratch is null ) {
+            scratch = new BBANDS_Stream(this);
+            peekScratch = scratch;
+         } else {
+            scratch.CopyFrom(this);
+         }
+         core.BBANDS_StreamStep(scratch, inReal);
+         return new BBANDS_Value(scratch.cur_outRealUpperBand, scratch.cur_outRealMiddleBand, scratch.cur_outRealLowerBand);
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public BBANDS_Value Value => new BBANDS_Value(cur_outRealUpperBand, cur_outRealMiddleBand, cur_outRealLowerBand);
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public BBANDS_Stream Clone()
+      {
+         return new BBANDS_Stream(this);
+      }
+   }
+
+   internal void BBANDS_StreamStep( BBANDS_Stream sp, double inReal )
+   {
+      double tempReal = 0.0;
+      double tempReal2 = 0.0;
+      double cur_tempBuffer1 = 0.0;
+      double cur_tempBuffer2 = 0.0;
+      double cur_outRealUpperBand = 0.0;
+      double cur_outRealLowerBand = 0.0;
+      /* Pipeline the new bar through the sub-streams (batch tail order). */
+      cur_tempBuffer1 = sp.sub0.Update(inReal);
+      cur_tempBuffer2 = sp.sub1.Update(inReal);
+      /* Combine map (batch tail, per bar). */
+      if( sp.optInNbDevUp == sp.optInNbDevDn ) {
+         tempReal = cur_tempBuffer2 * sp.optInNbDevUp;
+         tempReal2 = cur_tempBuffer1;
+         cur_outRealUpperBand = tempReal2 + tempReal;
+         cur_outRealLowerBand = tempReal2 - tempReal;
+      } else {
+         tempReal2 = cur_tempBuffer1;
+         cur_outRealUpperBand = Math.FusedMultiplyAdd(cur_tempBuffer2, sp.optInNbDevUp, tempReal2);
+         cur_outRealLowerBand = tempReal2 - cur_tempBuffer2 * sp.optInNbDevDn;
+      }
+      sp.cur_outRealUpperBand = cur_outRealUpperBand;
+      sp.cur_outRealMiddleBand = cur_tempBuffer1;
+      sp.cur_outRealLowerBand = cur_outRealLowerBand;
+   }
+
+   private RetCode BBANDS_OpenCore( BBANDS_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, out int outBegIdx, out int outNBElement, double[] outRealUpperBand, double[] outRealMiddleBand, double[] outRealLowerBand, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      RetCode retCode;
+      int i = 0;
+      int maBegIdx = 0;
+      int shiftIdx = 0;
+      double tempReal = 0;
+      double tempReal2 = 0;
+      double[] tempBuffer1;
+      double[] tempBuffer2;
+      int historyLen = inReal.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInTimePeriod == int.MinValue ) {
+         optInTimePeriod = 20;
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( optInNbDevUp == TA_REAL_DEFAULT ) {
+         optInNbDevUp = 2e0;
+      } else if( optInNbDevUp < TA_REAL_MIN || optInNbDevUp > TA_REAL_MAX ) {
+         return RetCode.BadParam;
+      }
+      if( optInNbDevDn == TA_REAL_DEFAULT ) {
+         optInNbDevDn = 2e0;
+      } else if( optInNbDevDn < TA_REAL_MIN || optInNbDevDn > TA_REAL_MAX ) {
+         return RetCode.BadParam;
+      }
+      if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
+         optInMAType = MAType.SMA;
+      } else if( (int)optInMAType < MATypes.Min || (int)optInMAType > MATypes.Max ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen < BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      double[] sc_outRealUpperBand = outStride == 1 ? outRealUpperBand : new double[historyLen];
+      double[] sc_outRealMiddleBand = outStride == 1 ? outRealMiddleBand : new double[historyLen];
+      double[] sc_outRealLowerBand = outStride == 1 ? outRealLowerBand : new double[historyLen];
+      /* General path (every MA type other than SMA): the middle band is the moving
+       * average and the deviation is the standard deviation of the input, combined
+       * at the same bar. Two intermediate buffers are allocated so the input may
+       * safely alias an output (it is only read here).
+       */
+      tempBuffer1 = new double[(int)((endIdx - startIdx + 1) * 1)];
+      tempBuffer2 = new double[(int)((endIdx - startIdx + 1) * 1)];
+      /* Calculate the middle band moving average. */
+      /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
+       * sub-call's own startIdx (the seeding point). */
+      MA_Stream sub0 = MA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, tempBuffer1);
+      retCode = RetCode.Success;
+      if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
+         outNBElement = 0;
+         return retCode ;
+      }
+      /* Remember where the moving average begins, to realign it below. */
+      maBegIdx = (int)outBegIdx;
+      /* Calculate the Standard Deviation into tempBuffer2. */
+      /* Sub-stream 1: stddev over `inReal`, warmed from bar 0 up to the
+       * sub-call's own startIdx (the seeding point). */
+      STDDEV_Stream sub1 = STDDEV_OpenAndFillInternal(inReal, (int)outBegIdx, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, tempBuffer2);
+      retCode = RetCode.Success;
+      if( retCode != RetCode.Success ) {
+         outNBElement = 0;
+         return retCode ;
+      }
+      /* When the standard deviation (lookback optInTimePeriod-1) clamps to a later
+       * begIdx than the moving average did - as with TA_MAType_MAMA (constant
+       * lookback 32) and optInTimePeriod >= 34 - the MA in tempBuffer1 still starts
+       * at the earlier maBegIdx. Copy it forward from that shift into the middle
+       * band so each band value pairs the moving average and standard deviation of
+       * the same bar. The guarded subtraction keeps shiftIdx non-negative even when
+       * the standard deviation produced no output (an empty range leaves *outBegIdx
+       * at 0), which the unconditional copy below then handles as a zero-length move.
+       */
+      if( (int)outBegIdx > maBegIdx ) {
+         shiftIdx = (int)outBegIdx - maBegIdx;
+      } else {
+         shiftIdx = 0;
+      }
+      Array.Copy(tempBuffer1, shiftIdx, sc_outRealMiddleBand, 0, outNBElement * 1);
+      /* Now do a tight loop to calculate the upper/lower band at the same time. */
+      if( optInNbDevUp == optInNbDevDn ) {
+         for( i = 0; i < (int)outNBElement; i += 1 ) {
+            tempReal = tempBuffer2[i] * optInNbDevUp;
+            tempReal2 = sc_outRealMiddleBand[i];
+            sc_outRealUpperBand[i] = tempReal2 + tempReal;
+            sc_outRealLowerBand[i] = tempReal2 - tempReal;
+         }
+      } else {
+         for( i = 0; i < (int)outNBElement; i += 1 ) {
+            tempReal2 = sc_outRealMiddleBand[i];
+            sc_outRealUpperBand[i] = Math.FusedMultiplyAdd(tempBuffer2[i], optInNbDevUp, tempReal2);
+            sc_outRealLowerBand[i] = tempReal2 - tempBuffer2[i] * optInNbDevDn;
+         }
+      }
+      /* Capture the live producer state + sub handles. */
+      if( outNBElement < 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      sp.optInTimePeriod = optInTimePeriod;
+      sp.optInNbDevUp = optInNbDevUp;
+      sp.optInNbDevDn = optInNbDevDn;
+      sp.optInMAType = optInMAType;
+      sp.sub0 = sub0;
+      sp.sub1 = sub1;
+      sp.cur_outRealUpperBand = sc_outRealUpperBand[outNBElement - 1];
+      sp.cur_outRealMiddleBand = sc_outRealMiddleBand[outNBElement - 1];
+      sp.cur_outRealLowerBand = sc_outRealLowerBand[outNBElement - 1];
+      return RetCode.Success;
+   }
+
+   private RetCode BBANDS_OpenBody( BBANDS_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
+   {
+      double[] sink_outRealUpperBand = new double[1];
+      double[] sink_outRealMiddleBand = new double[1];
+      double[] sink_outRealLowerBand = new double[1];
+      return BBANDS_OpenCore( sp, inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out _, out _, sink_outRealUpperBand, sink_outRealMiddleBand, sink_outRealLowerBand, 0 );
+   }
+
+   private RetCode BBANDS_OpenAndFillBody( BBANDS_Stream sp, double[] inReal, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, out int outBegIdx, out int outNBElement, double[] outRealUpperBand, double[] outRealMiddleBand, double[] outRealLowerBand )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outRealUpperBand, inReal) || ReferenceEquals(outRealMiddleBand, inReal) || ReferenceEquals(outRealLowerBand, inReal) || ReferenceEquals(outRealUpperBand, outRealMiddleBand) || ReferenceEquals(outRealUpperBand, outRealLowerBand) || ReferenceEquals(outRealMiddleBand, outRealLowerBand) ) {
+         return RetCode.BadParam;
+      }
+      return BBANDS_OpenCore( sp, inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out outBegIdx, out outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1 );
+   }
+
+   private RetCode BBANDS_OpenAndFillInternalBody( BBANDS_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, out int outBegIdx, out int outNBElement, double[] outRealUpperBand, double[] outRealMiddleBand, double[] outRealLowerBand )
+   {
+      return BBANDS_OpenCore(sp, inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out outBegIdx, out outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1);
+   }
+
+   /* BBANDS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal BBANDS_Stream BBANDS_OpenAndFillInternal( double[] inReal, int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, out int outBegIdx, out int outNBElement, double[] outRealUpperBand, double[] outRealMiddleBand, double[] outRealLowerBand )
+   {
+      BBANDS_Stream sp = new BBANDS_Stream(this);
+      RetCode retCode = BBANDS_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out outBegIdx, out outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("BBANDS", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind BBANDS_Open (composition seam). */
+   internal BBANDS_Stream BBANDS_OpenInternal( double[] inReal, int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
+   {
+      BBANDS_Stream sp = new BBANDS_Stream(this);
+      RetCode retCode = BBANDS_OpenBody(sp, inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("BBANDS", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>BBANDS</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="BBANDS_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>BBANDS</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>BBANDS_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>BBANDS_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inReal">Input data series. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="BBANDS_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInNbDevUp">As in the batch call; see <see cref="BBANDS_Lookback"/> for its default
+   /// and range (<c>-4e37</c> selects the default).</param>
+   /// <param name="optInNbDevDn">As in the batch call; see <see cref="BBANDS_Lookback"/> for its default
+   /// and range (<c>-4e37</c> selects the default).</param>
+   /// <param name="optInMAType">As in the batch call; see <see cref="BBANDS_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>BBANDS_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public BBANDS_Stream BBANDS_Open( double[] inReal, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
+   {
+      return BBANDS_OpenInternal(inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+   }
+
+   /// <summary><c>BBANDS_Open</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>BBANDS</c> produces over
+   /// the same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - BBANDS_Lookback(...)</c> values
+   /// and must not alias the inputs or each other — this path writes the outputs
+   /// and then reads the input tail to seed its rings, so the batch tier's
+   /// in-place allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="BBANDS_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inReal">Input data series. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="BBANDS_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInNbDevUp">As in the batch call; see <see cref="BBANDS_Lookback"/> for its default
+   /// and range (<c>-4e37</c> selects the default).</param>
+   /// <param name="optInNbDevDn">As in the batch call; see <see cref="BBANDS_Lookback"/> for its default
+   /// and range (<c>-4e37</c> selects the default).</param>
+   /// <param name="optInMAType">As in the batch call; see <see cref="BBANDS_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="outRealUpperBand">Middle band plus nbDevUp standard deviations. Must hold at least
+   /// <c>historyLen - BBANDS_Lookback(...)</c> values.</param>
+   /// <param name="outRealMiddleBand">The moving average. Must hold at least <c>historyLen -
+   /// BBANDS_Lookback(...)</c> values.</param>
+   /// <param name="outRealLowerBand">Middle band minus nbDevDn standard deviations. Must hold at least
+   /// <c>historyLen - BBANDS_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>BBANDS_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public BBANDS_Stream BBANDS_OpenAndFill( double[] inReal, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, double[] outRealUpperBand, double[] outRealMiddleBand, double[] outRealLowerBand )
+   {
+      BBANDS_Stream sp = new BBANDS_Stream(this);
+      RetCode retCode = BBANDS_OpenAndFillBody(sp, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out int outBegIdx, out int outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("BBANDS", "openAndFill", retCode);
+   }
 }

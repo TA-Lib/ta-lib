@@ -959,4 +959,1084 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>One <c>MAMA</c> output set, in batch output order.</summary>
+   /// <remarks>
+   /// <para>Equality is the compiler-generated record-struct equality, which compares
+   /// the components with <c>==</c>: <c>NaN</c> does not equal <c>NaN</c>, and
+   /// <c>0.0</c> equals <c>-0.0</c>. That is deliberately <em>not</em> the Java
+   /// <c>Value</c> contract, which compares bitwise — compare
+   /// <see cref="System.BitConverter.DoubleToInt64Bits(double)"/> per component
+   /// when bit-level identity is what you mean.</para>
+   /// </remarks>
+   /// <param name="MAMA">Adaptive moving average (fast line)</param>
+   /// <param name="FAMA">Following adaptive moving average, using half the alpha (slow line)</param>
+   public readonly record struct MAMA_Value( double MAMA, double FAMA );
+
+   /// <summary>A live <c>MAMA</c> stream: one value per closed bar, bit-identical to
+   /// <c>MAMA</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.MAMA_Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class MAMA_Stream
+   {
+      internal Core core;
+      internal double optInFastLimit;
+      internal double optInSlowLimit;
+      internal double tempReal;
+      internal double tempReal2;
+      internal double period;
+      internal double periodWMASum;
+      internal double periodWMASub;
+      internal double trailingWMAValue;
+      internal double smoothedValue;
+      internal double a;
+      internal double b;
+      internal double hilbertTempReal;
+      internal int hilbertIdx;
+      internal double[] detrender_Odd = [];
+      internal double[] detrender_Even = [];
+      internal double detrender;
+      internal double prev_detrender_Odd;
+      internal double prev_detrender_Even;
+      internal double prev_detrender_input_Odd;
+      internal double prev_detrender_input_Even;
+      internal double[] Q1_Odd = [];
+      internal double[] Q1_Even = [];
+      internal double Q1;
+      internal double prev_Q1_Odd;
+      internal double prev_Q1_Even;
+      internal double prev_Q1_input_Odd;
+      internal double prev_Q1_input_Even;
+      internal double[] jI_Odd = [];
+      internal double[] jI_Even = [];
+      internal double jI;
+      internal double prev_jI_Odd;
+      internal double prev_jI_Even;
+      internal double prev_jI_input_Odd;
+      internal double prev_jI_input_Even;
+      internal double[] jQ_Odd = [];
+      internal double[] jQ_Even = [];
+      internal double jQ;
+      internal double prev_jQ_Odd;
+      internal double prev_jQ_Even;
+      internal double prev_jQ_input_Odd;
+      internal double prev_jQ_input_Even;
+      internal double Q2;
+      internal double I2;
+      internal double prevQ2;
+      internal double prevI2;
+      internal double Re;
+      internal double Im;
+      internal double I1ForOddPrev2;
+      internal double I1ForOddPrev3;
+      internal double I1ForEvenPrev2;
+      internal double I1ForEvenPrev3;
+      internal double rad2Deg;
+      internal double mama;
+      internal double fama;
+      internal double prevPhase;
+      internal int streamParity;
+      internal int ringPos_trailingWMAIdx;
+      internal int ringCap_trailingWMAIdx;
+      internal double[] ring_trailingWMAIdx_inReal = [];
+      internal double cur_outMAMA;
+      internal double cur_outFAMA;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal MAMA_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>MAMA_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
+      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal MAMA_Stream( MAMA_Stream other )
+      {
+         this.core = other.core;
+         this.optInFastLimit = other.optInFastLimit;
+         this.optInSlowLimit = other.optInSlowLimit;
+         this.tempReal = other.tempReal;
+         this.tempReal2 = other.tempReal2;
+         this.period = other.period;
+         this.periodWMASum = other.periodWMASum;
+         this.periodWMASub = other.periodWMASub;
+         this.trailingWMAValue = other.trailingWMAValue;
+         this.smoothedValue = other.smoothedValue;
+         this.a = other.a;
+         this.b = other.b;
+         this.hilbertTempReal = other.hilbertTempReal;
+         this.hilbertIdx = other.hilbertIdx;
+         this.detrender_Odd = new double[other.detrender_Odd.Length];
+         Array.Copy( other.detrender_Odd, this.detrender_Odd, other.detrender_Odd.Length );
+         this.detrender_Even = new double[other.detrender_Even.Length];
+         Array.Copy( other.detrender_Even, this.detrender_Even, other.detrender_Even.Length );
+         this.detrender = other.detrender;
+         this.prev_detrender_Odd = other.prev_detrender_Odd;
+         this.prev_detrender_Even = other.prev_detrender_Even;
+         this.prev_detrender_input_Odd = other.prev_detrender_input_Odd;
+         this.prev_detrender_input_Even = other.prev_detrender_input_Even;
+         this.Q1_Odd = new double[other.Q1_Odd.Length];
+         Array.Copy( other.Q1_Odd, this.Q1_Odd, other.Q1_Odd.Length );
+         this.Q1_Even = new double[other.Q1_Even.Length];
+         Array.Copy( other.Q1_Even, this.Q1_Even, other.Q1_Even.Length );
+         this.Q1 = other.Q1;
+         this.prev_Q1_Odd = other.prev_Q1_Odd;
+         this.prev_Q1_Even = other.prev_Q1_Even;
+         this.prev_Q1_input_Odd = other.prev_Q1_input_Odd;
+         this.prev_Q1_input_Even = other.prev_Q1_input_Even;
+         this.jI_Odd = new double[other.jI_Odd.Length];
+         Array.Copy( other.jI_Odd, this.jI_Odd, other.jI_Odd.Length );
+         this.jI_Even = new double[other.jI_Even.Length];
+         Array.Copy( other.jI_Even, this.jI_Even, other.jI_Even.Length );
+         this.jI = other.jI;
+         this.prev_jI_Odd = other.prev_jI_Odd;
+         this.prev_jI_Even = other.prev_jI_Even;
+         this.prev_jI_input_Odd = other.prev_jI_input_Odd;
+         this.prev_jI_input_Even = other.prev_jI_input_Even;
+         this.jQ_Odd = new double[other.jQ_Odd.Length];
+         Array.Copy( other.jQ_Odd, this.jQ_Odd, other.jQ_Odd.Length );
+         this.jQ_Even = new double[other.jQ_Even.Length];
+         Array.Copy( other.jQ_Even, this.jQ_Even, other.jQ_Even.Length );
+         this.jQ = other.jQ;
+         this.prev_jQ_Odd = other.prev_jQ_Odd;
+         this.prev_jQ_Even = other.prev_jQ_Even;
+         this.prev_jQ_input_Odd = other.prev_jQ_input_Odd;
+         this.prev_jQ_input_Even = other.prev_jQ_input_Even;
+         this.Q2 = other.Q2;
+         this.I2 = other.I2;
+         this.prevQ2 = other.prevQ2;
+         this.prevI2 = other.prevI2;
+         this.Re = other.Re;
+         this.Im = other.Im;
+         this.I1ForOddPrev2 = other.I1ForOddPrev2;
+         this.I1ForOddPrev3 = other.I1ForOddPrev3;
+         this.I1ForEvenPrev2 = other.I1ForEvenPrev2;
+         this.I1ForEvenPrev3 = other.I1ForEvenPrev3;
+         this.rad2Deg = other.rad2Deg;
+         this.mama = other.mama;
+         this.fama = other.fama;
+         this.prevPhase = other.prevPhase;
+         this.streamParity = other.streamParity;
+         this.ringPos_trailingWMAIdx = other.ringPos_trailingWMAIdx;
+         this.ringCap_trailingWMAIdx = other.ringCap_trailingWMAIdx;
+         this.ring_trailingWMAIdx_inReal = new double[other.ring_trailingWMAIdx_inReal.Length];
+         Array.Copy( other.ring_trailingWMAIdx_inReal, this.ring_trailingWMAIdx_inReal, other.ring_trailingWMAIdx_inReal.Length );
+         this.cur_outMAMA = other.cur_outMAMA;
+         this.cur_outFAMA = other.cur_outFAMA;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( MAMA_Stream other )
+      {
+         this.core = other.core;
+         this.optInFastLimit = other.optInFastLimit;
+         this.optInSlowLimit = other.optInSlowLimit;
+         this.tempReal = other.tempReal;
+         this.tempReal2 = other.tempReal2;
+         this.period = other.period;
+         this.periodWMASum = other.periodWMASum;
+         this.periodWMASub = other.periodWMASub;
+         this.trailingWMAValue = other.trailingWMAValue;
+         this.smoothedValue = other.smoothedValue;
+         this.a = other.a;
+         this.b = other.b;
+         this.hilbertTempReal = other.hilbertTempReal;
+         this.hilbertIdx = other.hilbertIdx;
+         if( this.detrender_Odd.Length != other.detrender_Odd.Length ) {
+            this.detrender_Odd = new double[other.detrender_Odd.Length];
+         }
+         Array.Copy( other.detrender_Odd, this.detrender_Odd, other.detrender_Odd.Length );
+         if( this.detrender_Even.Length != other.detrender_Even.Length ) {
+            this.detrender_Even = new double[other.detrender_Even.Length];
+         }
+         Array.Copy( other.detrender_Even, this.detrender_Even, other.detrender_Even.Length );
+         this.detrender = other.detrender;
+         this.prev_detrender_Odd = other.prev_detrender_Odd;
+         this.prev_detrender_Even = other.prev_detrender_Even;
+         this.prev_detrender_input_Odd = other.prev_detrender_input_Odd;
+         this.prev_detrender_input_Even = other.prev_detrender_input_Even;
+         if( this.Q1_Odd.Length != other.Q1_Odd.Length ) {
+            this.Q1_Odd = new double[other.Q1_Odd.Length];
+         }
+         Array.Copy( other.Q1_Odd, this.Q1_Odd, other.Q1_Odd.Length );
+         if( this.Q1_Even.Length != other.Q1_Even.Length ) {
+            this.Q1_Even = new double[other.Q1_Even.Length];
+         }
+         Array.Copy( other.Q1_Even, this.Q1_Even, other.Q1_Even.Length );
+         this.Q1 = other.Q1;
+         this.prev_Q1_Odd = other.prev_Q1_Odd;
+         this.prev_Q1_Even = other.prev_Q1_Even;
+         this.prev_Q1_input_Odd = other.prev_Q1_input_Odd;
+         this.prev_Q1_input_Even = other.prev_Q1_input_Even;
+         if( this.jI_Odd.Length != other.jI_Odd.Length ) {
+            this.jI_Odd = new double[other.jI_Odd.Length];
+         }
+         Array.Copy( other.jI_Odd, this.jI_Odd, other.jI_Odd.Length );
+         if( this.jI_Even.Length != other.jI_Even.Length ) {
+            this.jI_Even = new double[other.jI_Even.Length];
+         }
+         Array.Copy( other.jI_Even, this.jI_Even, other.jI_Even.Length );
+         this.jI = other.jI;
+         this.prev_jI_Odd = other.prev_jI_Odd;
+         this.prev_jI_Even = other.prev_jI_Even;
+         this.prev_jI_input_Odd = other.prev_jI_input_Odd;
+         this.prev_jI_input_Even = other.prev_jI_input_Even;
+         if( this.jQ_Odd.Length != other.jQ_Odd.Length ) {
+            this.jQ_Odd = new double[other.jQ_Odd.Length];
+         }
+         Array.Copy( other.jQ_Odd, this.jQ_Odd, other.jQ_Odd.Length );
+         if( this.jQ_Even.Length != other.jQ_Even.Length ) {
+            this.jQ_Even = new double[other.jQ_Even.Length];
+         }
+         Array.Copy( other.jQ_Even, this.jQ_Even, other.jQ_Even.Length );
+         this.jQ = other.jQ;
+         this.prev_jQ_Odd = other.prev_jQ_Odd;
+         this.prev_jQ_Even = other.prev_jQ_Even;
+         this.prev_jQ_input_Odd = other.prev_jQ_input_Odd;
+         this.prev_jQ_input_Even = other.prev_jQ_input_Even;
+         this.Q2 = other.Q2;
+         this.I2 = other.I2;
+         this.prevQ2 = other.prevQ2;
+         this.prevI2 = other.prevI2;
+         this.Re = other.Re;
+         this.Im = other.Im;
+         this.I1ForOddPrev2 = other.I1ForOddPrev2;
+         this.I1ForOddPrev3 = other.I1ForOddPrev3;
+         this.I1ForEvenPrev2 = other.I1ForEvenPrev2;
+         this.I1ForEvenPrev3 = other.I1ForEvenPrev3;
+         this.rad2Deg = other.rad2Deg;
+         this.mama = other.mama;
+         this.fama = other.fama;
+         this.prevPhase = other.prevPhase;
+         this.streamParity = other.streamParity;
+         this.ringPos_trailingWMAIdx = other.ringPos_trailingWMAIdx;
+         this.ringCap_trailingWMAIdx = other.ringCap_trailingWMAIdx;
+         if( this.ring_trailingWMAIdx_inReal.Length != other.ring_trailingWMAIdx_inReal.Length ) {
+            this.ring_trailingWMAIdx_inReal = new double[other.ring_trailingWMAIdx_inReal.Length];
+         }
+         Array.Copy( other.ring_trailingWMAIdx_inReal, this.ring_trailingWMAIdx_inReal, other.ring_trailingWMAIdx_inReal.Length );
+         this.cur_outMAMA = other.cur_outMAMA;
+         this.cur_outFAMA = other.cur_outFAMA;
+         this.fillRange = other.fillRange;
+      }
+
+      /* Peek's reusable scratch — one per thread, see CopyFrom. */
+      [ThreadStatic] private static MAMA_Stream? peekScratch;
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inReal">Price series to smooth.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public MAMA_Value Update( double inReal )
+      {
+         core.MAMA_StreamStep(this, inReal);
+         return new MAMA_Value(cur_outMAMA, cur_outFAMA);
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a scratch handle held per thread and reused, so the copy
+      /// allocates nothing after the first peek of this indicator on this thread.
+      /// That scratch is retained for the life of the thread.</para>
+      /// </remarks>
+      /// <param name="inReal">Price series to smooth.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public MAMA_Value Peek( double inReal )
+      {
+         MAMA_Stream? scratch = peekScratch;
+         if( scratch is null ) {
+            scratch = new MAMA_Stream(this);
+            peekScratch = scratch;
+         } else {
+            scratch.CopyFrom(this);
+         }
+         core.MAMA_StreamStep(scratch, inReal);
+         return new MAMA_Value(scratch.cur_outMAMA, scratch.cur_outFAMA);
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public MAMA_Value Value => new MAMA_Value(cur_outMAMA, cur_outFAMA);
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public MAMA_Stream Clone()
+      {
+         return new MAMA_Stream(this);
+      }
+   }
+
+   internal void MAMA_StreamStep( MAMA_Stream sp, double inReal )
+   {
+      double adjustedPrevPeriod = 0.0;
+      double todayValue = 0.0;
+      if( sp.ringCap_trailingWMAIdx == 0 ) {
+         sp.ring_trailingWMAIdx_inReal[0] = inReal;
+      }
+      adjustedPrevPeriod = Math.FusedMultiplyAdd(0.075, sp.period, 0.54);
+      todayValue = inReal;
+      sp.periodWMASub += todayValue;
+      sp.periodWMASub -= sp.trailingWMAValue;
+      sp.periodWMASum += todayValue * 4.0;
+      sp.trailingWMAValue = sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx];
+      sp.smoothedValue = sp.periodWMASum * 0.1;
+      sp.periodWMASum -= sp.periodWMASub;
+      if( sp.streamParity == 0 ) {
+         /* Do the Hilbert Transforms for even price bar */
+         sp.hilbertTempReal = sp.a * sp.smoothedValue;
+         sp.detrender = 0 - sp.detrender_Even[sp.hilbertIdx];
+         sp.detrender_Even[sp.hilbertIdx] = sp.hilbertTempReal;
+         sp.detrender += sp.hilbertTempReal;
+         sp.detrender -= sp.prev_detrender_Even;
+         sp.prev_detrender_Even = sp.b * sp.prev_detrender_input_Even;
+         sp.detrender += sp.prev_detrender_Even;
+         sp.prev_detrender_input_Even = sp.smoothedValue;
+         sp.detrender *= adjustedPrevPeriod;
+         sp.hilbertTempReal = sp.a * sp.detrender;
+         sp.Q1 = 0 - sp.Q1_Even[sp.hilbertIdx];
+         sp.Q1_Even[sp.hilbertIdx] = sp.hilbertTempReal;
+         sp.Q1 += sp.hilbertTempReal;
+         sp.Q1 -= sp.prev_Q1_Even;
+         sp.prev_Q1_Even = sp.b * sp.prev_Q1_input_Even;
+         sp.Q1 += sp.prev_Q1_Even;
+         sp.prev_Q1_input_Even = sp.detrender;
+         sp.Q1 *= adjustedPrevPeriod;
+         sp.hilbertTempReal = sp.a * sp.I1ForEvenPrev3;
+         sp.jI = 0 - sp.jI_Even[sp.hilbertIdx];
+         sp.jI_Even[sp.hilbertIdx] = sp.hilbertTempReal;
+         sp.jI += sp.hilbertTempReal;
+         sp.jI -= sp.prev_jI_Even;
+         sp.prev_jI_Even = sp.b * sp.prev_jI_input_Even;
+         sp.jI += sp.prev_jI_Even;
+         sp.prev_jI_input_Even = sp.I1ForEvenPrev3;
+         sp.jI *= adjustedPrevPeriod;
+         sp.hilbertTempReal = sp.a * sp.Q1;
+         sp.jQ = 0 - sp.jQ_Even[sp.hilbertIdx];
+         sp.jQ_Even[sp.hilbertIdx] = sp.hilbertTempReal;
+         sp.jQ += sp.hilbertTempReal;
+         sp.jQ -= sp.prev_jQ_Even;
+         sp.prev_jQ_Even = sp.b * sp.prev_jQ_input_Even;
+         sp.jQ += sp.prev_jQ_Even;
+         sp.prev_jQ_input_Even = sp.Q1;
+         sp.jQ *= adjustedPrevPeriod;
+         if( ++sp.hilbertIdx == 3 ) {
+            sp.hilbertIdx = 0;
+         }
+         sp.Q2 = Math.FusedMultiplyAdd(0.2, sp.Q1 + sp.jI, 0.8 * sp.prevQ2);
+         sp.I2 = Math.FusedMultiplyAdd(0.2, sp.I1ForEvenPrev3 - sp.jQ, 0.8 * sp.prevI2);
+         /* The variable I1 is the detrender delayed for
+          * 3 price bars.
+          *
+          * Save the current detrender value for being
+          * used by the "odd" logic later.
+          */
+         sp.I1ForOddPrev3 = sp.I1ForOddPrev2;
+         sp.I1ForOddPrev2 = sp.detrender;
+         /* Put Alpha in tempReal2 */
+         if( sp.I1ForEvenPrev3 != 0.0 ) {
+            sp.tempReal2 = Math.Atan(sp.Q1 / sp.I1ForEvenPrev3) * sp.rad2Deg;
+         } else {
+            sp.tempReal2 = 0.0;
+         }
+      } else {
+         /* Do the Hilbert Transforms for odd price bar */
+         sp.hilbertTempReal = sp.a * sp.smoothedValue;
+         sp.detrender = 0 - sp.detrender_Odd[sp.hilbertIdx];
+         sp.detrender_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
+         sp.detrender += sp.hilbertTempReal;
+         sp.detrender -= sp.prev_detrender_Odd;
+         sp.prev_detrender_Odd = sp.b * sp.prev_detrender_input_Odd;
+         sp.detrender += sp.prev_detrender_Odd;
+         sp.prev_detrender_input_Odd = sp.smoothedValue;
+         sp.detrender *= adjustedPrevPeriod;
+         sp.hilbertTempReal = sp.a * sp.detrender;
+         sp.Q1 = 0 - sp.Q1_Odd[sp.hilbertIdx];
+         sp.Q1_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
+         sp.Q1 += sp.hilbertTempReal;
+         sp.Q1 -= sp.prev_Q1_Odd;
+         sp.prev_Q1_Odd = sp.b * sp.prev_Q1_input_Odd;
+         sp.Q1 += sp.prev_Q1_Odd;
+         sp.prev_Q1_input_Odd = sp.detrender;
+         sp.Q1 *= adjustedPrevPeriod;
+         sp.hilbertTempReal = sp.a * sp.I1ForOddPrev3;
+         sp.jI = 0 - sp.jI_Odd[sp.hilbertIdx];
+         sp.jI_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
+         sp.jI += sp.hilbertTempReal;
+         sp.jI -= sp.prev_jI_Odd;
+         sp.prev_jI_Odd = sp.b * sp.prev_jI_input_Odd;
+         sp.jI += sp.prev_jI_Odd;
+         sp.prev_jI_input_Odd = sp.I1ForOddPrev3;
+         sp.jI *= adjustedPrevPeriod;
+         sp.hilbertTempReal = sp.a * sp.Q1;
+         sp.jQ = 0 - sp.jQ_Odd[sp.hilbertIdx];
+         sp.jQ_Odd[sp.hilbertIdx] = sp.hilbertTempReal;
+         sp.jQ += sp.hilbertTempReal;
+         sp.jQ -= sp.prev_jQ_Odd;
+         sp.prev_jQ_Odd = sp.b * sp.prev_jQ_input_Odd;
+         sp.jQ += sp.prev_jQ_Odd;
+         sp.prev_jQ_input_Odd = sp.Q1;
+         sp.jQ *= adjustedPrevPeriod;
+         sp.Q2 = Math.FusedMultiplyAdd(0.2, sp.Q1 + sp.jI, 0.8 * sp.prevQ2);
+         sp.I2 = Math.FusedMultiplyAdd(0.2, sp.I1ForOddPrev3 - sp.jQ, 0.8 * sp.prevI2);
+         /* The varaiable I1 is the detrender delayed for
+          * 3 price bars.
+          *
+          * Save the current detrender value for being
+          * used by the "odd" logic later.
+          */
+         sp.I1ForEvenPrev3 = sp.I1ForEvenPrev2;
+         sp.I1ForEvenPrev2 = sp.detrender;
+         /* Put Alpha in tempReal2 */
+         if( sp.I1ForOddPrev3 != 0.0 ) {
+            sp.tempReal2 = Math.Atan(sp.Q1 / sp.I1ForOddPrev3) * sp.rad2Deg;
+         } else {
+            sp.tempReal2 = 0.0;
+         }
+      }
+      /* Put Delta Phase into tempReal */
+      sp.tempReal = sp.prevPhase - sp.tempReal2;
+      sp.prevPhase = sp.tempReal2;
+      if( sp.tempReal < 1.0 ) {
+         sp.tempReal = 1.0;
+      }
+      /* Put Alpha into tempReal */
+      if( sp.tempReal > 1.0 ) {
+         sp.tempReal = sp.optInFastLimit / sp.tempReal;
+         if( sp.tempReal < sp.optInSlowLimit ) {
+            sp.tempReal = sp.optInSlowLimit;
+         }
+      } else {
+         sp.tempReal = sp.optInFastLimit;
+      }
+      /* Calculate MAMA, FAMA */
+      sp.mama = Math.FusedMultiplyAdd(1 - sp.tempReal, sp.mama, sp.tempReal * todayValue);
+      sp.tempReal *= 0.5;
+      sp.fama = Math.FusedMultiplyAdd(1 - sp.tempReal, sp.fama, sp.tempReal * sp.mama);
+      /* FAMA is nullable (issue #125): its write carries no outIdx advance so
+       * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
+       */
+      sp.cur_outFAMA = sp.fama;
+      sp.cur_outMAMA = sp.mama;
+      /* Adjust the period for next price bar */
+      sp.Re = Math.FusedMultiplyAdd(0.8, sp.Re, 0.2 * (Math.FusedMultiplyAdd(sp.I2, sp.prevI2, sp.Q2 * sp.prevQ2)));
+      sp.Im = Math.FusedMultiplyAdd(0.8, sp.Im, 0.2 * (sp.I2 * sp.prevQ2 - sp.Q2 * sp.prevI2));
+      sp.prevQ2 = sp.Q2;
+      sp.prevI2 = sp.I2;
+      sp.tempReal = sp.period;
+      if( sp.Im != 0.0 && sp.Re != 0.0 ) {
+         sp.period = 360.0 / (Math.Atan(sp.Im / sp.Re) * sp.rad2Deg);
+      }
+      sp.tempReal2 = 1.5 * sp.tempReal;
+      if( sp.period > sp.tempReal2 ) {
+         sp.period = sp.tempReal2;
+      }
+      sp.tempReal2 = 0.67 * sp.tempReal;
+      if( sp.period < sp.tempReal2 ) {
+         sp.period = sp.tempReal2;
+      }
+      if( sp.period < 6 ) {
+         sp.period = 6;
+      } else if( sp.period > 50 ) {
+         sp.period = 50;
+      }
+      sp.period = Math.FusedMultiplyAdd(0.2, sp.period, 0.8 * sp.tempReal);
+      /* Ooof... let's do the next price bar now! */
+      sp.ring_trailingWMAIdx_inReal[sp.ringPos_trailingWMAIdx] = inReal;
+      sp.ringPos_trailingWMAIdx = sp.ringPos_trailingWMAIdx + 1;
+      if( sp.ringPos_trailingWMAIdx >= sp.ringCap_trailingWMAIdx ) {
+         sp.ringPos_trailingWMAIdx = 0;
+      }
+      sp.streamParity = 1 - sp.streamParity;
+   }
+
+   private RetCode MAMA_OpenCore( MAMA_Stream sp, double[] inReal, int startIdx, double optInFastLimit, double optInSlowLimit, out int outBegIdx, out int outNBElement, double[] outMAMA, double[] outFAMA, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      int outIdx = 0;
+      int i = 0;
+      int lookbackTotal = 0;
+      int today = 0;
+      double tempReal = 0;
+      double tempReal2 = 0;
+      double adjustedPrevPeriod = 0;
+      double period = 0;
+      int trailingWMAIdx = 0;
+      double periodWMASum = 0;
+      double periodWMASub = 0;
+      double trailingWMAValue = 0;
+      double smoothedValue = 0;
+      double a = 0;
+      double b = 0;
+      double hilbertTempReal = 0;
+      int hilbertIdx = 0;
+      double[] detrender_Odd = new double[3];
+      double[] detrender_Even = new double[3];
+      double detrender = 0;
+      double prev_detrender_Odd = 0;
+      double prev_detrender_Even = 0;
+      double prev_detrender_input_Odd = 0;
+      double prev_detrender_input_Even = 0;
+      double[] Q1_Odd = new double[3];
+      double[] Q1_Even = new double[3];
+      double Q1 = 0;
+      double prev_Q1_Odd = 0;
+      double prev_Q1_Even = 0;
+      double prev_Q1_input_Odd = 0;
+      double prev_Q1_input_Even = 0;
+      double[] jI_Odd = new double[3];
+      double[] jI_Even = new double[3];
+      double jI = 0;
+      double prev_jI_Odd = 0;
+      double prev_jI_Even = 0;
+      double prev_jI_input_Odd = 0;
+      double prev_jI_input_Even = 0;
+      double[] jQ_Odd = new double[3];
+      double[] jQ_Even = new double[3];
+      double jQ = 0;
+      double prev_jQ_Odd = 0;
+      double prev_jQ_Even = 0;
+      double prev_jQ_input_Odd = 0;
+      double prev_jQ_input_Even = 0;
+      double Q2 = 0;
+      double I2 = 0;
+      double prevQ2 = 0;
+      double prevI2 = 0;
+      double Re = 0;
+      double Im = 0;
+      double I1ForOddPrev2 = 0;
+      double I1ForOddPrev3 = 0;
+      double I1ForEvenPrev2 = 0;
+      double I1ForEvenPrev3 = 0;
+      double rad2Deg = 0;
+      double mama = 0;
+      double fama = 0;
+      double todayValue = 0;
+      double prevPhase = 0;
+      int historyLen = inReal.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInFastLimit == TA_REAL_DEFAULT ) {
+         optInFastLimit = 5e-1;
+      } else if( optInFastLimit < 1e-2 || optInFastLimit > 9.9e-1 ) {
+         return RetCode.BadParam;
+      }
+      if( optInSlowLimit == TA_REAL_DEFAULT ) {
+         optInSlowLimit = 5e-2;
+      } else if( optInSlowLimit < 1e-2 || optInSlowLimit > 9.9e-1 ) {
+         return RetCode.BadParam;
+      }
+      a = 0.0962;
+      b = 0.5769;
+      /* Variable used for the price smoother (a weighted moving average). */
+      /* Variables used for the Hilbert Transormation */
+      /* Constant */
+      rad2Deg = 180.0 / (4.0 * Math.Atan(1));
+      /* Identify the minimum number of price bar needed
+       * to calculate at least one output.
+       */
+      lookbackTotal = 32 + this.unstablePeriod[(int)FuncUnstId.MAMA];
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      outBegIdx = startIdx;
+      /* Initialize the price smoother, which is simply a weighted
+       * moving average of the price.
+       * To understand this algorithm, I strongly suggest to understand
+       * first how TA_WMA is done.
+       */
+      trailingWMAIdx = startIdx - lookbackTotal;
+      today = trailingWMAIdx;
+      /* Initialization is same as WMA, except loop is unrolled
+       * for speed optimization.
+       */
+      tempReal = inReal[today++];
+      periodWMASub = tempReal;
+      periodWMASum = tempReal;
+      tempReal = inReal[today++];
+      periodWMASub += tempReal;
+      periodWMASum += tempReal * 2.0;
+      tempReal = inReal[today++];
+      periodWMASub += tempReal;
+      periodWMASum += tempReal * 3.0;
+      trailingWMAValue = 0.0;
+      /* Subsequent WMA value are evaluated by using
+       * the DO_PRICE_WMA macro.
+       */
+      i = 9;
+      do {
+         tempReal = inReal[today++];
+         periodWMASub += tempReal;
+         periodWMASub -= trailingWMAValue;
+         periodWMASum += tempReal * 4.0;
+         trailingWMAValue = inReal[trailingWMAIdx++];
+         smoothedValue = periodWMASum * 0.1;
+         periodWMASum -= periodWMASub;
+      } while( --i != 0 );
+      /* Initialize the circular buffers used by the hilbert
+       * transform logic.
+       * A buffer is used for odd day and another for even days.
+       * This minimize the number of memory access and floating point
+       * operations needed (note also that by using static circular buffer,
+       * no large dynamic memory allocation is needed for storing
+       * intermediate calculation!).
+       */
+      hilbertIdx = 0;
+      detrender_Odd[0] = 0.0;
+      detrender_Odd[1] = 0.0;
+      detrender_Odd[2] = 0.0;
+      detrender_Even[0] = 0.0;
+      detrender_Even[1] = 0.0;
+      detrender_Even[2] = 0.0;
+      detrender = 0.0;
+      prev_detrender_Odd = 0.0;
+      prev_detrender_Even = 0.0;
+      prev_detrender_input_Odd = 0.0;
+      prev_detrender_input_Even = 0.0;
+      Q1_Odd[0] = 0.0;
+      Q1_Odd[1] = 0.0;
+      Q1_Odd[2] = 0.0;
+      Q1_Even[0] = 0.0;
+      Q1_Even[1] = 0.0;
+      Q1_Even[2] = 0.0;
+      Q1 = 0.0;
+      prev_Q1_Odd = 0.0;
+      prev_Q1_Even = 0.0;
+      prev_Q1_input_Odd = 0.0;
+      prev_Q1_input_Even = 0.0;
+      jI_Odd[0] = 0.0;
+      jI_Odd[1] = 0.0;
+      jI_Odd[2] = 0.0;
+      jI_Even[0] = 0.0;
+      jI_Even[1] = 0.0;
+      jI_Even[2] = 0.0;
+      jI = 0.0;
+      prev_jI_Odd = 0.0;
+      prev_jI_Even = 0.0;
+      prev_jI_input_Odd = 0.0;
+      prev_jI_input_Even = 0.0;
+      jQ_Odd[0] = 0.0;
+      jQ_Odd[1] = 0.0;
+      jQ_Odd[2] = 0.0;
+      jQ_Even[0] = 0.0;
+      jQ_Even[1] = 0.0;
+      jQ_Even[2] = 0.0;
+      jQ = 0.0;
+      prev_jQ_Odd = 0.0;
+      prev_jQ_Even = 0.0;
+      prev_jQ_input_Odd = 0.0;
+      prev_jQ_input_Even = 0.0;
+      period = 0.0;
+      outIdx = 0;
+      prevQ2 = 0.0;
+      prevI2 = prevQ2;
+      Im = 0.0;
+      Re = Im;
+      fama = 0.0;
+      mama = fama;
+      I1ForEvenPrev3 = 0.0;
+      I1ForOddPrev3 = I1ForEvenPrev3;
+      I1ForEvenPrev2 = 0.0;
+      I1ForOddPrev2 = I1ForEvenPrev2;
+      prevPhase = 0.0;
+      /* The code is speed optimized and is most likely very
+       * hard to follow if you do not already know well the
+       * original algorithm.
+       * To understadn better, it is strongly suggested to look
+       * first at the Excel implementation in "test_MAMA.xls" included
+       * in this package.
+       */
+      while( today <= endIdx ) {
+         adjustedPrevPeriod = Math.FusedMultiplyAdd(0.075, period, 0.54);
+         todayValue = inReal[today];
+         periodWMASub += todayValue;
+         periodWMASub -= trailingWMAValue;
+         periodWMASum += todayValue * 4.0;
+         trailingWMAValue = inReal[trailingWMAIdx++];
+         smoothedValue = periodWMASum * 0.1;
+         periodWMASum -= periodWMASub;
+         if( today % 2 == 0 ) {
+            /* Do the Hilbert Transforms for even price bar */
+            hilbertTempReal = a * smoothedValue;
+            detrender = 0 - detrender_Even[hilbertIdx];
+            detrender_Even[hilbertIdx] = hilbertTempReal;
+            detrender += hilbertTempReal;
+            detrender -= prev_detrender_Even;
+            prev_detrender_Even = b * prev_detrender_input_Even;
+            detrender += prev_detrender_Even;
+            prev_detrender_input_Even = smoothedValue;
+            detrender *= adjustedPrevPeriod;
+            hilbertTempReal = a * detrender;
+            Q1 = 0 - Q1_Even[hilbertIdx];
+            Q1_Even[hilbertIdx] = hilbertTempReal;
+            Q1 += hilbertTempReal;
+            Q1 -= prev_Q1_Even;
+            prev_Q1_Even = b * prev_Q1_input_Even;
+            Q1 += prev_Q1_Even;
+            prev_Q1_input_Even = detrender;
+            Q1 *= adjustedPrevPeriod;
+            hilbertTempReal = a * I1ForEvenPrev3;
+            jI = 0 - jI_Even[hilbertIdx];
+            jI_Even[hilbertIdx] = hilbertTempReal;
+            jI += hilbertTempReal;
+            jI -= prev_jI_Even;
+            prev_jI_Even = b * prev_jI_input_Even;
+            jI += prev_jI_Even;
+            prev_jI_input_Even = I1ForEvenPrev3;
+            jI *= adjustedPrevPeriod;
+            hilbertTempReal = a * Q1;
+            jQ = 0 - jQ_Even[hilbertIdx];
+            jQ_Even[hilbertIdx] = hilbertTempReal;
+            jQ += hilbertTempReal;
+            jQ -= prev_jQ_Even;
+            prev_jQ_Even = b * prev_jQ_input_Even;
+            jQ += prev_jQ_Even;
+            prev_jQ_input_Even = Q1;
+            jQ *= adjustedPrevPeriod;
+            if( ++hilbertIdx == 3 ) {
+               hilbertIdx = 0;
+            }
+            Q2 = Math.FusedMultiplyAdd(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.FusedMultiplyAdd(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
+            /* The variable I1 is the detrender delayed for
+             * 3 price bars.
+             *
+             * Save the current detrender value for being
+             * used by the "odd" logic later.
+             */
+            I1ForOddPrev3 = I1ForOddPrev2;
+            I1ForOddPrev2 = detrender;
+            /* Put Alpha in tempReal2 */
+            if( I1ForEvenPrev3 != 0.0 ) {
+               tempReal2 = Math.Atan(Q1 / I1ForEvenPrev3) * rad2Deg;
+            } else {
+               tempReal2 = 0.0;
+            }
+         } else {
+            /* Do the Hilbert Transforms for odd price bar */
+            hilbertTempReal = a * smoothedValue;
+            detrender = 0 - detrender_Odd[hilbertIdx];
+            detrender_Odd[hilbertIdx] = hilbertTempReal;
+            detrender += hilbertTempReal;
+            detrender -= prev_detrender_Odd;
+            prev_detrender_Odd = b * prev_detrender_input_Odd;
+            detrender += prev_detrender_Odd;
+            prev_detrender_input_Odd = smoothedValue;
+            detrender *= adjustedPrevPeriod;
+            hilbertTempReal = a * detrender;
+            Q1 = 0 - Q1_Odd[hilbertIdx];
+            Q1_Odd[hilbertIdx] = hilbertTempReal;
+            Q1 += hilbertTempReal;
+            Q1 -= prev_Q1_Odd;
+            prev_Q1_Odd = b * prev_Q1_input_Odd;
+            Q1 += prev_Q1_Odd;
+            prev_Q1_input_Odd = detrender;
+            Q1 *= adjustedPrevPeriod;
+            hilbertTempReal = a * I1ForOddPrev3;
+            jI = 0 - jI_Odd[hilbertIdx];
+            jI_Odd[hilbertIdx] = hilbertTempReal;
+            jI += hilbertTempReal;
+            jI -= prev_jI_Odd;
+            prev_jI_Odd = b * prev_jI_input_Odd;
+            jI += prev_jI_Odd;
+            prev_jI_input_Odd = I1ForOddPrev3;
+            jI *= adjustedPrevPeriod;
+            hilbertTempReal = a * Q1;
+            jQ = 0 - jQ_Odd[hilbertIdx];
+            jQ_Odd[hilbertIdx] = hilbertTempReal;
+            jQ += hilbertTempReal;
+            jQ -= prev_jQ_Odd;
+            prev_jQ_Odd = b * prev_jQ_input_Odd;
+            jQ += prev_jQ_Odd;
+            prev_jQ_input_Odd = Q1;
+            jQ *= adjustedPrevPeriod;
+            Q2 = Math.FusedMultiplyAdd(0.2, Q1 + jI, 0.8 * prevQ2);
+            I2 = Math.FusedMultiplyAdd(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
+            /* The varaiable I1 is the detrender delayed for
+             * 3 price bars.
+             *
+             * Save the current detrender value for being
+             * used by the "odd" logic later.
+             */
+            I1ForEvenPrev3 = I1ForEvenPrev2;
+            I1ForEvenPrev2 = detrender;
+            /* Put Alpha in tempReal2 */
+            if( I1ForOddPrev3 != 0.0 ) {
+               tempReal2 = Math.Atan(Q1 / I1ForOddPrev3) * rad2Deg;
+            } else {
+               tempReal2 = 0.0;
+            }
+         }
+         /* Put Delta Phase into tempReal */
+         tempReal = prevPhase - tempReal2;
+         prevPhase = tempReal2;
+         if( tempReal < 1.0 ) {
+            tempReal = 1.0;
+         }
+         /* Put Alpha into tempReal */
+         if( tempReal > 1.0 ) {
+            tempReal = optInFastLimit / tempReal;
+            if( tempReal < optInSlowLimit ) {
+               tempReal = optInSlowLimit;
+            }
+         } else {
+            tempReal = optInFastLimit;
+         }
+         /* Calculate MAMA, FAMA */
+         mama = Math.FusedMultiplyAdd(1 - tempReal, mama, tempReal * todayValue);
+         tempReal *= 0.5;
+         fama = Math.FusedMultiplyAdd(1 - tempReal, fama, tempReal * mama);
+         if( today >= startIdx ) {
+            /* FAMA is nullable (issue #125): its write carries no outIdx advance so
+             * the codegen can NULL-guard it; outMAMA (never NULL) owns the ++.
+             */
+            outFAMA[outIdx * outStride] = fama;
+            outMAMA[outIdx++ * outStride] = mama;
+         }
+         /* Adjust the period for next price bar */
+         Re = Math.FusedMultiplyAdd(0.8, Re, 0.2 * (Math.FusedMultiplyAdd(I2, prevI2, Q2 * prevQ2)));
+         Im = Math.FusedMultiplyAdd(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
+         prevQ2 = Q2;
+         prevI2 = I2;
+         tempReal = period;
+         if( Im != 0.0 && Re != 0.0 ) {
+            period = 360.0 / (Math.Atan(Im / Re) * rad2Deg);
+         }
+         tempReal2 = 1.5 * tempReal;
+         if( period > tempReal2 ) {
+            period = tempReal2;
+         }
+         tempReal2 = 0.67 * tempReal;
+         if( period < tempReal2 ) {
+            period = tempReal2;
+         }
+         if( period < 6 ) {
+            period = 6;
+         } else if( period > 50 ) {
+            period = 50;
+         }
+         period = Math.FusedMultiplyAdd(0.2, period, 0.8 * tempReal);
+         /* Ooof... let's do the next price bar now! */
+         today += 1;
+      }
+      /* Default return values */
+      outNBElement = outIdx;
+      /* Capture the live batch state into the handle. */
+      int cap_trailingWMAIdx = today - trailingWMAIdx;
+      if( cap_trailingWMAIdx < 0 || cap_trailingWMAIdx > historyLen ) {
+         return RetCode.InternalError;
+      }
+      int allocN_trailingWMAIdx = (cap_trailingWMAIdx > 0)? cap_trailingWMAIdx : 1;
+      double[] capRing_trailingWMAIdx_inReal = new double[allocN_trailingWMAIdx];
+      Array.Copy(inReal, historyLen - cap_trailingWMAIdx, capRing_trailingWMAIdx_inReal, 0, cap_trailingWMAIdx);
+      sp.optInFastLimit = optInFastLimit;
+      sp.optInSlowLimit = optInSlowLimit;
+      sp.tempReal = tempReal;
+      sp.tempReal2 = tempReal2;
+      sp.period = period;
+      sp.periodWMASum = periodWMASum;
+      sp.periodWMASub = periodWMASub;
+      sp.trailingWMAValue = trailingWMAValue;
+      sp.smoothedValue = smoothedValue;
+      sp.a = a;
+      sp.b = b;
+      sp.hilbertTempReal = hilbertTempReal;
+      sp.hilbertIdx = hilbertIdx;
+      sp.detrender_Odd = detrender_Odd;
+      sp.detrender_Even = detrender_Even;
+      sp.detrender = detrender;
+      sp.prev_detrender_Odd = prev_detrender_Odd;
+      sp.prev_detrender_Even = prev_detrender_Even;
+      sp.prev_detrender_input_Odd = prev_detrender_input_Odd;
+      sp.prev_detrender_input_Even = prev_detrender_input_Even;
+      sp.Q1_Odd = Q1_Odd;
+      sp.Q1_Even = Q1_Even;
+      sp.Q1 = Q1;
+      sp.prev_Q1_Odd = prev_Q1_Odd;
+      sp.prev_Q1_Even = prev_Q1_Even;
+      sp.prev_Q1_input_Odd = prev_Q1_input_Odd;
+      sp.prev_Q1_input_Even = prev_Q1_input_Even;
+      sp.jI_Odd = jI_Odd;
+      sp.jI_Even = jI_Even;
+      sp.jI = jI;
+      sp.prev_jI_Odd = prev_jI_Odd;
+      sp.prev_jI_Even = prev_jI_Even;
+      sp.prev_jI_input_Odd = prev_jI_input_Odd;
+      sp.prev_jI_input_Even = prev_jI_input_Even;
+      sp.jQ_Odd = jQ_Odd;
+      sp.jQ_Even = jQ_Even;
+      sp.jQ = jQ;
+      sp.prev_jQ_Odd = prev_jQ_Odd;
+      sp.prev_jQ_Even = prev_jQ_Even;
+      sp.prev_jQ_input_Odd = prev_jQ_input_Odd;
+      sp.prev_jQ_input_Even = prev_jQ_input_Even;
+      sp.Q2 = Q2;
+      sp.I2 = I2;
+      sp.prevQ2 = prevQ2;
+      sp.prevI2 = prevI2;
+      sp.Re = Re;
+      sp.Im = Im;
+      sp.I1ForOddPrev2 = I1ForOddPrev2;
+      sp.I1ForOddPrev3 = I1ForOddPrev3;
+      sp.I1ForEvenPrev2 = I1ForEvenPrev2;
+      sp.I1ForEvenPrev3 = I1ForEvenPrev3;
+      sp.rad2Deg = rad2Deg;
+      sp.mama = mama;
+      sp.fama = fama;
+      sp.prevPhase = prevPhase;
+      sp.streamParity = historyLen % 2;
+      sp.ringPos_trailingWMAIdx = 0;
+      sp.ringCap_trailingWMAIdx = cap_trailingWMAIdx;
+      sp.ring_trailingWMAIdx_inReal = capRing_trailingWMAIdx_inReal;
+      sp.cur_outMAMA = outMAMA[(outNBElement - 1) * outStride];
+      sp.cur_outFAMA = outFAMA[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode MAMA_OpenBody( MAMA_Stream sp, double[] inReal, int startIdx, double optInFastLimit, double optInSlowLimit )
+   {
+      double[] sink_outMAMA = new double[1];
+      double[] sink_outFAMA = new double[1];
+      return MAMA_OpenCore( sp, inReal, startIdx, optInFastLimit, optInSlowLimit, out _, out _, sink_outMAMA, sink_outFAMA, 0 );
+   }
+
+   private RetCode MAMA_OpenAndFillBody( MAMA_Stream sp, double[] inReal, double optInFastLimit, double optInSlowLimit, out int outBegIdx, out int outNBElement, double[] outMAMA, double[] outFAMA )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outMAMA, inReal) || ReferenceEquals(outFAMA, inReal) || ReferenceEquals(outMAMA, outFAMA) ) {
+         return RetCode.BadParam;
+      }
+      return MAMA_OpenCore( sp, inReal, 0, optInFastLimit, optInSlowLimit, out outBegIdx, out outNBElement, outMAMA, outFAMA, 1 );
+   }
+
+   private RetCode MAMA_OpenAndFillInternalBody( MAMA_Stream sp, double[] inReal, int startIdx, double optInFastLimit, double optInSlowLimit, out int outBegIdx, out int outNBElement, double[] outMAMA, double[] outFAMA )
+   {
+      return MAMA_OpenCore(sp, inReal, startIdx, optInFastLimit, optInSlowLimit, out outBegIdx, out outNBElement, outMAMA, outFAMA, 1);
+   }
+
+   /* MAMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal MAMA_Stream MAMA_OpenAndFillInternal( double[] inReal, int startIdx, double optInFastLimit, double optInSlowLimit, out int outBegIdx, out int outNBElement, double[] outMAMA, double[] outFAMA )
+   {
+      MAMA_Stream sp = new MAMA_Stream(this);
+      RetCode retCode = MAMA_OpenAndFillInternalBody(sp, inReal, startIdx, optInFastLimit, optInSlowLimit, out outBegIdx, out outNBElement, outMAMA, outFAMA);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("MAMA", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind MAMA_Open (composition seam). */
+   internal MAMA_Stream MAMA_OpenInternal( double[] inReal, int startIdx, double optInFastLimit, double optInSlowLimit )
+   {
+      MAMA_Stream sp = new MAMA_Stream(this);
+      RetCode retCode = MAMA_OpenBody(sp, inReal, startIdx, optInFastLimit, optInSlowLimit);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("MAMA", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>MAMA</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="MAMA_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>MAMA</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>MAMA_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>MAMA_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inReal">Price series to smooth. The warm-up history, oldest bar first.</param>
+   /// <param name="optInFastLimit">As in the batch call; see <see cref="MAMA_Lookback"/> for its default and
+   /// range (<c>-4e37</c> selects the default).</param>
+   /// <param name="optInSlowLimit">As in the batch call; see <see cref="MAMA_Lookback"/> for its default and
+   /// range (<c>-4e37</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MAMA_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public MAMA_Stream MAMA_Open( double[] inReal, double optInFastLimit, double optInSlowLimit )
+   {
+      return MAMA_OpenInternal(inReal, 0, optInFastLimit, optInSlowLimit);
+   }
+
+   /// <summary><c>MAMA_Open</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>MAMA</c> produces over the
+   /// same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - MAMA_Lookback(...)</c> values and
+   /// must not alias the inputs or each other — this path writes the outputs and
+   /// then reads the input tail to seed its rings, so the batch tier's in-place
+   /// allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="MAMA_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inReal">Price series to smooth. The warm-up history, oldest bar first.</param>
+   /// <param name="optInFastLimit">As in the batch call; see <see cref="MAMA_Lookback"/> for its default and
+   /// range (<c>-4e37</c> selects the default).</param>
+   /// <param name="optInSlowLimit">As in the batch call; see <see cref="MAMA_Lookback"/> for its default and
+   /// range (<c>-4e37</c> selects the default).</param>
+   /// <param name="outMAMA">Adaptive moving average (fast line) Must hold at least <c>historyLen -
+   /// MAMA_Lookback(...)</c> values.</param>
+   /// <param name="outFAMA">Following adaptive moving average, using half the alpha (slow line) Must
+   /// hold at least <c>historyLen - MAMA_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MAMA_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public MAMA_Stream MAMA_OpenAndFill( double[] inReal, double optInFastLimit, double optInSlowLimit, double[] outMAMA, double[] outFAMA )
+   {
+      MAMA_Stream sp = new MAMA_Stream(this);
+      RetCode retCode = MAMA_OpenAndFillBody(sp, inReal, optInFastLimit, optInSlowLimit, out int outBegIdx, out int outNBElement, outMAMA, outFAMA);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("MAMA", "openAndFill", retCode);
+   }
 }

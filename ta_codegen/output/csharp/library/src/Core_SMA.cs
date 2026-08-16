@@ -310,4 +310,320 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>SMA</c> stream: one value per closed bar, bit-identical to
+   /// <c>SMA</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.SMA_Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class SMA_Stream
+   {
+      internal Core core;
+      internal int optInTimePeriod;
+      internal double periodTotal;
+      internal double tempReal;
+      internal int ringPos_trailingIdx;
+      internal int ringCap_trailingIdx;
+      internal double[] ring_trailingIdx_inReal = [];
+      internal double cur_outReal;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal SMA_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>SMA_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
+      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal SMA_Stream( SMA_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.periodTotal = other.periodTotal;
+         this.tempReal = other.tempReal;
+         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
+         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
+         this.ring_trailingIdx_inReal = new double[other.ring_trailingIdx_inReal.Length];
+         Array.Copy( other.ring_trailingIdx_inReal, this.ring_trailingIdx_inReal, other.ring_trailingIdx_inReal.Length );
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( SMA_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.periodTotal = other.periodTotal;
+         this.tempReal = other.tempReal;
+         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
+         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
+         if( this.ring_trailingIdx_inReal.Length != other.ring_trailingIdx_inReal.Length ) {
+            this.ring_trailingIdx_inReal = new double[other.ring_trailingIdx_inReal.Length];
+         }
+         Array.Copy( other.ring_trailingIdx_inReal, this.ring_trailingIdx_inReal, other.ring_trailingIdx_inReal.Length );
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inReal">Source series to average.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public double Update( double inReal )
+      {
+         core.SMA_StreamStep(this, inReal);
+         return cur_outReal;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a throwaway copy, which for this handle's shape is cheaper than
+      /// reusing one.</para>
+      /// </remarks>
+      /// <param name="inReal">Source series to average.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public double Peek( double inReal )
+      {
+         SMA_Stream scratch = new SMA_Stream(this);
+         core.SMA_StreamStep(scratch, inReal);
+         return scratch.cur_outReal;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public double Value => cur_outReal;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public SMA_Stream Clone()
+      {
+         return new SMA_Stream(this);
+      }
+   }
+
+   internal void SMA_StreamStep( SMA_Stream sp, double inReal )
+   {
+      if( sp.ringCap_trailingIdx == 0 ) {
+         sp.ring_trailingIdx_inReal[0] = inReal;
+      }
+      sp.periodTotal += (double)inReal;
+      sp.tempReal = sp.periodTotal;
+      sp.periodTotal -= (double)sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
+      sp.cur_outReal = sp.tempReal / (double)sp.optInTimePeriod;
+      sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
+      sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
+      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+         sp.ringPos_trailingIdx = 0;
+      }
+   }
+
+   private RetCode SMA_OpenCore( SMA_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      double periodTotal = 0;
+      double tempReal = 0;
+      int i = 0;
+      int outIdx = 0;
+      int trailingIdx = 0;
+      int lookbackTotal = 0;
+      int historyLen = inReal.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInTimePeriod == int.MinValue ) {
+         optInTimePeriod = 30;
+      } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      /* Identify the minimum number of price bar needed
+       * to calculate at least one output.
+       */
+      lookbackTotal = (int)(optInTimePeriod - 1);
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      /* Do the MA calculation using tight loops. */
+      /* Add-up the initial period, except for the last value. */
+      periodTotal = 0.0;
+      trailingIdx = startIdx - lookbackTotal;
+      i = trailingIdx;
+      if( optInTimePeriod > 1 ) {
+         while( i < startIdx ) {
+            periodTotal += (double)inReal[i];
+            i = i + 1;
+         }
+      }
+      /* Proceed with the calculation for the requested range.
+       * Note that this algorithm allows the inReal and
+       * outReal to be the same buffer.
+       */
+      outIdx = 0;
+      while( i <= endIdx ) {
+         periodTotal += (double)inReal[i];
+         i = i + 1;
+         tempReal = periodTotal;
+         periodTotal -= (double)inReal[trailingIdx];
+         trailingIdx = trailingIdx + 1;
+         outReal[outIdx * outStride] = tempReal / (double)optInTimePeriod;
+         outIdx = outIdx + 1;
+      }
+      /* All done. Indicate the output limits and return. */
+      outNBElement = outIdx;
+      outBegIdx = startIdx;
+      /* Capture the live batch state into the handle. */
+      int cap_trailingIdx = i - trailingIdx;
+      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+         return RetCode.InternalError;
+      }
+      int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
+      double[] capRing_trailingIdx_inReal = new double[allocN_trailingIdx];
+      Array.Copy(inReal, historyLen - cap_trailingIdx, capRing_trailingIdx_inReal, 0, cap_trailingIdx);
+      sp.optInTimePeriod = optInTimePeriod;
+      sp.periodTotal = periodTotal;
+      sp.tempReal = tempReal;
+      sp.ringPos_trailingIdx = 0;
+      sp.ringCap_trailingIdx = cap_trailingIdx;
+      sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
+      sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode SMA_OpenBody( SMA_Stream sp, double[] inReal, int startIdx, int optInTimePeriod )
+   {
+      double[] sink_outReal = new double[1];
+      return SMA_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+   }
+
+   private RetCode SMA_OpenAndFillBody( SMA_Stream sp, double[] inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outReal, inReal) ) {
+         return RetCode.BadParam;
+      }
+      return SMA_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+   }
+
+   private RetCode SMA_OpenAndFillInternalBody( SMA_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      return SMA_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+   }
+
+   /* SMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal SMA_Stream SMA_OpenAndFillInternal( double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      SMA_Stream sp = new SMA_Stream(this);
+      RetCode retCode = SMA_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("SMA", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind SMA_Open (composition seam). */
+   internal SMA_Stream SMA_OpenInternal( double[] inReal, int startIdx, int optInTimePeriod )
+   {
+      SMA_Stream sp = new SMA_Stream(this);
+      RetCode retCode = SMA_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("SMA", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>SMA</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="SMA_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>SMA</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>SMA_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>SMA_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inReal">Source series to average. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="SMA_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>SMA_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public SMA_Stream SMA_Open( double[] inReal, int optInTimePeriod )
+   {
+      return SMA_OpenInternal(inReal, 0, optInTimePeriod);
+   }
+
+   /// <summary><c>SMA_Open</c> that also fills the output array(s) over the whole history
+   /// in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>SMA</c> produces over the
+   /// same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - SMA_Lookback(...)</c> values and
+   /// must not alias the inputs or each other — this path writes the outputs and
+   /// then reads the input tail to seed its rings, so the batch tier's in-place
+   /// allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="SMA_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inReal">Source series to average. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="SMA_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="outReal">Simple moving average of the input. Must hold at least <c>historyLen -
+   /// SMA_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>SMA_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public SMA_Stream SMA_OpenAndFill( double[] inReal, int optInTimePeriod, double[] outReal )
+   {
+      SMA_Stream sp = new SMA_Stream(this);
+      RetCode retCode = SMA_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("SMA", "openAndFill", retCode);
+   }
 }

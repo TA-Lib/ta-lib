@@ -431,4 +431,371 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /* Using min_ALT1 for TA_ALT={STREAM,ALL_LANGUAGES} */
+
+   /// <summary>A live <c>MIN</c> stream: one value per closed bar, bit-identical to
+   /// <c>MIN</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.MIN_Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class MIN_Stream
+   {
+      internal Core core;
+      internal int optInTimePeriod;
+      internal double lowest;
+      internal int trailingIdx;
+      internal int lowestIdx;
+      internal int i;
+      internal int today;
+      internal int xMask;
+      internal double[] x_inReal = [];
+      internal double cur_outReal;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal MIN_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>MIN_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
+      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal MIN_Stream( MIN_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.lowest = other.lowest;
+         this.trailingIdx = other.trailingIdx;
+         this.lowestIdx = other.lowestIdx;
+         this.i = other.i;
+         this.today = other.today;
+         this.xMask = other.xMask;
+         this.x_inReal = new double[other.x_inReal.Length];
+         Array.Copy( other.x_inReal, this.x_inReal, other.x_inReal.Length );
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( MIN_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.lowest = other.lowest;
+         this.trailingIdx = other.trailingIdx;
+         this.lowestIdx = other.lowestIdx;
+         this.i = other.i;
+         this.today = other.today;
+         this.xMask = other.xMask;
+         if( this.x_inReal.Length != other.x_inReal.Length ) {
+            this.x_inReal = new double[other.x_inReal.Length];
+         }
+         Array.Copy( other.x_inReal, this.x_inReal, other.x_inReal.Length );
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inReal">Source series to take the minimum of.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public double Update( double inReal )
+      {
+         core.MIN_StreamStep(this, inReal);
+         return cur_outReal;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a throwaway copy, which for this handle's shape is cheaper than
+      /// reusing one.</para>
+      /// </remarks>
+      /// <param name="inReal">Source series to take the minimum of.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public double Peek( double inReal )
+      {
+         MIN_Stream scratch = new MIN_Stream(this);
+         core.MIN_StreamStep(scratch, inReal);
+         return scratch.cur_outReal;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public double Value => cur_outReal;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public MIN_Stream Clone()
+      {
+         return new MIN_Stream(this);
+      }
+   }
+
+   internal void MIN_StreamStep( MIN_Stream sp, double inReal )
+   {
+      double tmp = 0.0;
+      if( sp.today >= 1073741824 ) {
+         int rebaseShift = sp.trailingIdx & ~sp.xMask;
+         sp.today -= rebaseShift;
+         sp.trailingIdx -= rebaseShift;
+         sp.i -= rebaseShift;
+         sp.lowestIdx -= rebaseShift;
+      }
+      sp.x_inReal[sp.today & sp.xMask] = inReal;
+      tmp = sp.x_inReal[sp.today & sp.xMask];
+      if( sp.lowestIdx < sp.trailingIdx ) {
+         sp.lowestIdx = sp.trailingIdx;
+         sp.lowest = sp.x_inReal[sp.lowestIdx & sp.xMask];
+         sp.i = sp.lowestIdx;
+         while( ++sp.i <= sp.today ) {
+            tmp = sp.x_inReal[sp.i & sp.xMask];
+            if( tmp < sp.lowest ) {
+               sp.lowestIdx = sp.i;
+               sp.lowest = tmp;
+            }
+         }
+      } else if( tmp <= sp.lowest ) {
+         sp.lowestIdx = sp.today;
+         sp.lowest = tmp;
+      }
+      sp.cur_outReal = sp.lowest;
+      sp.trailingIdx += 1;
+      sp.today += 1;
+   }
+
+   private RetCode MIN_OpenCore( MIN_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      double lowest = 0;
+      double tmp = 0;
+      int outIdx = 0;
+      int nbInitialElementNeeded = 0;
+      int trailingIdx = 0;
+      int lowestIdx = 0;
+      int today = 0;
+      int i = 0;
+      int historyLen = inReal.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInTimePeriod == int.MinValue ) {
+         optInTimePeriod = 30;
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      /* Identify the minimum number of price bar needed
+       * to identify at least one output over the specified
+       * period.
+       */
+      nbInitialElementNeeded = optInTimePeriod - 1;
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < nbInitialElementNeeded ) {
+         startIdx = nbInitialElementNeeded;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      /* Proceed with the calculation for the requested range.
+       * Note that this algorithm allows the input and
+       * output to be the same buffer.
+       *
+       * Cache the lowest value with its index; rescan only when the cached
+       * extremum leaves the window. O(1) per bar while the extremum sits away
+       * from the trailing edge, but not amortized O(1): an extremum on the
+       * oldest in-window bar drops out on the very next bar, so the rescan
+       * repeats and the cost stays O(period) per bar for as long as that
+       * persists. Slower than the block scan the batch tier runs; it is here
+       * because one bar at a time is exactly what the streaming tier needs.
+       */
+      outIdx = 0;
+      today = startIdx;
+      trailingIdx = startIdx - nbInitialElementNeeded;
+      lowestIdx = 0 - 1;
+      lowest = 0.0;
+      while( today <= endIdx ) {
+         tmp = inReal[today];
+         if( lowestIdx < trailingIdx ) {
+            lowestIdx = trailingIdx;
+            lowest = inReal[lowestIdx];
+            i = lowestIdx;
+            while( ++i <= today ) {
+               tmp = inReal[i];
+               if( tmp < lowest ) {
+                  lowestIdx = i;
+                  lowest = tmp;
+               }
+            }
+         } else if( tmp <= lowest ) {
+            lowestIdx = today;
+            lowest = tmp;
+         }
+         outReal[outIdx++ * outStride] = lowest;
+         trailingIdx += 1;
+         today += 1;
+      }
+      /* Keep the outBegIdx relative to the
+       * caller input before returning.
+       */
+      outBegIdx = startIdx;
+      outNBElement = outIdx;
+      /* Capture the live batch state into the handle. */
+      int capX = today - trailingIdx + 1;
+      if( capX < 1 || capX > historyLen ) {
+         return RetCode.InternalError;
+      }
+      int physX = 1;
+      while( physX < capX ) {
+         physX <<= 1;
+      }
+      double[] capX_inReal = new double[physX];
+      for( int fillJ = historyLen - capX; fillJ < historyLen; fillJ++ ) {
+         capX_inReal[fillJ & (physX - 1)] = inReal[fillJ];
+      }
+      sp.optInTimePeriod = optInTimePeriod;
+      sp.lowest = lowest;
+      sp.trailingIdx = trailingIdx;
+      sp.lowestIdx = lowestIdx;
+      sp.i = i;
+      sp.today = today;
+      sp.xMask = physX - 1;
+      sp.x_inReal = capX_inReal;
+      sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode MIN_OpenBody( MIN_Stream sp, double[] inReal, int startIdx, int optInTimePeriod )
+   {
+      double[] sink_outReal = new double[1];
+      return MIN_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+   }
+
+   private RetCode MIN_OpenAndFillBody( MIN_Stream sp, double[] inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outReal, inReal) ) {
+         return RetCode.BadParam;
+      }
+      return MIN_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+   }
+
+   private RetCode MIN_OpenAndFillInternalBody( MIN_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      return MIN_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+   }
+
+   /* MIN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal MIN_Stream MIN_OpenAndFillInternal( double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      MIN_Stream sp = new MIN_Stream(this);
+      RetCode retCode = MIN_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("MIN", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind MIN_Open (composition seam). */
+   internal MIN_Stream MIN_OpenInternal( double[] inReal, int startIdx, int optInTimePeriod )
+   {
+      MIN_Stream sp = new MIN_Stream(this);
+      RetCode retCode = MIN_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("MIN", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>MIN</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="MIN_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>MIN</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>MIN_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>MIN_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inReal">Source series to take the minimum of. The warm-up history, oldest bar
+   /// first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="MIN_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MIN_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public MIN_Stream MIN_Open( double[] inReal, int optInTimePeriod )
+   {
+      return MIN_OpenInternal(inReal, 0, optInTimePeriod);
+   }
+
+   /// <summary><c>MIN_Open</c> that also fills the output array(s) over the whole history
+   /// in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>MIN</c> produces over the
+   /// same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - MIN_Lookback(...)</c> values and
+   /// must not alias the inputs or each other — this path writes the outputs and
+   /// then reads the input tail to seed its rings, so the batch tier's in-place
+   /// allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="MIN_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inReal">Source series to take the minimum of. The warm-up history, oldest bar
+   /// first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="MIN_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="outReal">Lowest input value over the trailing window. Must hold at least
+   /// <c>historyLen - MIN_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MIN_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public MIN_Stream MIN_OpenAndFill( double[] inReal, int optInTimePeriod, double[] outReal )
+   {
+      MIN_Stream sp = new MIN_Stream(this);
+      RetCode retCode = MIN_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("MIN", "openAndFill", retCode);
+   }
 }

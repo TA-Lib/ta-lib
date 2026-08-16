@@ -526,4 +526,461 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>T3</c> stream: one value per closed bar, bit-identical to
+   /// <c>T3</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.T3_Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class T3_Stream
+   {
+      internal Core core;
+      internal int optInTimePeriod;
+      internal double optInVFactor;
+      internal double k;
+      internal double one_minus_k;
+      internal double e1;
+      internal double e2;
+      internal double e3;
+      internal double e4;
+      internal double e5;
+      internal double e6;
+      internal double c1;
+      internal double c2;
+      internal double c3;
+      internal double c4;
+      internal double cur_outReal;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal T3_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>T3_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
+      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal T3_Stream( T3_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.optInVFactor = other.optInVFactor;
+         this.k = other.k;
+         this.one_minus_k = other.one_minus_k;
+         this.e1 = other.e1;
+         this.e2 = other.e2;
+         this.e3 = other.e3;
+         this.e4 = other.e4;
+         this.e5 = other.e5;
+         this.e6 = other.e6;
+         this.c1 = other.c1;
+         this.c2 = other.c2;
+         this.c3 = other.c3;
+         this.c4 = other.c4;
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( T3_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.optInVFactor = other.optInVFactor;
+         this.k = other.k;
+         this.one_minus_k = other.one_minus_k;
+         this.e1 = other.e1;
+         this.e2 = other.e2;
+         this.e3 = other.e3;
+         this.e4 = other.e4;
+         this.e5 = other.e5;
+         this.e6 = other.e6;
+         this.c1 = other.c1;
+         this.c2 = other.c2;
+         this.c3 = other.c3;
+         this.c4 = other.c4;
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inReal">Source series to smooth.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public double Update( double inReal )
+      {
+         core.T3_StreamStep(this, inReal);
+         return cur_outReal;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a throwaway copy, which for this handle's shape is cheaper than
+      /// reusing one.</para>
+      /// </remarks>
+      /// <param name="inReal">Source series to smooth.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public double Peek( double inReal )
+      {
+         T3_Stream scratch = new T3_Stream(this);
+         core.T3_StreamStep(scratch, inReal);
+         return scratch.cur_outReal;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public double Value => cur_outReal;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public T3_Stream Clone()
+      {
+         return new T3_Stream(this);
+      }
+   }
+
+   internal void T3_StreamStep( T3_Stream sp, double inReal )
+   {
+      if( sp.optInTimePeriod == 1 ) {
+         sp.cur_outReal = inReal;
+         return ;
+      }
+      sp.e1 = Math.FusedMultiplyAdd(sp.one_minus_k, sp.e1, sp.k * inReal);
+      sp.e2 = Math.FusedMultiplyAdd(sp.one_minus_k, sp.e2, sp.k * sp.e1);
+      sp.e3 = Math.FusedMultiplyAdd(sp.one_minus_k, sp.e3, sp.k * sp.e2);
+      sp.e4 = Math.FusedMultiplyAdd(sp.one_minus_k, sp.e4, sp.k * sp.e3);
+      sp.e5 = Math.FusedMultiplyAdd(sp.one_minus_k, sp.e5, sp.k * sp.e4);
+      sp.e6 = Math.FusedMultiplyAdd(sp.one_minus_k, sp.e6, sp.k * sp.e5);
+      sp.cur_outReal = Math.FusedMultiplyAdd(sp.c4, sp.e3, Math.FusedMultiplyAdd(sp.c3, sp.e4, Math.FusedMultiplyAdd(sp.c1, sp.e6, sp.c2 * sp.e5)));
+   }
+
+   private RetCode T3_OpenCore( T3_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, double optInVFactor, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      int outIdx = 0;
+      int lookbackTotal = 0;
+      int today = 0;
+      int i = 0;
+      double k = 0;
+      double one_minus_k = 0;
+      double e1 = 0;
+      double e2 = 0;
+      double e3 = 0;
+      double e4 = 0;
+      double e5 = 0;
+      double e6 = 0;
+      double c1 = 0;
+      double c2 = 0;
+      double c3 = 0;
+      double c4 = 0;
+      double tempReal = 0;
+      int historyLen = inReal.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInTimePeriod == int.MinValue ) {
+         optInTimePeriod = 5;
+      } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( optInVFactor == TA_REAL_DEFAULT ) {
+         optInVFactor = 7e-1;
+      } else if( optInVFactor < 0e0 || optInVFactor > 1e0 ) {
+         return RetCode.BadParam;
+      }
+      if( optInTimePeriod == 1 ) {
+         if( historyLen < T3_Lookback(optInTimePeriod, optInVFactor) + 1 ) {
+            return RetCode.OutOfRangeEndIndex;
+         }
+         sp.optInTimePeriod = optInTimePeriod;
+         sp.optInVFactor = optInVFactor;
+         sp.k = 0.0;
+         sp.one_minus_k = 0.0;
+         sp.e1 = 0.0;
+         sp.e2 = 0.0;
+         sp.e3 = 0.0;
+         sp.e4 = 0.0;
+         sp.e5 = 0.0;
+         sp.e6 = 0.0;
+         sp.c1 = 0.0;
+         sp.c2 = 0.0;
+         sp.c3 = 0.0;
+         sp.c4 = 0.0;
+         int fillLb = T3_Lookback(optInTimePeriod, optInVFactor);
+         outBegIdx = fillLb;
+         outNBElement = historyLen - fillLb;
+         if( outStride == 0 ) {
+            outReal[0] = inReal[historyLen - 1];
+         } else {
+            for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+               outReal[fillIdx] = inReal[fillLb + fillIdx];
+            }
+         }
+         sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+         return RetCode.Success;
+      }
+      /* For an explanation of this function, please read:
+       *
+       * Magazine articles written by Tim Tillson
+       *
+       * Essentially, a T3 of time serie 't' is:
+       *   EMA1(x,Period) = EMA(x,Period)
+       *   EMA2(x,Period) = EMA(EMA1(x,Period),Period)
+       *   GD(x,Period,vFactor) = (EMA1(x,Period)*(1+vFactor)) - (EMA2(x,Period)*vFactor)
+       *   T3 = GD (GD ( GD(t, Period, vFactor), Period, vFactor), Period, vFactor);
+       *
+       * T3 offers a moving average with less lags then the
+       * traditional EMA.
+       *
+       * Do not confuse a T3 with EMA3. Both are called "Triple EMA"
+       * in the litterature.
+       */
+      lookbackTotal = 6 * (optInTimePeriod - 1) + this.unstablePeriod[(int)FuncUnstId.T3];
+      if( startIdx <= lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outNBElement = 0;
+         outBegIdx = 0;
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      outBegIdx = startIdx;
+      today = startIdx - lookbackTotal;
+      k = 2.0 / (optInTimePeriod + 1.0);
+      one_minus_k = 1.0 - k;
+      /* Initialize e1 */
+      tempReal = inReal[today++];
+      for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
+         tempReal += inReal[today++];
+      }
+      e1 = tempReal / optInTimePeriod;
+      /* Initialize e2 */
+      tempReal = e1;
+      for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
+         e1 = Math.FusedMultiplyAdd(one_minus_k, e1, k * inReal[today++]);
+         tempReal += e1;
+      }
+      e2 = tempReal / optInTimePeriod;
+      /* Initialize e3 */
+      tempReal = e2;
+      for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
+         e1 = Math.FusedMultiplyAdd(one_minus_k, e1, k * inReal[today++]);
+         e2 = Math.FusedMultiplyAdd(one_minus_k, e2, k * e1);
+         tempReal += e2;
+      }
+      e3 = tempReal / optInTimePeriod;
+      /* Initialize e4 */
+      tempReal = e3;
+      for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
+         e1 = Math.FusedMultiplyAdd(one_minus_k, e1, k * inReal[today++]);
+         e2 = Math.FusedMultiplyAdd(one_minus_k, e2, k * e1);
+         e3 = Math.FusedMultiplyAdd(one_minus_k, e3, k * e2);
+         tempReal += e3;
+      }
+      e4 = tempReal / optInTimePeriod;
+      /* Initialize e5 */
+      tempReal = e4;
+      for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
+         e1 = Math.FusedMultiplyAdd(one_minus_k, e1, k * inReal[today++]);
+         e2 = Math.FusedMultiplyAdd(one_minus_k, e2, k * e1);
+         e3 = Math.FusedMultiplyAdd(one_minus_k, e3, k * e2);
+         e4 = Math.FusedMultiplyAdd(one_minus_k, e4, k * e3);
+         tempReal += e4;
+      }
+      e5 = tempReal / optInTimePeriod;
+      /* Initialize e6 */
+      tempReal = e5;
+      for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
+         e1 = Math.FusedMultiplyAdd(one_minus_k, e1, k * inReal[today++]);
+         e2 = Math.FusedMultiplyAdd(one_minus_k, e2, k * e1);
+         e3 = Math.FusedMultiplyAdd(one_minus_k, e3, k * e2);
+         e4 = Math.FusedMultiplyAdd(one_minus_k, e4, k * e3);
+         e5 = Math.FusedMultiplyAdd(one_minus_k, e5, k * e4);
+         tempReal += e5;
+      }
+      e6 = tempReal / optInTimePeriod;
+      /* Skip the unstable period */
+      while( today <= startIdx ) {
+         /* Do the calculation but do not write the output */
+         e1 = Math.FusedMultiplyAdd(one_minus_k, e1, k * inReal[today++]);
+         e2 = Math.FusedMultiplyAdd(one_minus_k, e2, k * e1);
+         e3 = Math.FusedMultiplyAdd(one_minus_k, e3, k * e2);
+         e4 = Math.FusedMultiplyAdd(one_minus_k, e4, k * e3);
+         e5 = Math.FusedMultiplyAdd(one_minus_k, e5, k * e4);
+         e6 = Math.FusedMultiplyAdd(one_minus_k, e6, k * e5);
+      }
+      /* Calculate the constants */
+      tempReal = optInVFactor * optInVFactor;
+      c1 = 0 - tempReal * optInVFactor;
+      c2 = 3.0 * (tempReal - c1);
+      c3 = (0 - 6.0) * tempReal - 3.0 * (optInVFactor - c1);
+      c4 = Math.FusedMultiplyAdd(3.0, tempReal, Math.FusedMultiplyAdd(3.0, optInVFactor, 1.0) - c1);
+      /* Write the first output */
+      outIdx = 0;
+      outReal[outIdx++ * outStride] = Math.FusedMultiplyAdd(c4, e3, Math.FusedMultiplyAdd(c3, e4, Math.FusedMultiplyAdd(c1, e6, c2 * e5)));
+      /* Calculate and output the remaining of the range. */
+      while( today <= endIdx ) {
+         e1 = Math.FusedMultiplyAdd(one_minus_k, e1, k * inReal[today++]);
+         e2 = Math.FusedMultiplyAdd(one_minus_k, e2, k * e1);
+         e3 = Math.FusedMultiplyAdd(one_minus_k, e3, k * e2);
+         e4 = Math.FusedMultiplyAdd(one_minus_k, e4, k * e3);
+         e5 = Math.FusedMultiplyAdd(one_minus_k, e5, k * e4);
+         e6 = Math.FusedMultiplyAdd(one_minus_k, e6, k * e5);
+         outReal[outIdx++ * outStride] = Math.FusedMultiplyAdd(c4, e3, Math.FusedMultiplyAdd(c3, e4, Math.FusedMultiplyAdd(c1, e6, c2 * e5)));
+      }
+      /* Indicates to the caller the number of output
+       * successfully calculated.
+       */
+      outNBElement = outIdx;
+      /* Capture the live batch state into the handle. */
+      sp.optInTimePeriod = optInTimePeriod;
+      sp.optInVFactor = optInVFactor;
+      sp.k = k;
+      sp.one_minus_k = one_minus_k;
+      sp.e1 = e1;
+      sp.e2 = e2;
+      sp.e3 = e3;
+      sp.e4 = e4;
+      sp.e5 = e5;
+      sp.e6 = e6;
+      sp.c1 = c1;
+      sp.c2 = c2;
+      sp.c3 = c3;
+      sp.c4 = c4;
+      sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode T3_OpenBody( T3_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, double optInVFactor )
+   {
+      double[] sink_outReal = new double[1];
+      return T3_OpenCore( sp, inReal, startIdx, optInTimePeriod, optInVFactor, out _, out _, sink_outReal, 0 );
+   }
+
+   private RetCode T3_OpenAndFillBody( T3_Stream sp, double[] inReal, int optInTimePeriod, double optInVFactor, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outReal, inReal) ) {
+         return RetCode.BadParam;
+      }
+      return T3_OpenCore( sp, inReal, 0, optInTimePeriod, optInVFactor, out outBegIdx, out outNBElement, outReal, 1 );
+   }
+
+   private RetCode T3_OpenAndFillInternalBody( T3_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, double optInVFactor, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      return T3_OpenCore(sp, inReal, startIdx, optInTimePeriod, optInVFactor, out outBegIdx, out outNBElement, outReal, 1);
+   }
+
+   /* T3_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal T3_Stream T3_OpenAndFillInternal( double[] inReal, int startIdx, int optInTimePeriod, double optInVFactor, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      T3_Stream sp = new T3_Stream(this);
+      RetCode retCode = T3_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, optInVFactor, out outBegIdx, out outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("T3", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind T3_Open (composition seam). */
+   internal T3_Stream T3_OpenInternal( double[] inReal, int startIdx, int optInTimePeriod, double optInVFactor )
+   {
+      T3_Stream sp = new T3_Stream(this);
+      RetCode retCode = T3_OpenBody(sp, inReal, startIdx, optInTimePeriod, optInVFactor);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("T3", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>T3</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="T3_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>T3</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>T3_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>T3_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inReal">Source series to smooth. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="T3_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInVFactor">As in the batch call; see <see cref="T3_Lookback"/> for its default and
+   /// range (<c>-4e37</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>T3_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public T3_Stream T3_Open( double[] inReal, int optInTimePeriod, double optInVFactor )
+   {
+      return T3_OpenInternal(inReal, 0, optInTimePeriod, optInVFactor);
+   }
+
+   /// <summary><c>T3_Open</c> that also fills the output array(s) over the whole history
+   /// in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>T3</c> produces over the
+   /// same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - T3_Lookback(...)</c> values and
+   /// must not alias the inputs or each other — this path writes the outputs and
+   /// then reads the input tail to seed its rings, so the batch tier's in-place
+   /// allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="T3_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inReal">Source series to smooth. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="T3_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInVFactor">As in the batch call; see <see cref="T3_Lookback"/> for its default and
+   /// range (<c>-4e37</c> selects the default).</param>
+   /// <param name="outReal">T3 smoothed line. Must hold at least <c>historyLen - T3_Lookback(...)</c>
+   /// values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>T3_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public T3_Stream T3_OpenAndFill( double[] inReal, int optInTimePeriod, double optInVFactor, double[] outReal )
+   {
+      T3_Stream sp = new T3_Stream(this);
+      RetCode retCode = T3_OpenAndFillBody(sp, inReal, optInTimePeriod, optInVFactor, out int outBegIdx, out int outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("T3", "openAndFill", retCode);
+   }
 }

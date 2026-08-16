@@ -675,4 +675,619 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>ULTOSC</c> stream: one value per closed bar, bit-identical to
+   /// <c>ULTOSC</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.ULTOSC_Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class ULTOSC_Stream
+   {
+      internal Core core;
+      internal int optInTimePeriod1;
+      internal int optInTimePeriod2;
+      internal int optInTimePeriod3;
+      internal double a1Total;
+      internal double a2Total;
+      internal double a3Total;
+      internal double b1Total;
+      internal double b2Total;
+      internal double b3Total;
+      internal double output;
+      internal int trailingPos1;
+      internal int trailingPos2;
+      internal int term_Idx;
+      internal int maxIdx_term;
+      internal double lag1_inClose;
+      internal int cbSize_term;
+      internal double[] cb_term_closeMinusTrueLow = [];
+      internal double[] cb_term_trueRange = [];
+      internal double cur_outReal;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal ULTOSC_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>ULTOSC_OpenAndFill</c> filled, or
+      /// <see cref="OutRange.Empty"/> when this handle came from a plain open
+      /// (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal ULTOSC_Stream( ULTOSC_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod1 = other.optInTimePeriod1;
+         this.optInTimePeriod2 = other.optInTimePeriod2;
+         this.optInTimePeriod3 = other.optInTimePeriod3;
+         this.a1Total = other.a1Total;
+         this.a2Total = other.a2Total;
+         this.a3Total = other.a3Total;
+         this.b1Total = other.b1Total;
+         this.b2Total = other.b2Total;
+         this.b3Total = other.b3Total;
+         this.output = other.output;
+         this.trailingPos1 = other.trailingPos1;
+         this.trailingPos2 = other.trailingPos2;
+         this.term_Idx = other.term_Idx;
+         this.maxIdx_term = other.maxIdx_term;
+         this.lag1_inClose = other.lag1_inClose;
+         this.cbSize_term = other.cbSize_term;
+         this.cb_term_closeMinusTrueLow = new double[other.cb_term_closeMinusTrueLow.Length];
+         Array.Copy( other.cb_term_closeMinusTrueLow, this.cb_term_closeMinusTrueLow, other.cb_term_closeMinusTrueLow.Length );
+         this.cb_term_trueRange = new double[other.cb_term_trueRange.Length];
+         Array.Copy( other.cb_term_trueRange, this.cb_term_trueRange, other.cb_term_trueRange.Length );
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( ULTOSC_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod1 = other.optInTimePeriod1;
+         this.optInTimePeriod2 = other.optInTimePeriod2;
+         this.optInTimePeriod3 = other.optInTimePeriod3;
+         this.a1Total = other.a1Total;
+         this.a2Total = other.a2Total;
+         this.a3Total = other.a3Total;
+         this.b1Total = other.b1Total;
+         this.b2Total = other.b2Total;
+         this.b3Total = other.b3Total;
+         this.output = other.output;
+         this.trailingPos1 = other.trailingPos1;
+         this.trailingPos2 = other.trailingPos2;
+         this.term_Idx = other.term_Idx;
+         this.maxIdx_term = other.maxIdx_term;
+         this.lag1_inClose = other.lag1_inClose;
+         this.cbSize_term = other.cbSize_term;
+         if( this.cb_term_closeMinusTrueLow.Length != other.cb_term_closeMinusTrueLow.Length ) {
+            this.cb_term_closeMinusTrueLow = new double[other.cb_term_closeMinusTrueLow.Length];
+         }
+         Array.Copy( other.cb_term_closeMinusTrueLow, this.cb_term_closeMinusTrueLow, other.cb_term_closeMinusTrueLow.Length );
+         if( this.cb_term_trueRange.Length != other.cb_term_trueRange.Length ) {
+            this.cb_term_trueRange = new double[other.cb_term_trueRange.Length];
+         }
+         Array.Copy( other.cb_term_trueRange, this.cb_term_trueRange, other.cb_term_trueRange.Length );
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /* Peek's reusable scratch — one per thread, see CopyFrom. */
+      [ThreadStatic] private static ULTOSC_Stream? peekScratch;
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <param name="inClose">Close price of each bar.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public double Update( double inHigh, double inLow, double inClose )
+      {
+         core.ULTOSC_StreamStep(this, inHigh, inLow, inClose);
+         return cur_outReal;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a scratch handle held per thread and reused, so the copy
+      /// allocates nothing after the first peek of this indicator on this thread.
+      /// That scratch is retained for the life of the thread.</para>
+      /// </remarks>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <param name="inClose">Close price of each bar.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public double Peek( double inHigh, double inLow, double inClose )
+      {
+         ULTOSC_Stream? scratch = peekScratch;
+         if( scratch is null ) {
+            scratch = new ULTOSC_Stream(this);
+            peekScratch = scratch;
+         } else {
+            scratch.CopyFrom(this);
+         }
+         core.ULTOSC_StreamStep(scratch, inHigh, inLow, inClose);
+         return scratch.cur_outReal;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public double Value => cur_outReal;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public ULTOSC_Stream Clone()
+      {
+         return new ULTOSC_Stream(this);
+      }
+   }
+
+   internal void ULTOSC_StreamStep( ULTOSC_Stream sp, double inHigh, double inLow, double inClose )
+   {
+      double trueLow = 0.0;
+      double trueRange = 0.0;
+      double closeMinusTrueLow = 0.0;
+      double tempDouble = 0.0;
+      double tempHT = 0.0;
+      double tempLT = 0.0;
+      double tempCY = 0.0;
+      /* Add on today's terms */
+      tempLT = inLow;
+      tempHT = inHigh;
+      tempCY = sp.lag1_inClose;
+      trueLow = Math.Min(tempLT, tempCY);
+      closeMinusTrueLow = inClose - trueLow;
+      trueRange = tempHT - tempLT;
+      tempDouble = Math.Abs(tempCY - tempHT);
+      if( tempDouble > trueRange ) {
+         trueRange = tempDouble;
+      }
+      tempDouble = Math.Abs(tempCY - tempLT);
+      if( tempDouble > trueRange ) {
+         trueRange = tempDouble;
+      }
+      sp.cb_term_closeMinusTrueLow[sp.term_Idx] = closeMinusTrueLow;
+      sp.cb_term_trueRange[sp.term_Idx] = trueRange;
+      sp.a1Total += closeMinusTrueLow;
+      sp.a2Total += closeMinusTrueLow;
+      sp.a3Total += closeMinusTrueLow;
+      sp.b1Total += trueRange;
+      sp.b2Total += trueRange;
+      sp.b3Total += trueRange;
+      /* Calculate the oscillator value for today */
+      sp.output = 0.0;
+      if( !((-0.00000000000001 < sp.b1Total) && (sp.b1Total < 0.00000000000001)) ) {
+         sp.output += 4.0 * (sp.a1Total / sp.b1Total);
+      }
+      if( !((-0.00000000000001 < sp.b2Total) && (sp.b2Total < 0.00000000000001)) ) {
+         sp.output += 2.0 * (sp.a2Total / sp.b2Total);
+      }
+      if( !((-0.00000000000001 < sp.b3Total) && (sp.b3Total < 0.00000000000001)) ) {
+         sp.output += sp.a3Total / sp.b3Total;
+      }
+      /* Remove the trailing terms to prepare for next day. Each was evaluated
+       * once, when its bar entered the ring.
+       */
+      sp.a1Total -= sp.cb_term_closeMinusTrueLow[sp.trailingPos1];
+      sp.b1Total -= sp.cb_term_trueRange[sp.trailingPos1];
+      sp.trailingPos1 += 1;
+      if( sp.trailingPos1 >= sp.optInTimePeriod3 ) {
+         sp.trailingPos1 = 0;
+      }
+      sp.a2Total -= sp.cb_term_closeMinusTrueLow[sp.trailingPos2];
+      sp.b2Total -= sp.cb_term_trueRange[sp.trailingPos2];
+      sp.trailingPos2 += 1;
+      if( sp.trailingPos2 >= sp.optInTimePeriod3 ) {
+         sp.trailingPos2 = 0;
+      }
+      sp.term_Idx = sp.term_Idx + 1;
+      if( sp.term_Idx > sp.maxIdx_term ) {
+         sp.term_Idx = 0;
+      }
+      sp.a3Total -= sp.cb_term_closeMinusTrueLow[sp.term_Idx];
+      sp.b3Total -= sp.cb_term_trueRange[sp.term_Idx];
+      /* Last operation is to write the output. Must
+       * be done after the trailing index have all been
+       * taken care of because the caller is allowed
+       * to have the input array to be also the output
+       * array.
+       */
+      sp.cur_outReal = 100.0 * (sp.output / 7.0);
+      /* Increment indexes */
+      sp.lag1_inClose = inClose;
+   }
+
+   private RetCode ULTOSC_OpenCore( ULTOSC_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      double a1Total = 0;
+      double a2Total = 0;
+      double a3Total = 0;
+      double b1Total = 0;
+      double b2Total = 0;
+      double b3Total = 0;
+      double trueLow = 0;
+      double trueRange = 0;
+      double closeMinusTrueLow = 0;
+      double tempDouble = 0;
+      double output = 0;
+      double tempHT = 0;
+      double tempLT = 0;
+      double tempCY = 0;
+      int lookbackTotal = 0;
+      int longestPeriod = 0;
+      int longestIndex = 0;
+      int i = 0;
+      int j = 0;
+      int today = 0;
+      int outIdx = 0;
+      int trailingPos1 = 0;
+      int trailingPos2 = 0;
+      int[] usedFlag = new int[3];
+      int[] periods = new int[3];
+      int[] sortedPeriods = new int[3];
+      double[] term_closeMinusTrueLow = [];
+      double[] term_trueRange = [];
+      int term_Idx = 0;
+      int maxIdx_term = (32)-1;
+      int historyLen = inHigh.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 || inLow.Length != inHigh.Length || inClose.Length != inHigh.Length ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInTimePeriod1 == int.MinValue ) {
+         optInTimePeriod1 = 7;
+      } else if( optInTimePeriod1 < 1 || optInTimePeriod1 > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( optInTimePeriod2 == int.MinValue ) {
+         optInTimePeriod2 = 14;
+      } else if( optInTimePeriod2 < 1 || optInTimePeriod2 > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( optInTimePeriod3 == int.MinValue ) {
+         optInTimePeriod3 = 28;
+      } else if( optInTimePeriod3 < 1 || optInTimePeriod3 > 100000 ) {
+         return RetCode.BadParam;
+      }
+      /* The two per-bar terms the three moving sums are built from. Both are a
+       * pure function of the bar, so each bar is evaluated once on entry and read
+       * back when it leaves each of the three windows.
+       */
+      /* One entry per bar of the longest window. Stays on the stack for every
+       * period up to 32, which covers the 7/14/28 default.
+       */
+      /* Id, Type, Static Size */
+      outBegIdx = 0;
+      outNBElement = 0;
+      /* Ensure that the time periods are ordered from shortest to longest.
+       * Sort.
+       */
+      periods[0] = optInTimePeriod1;
+      periods[1] = optInTimePeriod2;
+      periods[2] = optInTimePeriod3;
+      usedFlag[0] = 0;
+      usedFlag[1] = 0;
+      usedFlag[2] = 0;
+      for( i = 0; i < 3; i += 1 ) {
+         longestPeriod = 0;
+         longestIndex = 0;
+         for( j = 0; j < 3; j += 1 ) {
+            if( usedFlag[j] == 0 && periods[j] > longestPeriod ) {
+               longestPeriod = periods[j];
+               longestIndex = j;
+            }
+         }
+         usedFlag[longestIndex] = 1;
+         sortedPeriods[i] = longestPeriod;
+      }
+      optInTimePeriod1 = sortedPeriods[2];
+      optInTimePeriod2 = sortedPeriods[1];
+      optInTimePeriod3 = sortedPeriods[0];
+      /* Adjust startIdx for lookback period. */
+      lookbackTotal = ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      if( optInTimePeriod3 < 1 ) return RetCode.InternalError;
+      term_closeMinusTrueLow = new double[optInTimePeriod3];
+      term_trueRange = new double[optInTimePeriod3];
+      maxIdx_term = (optInTimePeriod3)-1;
+      term_Idx = 0;
+      /* Prime running totals used in moving averages.
+       *
+       * One pass over the longest warm-up window replaces three overlapping
+       * passes. A bar inside the shorter windows is added to those totals as it
+       * is reached, so every total still accumulates exactly the same bars in
+       * exactly the same ascending order as three separate loops did.
+       */
+      a1Total = 0;
+      b1Total = 0;
+      a2Total = 0;
+      b2Total = 0;
+      a3Total = 0;
+      b3Total = 0;
+      for( i = startIdx - optInTimePeriod3 + 1; i < startIdx; i += 1 ) {
+         tempLT = inLow[i];
+         tempHT = inHigh[i];
+         tempCY = inClose[i - 1];
+         trueLow = Math.Min(tempLT, tempCY);
+         closeMinusTrueLow = inClose[i] - trueLow;
+         trueRange = tempHT - tempLT;
+         tempDouble = Math.Abs(tempCY - tempHT);
+         if( tempDouble > trueRange ) {
+            trueRange = tempDouble;
+         }
+         tempDouble = Math.Abs(tempCY - tempLT);
+         if( tempDouble > trueRange ) {
+            trueRange = tempDouble;
+         }
+         term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+         term_trueRange[term_Idx] = trueRange;
+         term_Idx++;
+         if( term_Idx > maxIdx_term ) { term_Idx = 0; }
+         if( i >= startIdx - optInTimePeriod1 + 1 ) {
+            a1Total += closeMinusTrueLow;
+            b1Total += trueRange;
+         }
+         if( i >= startIdx - optInTimePeriod2 + 1 ) {
+            a2Total += closeMinusTrueLow;
+            b2Total += trueRange;
+         }
+         a3Total += closeMinusTrueLow;
+         b3Total += trueRange;
+      }
+      /* Calculate oscillator */
+      today = startIdx;
+      outIdx = 0;
+      /* The warm-up wrote optInTimePeriod3-1 bars, so term_Idx is the slot for
+       * `today` and, once advanced past it, the slot of the bar leaving the
+       * longest window. The two shorter windows trail it by a fixed offset.
+       */
+      trailingPos1 = term_Idx + optInTimePeriod3 - optInTimePeriod1 + 1;
+      if( trailingPos1 >= optInTimePeriod3 ) {
+         trailingPos1 -= optInTimePeriod3;
+      }
+      trailingPos2 = term_Idx + optInTimePeriod3 - optInTimePeriod2 + 1;
+      if( trailingPos2 >= optInTimePeriod3 ) {
+         trailingPos2 -= optInTimePeriod3;
+      }
+      while( today <= endIdx ) {
+         /* Add on today's terms */
+         tempLT = inLow[today];
+         tempHT = inHigh[today];
+         tempCY = inClose[today - 1];
+         trueLow = Math.Min(tempLT, tempCY);
+         closeMinusTrueLow = inClose[today] - trueLow;
+         trueRange = tempHT - tempLT;
+         tempDouble = Math.Abs(tempCY - tempHT);
+         if( tempDouble > trueRange ) {
+            trueRange = tempDouble;
+         }
+         tempDouble = Math.Abs(tempCY - tempLT);
+         if( tempDouble > trueRange ) {
+            trueRange = tempDouble;
+         }
+         term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
+         term_trueRange[term_Idx] = trueRange;
+         a1Total += closeMinusTrueLow;
+         a2Total += closeMinusTrueLow;
+         a3Total += closeMinusTrueLow;
+         b1Total += trueRange;
+         b2Total += trueRange;
+         b3Total += trueRange;
+         /* Calculate the oscillator value for today */
+         output = 0.0;
+         if( !((-0.00000000000001 < b1Total) && (b1Total < 0.00000000000001)) ) {
+            output += 4.0 * (a1Total / b1Total);
+         }
+         if( !((-0.00000000000001 < b2Total) && (b2Total < 0.00000000000001)) ) {
+            output += 2.0 * (a2Total / b2Total);
+         }
+         if( !((-0.00000000000001 < b3Total) && (b3Total < 0.00000000000001)) ) {
+            output += a3Total / b3Total;
+         }
+         /* Remove the trailing terms to prepare for next day. Each was evaluated
+          * once, when its bar entered the ring.
+          */
+         a1Total -= term_closeMinusTrueLow[trailingPos1];
+         b1Total -= term_trueRange[trailingPos1];
+         trailingPos1 += 1;
+         if( trailingPos1 >= optInTimePeriod3 ) {
+            trailingPos1 = 0;
+         }
+         a2Total -= term_closeMinusTrueLow[trailingPos2];
+         b2Total -= term_trueRange[trailingPos2];
+         trailingPos2 += 1;
+         if( trailingPos2 >= optInTimePeriod3 ) {
+            trailingPos2 = 0;
+         }
+         term_Idx++;
+         if( term_Idx > maxIdx_term ) { term_Idx = 0; }
+         a3Total -= term_closeMinusTrueLow[term_Idx];
+         b3Total -= term_trueRange[term_Idx];
+         /* Last operation is to write the output. Must
+          * be done after the trailing index have all been
+          * taken care of because the caller is allowed
+          * to have the input array to be also the output
+          * array.
+          */
+         outReal[outIdx * outStride] = 100.0 * (output / 7.0);
+         /* Increment indexes */
+         outIdx += 1;
+         today += 1;
+      }
+      /* All done. Indicate the output limits and return. */
+      outNBElement = outIdx;
+      outBegIdx = startIdx;
+      /* Capture the live batch state into the handle. */
+      int capCb_term = maxIdx_term + 1;
+      if( capCb_term > historyLen + 1 ) {
+         return RetCode.InternalError;
+      }
+      sp.optInTimePeriod1 = optInTimePeriod1;
+      sp.optInTimePeriod2 = optInTimePeriod2;
+      sp.optInTimePeriod3 = optInTimePeriod3;
+      sp.a1Total = a1Total;
+      sp.a2Total = a2Total;
+      sp.a3Total = a3Total;
+      sp.b1Total = b1Total;
+      sp.b2Total = b2Total;
+      sp.b3Total = b3Total;
+      sp.output = output;
+      sp.trailingPos1 = trailingPos1;
+      sp.trailingPos2 = trailingPos2;
+      sp.term_Idx = term_Idx;
+      sp.maxIdx_term = maxIdx_term;
+      sp.lag1_inClose = inClose[historyLen - 1];
+      sp.cbSize_term = capCb_term;
+      sp.cb_term_closeMinusTrueLow = term_closeMinusTrueLow;
+      sp.cb_term_trueRange = term_trueRange;
+      sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode ULTOSC_OpenBody( ULTOSC_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
+   {
+      double[] sink_outReal = new double[1];
+      return ULTOSC_OpenCore( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out _, out _, sink_outReal, 0 );
+   }
+
+   private RetCode ULTOSC_OpenAndFillBody( ULTOSC_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outReal, inHigh) || ReferenceEquals(outReal, inLow) || ReferenceEquals(outReal, inClose) ) {
+         return RetCode.BadParam;
+      }
+      return ULTOSC_OpenCore( sp, inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out outBegIdx, out outNBElement, outReal, 1 );
+   }
+
+   private RetCode ULTOSC_OpenAndFillInternalBody( ULTOSC_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      return ULTOSC_OpenCore(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out outBegIdx, out outNBElement, outReal, 1);
+   }
+
+   /* ULTOSC_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal ULTOSC_Stream ULTOSC_OpenAndFillInternal( double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      ULTOSC_Stream sp = new ULTOSC_Stream(this);
+      RetCode retCode = ULTOSC_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out outBegIdx, out outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("ULTOSC", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind ULTOSC_Open (composition seam). */
+   internal ULTOSC_Stream ULTOSC_OpenInternal( double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
+   {
+      ULTOSC_Stream sp = new ULTOSC_Stream(this);
+      RetCode retCode = ULTOSC_OpenBody(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("ULTOSC", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>ULTOSC</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="ULTOSC_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>ULTOSC</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>ULTOSC_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>ULTOSC_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod1">As in the batch call; see <see cref="ULTOSC_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInTimePeriod2">As in the batch call; see <see cref="ULTOSC_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInTimePeriod3">As in the batch call; see <see cref="ULTOSC_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>ULTOSC_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public ULTOSC_Stream ULTOSC_Open( double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
+   {
+      return ULTOSC_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
+   }
+
+   /// <summary><c>ULTOSC_Open</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>ULTOSC</c> produces over
+   /// the same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - ULTOSC_Lookback(...)</c> values
+   /// and must not alias the inputs or each other — this path writes the outputs
+   /// and then reads the input tail to seed its rings, so the batch tier's
+   /// in-place allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="ULTOSC_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod1">As in the batch call; see <see cref="ULTOSC_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInTimePeriod2">As in the batch call; see <see cref="ULTOSC_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInTimePeriod3">As in the batch call; see <see cref="ULTOSC_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="outReal">Ultimate Oscillator value. Must hold at least <c>historyLen -
+   /// ULTOSC_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>ULTOSC_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public ULTOSC_Stream ULTOSC_OpenAndFill( double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, double[] outReal )
+   {
+      ULTOSC_Stream sp = new ULTOSC_Stream(this);
+      RetCode retCode = ULTOSC_OpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out int outBegIdx, out int outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("ULTOSC", "openAndFill", retCode);
+   }
 }

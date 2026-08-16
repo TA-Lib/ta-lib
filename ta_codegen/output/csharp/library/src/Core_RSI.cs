@@ -517,4 +517,425 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>RSI</c> stream: one value per closed bar, bit-identical to
+   /// <c>RSI</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.RSI_Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class RSI_Stream
+   {
+      internal Core core;
+      internal int optInTimePeriod;
+      internal double prevGain;
+      internal double prevLoss;
+      internal double prevValue;
+      internal double cur_outReal;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal RSI_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>RSI_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
+      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal RSI_Stream( RSI_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.prevGain = other.prevGain;
+         this.prevLoss = other.prevLoss;
+         this.prevValue = other.prevValue;
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( RSI_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.prevGain = other.prevGain;
+         this.prevLoss = other.prevLoss;
+         this.prevValue = other.prevValue;
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inReal">Price series (typically close)</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public double Update( double inReal )
+      {
+         core.RSI_StreamStep(this, inReal);
+         return cur_outReal;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a throwaway copy, which for this handle's shape is cheaper than
+      /// reusing one.</para>
+      /// </remarks>
+      /// <param name="inReal">Price series (typically close)</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public double Peek( double inReal )
+      {
+         RSI_Stream scratch = new RSI_Stream(this);
+         core.RSI_StreamStep(scratch, inReal);
+         return scratch.cur_outReal;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public double Value => cur_outReal;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public RSI_Stream Clone()
+      {
+         return new RSI_Stream(this);
+      }
+   }
+
+   internal void RSI_StreamStep( RSI_Stream sp, double inReal )
+   {
+      double tempValue1 = 0.0;
+      double tempValue2 = 0.0;
+      if( sp.optInTimePeriod == 1 ) {
+         sp.cur_outReal = inReal;
+         return ;
+      }
+      tempValue1 = (double)inReal;
+      tempValue2 = tempValue1 - sp.prevValue;
+      sp.prevValue = tempValue1;
+      sp.prevLoss *= (double)(sp.optInTimePeriod - 1);
+      sp.prevGain *= (double)(sp.optInTimePeriod - 1);
+      if( tempValue2 < 0.0 ) {
+         sp.prevLoss -= tempValue2;
+      } else {
+         sp.prevGain += tempValue2;
+      }
+      sp.prevLoss /= (double)sp.optInTimePeriod;
+      sp.prevGain /= (double)sp.optInTimePeriod;
+      tempValue1 = sp.prevGain + sp.prevLoss;
+      if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
+         sp.cur_outReal = 100.0 * (sp.prevGain / tempValue1);
+      } else {
+         sp.cur_outReal = 0.0;
+      }
+   }
+
+   private RetCode RSI_OpenCore( RSI_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      int outIdx = 0;
+      int today = 0;
+      int lookbackTotal = 0;
+      int unstablePeriod = 0;
+      int i = 0;
+      double prevGain = 0;
+      double prevLoss = 0;
+      double prevValue = 0;
+      double savePrevValue = 0;
+      double tempValue1 = 0;
+      double tempValue2 = 0;
+      int historyLen = inReal.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInTimePeriod == int.MinValue ) {
+         optInTimePeriod = 14;
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( optInTimePeriod == 1 ) {
+         if( historyLen < RSI_Lookback(optInTimePeriod) + 1 ) {
+            return RetCode.OutOfRangeEndIndex;
+         }
+         sp.optInTimePeriod = optInTimePeriod;
+         sp.prevGain = 0.0;
+         sp.prevLoss = 0.0;
+         sp.prevValue = 0.0;
+         int fillLb = RSI_Lookback(optInTimePeriod);
+         outBegIdx = fillLb;
+         outNBElement = historyLen - fillLb;
+         if( outStride == 0 ) {
+            outReal[0] = inReal[historyLen - 1];
+         } else {
+            for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+               outReal[fillIdx] = inReal[fillLb + fillIdx];
+            }
+         }
+         sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+         return RetCode.Success;
+      }
+      /* The following algorithm is base on the original
+       * work from Wilder's and shall represent the
+       * original idea behind the classic RSI.
+       *
+       * Metastock is starting the calculation one price
+       * bar earlier. To make this possible, they assume
+       * that the very first bar will be identical to the
+       * previous one (no gain or loss).
+       */
+      /* If changing this function, please check also CMO
+       * which is mostly identical (just different in one step
+       * of calculation).
+       */
+      outBegIdx = 0;
+      outNBElement = 0;
+      /* Adjust startIdx to account for the lookback period. */
+      lookbackTotal = (int)RSI_Lookback(optInTimePeriod);
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      outIdx = 0;
+      /* Index into the output. */
+      /* Accumulate Wilder's "Average Gain" and "Average Loss"
+       * among the initial period.
+       */
+      today = startIdx - lookbackTotal;
+      prevValue = (double)inReal[today];
+      unstablePeriod = this.unstablePeriod[(int)FuncUnstId.RSI];
+      /* If there is no unstable period,
+       * calculate the 'additional' initial
+       * price bar who is particuliar to
+       * metastock.
+       * If there is an unstable period,
+       * no need to calculate since this
+       * first value will be surely skip.
+       */
+      /* Remaining of the processing is identical
+       * for both Classic calculation and Metastock.
+       */
+      prevGain = 0.0;
+      prevLoss = 0.0;
+      today = today + 1;
+      for( i = optInTimePeriod; i > 0; i -= 1 ) {
+         tempValue1 = (double)inReal[today];
+         today = today + 1;
+         tempValue2 = tempValue1 - prevValue;
+         prevValue = tempValue1;
+         if( tempValue2 < 0.0 ) {
+            prevLoss -= tempValue2;
+         } else {
+            prevGain += tempValue2;
+         }
+      }
+      /* Subsequent prevLoss and prevGain are smoothed
+       * using the previous values (Wilder's approach).
+       *  1) Multiply the previous by 'period-1'.
+       *  2) Add today value.
+       *  3) Divide by 'period'.
+       */
+      prevLoss /= (double)optInTimePeriod;
+      prevGain /= (double)optInTimePeriod;
+      /* Often documentation present the RSI calculation as follow:
+       *    RSI = 100 - (100 / 1 + (prevGain/prevLoss))
+       *
+       * The following is equivalent:
+       *    RSI = 100 * (prevGain/(prevGain+prevLoss))
+       *
+       * The second equation is used here for speed optimization.
+       */
+      if( today > startIdx ) {
+         tempValue1 = prevGain + prevLoss;
+         if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
+            outReal[outIdx * outStride] = 100.0 * (prevGain / tempValue1);
+            outIdx = outIdx + 1;
+         } else {
+            outReal[outIdx * outStride] = 0.0;
+            outIdx = outIdx + 1;
+         }
+      } else {
+         /* Skip the unstable period. Do the processing
+          * but do not write it in the output.
+          */
+         while( today < startIdx ) {
+            tempValue1 = (double)inReal[today];
+            tempValue2 = tempValue1 - prevValue;
+            prevValue = tempValue1;
+            prevLoss *= (double)(optInTimePeriod - 1);
+            prevGain *= (double)(optInTimePeriod - 1);
+            if( tempValue2 < 0.0 ) {
+               prevLoss -= tempValue2;
+            } else {
+               prevGain += tempValue2;
+            }
+            prevLoss /= (double)optInTimePeriod;
+            prevGain /= (double)optInTimePeriod;
+            today = today + 1;
+         }
+      }
+      /* Unstable period skipped... now continue
+       * processing if needed.
+       */
+      while( today <= endIdx ) {
+         tempValue1 = (double)inReal[today];
+         today = today + 1;
+         tempValue2 = tempValue1 - prevValue;
+         prevValue = tempValue1;
+         prevLoss *= (double)(optInTimePeriod - 1);
+         prevGain *= (double)(optInTimePeriod - 1);
+         if( tempValue2 < 0.0 ) {
+            prevLoss -= tempValue2;
+         } else {
+            prevGain += tempValue2;
+         }
+         prevLoss /= (double)optInTimePeriod;
+         prevGain /= (double)optInTimePeriod;
+         tempValue1 = prevGain + prevLoss;
+         if( !((-0.00000000000001 < tempValue1) && (tempValue1 < 0.00000000000001)) ) {
+            outReal[outIdx * outStride] = 100.0 * (prevGain / tempValue1);
+            outIdx = outIdx + 1;
+         } else {
+            outReal[outIdx * outStride] = 0.0;
+            outIdx = outIdx + 1;
+         }
+      }
+      outBegIdx = startIdx;
+      outNBElement = outIdx;
+      /* Capture the live batch state into the handle. */
+      sp.optInTimePeriod = optInTimePeriod;
+      sp.prevGain = prevGain;
+      sp.prevLoss = prevLoss;
+      sp.prevValue = prevValue;
+      sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode RSI_OpenBody( RSI_Stream sp, double[] inReal, int startIdx, int optInTimePeriod )
+   {
+      double[] sink_outReal = new double[1];
+      return RSI_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+   }
+
+   private RetCode RSI_OpenAndFillBody( RSI_Stream sp, double[] inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outReal, inReal) ) {
+         return RetCode.BadParam;
+      }
+      return RSI_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+   }
+
+   private RetCode RSI_OpenAndFillInternalBody( RSI_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      return RSI_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+   }
+
+   /* RSI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal RSI_Stream RSI_OpenAndFillInternal( double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      RSI_Stream sp = new RSI_Stream(this);
+      RetCode retCode = RSI_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("RSI", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind RSI_Open (composition seam). */
+   internal RSI_Stream RSI_OpenInternal( double[] inReal, int startIdx, int optInTimePeriod )
+   {
+      RSI_Stream sp = new RSI_Stream(this);
+      RetCode retCode = RSI_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("RSI", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>RSI</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="RSI_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>RSI</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>RSI_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>RSI_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inReal">Price series (typically close) The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="RSI_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>RSI_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public RSI_Stream RSI_Open( double[] inReal, int optInTimePeriod )
+   {
+      return RSI_OpenInternal(inReal, 0, optInTimePeriod);
+   }
+
+   /// <summary><c>RSI_Open</c> that also fills the output array(s) over the whole history
+   /// in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>RSI</c> produces over the
+   /// same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - RSI_Lookback(...)</c> values and
+   /// must not alias the inputs or each other — this path writes the outputs and
+   /// then reads the input tail to seed its rings, so the batch tier's in-place
+   /// allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="RSI_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inReal">Price series (typically close) The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="RSI_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="outReal">RSI value. Must hold at least <c>historyLen - RSI_Lookback(...)</c>
+   /// values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>RSI_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public RSI_Stream RSI_OpenAndFill( double[] inReal, int optInTimePeriod, double[] outReal )
+   {
+      RSI_Stream sp = new RSI_Stream(this);
+      RetCode retCode = RSI_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("RSI", "openAndFill", retCode);
+   }
 }

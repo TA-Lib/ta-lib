@@ -353,4 +353,494 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>CDLHIGHWAVE</c> stream: one value per closed bar, bit-identical
+   /// to <c>CDLHIGHWAVE</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.CDLHIGHWAVE_Open"/>. There is no close and
+   /// nothing to dispose — the handle is ordinary managed state, and an
+   /// unreferenced handle is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class CDLHIGHWAVE_Stream
+   {
+      internal Core core;
+      internal double BodyPeriodTotal;
+      internal double ShadowPeriodTotal;
+      internal int ringPos_BodyTrailingIdx;
+      internal int ringCap_BodyTrailingIdx;
+      internal double[] ring_BodyTrailingIdx_inOpen = [];
+      internal double[] ring_BodyTrailingIdx_inHigh = [];
+      internal double[] ring_BodyTrailingIdx_inLow = [];
+      internal double[] ring_BodyTrailingIdx_inClose = [];
+      internal int ringPos_ShadowTrailingIdx;
+      internal int ringCap_ShadowTrailingIdx;
+      internal double[] ring_ShadowTrailingIdx_inOpen = [];
+      internal double[] ring_ShadowTrailingIdx_inHigh = [];
+      internal double[] ring_ShadowTrailingIdx_inLow = [];
+      internal double[] ring_ShadowTrailingIdx_inClose = [];
+      internal int cs_BodyShort_rangeType;
+      internal int cs_BodyShort_avgPeriod;
+      internal double cs_BodyShort_factor;
+      internal int cs_ShadowVeryLong_rangeType;
+      internal int cs_ShadowVeryLong_avgPeriod;
+      internal double cs_ShadowVeryLong_factor;
+      internal int cur_outInteger;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal CDLHIGHWAVE_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>CDLHIGHWAVE_OpenAndFill</c> filled, or
+      /// <see cref="OutRange.Empty"/> when this handle came from a plain open
+      /// (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal CDLHIGHWAVE_Stream( CDLHIGHWAVE_Stream other )
+      {
+         this.core = other.core;
+         this.BodyPeriodTotal = other.BodyPeriodTotal;
+         this.ShadowPeriodTotal = other.ShadowPeriodTotal;
+         this.ringPos_BodyTrailingIdx = other.ringPos_BodyTrailingIdx;
+         this.ringCap_BodyTrailingIdx = other.ringCap_BodyTrailingIdx;
+         this.ring_BodyTrailingIdx_inOpen = new double[other.ring_BodyTrailingIdx_inOpen.Length];
+         Array.Copy( other.ring_BodyTrailingIdx_inOpen, this.ring_BodyTrailingIdx_inOpen, other.ring_BodyTrailingIdx_inOpen.Length );
+         this.ring_BodyTrailingIdx_inHigh = new double[other.ring_BodyTrailingIdx_inHigh.Length];
+         Array.Copy( other.ring_BodyTrailingIdx_inHigh, this.ring_BodyTrailingIdx_inHigh, other.ring_BodyTrailingIdx_inHigh.Length );
+         this.ring_BodyTrailingIdx_inLow = new double[other.ring_BodyTrailingIdx_inLow.Length];
+         Array.Copy( other.ring_BodyTrailingIdx_inLow, this.ring_BodyTrailingIdx_inLow, other.ring_BodyTrailingIdx_inLow.Length );
+         this.ring_BodyTrailingIdx_inClose = new double[other.ring_BodyTrailingIdx_inClose.Length];
+         Array.Copy( other.ring_BodyTrailingIdx_inClose, this.ring_BodyTrailingIdx_inClose, other.ring_BodyTrailingIdx_inClose.Length );
+         this.ringPos_ShadowTrailingIdx = other.ringPos_ShadowTrailingIdx;
+         this.ringCap_ShadowTrailingIdx = other.ringCap_ShadowTrailingIdx;
+         this.ring_ShadowTrailingIdx_inOpen = new double[other.ring_ShadowTrailingIdx_inOpen.Length];
+         Array.Copy( other.ring_ShadowTrailingIdx_inOpen, this.ring_ShadowTrailingIdx_inOpen, other.ring_ShadowTrailingIdx_inOpen.Length );
+         this.ring_ShadowTrailingIdx_inHigh = new double[other.ring_ShadowTrailingIdx_inHigh.Length];
+         Array.Copy( other.ring_ShadowTrailingIdx_inHigh, this.ring_ShadowTrailingIdx_inHigh, other.ring_ShadowTrailingIdx_inHigh.Length );
+         this.ring_ShadowTrailingIdx_inLow = new double[other.ring_ShadowTrailingIdx_inLow.Length];
+         Array.Copy( other.ring_ShadowTrailingIdx_inLow, this.ring_ShadowTrailingIdx_inLow, other.ring_ShadowTrailingIdx_inLow.Length );
+         this.ring_ShadowTrailingIdx_inClose = new double[other.ring_ShadowTrailingIdx_inClose.Length];
+         Array.Copy( other.ring_ShadowTrailingIdx_inClose, this.ring_ShadowTrailingIdx_inClose, other.ring_ShadowTrailingIdx_inClose.Length );
+         this.cs_BodyShort_rangeType = other.cs_BodyShort_rangeType;
+         this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
+         this.cs_BodyShort_factor = other.cs_BodyShort_factor;
+         this.cs_ShadowVeryLong_rangeType = other.cs_ShadowVeryLong_rangeType;
+         this.cs_ShadowVeryLong_avgPeriod = other.cs_ShadowVeryLong_avgPeriod;
+         this.cs_ShadowVeryLong_factor = other.cs_ShadowVeryLong_factor;
+         this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( CDLHIGHWAVE_Stream other )
+      {
+         this.core = other.core;
+         this.BodyPeriodTotal = other.BodyPeriodTotal;
+         this.ShadowPeriodTotal = other.ShadowPeriodTotal;
+         this.ringPos_BodyTrailingIdx = other.ringPos_BodyTrailingIdx;
+         this.ringCap_BodyTrailingIdx = other.ringCap_BodyTrailingIdx;
+         if( this.ring_BodyTrailingIdx_inOpen.Length != other.ring_BodyTrailingIdx_inOpen.Length ) {
+            this.ring_BodyTrailingIdx_inOpen = new double[other.ring_BodyTrailingIdx_inOpen.Length];
+         }
+         Array.Copy( other.ring_BodyTrailingIdx_inOpen, this.ring_BodyTrailingIdx_inOpen, other.ring_BodyTrailingIdx_inOpen.Length );
+         if( this.ring_BodyTrailingIdx_inHigh.Length != other.ring_BodyTrailingIdx_inHigh.Length ) {
+            this.ring_BodyTrailingIdx_inHigh = new double[other.ring_BodyTrailingIdx_inHigh.Length];
+         }
+         Array.Copy( other.ring_BodyTrailingIdx_inHigh, this.ring_BodyTrailingIdx_inHigh, other.ring_BodyTrailingIdx_inHigh.Length );
+         if( this.ring_BodyTrailingIdx_inLow.Length != other.ring_BodyTrailingIdx_inLow.Length ) {
+            this.ring_BodyTrailingIdx_inLow = new double[other.ring_BodyTrailingIdx_inLow.Length];
+         }
+         Array.Copy( other.ring_BodyTrailingIdx_inLow, this.ring_BodyTrailingIdx_inLow, other.ring_BodyTrailingIdx_inLow.Length );
+         if( this.ring_BodyTrailingIdx_inClose.Length != other.ring_BodyTrailingIdx_inClose.Length ) {
+            this.ring_BodyTrailingIdx_inClose = new double[other.ring_BodyTrailingIdx_inClose.Length];
+         }
+         Array.Copy( other.ring_BodyTrailingIdx_inClose, this.ring_BodyTrailingIdx_inClose, other.ring_BodyTrailingIdx_inClose.Length );
+         this.ringPos_ShadowTrailingIdx = other.ringPos_ShadowTrailingIdx;
+         this.ringCap_ShadowTrailingIdx = other.ringCap_ShadowTrailingIdx;
+         if( this.ring_ShadowTrailingIdx_inOpen.Length != other.ring_ShadowTrailingIdx_inOpen.Length ) {
+            this.ring_ShadowTrailingIdx_inOpen = new double[other.ring_ShadowTrailingIdx_inOpen.Length];
+         }
+         Array.Copy( other.ring_ShadowTrailingIdx_inOpen, this.ring_ShadowTrailingIdx_inOpen, other.ring_ShadowTrailingIdx_inOpen.Length );
+         if( this.ring_ShadowTrailingIdx_inHigh.Length != other.ring_ShadowTrailingIdx_inHigh.Length ) {
+            this.ring_ShadowTrailingIdx_inHigh = new double[other.ring_ShadowTrailingIdx_inHigh.Length];
+         }
+         Array.Copy( other.ring_ShadowTrailingIdx_inHigh, this.ring_ShadowTrailingIdx_inHigh, other.ring_ShadowTrailingIdx_inHigh.Length );
+         if( this.ring_ShadowTrailingIdx_inLow.Length != other.ring_ShadowTrailingIdx_inLow.Length ) {
+            this.ring_ShadowTrailingIdx_inLow = new double[other.ring_ShadowTrailingIdx_inLow.Length];
+         }
+         Array.Copy( other.ring_ShadowTrailingIdx_inLow, this.ring_ShadowTrailingIdx_inLow, other.ring_ShadowTrailingIdx_inLow.Length );
+         if( this.ring_ShadowTrailingIdx_inClose.Length != other.ring_ShadowTrailingIdx_inClose.Length ) {
+            this.ring_ShadowTrailingIdx_inClose = new double[other.ring_ShadowTrailingIdx_inClose.Length];
+         }
+         Array.Copy( other.ring_ShadowTrailingIdx_inClose, this.ring_ShadowTrailingIdx_inClose, other.ring_ShadowTrailingIdx_inClose.Length );
+         this.cs_BodyShort_rangeType = other.cs_BodyShort_rangeType;
+         this.cs_BodyShort_avgPeriod = other.cs_BodyShort_avgPeriod;
+         this.cs_BodyShort_factor = other.cs_BodyShort_factor;
+         this.cs_ShadowVeryLong_rangeType = other.cs_ShadowVeryLong_rangeType;
+         this.cs_ShadowVeryLong_avgPeriod = other.cs_ShadowVeryLong_avgPeriod;
+         this.cs_ShadowVeryLong_factor = other.cs_ShadowVeryLong_factor;
+         this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
+      }
+
+      /* Peek's reusable scratch — one per thread, see CopyFrom. */
+      [ThreadStatic] private static CDLHIGHWAVE_Stream? peekScratch;
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inOpen">Open price of each bar.</param>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <param name="inClose">Close price of each bar.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public int Update( double inOpen, double inHigh, double inLow, double inClose )
+      {
+         core.CDLHIGHWAVE_StreamStep(this, inOpen, inHigh, inLow, inClose);
+         return cur_outInteger;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a scratch handle held per thread and reused, so the copy
+      /// allocates nothing after the first peek of this indicator on this thread.
+      /// That scratch is retained for the life of the thread.</para>
+      /// </remarks>
+      /// <param name="inOpen">Open price of each bar.</param>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <param name="inClose">Close price of each bar.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public int Peek( double inOpen, double inHigh, double inLow, double inClose )
+      {
+         CDLHIGHWAVE_Stream? scratch = peekScratch;
+         if( scratch is null ) {
+            scratch = new CDLHIGHWAVE_Stream(this);
+            peekScratch = scratch;
+         } else {
+            scratch.CopyFrom(this);
+         }
+         core.CDLHIGHWAVE_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         return scratch.cur_outInteger;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public int Value => cur_outInteger;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public CDLHIGHWAVE_Stream Clone()
+      {
+         return new CDLHIGHWAVE_Stream(this);
+      }
+   }
+
+   internal void CDLHIGHWAVE_StreamStep( CDLHIGHWAVE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
+   {
+      int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
+      int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
+      double BodyShort_factor = sp.cs_BodyShort_factor;
+      int ShadowVeryLong_rangeType = sp.cs_ShadowVeryLong_rangeType;
+      int ShadowVeryLong_avgPeriod = sp.cs_ShadowVeryLong_avgPeriod;
+      double ShadowVeryLong_factor = sp.cs_ShadowVeryLong_factor;
+      if( sp.ringCap_BodyTrailingIdx == 0 ) {
+         sp.ring_BodyTrailingIdx_inOpen[0] = inOpen;
+         sp.ring_BodyTrailingIdx_inHigh[0] = inHigh;
+         sp.ring_BodyTrailingIdx_inLow[0] = inLow;
+         sp.ring_BodyTrailingIdx_inClose[0] = inClose;
+      }
+      if( sp.ringCap_ShadowTrailingIdx == 0 ) {
+         sp.ring_ShadowTrailingIdx_inOpen[0] = inOpen;
+         sp.ring_ShadowTrailingIdx_inHigh[0] = inHigh;
+         sp.ring_ShadowTrailingIdx_inLow[0] = inLow;
+         sp.ring_ShadowTrailingIdx_inClose[0] = inClose;
+      }
+      if( Math.Abs(inClose - inOpen) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (sp.BodyPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > ((ShadowVeryLong_factor * (((ShadowVeryLong_avgPeriod != 0) ? (sp.ShadowPeriodTotal / ShadowVeryLong_avgPeriod) : ((ShadowVeryLong_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((ShadowVeryLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryLong_rangeType == 2) ? 2.0 : 1.0)))) && (((inClose >= inOpen) ? inOpen : inClose) - inLow) > ((ShadowVeryLong_factor * (((ShadowVeryLong_avgPeriod != 0) ? (sp.ShadowPeriodTotal / ShadowVeryLong_avgPeriod) : ((ShadowVeryLong_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((ShadowVeryLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((ShadowVeryLong_rangeType == 2) ? 2.0 : 1.0)))) ) {
+         sp.cur_outInteger = ((inClose >= inOpen) ? 1 : 0 - 1) * 100;
+      } else {
+         sp.cur_outInteger = 0;
+      }
+      /* add the current range and subtract the first range: this is done after the pattern recognition
+       * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+       */
+      sp.BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyShort_rangeType == 1) ? (inHigh - inLow) : ((BodyShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((BodyShort_rangeType == 0) ? (Math.Abs(sp.ring_BodyTrailingIdx_inClose[sp.ringPos_BodyTrailingIdx] - sp.ring_BodyTrailingIdx_inOpen[sp.ringPos_BodyTrailingIdx])) : ((BodyShort_rangeType == 1) ? (sp.ring_BodyTrailingIdx_inHigh[sp.ringPos_BodyTrailingIdx] - sp.ring_BodyTrailingIdx_inLow[sp.ringPos_BodyTrailingIdx]) : ((BodyShort_rangeType == 2) ? ((sp.ring_BodyTrailingIdx_inHigh[sp.ringPos_BodyTrailingIdx] - (((sp.ring_BodyTrailingIdx_inClose[sp.ringPos_BodyTrailingIdx]) >= (sp.ring_BodyTrailingIdx_inOpen[sp.ringPos_BodyTrailingIdx])) ? (sp.ring_BodyTrailingIdx_inClose[sp.ringPos_BodyTrailingIdx]) : (sp.ring_BodyTrailingIdx_inOpen[sp.ringPos_BodyTrailingIdx]))) + ((((sp.ring_BodyTrailingIdx_inClose[sp.ringPos_BodyTrailingIdx]) >= (sp.ring_BodyTrailingIdx_inOpen[sp.ringPos_BodyTrailingIdx])) ? (sp.ring_BodyTrailingIdx_inOpen[sp.ringPos_BodyTrailingIdx]) : (sp.ring_BodyTrailingIdx_inClose[sp.ringPos_BodyTrailingIdx])) - sp.ring_BodyTrailingIdx_inLow[sp.ringPos_BodyTrailingIdx])) : 0.0)));
+      sp.ShadowPeriodTotal += ((ShadowVeryLong_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((ShadowVeryLong_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((ShadowVeryLong_rangeType == 0) ? (Math.Abs(sp.ring_ShadowTrailingIdx_inClose[sp.ringPos_ShadowTrailingIdx] - sp.ring_ShadowTrailingIdx_inOpen[sp.ringPos_ShadowTrailingIdx])) : ((ShadowVeryLong_rangeType == 1) ? (sp.ring_ShadowTrailingIdx_inHigh[sp.ringPos_ShadowTrailingIdx] - sp.ring_ShadowTrailingIdx_inLow[sp.ringPos_ShadowTrailingIdx]) : ((ShadowVeryLong_rangeType == 2) ? ((sp.ring_ShadowTrailingIdx_inHigh[sp.ringPos_ShadowTrailingIdx] - (((sp.ring_ShadowTrailingIdx_inClose[sp.ringPos_ShadowTrailingIdx]) >= (sp.ring_ShadowTrailingIdx_inOpen[sp.ringPos_ShadowTrailingIdx])) ? (sp.ring_ShadowTrailingIdx_inClose[sp.ringPos_ShadowTrailingIdx]) : (sp.ring_ShadowTrailingIdx_inOpen[sp.ringPos_ShadowTrailingIdx]))) + ((((sp.ring_ShadowTrailingIdx_inClose[sp.ringPos_ShadowTrailingIdx]) >= (sp.ring_ShadowTrailingIdx_inOpen[sp.ringPos_ShadowTrailingIdx])) ? (sp.ring_ShadowTrailingIdx_inOpen[sp.ringPos_ShadowTrailingIdx]) : (sp.ring_ShadowTrailingIdx_inClose[sp.ringPos_ShadowTrailingIdx])) - sp.ring_ShadowTrailingIdx_inLow[sp.ringPos_ShadowTrailingIdx])) : 0.0)));
+      sp.ring_BodyTrailingIdx_inOpen[sp.ringPos_BodyTrailingIdx] = inOpen;
+      sp.ring_BodyTrailingIdx_inHigh[sp.ringPos_BodyTrailingIdx] = inHigh;
+      sp.ring_BodyTrailingIdx_inLow[sp.ringPos_BodyTrailingIdx] = inLow;
+      sp.ring_BodyTrailingIdx_inClose[sp.ringPos_BodyTrailingIdx] = inClose;
+      sp.ringPos_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx + 1;
+      if( sp.ringPos_BodyTrailingIdx >= sp.ringCap_BodyTrailingIdx ) {
+         sp.ringPos_BodyTrailingIdx = 0;
+      }
+      sp.ring_ShadowTrailingIdx_inOpen[sp.ringPos_ShadowTrailingIdx] = inOpen;
+      sp.ring_ShadowTrailingIdx_inHigh[sp.ringPos_ShadowTrailingIdx] = inHigh;
+      sp.ring_ShadowTrailingIdx_inLow[sp.ringPos_ShadowTrailingIdx] = inLow;
+      sp.ring_ShadowTrailingIdx_inClose[sp.ringPos_ShadowTrailingIdx] = inClose;
+      sp.ringPos_ShadowTrailingIdx = sp.ringPos_ShadowTrailingIdx + 1;
+      if( sp.ringPos_ShadowTrailingIdx >= sp.ringCap_ShadowTrailingIdx ) {
+         sp.ringPos_ShadowTrailingIdx = 0;
+      }
+   }
+
+   private RetCode CDLHIGHWAVE_OpenCore( CDLHIGHWAVE_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      double BodyPeriodTotal = 0;
+      double ShadowPeriodTotal = 0;
+      int i = 0;
+      int outIdx = 0;
+      int BodyTrailingIdx = 0;
+      int ShadowTrailingIdx = 0;
+      int lookbackTotal = 0;
+      int historyLen = inOpen.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 || inHigh.Length != inOpen.Length || inLow.Length != inOpen.Length || inClose.Length != inOpen.Length ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      int BodyShort_rangeType = (int)this.candleSettings[(int)CandleSettingType.BodyShort].rangeType;
+      int BodyShort_avgPeriod = this.candleSettings[(int)CandleSettingType.BodyShort].avgPeriod;
+      double BodyShort_factor = this.candleSettings[(int)CandleSettingType.BodyShort].factor;
+      int ShadowVeryLong_rangeType = (int)this.candleSettings[(int)CandleSettingType.ShadowVeryLong].rangeType;
+      int ShadowVeryLong_avgPeriod = this.candleSettings[(int)CandleSettingType.ShadowVeryLong].avgPeriod;
+      double ShadowVeryLong_factor = this.candleSettings[(int)CandleSettingType.ShadowVeryLong].factor;
+      /* Identify the minimum number of price bar needed
+       * to calculate at least one output.
+       */
+      lookbackTotal = CDLHIGHWAVE_Lookback();
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      /* Do the calculation using tight loops. */
+      /* Add-up the initial period, except for the last value. */
+      BodyPeriodTotal = 0;
+      BodyTrailingIdx = startIdx - BodyShort_avgPeriod;
+      ShadowPeriodTotal = 0;
+      ShadowTrailingIdx = startIdx - ShadowVeryLong_avgPeriod;
+      i = BodyTrailingIdx;
+      while( i < startIdx ) {
+         BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)));
+         i += 1;
+      }
+      i = ShadowTrailingIdx;
+      while( i < startIdx ) {
+         ShadowPeriodTotal += ((ShadowVeryLong_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((ShadowVeryLong_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((ShadowVeryLong_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)));
+         i += 1;
+      }
+      /* Proceed with the calculation for the requested range.
+       * Must have:
+       * - short real body
+       * - very long upper and lower shadow
+       * The meaning of "short" and "very long" is specified with TA_SetCandleSettings
+       * outInteger is positive (1 to 100) when white or negative (-1 to -100) when black;
+       * it does not mean bullish or bearish
+       */
+      outIdx = 0;
+      do {
+         if( Math.Abs(inClose[i] - inOpen[i]) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > ((ShadowVeryLong_factor * (((ShadowVeryLong_avgPeriod != 0) ? (ShadowPeriodTotal / ShadowVeryLong_avgPeriod) : ((ShadowVeryLong_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((ShadowVeryLong_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((ShadowVeryLong_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)))) / ((ShadowVeryLong_rangeType == 2) ? 2.0 : 1.0)))) && (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > ((ShadowVeryLong_factor * (((ShadowVeryLong_avgPeriod != 0) ? (ShadowPeriodTotal / ShadowVeryLong_avgPeriod) : ((ShadowVeryLong_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((ShadowVeryLong_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((ShadowVeryLong_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0)))) / ((ShadowVeryLong_rangeType == 2) ? 2.0 : 1.0)))) ) {
+            outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
+         } else {
+            outInteger[outIdx++ * outStride] = 0;
+         }
+         /* add the current range and subtract the first range: this is done after the pattern recognition
+          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
+          */
+         BodyPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0))) - ((BodyShort_rangeType == 0) ? (Math.Abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx])) : ((BodyShort_rangeType == 1) ? (inHigh[BodyTrailingIdx] - inLow[BodyTrailingIdx]) : ((BodyShort_rangeType == 2) ? ((inHigh[BodyTrailingIdx] - (((inClose[BodyTrailingIdx]) >= (inOpen[BodyTrailingIdx])) ? (inClose[BodyTrailingIdx]) : (inOpen[BodyTrailingIdx]))) + ((((inClose[BodyTrailingIdx]) >= (inOpen[BodyTrailingIdx])) ? (inOpen[BodyTrailingIdx]) : (inClose[BodyTrailingIdx])) - inLow[BodyTrailingIdx])) : 0.0)));
+         ShadowPeriodTotal += ((ShadowVeryLong_rangeType == 0) ? (Math.Abs(inClose[i] - inOpen[i])) : ((ShadowVeryLong_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((ShadowVeryLong_rangeType == 2) ? ((inHigh[i] - (((inClose[i]) >= (inOpen[i])) ? (inClose[i]) : (inOpen[i]))) + ((((inClose[i]) >= (inOpen[i])) ? (inOpen[i]) : (inClose[i])) - inLow[i])) : 0.0))) - ((ShadowVeryLong_rangeType == 0) ? (Math.Abs(inClose[ShadowTrailingIdx] - inOpen[ShadowTrailingIdx])) : ((ShadowVeryLong_rangeType == 1) ? (inHigh[ShadowTrailingIdx] - inLow[ShadowTrailingIdx]) : ((ShadowVeryLong_rangeType == 2) ? ((inHigh[ShadowTrailingIdx] - (((inClose[ShadowTrailingIdx]) >= (inOpen[ShadowTrailingIdx])) ? (inClose[ShadowTrailingIdx]) : (inOpen[ShadowTrailingIdx]))) + ((((inClose[ShadowTrailingIdx]) >= (inOpen[ShadowTrailingIdx])) ? (inOpen[ShadowTrailingIdx]) : (inClose[ShadowTrailingIdx])) - inLow[ShadowTrailingIdx])) : 0.0)));
+         i += 1;
+         BodyTrailingIdx += 1;
+         ShadowTrailingIdx += 1;
+      } while( i <= endIdx );
+      /* All done. Indicate the output limits and return. */
+      outNBElement = outIdx;
+      outBegIdx = startIdx;
+      /* Capture the live batch state into the handle. */
+      int cap_BodyTrailingIdx = i - BodyTrailingIdx;
+      if( cap_BodyTrailingIdx < 0 || cap_BodyTrailingIdx > historyLen ) {
+         return RetCode.InternalError;
+      }
+      int allocN_BodyTrailingIdx = (cap_BodyTrailingIdx > 0)? cap_BodyTrailingIdx : 1;
+      double[] capRing_BodyTrailingIdx_inOpen = new double[allocN_BodyTrailingIdx];
+      Array.Copy(inOpen, historyLen - cap_BodyTrailingIdx, capRing_BodyTrailingIdx_inOpen, 0, cap_BodyTrailingIdx);
+      double[] capRing_BodyTrailingIdx_inHigh = new double[allocN_BodyTrailingIdx];
+      Array.Copy(inHigh, historyLen - cap_BodyTrailingIdx, capRing_BodyTrailingIdx_inHigh, 0, cap_BodyTrailingIdx);
+      double[] capRing_BodyTrailingIdx_inLow = new double[allocN_BodyTrailingIdx];
+      Array.Copy(inLow, historyLen - cap_BodyTrailingIdx, capRing_BodyTrailingIdx_inLow, 0, cap_BodyTrailingIdx);
+      double[] capRing_BodyTrailingIdx_inClose = new double[allocN_BodyTrailingIdx];
+      Array.Copy(inClose, historyLen - cap_BodyTrailingIdx, capRing_BodyTrailingIdx_inClose, 0, cap_BodyTrailingIdx);
+      int cap_ShadowTrailingIdx = i - ShadowTrailingIdx;
+      if( cap_ShadowTrailingIdx < 0 || cap_ShadowTrailingIdx > historyLen ) {
+         return RetCode.InternalError;
+      }
+      int allocN_ShadowTrailingIdx = (cap_ShadowTrailingIdx > 0)? cap_ShadowTrailingIdx : 1;
+      double[] capRing_ShadowTrailingIdx_inOpen = new double[allocN_ShadowTrailingIdx];
+      Array.Copy(inOpen, historyLen - cap_ShadowTrailingIdx, capRing_ShadowTrailingIdx_inOpen, 0, cap_ShadowTrailingIdx);
+      double[] capRing_ShadowTrailingIdx_inHigh = new double[allocN_ShadowTrailingIdx];
+      Array.Copy(inHigh, historyLen - cap_ShadowTrailingIdx, capRing_ShadowTrailingIdx_inHigh, 0, cap_ShadowTrailingIdx);
+      double[] capRing_ShadowTrailingIdx_inLow = new double[allocN_ShadowTrailingIdx];
+      Array.Copy(inLow, historyLen - cap_ShadowTrailingIdx, capRing_ShadowTrailingIdx_inLow, 0, cap_ShadowTrailingIdx);
+      double[] capRing_ShadowTrailingIdx_inClose = new double[allocN_ShadowTrailingIdx];
+      Array.Copy(inClose, historyLen - cap_ShadowTrailingIdx, capRing_ShadowTrailingIdx_inClose, 0, cap_ShadowTrailingIdx);
+      sp.BodyPeriodTotal = BodyPeriodTotal;
+      sp.ShadowPeriodTotal = ShadowPeriodTotal;
+      sp.ringPos_BodyTrailingIdx = 0;
+      sp.ringCap_BodyTrailingIdx = cap_BodyTrailingIdx;
+      sp.ring_BodyTrailingIdx_inOpen = capRing_BodyTrailingIdx_inOpen;
+      sp.ring_BodyTrailingIdx_inHigh = capRing_BodyTrailingIdx_inHigh;
+      sp.ring_BodyTrailingIdx_inLow = capRing_BodyTrailingIdx_inLow;
+      sp.ring_BodyTrailingIdx_inClose = capRing_BodyTrailingIdx_inClose;
+      sp.ringPos_ShadowTrailingIdx = 0;
+      sp.ringCap_ShadowTrailingIdx = cap_ShadowTrailingIdx;
+      sp.ring_ShadowTrailingIdx_inOpen = capRing_ShadowTrailingIdx_inOpen;
+      sp.ring_ShadowTrailingIdx_inHigh = capRing_ShadowTrailingIdx_inHigh;
+      sp.ring_ShadowTrailingIdx_inLow = capRing_ShadowTrailingIdx_inLow;
+      sp.ring_ShadowTrailingIdx_inClose = capRing_ShadowTrailingIdx_inClose;
+      sp.cs_BodyShort_rangeType = BodyShort_rangeType;
+      sp.cs_BodyShort_avgPeriod = BodyShort_avgPeriod;
+      sp.cs_BodyShort_factor = BodyShort_factor;
+      sp.cs_ShadowVeryLong_rangeType = ShadowVeryLong_rangeType;
+      sp.cs_ShadowVeryLong_avgPeriod = ShadowVeryLong_avgPeriod;
+      sp.cs_ShadowVeryLong_factor = ShadowVeryLong_factor;
+      sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode CDLHIGHWAVE_OpenBody( CDLHIGHWAVE_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx )
+   {
+      int[] sink_outInteger = new int[1];
+      return CDLHIGHWAVE_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
+   }
+
+   private RetCode CDLHIGHWAVE_OpenAndFillBody( CDLHIGHWAVE_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, out int outBegIdx, out int outNBElement, int[] outInteger )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outInteger, inOpen) || ReferenceEquals(outInteger, inHigh) || ReferenceEquals(outInteger, inLow) || ReferenceEquals(outInteger, inClose) ) {
+         return RetCode.BadParam;
+      }
+      return CDLHIGHWAVE_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
+   }
+
+   private RetCode CDLHIGHWAVE_OpenAndFillInternalBody( CDLHIGHWAVE_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger )
+   {
+      return CDLHIGHWAVE_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+   }
+
+   /* CDLHIGHWAVE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal CDLHIGHWAVE_Stream CDLHIGHWAVE_OpenAndFillInternal( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger )
+   {
+      CDLHIGHWAVE_Stream sp = new CDLHIGHWAVE_Stream(this);
+      RetCode retCode = CDLHIGHWAVE_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("CDLHIGHWAVE", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind CDLHIGHWAVE_Open (composition seam). */
+   internal CDLHIGHWAVE_Stream CDLHIGHWAVE_OpenInternal( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx )
+   {
+      CDLHIGHWAVE_Stream sp = new CDLHIGHWAVE_Stream(this);
+      RetCode retCode = CDLHIGHWAVE_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("CDLHIGHWAVE", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>CDLHIGHWAVE</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="CDLHIGHWAVE_Stream.Value"/> starts at the last
+   /// history bar's value — bit-identical to what <c>CDLHIGHWAVE</c> reports for
+   /// that bar.</para>
+   /// <para>The history must hold at least <c>CDLHIGHWAVE_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>CDLHIGHWAVE_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CDLHIGHWAVE_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public CDLHIGHWAVE_Stream CDLHIGHWAVE_Open( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose )
+   {
+      return CDLHIGHWAVE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
+   }
+
+   /// <summary><c>CDLHIGHWAVE_Open</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>CDLHIGHWAVE</c> produces
+   /// over the same series, so no separate batch call is needed for the warm-up
+   /// plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - CDLHIGHWAVE_Lookback(...)</c>
+   /// values and must not alias the inputs or each other — this path writes the
+   /// outputs and then reads the input tail to seed its rings, so the batch
+   /// tier's in-place allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="CDLHIGHWAVE_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="outInteger">On a hit, +100 when the candle is white (close &gt;= open) or -100 when
+   /// black (close &lt; open); 0 otherwise. Sign denotes color, NOT bull/bear.
+   /// Must hold at least <c>historyLen - CDLHIGHWAVE_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CDLHIGHWAVE_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public CDLHIGHWAVE_Stream CDLHIGHWAVE_OpenAndFill( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int[] outInteger )
+   {
+      CDLHIGHWAVE_Stream sp = new CDLHIGHWAVE_Stream(this);
+      RetCode retCode = CDLHIGHWAVE_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("CDLHIGHWAVE", "openAndFill", retCode);
+   }
 }

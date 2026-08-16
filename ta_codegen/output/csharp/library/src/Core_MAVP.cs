@@ -676,4 +676,365 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>MAVP</c> stream: one value per closed bar, bit-identical to
+   /// <c>MAVP</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.MAVP_Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class MAVP_Stream
+   {
+      internal Core core;
+      internal int optInMinPeriod;
+      internal int optInMaxPeriod;
+      internal MAType optInMAType;
+      internal double cur_outReal;
+      // One sub-MA stream per period in [optInMinPeriod, optInMaxPeriod], advanced in lockstep.
+      internal MA_Stream[] bank = [];
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal MAVP_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>MAVP_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
+      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal MAVP_Stream( MAVP_Stream other )
+      {
+         this.core = other.core;
+         this.optInMinPeriod = other.optInMinPeriod;
+         this.optInMaxPeriod = other.optInMaxPeriod;
+         this.optInMAType = other.optInMAType;
+         this.cur_outReal = other.cur_outReal;
+         this.bank = new MA_Stream[other.bank.Length];
+         for( int bankIdx = 0; bankIdx < other.bank.Length; bankIdx++ ) {
+            this.bank[bankIdx] = new MA_Stream(other.bank[bankIdx]);
+         }
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( MAVP_Stream other )
+      {
+         this.core = other.core;
+         this.optInMinPeriod = other.optInMinPeriod;
+         this.optInMaxPeriod = other.optInMaxPeriod;
+         this.optInMAType = other.optInMAType;
+         this.cur_outReal = other.cur_outReal;
+         if( this.bank.Length == other.bank.Length ) {
+            for( int bankIdx = 0; bankIdx < other.bank.Length; bankIdx++ ) {
+               this.bank[bankIdx].CopyFrom(other.bank[bankIdx]);
+            }
+         } else {
+            this.bank = new MA_Stream[other.bank.Length];
+            for( int bankIdx = 0; bankIdx < other.bank.Length; bankIdx++ ) {
+               this.bank[bankIdx] = new MA_Stream(other.bank[bankIdx]);
+            }
+         }
+         this.fillRange = other.fillRange;
+      }
+
+      /* Peek's reusable scratch — one per thread, see CopyFrom. */
+      [ThreadStatic] private static MAVP_Stream? peekScratch;
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inReal">series to be averaged.</param>
+      /// <param name="inPeriods">per-bar desired MA period.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public double Update( double inReal, double inPeriods )
+      {
+         core.MAVP_StreamStep(this, inReal, inPeriods);
+         return cur_outReal;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a scratch handle held per thread and reused, so the copy
+      /// allocates nothing after the first peek of this indicator on this thread.
+      /// That scratch is retained for the life of the thread.</para>
+      /// </remarks>
+      /// <param name="inReal">series to be averaged.</param>
+      /// <param name="inPeriods">per-bar desired MA period.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public double Peek( double inReal, double inPeriods )
+      {
+         MAVP_Stream? scratch = peekScratch;
+         if( scratch is null ) {
+            scratch = new MAVP_Stream(this);
+            peekScratch = scratch;
+         } else {
+            scratch.CopyFrom(this);
+         }
+         core.MAVP_StreamStep(scratch, inReal, inPeriods);
+         return scratch.cur_outReal;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public double Value => cur_outReal;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public MAVP_Stream Clone()
+      {
+         return new MAVP_Stream(this);
+      }
+   }
+
+   internal void MAVP_StreamStep( MAVP_Stream sp, double inReal, double inPeriods )
+   {
+      int cp = (int)inPeriods;
+      if( cp < sp.optInMinPeriod ) {
+         cp = sp.optInMinPeriod;
+      } else if( cp > sp.optInMaxPeriod ) {
+         cp = sp.optInMaxPeriod;
+      }
+      int slot = cp - sp.optInMinPeriod;
+      MA_Stream[] bank = sp.bank;
+      for( int bankIdx = 0; bankIdx < bank.Length; bankIdx++ ) {
+         double subValue = bank[bankIdx].Update(inReal);
+         if( bankIdx == slot ) {
+            sp.cur_outReal = subValue;
+         }
+      }
+   }
+
+   private RetCode MAVP_OpenBody( MAVP_Stream sp, double[] inReal, double[] inPeriods, int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
+   {
+      int historyLen = inReal.Length;
+      if( historyLen < 1 || inPeriods.Length != inReal.Length ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInMinPeriod == int.MinValue ) {
+         optInMinPeriod = 2;
+      } else if( optInMinPeriod < 1 || optInMinPeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( optInMaxPeriod == int.MinValue ) {
+         optInMaxPeriod = 30;
+      } else if( optInMaxPeriod < 1 || optInMaxPeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
+         optInMAType = MAType.SMA;
+      } else if( (int)optInMAType < MATypes.Min || (int)optInMAType > MATypes.Max ) {
+         return RetCode.BadParam;
+      }
+      /* An inverted [min, max] period window is invalid (batch rejects). */
+      if( optInMinPeriod > optInMaxPeriod ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen < MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType) + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      /* Seed EVERY sub at the SHARED max-period lookback, exactly as batch
+       * does: it clamps startIdx up to lookback(maxPeriod) and calls the callee
+       * with that same start for every period. Seeding each sub at its own
+       * (smaller) lookback would seed the recurrence from a different bar and
+       * diverge for every period < maxPeriod. */
+      int lookbackTotal = MA_Lookback(optInMaxPeriod, optInMAType);
+      int subStart = (startIdx < lookbackTotal)? lookbackTotal : startIdx;
+      int nBank = optInMaxPeriod - optInMinPeriod + 1;
+      MA_Stream[] bank = new MA_Stream[nBank];
+      for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {
+         bank[bankIdx] = MA_OpenInternal(inReal, subStart, optInMinPeriod + bankIdx, optInMAType);
+      }
+      int cp = (int)inPeriods[historyLen - 1];
+      if( cp < optInMinPeriod ) {
+         cp = optInMinPeriod;
+      } else if( cp > optInMaxPeriod ) {
+         cp = optInMaxPeriod;
+      }
+      sp.optInMinPeriod = optInMinPeriod;
+      sp.optInMaxPeriod = optInMaxPeriod;
+      sp.optInMAType = optInMAType;
+      sp.bank = bank;
+      sp.cur_outReal = bank[cp - optInMinPeriod].cur_outReal;
+      return RetCode.Success;
+   }
+
+   private RetCode MAVP_OpenAndFillBody( MAVP_Stream sp, double[] inReal, double[] inPeriods, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      int historyLen = inReal.Length;
+      if( historyLen < 1 || inPeriods.Length != inReal.Length ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInMinPeriod == int.MinValue ) {
+         optInMinPeriod = 2;
+      } else if( optInMinPeriod < 1 || optInMinPeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( optInMaxPeriod == int.MinValue ) {
+         optInMaxPeriod = 30;
+      } else if( optInMaxPeriod < 1 || optInMaxPeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
+         optInMAType = MAType.SMA;
+      } else if( (int)optInMAType < MATypes.Min || (int)optInMAType > MATypes.Max ) {
+         return RetCode.BadParam;
+      }
+      if( ReferenceEquals(outReal, inReal) || ReferenceEquals(outReal, inPeriods) ) {
+         return RetCode.BadParam;
+      }
+      /* An inverted [min, max] period window is invalid (batch rejects). */
+      if( optInMinPeriod > optInMaxPeriod ) {
+         return RetCode.BadParam;
+      }
+      int lookbackTotal = MA_Lookback(optInMaxPeriod, optInMAType);
+      if( historyLen < lookbackTotal + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      int nBank = optInMaxPeriod - optInMinPeriod + 1;
+      /* Seed each sub at the first output bar (lookbackTotal), NOT the last. */
+      MA_Stream[] bank = new MA_Stream[nBank];
+      double[] scratch = new double[nBank];
+      double[] seedPrefix = new double[lookbackTotal + 1];
+      Array.Copy(inReal, seedPrefix, lookbackTotal + 1);
+      for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {
+         MA_Stream sub = MA_OpenInternal(seedPrefix, lookbackTotal, optInMinPeriod + bankIdx, optInMAType);
+         bank[bankIdx] = sub;
+         scratch[bankIdx] = sub.cur_outReal;
+      }
+      /* First output bar (lookbackTotal), then replay the remaining history. */
+      int cp = (int)inPeriods[lookbackTotal];
+      if( cp < optInMinPeriod ) {
+         cp = optInMinPeriod;
+      } else if( cp > optInMaxPeriod ) {
+         cp = optInMaxPeriod;
+      }
+      outReal[0] = scratch[cp - optInMinPeriod];
+      for( int t = lookbackTotal + 1; t < historyLen; t++ ) {
+         for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {
+            scratch[bankIdx] = bank[bankIdx].Update(inReal[t]);
+         }
+         cp = (int)inPeriods[t];
+         if( cp < optInMinPeriod ) {
+            cp = optInMinPeriod;
+         } else if( cp > optInMaxPeriod ) {
+            cp = optInMaxPeriod;
+         }
+         outReal[t - lookbackTotal] = scratch[cp - optInMinPeriod];
+      }
+      outBegIdx = lookbackTotal;
+      outNBElement = historyLen - lookbackTotal;
+      sp.optInMinPeriod = optInMinPeriod;
+      sp.optInMaxPeriod = optInMaxPeriod;
+      sp.optInMAType = optInMAType;
+      sp.bank = bank;
+      sp.cur_outReal = outReal[outNBElement - 1];
+      return RetCode.Success;
+   }
+
+   /* Internal startIdx-anchored open behind MAVP_Open (composition seam). */
+   internal MAVP_Stream MAVP_OpenInternal( double[] inReal, double[] inPeriods, int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
+   {
+      MAVP_Stream sp = new MAVP_Stream(this);
+      RetCode retCode = MAVP_OpenBody(sp, inReal, inPeriods, startIdx, optInMinPeriod, optInMaxPeriod, optInMAType);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("MAVP", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>MAVP</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="MAVP_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>MAVP</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>MAVP_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>MAVP_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inReal">series to be averaged. The warm-up history, oldest bar first.</param>
+   /// <param name="inPeriods">per-bar desired MA period. The warm-up history, oldest bar first.</param>
+   /// <param name="optInMinPeriod">As in the batch call; see <see cref="MAVP_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInMaxPeriod">As in the batch call; see <see cref="MAVP_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInMAType">As in the batch call; see <see cref="MAVP_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MAVP_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public MAVP_Stream MAVP_Open( double[] inReal, double[] inPeriods, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
+   {
+      return MAVP_OpenInternal(inReal, inPeriods, 0, optInMinPeriod, optInMaxPeriod, optInMAType);
+   }
+
+   /// <summary><c>MAVP_Open</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>MAVP</c> produces over the
+   /// same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - MAVP_Lookback(...)</c> values and
+   /// must not alias the inputs or each other — this path writes the outputs and
+   /// then reads the input tail to seed its rings, so the batch tier's in-place
+   /// allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="MAVP_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inReal">series to be averaged. The warm-up history, oldest bar first.</param>
+   /// <param name="inPeriods">per-bar desired MA period. The warm-up history, oldest bar first.</param>
+   /// <param name="optInMinPeriod">As in the batch call; see <see cref="MAVP_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInMaxPeriod">As in the batch call; see <see cref="MAVP_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInMAType">As in the batch call; see <see cref="MAVP_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="outReal">variable-period moving average. Must hold at least <c>historyLen -
+   /// MAVP_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MAVP_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public MAVP_Stream MAVP_OpenAndFill( double[] inReal, double[] inPeriods, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, double[] outReal )
+   {
+      MAVP_Stream sp = new MAVP_Stream(this);
+      RetCode retCode = MAVP_OpenAndFillBody(sp, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("MAVP", "openAndFill", retCode);
+   }
 }

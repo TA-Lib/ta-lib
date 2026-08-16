@@ -597,4 +597,487 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>One <c>MACD</c> output set, in batch output order.</summary>
+   /// <remarks>
+   /// <para>Equality is the compiler-generated record-struct equality, which compares
+   /// the components with <c>==</c>: <c>NaN</c> does not equal <c>NaN</c>, and
+   /// <c>0.0</c> equals <c>-0.0</c>. That is deliberately <em>not</em> the Java
+   /// <c>Value</c> contract, which compares bitwise — compare
+   /// <see cref="System.BitConverter.DoubleToInt64Bits(double)"/> per component
+   /// when bit-level identity is what you mean.</para>
+   /// </remarks>
+   /// <param name="MACD">Fast EMA minus slow EMA.</param>
+   /// <param name="MACDSignal">EMA of the MACD line.</param>
+   /// <param name="MACDHist">MACD minus signal line.</param>
+   public readonly record struct MACD_Value( double MACD, double MACDSignal, double MACDHist );
+
+   /// <summary>A live <c>MACD</c> stream: one value per closed bar, bit-identical to
+   /// <c>MACD</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.MACD_Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class MACD_Stream
+   {
+      internal Core core;
+      internal int optInFastPeriod;
+      internal int optInSlowPeriod;
+      internal int optInSignalPeriod;
+      internal double prevFast;
+      internal double prevSlow;
+      internal double prevSignal;
+      internal double slowK;
+      internal double fastK;
+      internal double signalK;
+      internal double cur_outMACD;
+      internal double cur_outMACDSignal;
+      internal double cur_outMACDHist;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal MACD_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>MACD_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
+      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal MACD_Stream( MACD_Stream other )
+      {
+         this.core = other.core;
+         this.optInFastPeriod = other.optInFastPeriod;
+         this.optInSlowPeriod = other.optInSlowPeriod;
+         this.optInSignalPeriod = other.optInSignalPeriod;
+         this.prevFast = other.prevFast;
+         this.prevSlow = other.prevSlow;
+         this.prevSignal = other.prevSignal;
+         this.slowK = other.slowK;
+         this.fastK = other.fastK;
+         this.signalK = other.signalK;
+         this.cur_outMACD = other.cur_outMACD;
+         this.cur_outMACDSignal = other.cur_outMACDSignal;
+         this.cur_outMACDHist = other.cur_outMACDHist;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( MACD_Stream other )
+      {
+         this.core = other.core;
+         this.optInFastPeriod = other.optInFastPeriod;
+         this.optInSlowPeriod = other.optInSlowPeriod;
+         this.optInSignalPeriod = other.optInSignalPeriod;
+         this.prevFast = other.prevFast;
+         this.prevSlow = other.prevSlow;
+         this.prevSignal = other.prevSignal;
+         this.slowK = other.slowK;
+         this.fastK = other.fastK;
+         this.signalK = other.signalK;
+         this.cur_outMACD = other.cur_outMACD;
+         this.cur_outMACDSignal = other.cur_outMACDSignal;
+         this.cur_outMACDHist = other.cur_outMACDHist;
+         this.fillRange = other.fillRange;
+      }
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inReal">Input series (typically close)</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public MACD_Value Update( double inReal )
+      {
+         core.MACD_StreamStep(this, inReal);
+         return new MACD_Value(cur_outMACD, cur_outMACDSignal, cur_outMACDHist);
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a throwaway copy, which for this handle's shape is cheaper than
+      /// reusing one.</para>
+      /// </remarks>
+      /// <param name="inReal">Input series (typically close)</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public MACD_Value Peek( double inReal )
+      {
+         MACD_Stream scratch = new MACD_Stream(this);
+         core.MACD_StreamStep(scratch, inReal);
+         return new MACD_Value(scratch.cur_outMACD, scratch.cur_outMACDSignal, scratch.cur_outMACDHist);
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public MACD_Value Value => new MACD_Value(cur_outMACD, cur_outMACDSignal, cur_outMACDHist);
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public MACD_Stream Clone()
+      {
+         return new MACD_Stream(this);
+      }
+   }
+
+   internal void MACD_StreamStep( MACD_Stream sp, double inReal )
+   {
+      double macdValue = 0.0;
+      double tempReal = 0.0;
+      tempReal = inReal;
+      sp.prevFast = Math.FusedMultiplyAdd(tempReal - sp.prevFast, sp.fastK, sp.prevFast);
+      sp.prevSlow = Math.FusedMultiplyAdd(tempReal - sp.prevSlow, sp.slowK, sp.prevSlow);
+      macdValue = sp.prevFast - sp.prevSlow;
+      if( sp.optInSignalPeriod == 1 ) {
+         sp.prevSignal = macdValue;
+      } else {
+         sp.prevSignal = Math.FusedMultiplyAdd(macdValue - sp.prevSignal, sp.signalK, sp.prevSignal);
+      }
+      sp.cur_outMACD = macdValue;
+      sp.cur_outMACDSignal = sp.prevSignal;
+      sp.cur_outMACDHist = macdValue - sp.prevSignal;
+   }
+
+   private RetCode MACD_OpenCore( MACD_Stream sp, double[] inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, double[] outMACD, double[] outMACDSignal, double[] outMACDHist, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      double prevFast = 0;
+      double prevSlow = 0;
+      double prevSignal = 0;
+      double macdValue = 0;
+      double tempReal = 0;
+      double slowK = 0;
+      double fastK = 0;
+      double signalK = 0;
+      int i = 0;
+      int today = 0;
+      int outIdx = 0;
+      int tempInteger = 0;
+      int lookbackTotal = 0;
+      int lookbackSignal = 0;
+      int historyLen = inReal.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInFastPeriod == int.MinValue ) {
+         optInFastPeriod = 12;
+      } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( optInSlowPeriod == int.MinValue ) {
+         optInSlowPeriod = 26;
+      } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( optInSignalPeriod == int.MinValue ) {
+         optInSignalPeriod = 9;
+      } else if( optInSignalPeriod < 1 || optInSignalPeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      /* Make sure slow is really slower than
+       * the fast period! if not, swap...
+       */
+      if( optInSlowPeriod < optInFastPeriod ) {
+         /* swap */
+         tempInteger = optInSlowPeriod;
+         optInSlowPeriod = optInFastPeriod;
+         optInFastPeriod = tempInteger;
+      }
+      /* Catch special case for fix 26/12 MACD.
+       * Use hardcoded k values matching the original algorithm.
+       */
+      if( optInSlowPeriod == 0 ) {
+         /* Fix 26 */
+         optInSlowPeriod = 26;
+         slowK = 0.075;
+      } else {
+         slowK = 2.0 / (double)(optInSlowPeriod + 1);
+      }
+      if( optInFastPeriod == 0 ) {
+         /* Fix 12 */
+         optInFastPeriod = 12;
+         fastK = 0.15;
+      } else {
+         fastK = 2.0 / (double)(optInFastPeriod + 1);
+      }
+      /* A signal period of 1 disables signal-line smoothing: the signal IS the
+       * MACD line and the histogram is exactly zero. signalK is then exactly
+       * 1.0, so the recursion below reduces to (x-prev)+prev -- which returns x
+       * only while consecutive MACD-line values stay within a factor of two of
+       * each other. The MACD line oscillates through zero, so it leaves that
+       * window on ordinary data; hence the explicit arm at each step.
+       */
+      signalK = 2.0 / (double)(optInSignalPeriod + 1);
+      lookbackSignal = EMA_Lookback(optInSignalPeriod);
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      lookbackTotal = lookbackSignal;
+      lookbackTotal += EMA_Lookback(optInSlowPeriod);
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      /* Everything is computed in a single lockstep pass: each bar
+       * advances the fast and slow EMA (two independent recursions),
+       * their difference is the MACD line, and each MACD-line value
+       * is immediately fed into the signal EMA. No temporary buffers.
+       *
+       * The arithmetic order below is the bit-exactness contract
+       * (do not reorder or fuse operations):
+       *  - EMA recursion: ((x-prev)*k)+prev.
+       *  - Default compatibility: each EMA is seeded with the sum of
+       *    its first 'period' inputs, accumulated from 0.0 in input
+       *    order, divided by the period. The fast and slow seed
+       *    windows end on the same bar. The signal EMA is seeded the
+       *    same way from the first 'signal period' MACD-line values.
+       *  - Metastock compatibility: the fast and slow EMA are seeded
+       *    from inReal[0], the signal EMA from the first MACD-line
+       *    value.
+       * Output alignment is identical for all compatibility modes;
+       * only the seed values differ.
+       *
+       * In-place (an output == inReal) is supported: outputs at
+       * [outIdx] are written only after inReal[startIdx+outIdx] was
+       * read.
+       */
+      /* Seed each price EMA with a simple average of its first
+       * 'period' price bars. The fast window is the tail of the
+       * slow window: consume the leading slow-only bars first,
+       * then accumulate both over the shared bars.
+       */
+      today = startIdx - lookbackTotal;
+      tempReal = 0.0;
+      i = optInSlowPeriod - optInFastPeriod;
+      while( i-- > 0 ) {
+         tempReal += inReal[today++];
+      }
+      prevFast = 0.0;
+      i = optInFastPeriod;
+      while( i-- > 0 ) {
+         prevFast += inReal[today];
+         tempReal += inReal[today++];
+      }
+      prevSlow = tempReal / optInSlowPeriod;
+      prevFast = prevFast / optInFastPeriod;
+      /* Advance both EMA through their unstable period, up to the
+       * first MACD-line bar.
+       */
+      while( today <= startIdx - lookbackSignal ) {
+         tempReal = inReal[today++];
+         prevFast = Math.FusedMultiplyAdd(tempReal - prevFast, fastK, prevFast);
+         prevSlow = Math.FusedMultiplyAdd(tempReal - prevSlow, slowK, prevSlow);
+      }
+      macdValue = prevFast - prevSlow;
+      /* Seed the signal EMA with a simple average of the first
+       * 'signal period' MACD-line values, accumulated as they are
+       * produced.
+       */
+      prevSignal = 0.0;
+      prevSignal += macdValue;
+      i = optInSignalPeriod - 1;
+      while( i-- > 0 ) {
+         tempReal = inReal[today++];
+         prevFast = Math.FusedMultiplyAdd(tempReal - prevFast, fastK, prevFast);
+         prevSlow = Math.FusedMultiplyAdd(tempReal - prevSlow, slowK, prevSlow);
+         macdValue = prevFast - prevSlow;
+         prevSignal += macdValue;
+      }
+      prevSignal = prevSignal / optInSignalPeriod;
+      /* Advance everything in lockstep through the unstable period
+       * of the signal EMA, up to the first output bar.
+       */
+      while( today <= startIdx ) {
+         tempReal = inReal[today++];
+         prevFast = Math.FusedMultiplyAdd(tempReal - prevFast, fastK, prevFast);
+         prevSlow = Math.FusedMultiplyAdd(tempReal - prevSlow, slowK, prevSlow);
+         macdValue = prevFast - prevSlow;
+         if( optInSignalPeriod == 1 ) {
+            prevSignal = macdValue;
+         } else {
+            prevSignal = Math.FusedMultiplyAdd(macdValue - prevSignal, signalK, prevSignal);
+         }
+      }
+      /* Stable zone: keep advancing in lockstep and write the three
+       * outputs.
+       */
+      outMACD[0 * outStride] = macdValue;
+      outMACDSignal[0 * outStride] = prevSignal;
+      outMACDHist[0 * outStride] = macdValue - prevSignal;
+      outIdx = 1;
+      while( today <= endIdx ) {
+         tempReal = inReal[today++];
+         prevFast = Math.FusedMultiplyAdd(tempReal - prevFast, fastK, prevFast);
+         prevSlow = Math.FusedMultiplyAdd(tempReal - prevSlow, slowK, prevSlow);
+         macdValue = prevFast - prevSlow;
+         if( optInSignalPeriod == 1 ) {
+            prevSignal = macdValue;
+         } else {
+            prevSignal = Math.FusedMultiplyAdd(macdValue - prevSignal, signalK, prevSignal);
+         }
+         outMACD[outIdx * outStride] = macdValue;
+         outMACDSignal[outIdx * outStride] = prevSignal;
+         outMACDHist[outIdx * outStride] = macdValue - prevSignal;
+         outIdx += 1;
+      }
+      /* All done! Indicate the output limits and return success. */
+      outBegIdx = startIdx;
+      outNBElement = outIdx;
+      /* Capture the live batch state into the handle. */
+      sp.optInFastPeriod = optInFastPeriod;
+      sp.optInSlowPeriod = optInSlowPeriod;
+      sp.optInSignalPeriod = optInSignalPeriod;
+      sp.prevFast = prevFast;
+      sp.prevSlow = prevSlow;
+      sp.prevSignal = prevSignal;
+      sp.slowK = slowK;
+      sp.fastK = fastK;
+      sp.signalK = signalK;
+      sp.cur_outMACD = outMACD[(outNBElement - 1) * outStride];
+      sp.cur_outMACDSignal = outMACDSignal[(outNBElement - 1) * outStride];
+      sp.cur_outMACDHist = outMACDHist[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode MACD_OpenBody( MACD_Stream sp, double[] inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
+   {
+      double[] sink_outMACD = new double[1];
+      double[] sink_outMACDSignal = new double[1];
+      double[] sink_outMACDHist = new double[1];
+      return MACD_OpenCore( sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out _, out _, sink_outMACD, sink_outMACDSignal, sink_outMACDHist, 0 );
+   }
+
+   private RetCode MACD_OpenAndFillBody( MACD_Stream sp, double[] inReal, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, double[] outMACD, double[] outMACDSignal, double[] outMACDHist )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outMACD, inReal) || ReferenceEquals(outMACDSignal, inReal) || ReferenceEquals(outMACDHist, inReal) || ReferenceEquals(outMACD, outMACDSignal) || ReferenceEquals(outMACD, outMACDHist) || ReferenceEquals(outMACDSignal, outMACDHist) ) {
+         return RetCode.BadParam;
+      }
+      return MACD_OpenCore( sp, inReal, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist, 1 );
+   }
+
+   private RetCode MACD_OpenAndFillInternalBody( MACD_Stream sp, double[] inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, double[] outMACD, double[] outMACDSignal, double[] outMACDHist )
+   {
+      return MACD_OpenCore(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist, 1);
+   }
+
+   /* MACD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal MACD_Stream MACD_OpenAndFillInternal( double[] inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, double[] outMACD, double[] outMACDSignal, double[] outMACDHist )
+   {
+      MACD_Stream sp = new MACD_Stream(this);
+      RetCode retCode = MACD_OpenAndFillInternalBody(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("MACD", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind MACD_Open (composition seam). */
+   internal MACD_Stream MACD_OpenInternal( double[] inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
+   {
+      MACD_Stream sp = new MACD_Stream(this);
+      RetCode retCode = MACD_OpenBody(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("MACD", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>MACD</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="MACD_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>MACD</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>MACD_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>MACD_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inReal">Input series (typically close) The warm-up history, oldest bar first.</param>
+   /// <param name="optInFastPeriod">As in the batch call; see <see cref="MACD_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSlowPeriod">As in the batch call; see <see cref="MACD_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSignalPeriod">As in the batch call; see <see cref="MACD_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MACD_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public MACD_Stream MACD_Open( double[] inReal, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
+   {
+      return MACD_OpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+   }
+
+   /// <summary><c>MACD_Open</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>MACD</c> produces over the
+   /// same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - MACD_Lookback(...)</c> values and
+   /// must not alias the inputs or each other — this path writes the outputs and
+   /// then reads the input tail to seed its rings, so the batch tier's in-place
+   /// allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="MACD_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inReal">Input series (typically close) The warm-up history, oldest bar first.</param>
+   /// <param name="optInFastPeriod">As in the batch call; see <see cref="MACD_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSlowPeriod">As in the batch call; see <see cref="MACD_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInSignalPeriod">As in the batch call; see <see cref="MACD_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="outMACD">Fast EMA minus slow EMA. Must hold at least <c>historyLen -
+   /// MACD_Lookback(...)</c> values.</param>
+   /// <param name="outMACDSignal">EMA of the MACD line. Must hold at least <c>historyLen -
+   /// MACD_Lookback(...)</c> values.</param>
+   /// <param name="outMACDHist">MACD minus signal line. Must hold at least <c>historyLen -
+   /// MACD_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MACD_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public MACD_Stream MACD_OpenAndFill( double[] inReal, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, double[] outMACD, double[] outMACDSignal, double[] outMACDHist )
+   {
+      MACD_Stream sp = new MACD_Stream(this);
+      RetCode retCode = MACD_OpenAndFillBody(sp, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("MACD", "openAndFill", retCode);
+   }
 }

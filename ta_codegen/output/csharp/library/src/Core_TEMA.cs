@@ -463,4 +463,412 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>TEMA</c> stream: one value per closed bar, bit-identical to
+   /// <c>TEMA</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.TEMA_Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class TEMA_Stream
+   {
+      internal Core core;
+      internal int optInTimePeriod;
+      internal double prevEMA1;
+      internal double prevEMA2;
+      internal double prevEMA3;
+      internal double optInK_1;
+      internal double cur_outReal;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal TEMA_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>TEMA_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
+      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal TEMA_Stream( TEMA_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.prevEMA1 = other.prevEMA1;
+         this.prevEMA2 = other.prevEMA2;
+         this.prevEMA3 = other.prevEMA3;
+         this.optInK_1 = other.optInK_1;
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( TEMA_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.prevEMA1 = other.prevEMA1;
+         this.prevEMA2 = other.prevEMA2;
+         this.prevEMA3 = other.prevEMA3;
+         this.optInK_1 = other.optInK_1;
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inReal">Source price/data series.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public double Update( double inReal )
+      {
+         core.TEMA_StreamStep(this, inReal);
+         return cur_outReal;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a throwaway copy, which for this handle's shape is cheaper than
+      /// reusing one.</para>
+      /// </remarks>
+      /// <param name="inReal">Source price/data series.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public double Peek( double inReal )
+      {
+         TEMA_Stream scratch = new TEMA_Stream(this);
+         core.TEMA_StreamStep(scratch, inReal);
+         return scratch.cur_outReal;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public double Value => cur_outReal;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public TEMA_Stream Clone()
+      {
+         return new TEMA_Stream(this);
+      }
+   }
+
+   internal void TEMA_StreamStep( TEMA_Stream sp, double inReal )
+   {
+      if( sp.optInTimePeriod == 1 ) {
+         sp.cur_outReal = inReal;
+         return ;
+      }
+      sp.prevEMA1 = Math.FusedMultiplyAdd(inReal - sp.prevEMA1, sp.optInK_1, sp.prevEMA1);
+      sp.prevEMA2 = Math.FusedMultiplyAdd(sp.prevEMA1 - sp.prevEMA2, sp.optInK_1, sp.prevEMA2);
+      sp.prevEMA3 = Math.FusedMultiplyAdd(sp.prevEMA2 - sp.prevEMA3, sp.optInK_1, sp.prevEMA3);
+      sp.cur_outReal = sp.prevEMA3 + (3.0 * sp.prevEMA1 - 3.0 * sp.prevEMA2);
+   }
+
+   private RetCode TEMA_OpenCore( TEMA_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      double prevEMA1 = 0;
+      double prevEMA2 = 0;
+      double prevEMA3 = 0;
+      double tempReal = 0;
+      double optInK_1 = 0;
+      int i = 0;
+      int today = 0;
+      int outIdx = 0;
+      int lookbackEMA = 0;
+      int lookbackTotal = 0;
+      int historyLen = inReal.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInTimePeriod == int.MinValue ) {
+         optInTimePeriod = 30;
+      } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( optInTimePeriod == 1 ) {
+         if( historyLen < TEMA_Lookback(optInTimePeriod) + 1 ) {
+            return RetCode.OutOfRangeEndIndex;
+         }
+         sp.optInTimePeriod = optInTimePeriod;
+         sp.prevEMA1 = 0.0;
+         sp.prevEMA2 = 0.0;
+         sp.prevEMA3 = 0.0;
+         sp.optInK_1 = 0.0;
+         int fillLb = TEMA_Lookback(optInTimePeriod);
+         outBegIdx = fillLb;
+         outNBElement = historyLen - fillLb;
+         if( outStride == 0 ) {
+            outReal[0] = inReal[historyLen - 1];
+         } else {
+            for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+               outReal[fillIdx] = inReal[fillLb + fillIdx];
+            }
+         }
+         sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+         return RetCode.Success;
+      }
+      /* For an explanation of this function, please read:
+       *
+       * Stocks & Commodities V. 12:1 (11-19):
+       *   Smoothing Data With Faster Moving Averages
+       * Stocks & Commodities V. 12:2 (72-80):
+       *   Smoothing Data With Less Lag
+       *
+       * Both magazine articles written by Patrick G. Mulloy
+       *
+       * Essentially, a TEMA of time serie 't' is:
+       *   EMA1 = EMA(t,period)
+       *   EMA2 = EMA(EMA(t,period),period)
+       *   EMA3 = EMA(EMA(EMA(t,period),period))
+       *   TEMA = 3*EMA1 - 3*EMA2 + EMA3
+       *
+       * TEMA offers a moving average with less lags then the
+       * traditional EMA.
+       *
+       * Do not confuse a TEMA with EMA3. Both are called "Triple EMA"
+       * in the litterature.
+       *
+       * DEMA is very similar (and from the same author).
+       */
+      /* Will change only on success. */
+      outNBElement = 0;
+      outBegIdx = 0;
+      /* Adjust startIdx to account for the lookback period. */
+      lookbackEMA = EMA_Lookback(optInTimePeriod);
+      lookbackTotal = lookbackEMA * 3;
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      /* The three EMA are computed in a single lockstep pass: each new
+       * EMA1 value is immediately fed into EMA2, and each new EMA2 value
+       * into EMA3. No temporary buffers are needed.
+       *
+       * The arithmetic order below is the bit-exactness contract
+       * (do not reorder or fuse operations):
+       *  - EMA recursion: ((x-prev)*k)+prev.
+       *  - Default compatibility: each EMA is seeded with the sum
+       *    of its first 'period' inputs, accumulated from 0.0 in
+       *    input order (0.0+x is not x for x=-0.0), divided by
+       *    the period.
+       *  - Metastock compatibility: EMA1 is seeded from inReal[0],
+       *    EMA2 from the first EMA1 value, EMA3 from the first EMA2
+       *    value.
+       *  - The combine keeps the (3.0*EMA1)-(3.0*EMA2) grouping,
+       *    added to EMA3 on the left.
+       * Output alignment is identical for all compatibility modes;
+       * only the seed values differ.
+       *
+       * In-place (inReal == outReal) is supported: outReal[outIdx]
+       * is written only after inReal[startIdx+outIdx] was read.
+       */
+      optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+      /* Seed EMA1 with a simple average of the first
+       * 'period' price bars.
+       */
+      today = startIdx - lookbackTotal;
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 ) {
+         tempReal += inReal[today++];
+      }
+      prevEMA1 = tempReal / optInTimePeriod;
+      /* Advance EMA1 alone through its unstable period, up to
+       * the bar where EMA2 seeding begins.
+       */
+      while( today <= startIdx - lookbackEMA * 2 ) {
+         prevEMA1 = Math.FusedMultiplyAdd(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+      }
+      /* Seed EMA2 with a simple average of the first 'period'
+       * EMA1 values, accumulated as EMA1 produces them.
+       */
+      tempReal = 0.0;
+      tempReal += prevEMA1;
+      i = optInTimePeriod - 1;
+      while( i-- > 0 ) {
+         prevEMA1 = Math.FusedMultiplyAdd(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         tempReal += prevEMA1;
+      }
+      prevEMA2 = tempReal / optInTimePeriod;
+      /* Advance EMA1 and EMA2 in lockstep through the unstable
+       * period of EMA2, up to the bar where EMA3 seeding begins.
+       */
+      while( today <= startIdx - lookbackEMA ) {
+         prevEMA1 = Math.FusedMultiplyAdd(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.FusedMultiplyAdd(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+      }
+      /* Seed EMA3 with a simple average of the first 'period'
+       * EMA2 values, accumulated as EMA2 produces them.
+       */
+      tempReal = 0.0;
+      tempReal += prevEMA2;
+      i = optInTimePeriod - 1;
+      while( i-- > 0 ) {
+         prevEMA1 = Math.FusedMultiplyAdd(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.FusedMultiplyAdd(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         tempReal += prevEMA2;
+      }
+      prevEMA3 = tempReal / optInTimePeriod;
+      /* Advance all three EMA in lockstep through the unstable
+       * period of EMA3, up to the first output bar.
+       */
+      while( today <= startIdx ) {
+         prevEMA1 = Math.FusedMultiplyAdd(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.FusedMultiplyAdd(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA3 = Math.FusedMultiplyAdd(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+      }
+      /* Stable zone: keep advancing the three EMA in lockstep and
+       * write the TEMA into the output.
+       */
+      outReal[0 * outStride] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
+      outIdx = 1;
+      while( today <= endIdx ) {
+         prevEMA1 = Math.FusedMultiplyAdd(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = Math.FusedMultiplyAdd(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
+         prevEMA3 = Math.FusedMultiplyAdd(prevEMA2 - prevEMA3, optInK_1, prevEMA3);
+         outReal[outIdx++ * outStride] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
+      }
+      /* Succeed. Indicate where the output starts relative to
+       * the caller input.
+       */
+      outBegIdx = startIdx;
+      outNBElement = outIdx;
+      /* Capture the live batch state into the handle. */
+      sp.optInTimePeriod = optInTimePeriod;
+      sp.prevEMA1 = prevEMA1;
+      sp.prevEMA2 = prevEMA2;
+      sp.prevEMA3 = prevEMA3;
+      sp.optInK_1 = optInK_1;
+      sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode TEMA_OpenBody( TEMA_Stream sp, double[] inReal, int startIdx, int optInTimePeriod )
+   {
+      double[] sink_outReal = new double[1];
+      return TEMA_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+   }
+
+   private RetCode TEMA_OpenAndFillBody( TEMA_Stream sp, double[] inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outReal, inReal) ) {
+         return RetCode.BadParam;
+      }
+      return TEMA_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+   }
+
+   private RetCode TEMA_OpenAndFillInternalBody( TEMA_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      return TEMA_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+   }
+
+   /* TEMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal TEMA_Stream TEMA_OpenAndFillInternal( double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      TEMA_Stream sp = new TEMA_Stream(this);
+      RetCode retCode = TEMA_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("TEMA", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind TEMA_Open (composition seam). */
+   internal TEMA_Stream TEMA_OpenInternal( double[] inReal, int startIdx, int optInTimePeriod )
+   {
+      TEMA_Stream sp = new TEMA_Stream(this);
+      RetCode retCode = TEMA_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("TEMA", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>TEMA</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="TEMA_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>TEMA</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>TEMA_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>TEMA_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inReal">Source price/data series. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="TEMA_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>TEMA_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public TEMA_Stream TEMA_Open( double[] inReal, int optInTimePeriod )
+   {
+      return TEMA_OpenInternal(inReal, 0, optInTimePeriod);
+   }
+
+   /// <summary><c>TEMA_Open</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>TEMA</c> produces over the
+   /// same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - TEMA_Lookback(...)</c> values and
+   /// must not alias the inputs or each other — this path writes the outputs and
+   /// then reads the input tail to seed its rings, so the batch tier's in-place
+   /// allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="TEMA_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inReal">Source price/data series. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="TEMA_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="outReal">The TEMA line. Must hold at least <c>historyLen - TEMA_Lookback(...)</c>
+   /// values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>TEMA_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public TEMA_Stream TEMA_OpenAndFill( double[] inReal, int optInTimePeriod, double[] outReal )
+   {
+      TEMA_Stream sp = new TEMA_Stream(this);
+      RetCode retCode = TEMA_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("TEMA", "openAndFill", retCode);
+   }
 }

@@ -541,4 +541,470 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>NATR</c> stream: one value per closed bar, bit-identical to
+   /// <c>NATR</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.NATR_Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class NATR_Stream
+   {
+      internal Core core;
+      internal int optInTimePeriod;
+      internal double prevATR;
+      internal double tempValue;
+      internal double val3;
+      internal double lag1_inClose;
+      internal double cur_outReal;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal NATR_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>NATR_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
+      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal NATR_Stream( NATR_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.prevATR = other.prevATR;
+         this.tempValue = other.tempValue;
+         this.val3 = other.val3;
+         this.lag1_inClose = other.lag1_inClose;
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( NATR_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.prevATR = other.prevATR;
+         this.tempValue = other.tempValue;
+         this.val3 = other.val3;
+         this.lag1_inClose = other.lag1_inClose;
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <param name="inClose">Close price of each bar.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public double Update( double inHigh, double inLow, double inClose )
+      {
+         core.NATR_StreamStep(this, inHigh, inLow, inClose);
+         return cur_outReal;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a throwaway copy, which for this handle's shape is cheaper than
+      /// reusing one.</para>
+      /// </remarks>
+      /// <param name="inHigh">High price of each bar.</param>
+      /// <param name="inLow">Low price of each bar.</param>
+      /// <param name="inClose">Close price of each bar.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public double Peek( double inHigh, double inLow, double inClose )
+      {
+         NATR_Stream scratch = new NATR_Stream(this);
+         core.NATR_StreamStep(scratch, inHigh, inLow, inClose);
+         return scratch.cur_outReal;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public double Value => cur_outReal;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public NATR_Stream Clone()
+      {
+         return new NATR_Stream(this);
+      }
+   }
+
+   internal void NATR_StreamStep( NATR_Stream sp, double inHigh, double inLow, double inClose )
+   {
+      double val2 = 0.0;
+      double greatest = 0.0;
+      double tempCY = 0.0;
+      double tempLT = 0.0;
+      double tempHT = 0.0;
+      /* Find the greatest of the 3 values. */
+      tempLT = inLow;
+      tempHT = inHigh;
+      tempCY = sp.lag1_inClose;
+      greatest = tempHT - tempLT;
+      /* val1 */
+      val2 = Math.Abs(tempCY - tempHT);
+      if( val2 > greatest ) {
+         greatest = val2;
+      }
+      sp.val3 = Math.Abs(tempCY - tempLT);
+      if( sp.val3 > greatest ) {
+         greatest = sp.val3;
+      }
+      sp.prevATR *= sp.optInTimePeriod - 1;
+      sp.prevATR += greatest;
+      sp.prevATR /= sp.optInTimePeriod;
+      if( sp.optInTimePeriod <= 1 ) {
+         /* No smoothing: emit the raw True Range (unnormalized). */
+         sp.cur_outReal = sp.prevATR;
+      } else {
+         sp.tempValue = inClose;
+         if( !((-0.00000000000001 < sp.tempValue) && (sp.tempValue < 0.00000000000001)) ) {
+            sp.cur_outReal = sp.prevATR / sp.tempValue * 100.0;
+         } else {
+            sp.cur_outReal = 0.0;
+         }
+      }
+      sp.lag1_inClose = inClose;
+   }
+
+   private RetCode NATR_OpenCore( NATR_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      int i = 0;
+      int outIdx = 0;
+      int today = 0;
+      int lookbackTotal = 0;
+      int nbATR = 0;
+      double prevATR = 0;
+      double periodTotal = 0;
+      double tempValue = 0;
+      double val2 = 0;
+      double val3 = 0;
+      double greatest = 0;
+      double tempCY = 0;
+      double tempLT = 0;
+      double tempHT = 0;
+      int historyLen = inHigh.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 || inLow.Length != inHigh.Length || inClose.Length != inHigh.Length ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInTimePeriod == int.MinValue ) {
+         optInTimePeriod = 14;
+      } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      /* This function is very similar as ATR, except
+       * it is being normalized as follow:
+       *
+       *    NATR = (ATR(period) / Close) * 100
+       *
+       *
+       * Normalization make the ATR function more relevant
+       * in the folllowing scenario:
+       *    - Long term analysis where the price changes drastically.
+       *    - Cross-market or cross-security ATR comparison.
+       *
+       * More Info:
+       *      Technical Analysis of Stock & Commodities (TASC)
+       *      May 2006 by John Forman
+       */
+      /* Average True Range is the greatest of the following:
+       *
+       *  val1 = distance from today's high to today's low.
+       *  val2 = distance from yesterday's close to today's high.
+       *  val3 = distance from yesterday's close to today's low.
+       *
+       * These value are averaged for the specified period using
+       * Wilder method. This method have an unstable period comparable
+       * to an Exponential Moving Average (EMA).
+       */
+      outBegIdx = 0;
+      outNBElement = 0;
+      /* Adjust startIdx to account for the lookback period. */
+      lookbackTotal = NATR_Lookback(optInTimePeriod);
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      /* Period 1 needs no smoothing: the Wilder recursion below degenerates
+       * to the raw True Range at every bar (prevATR = (prevATR*0 + TR)/1 = TR).
+       * At period 1 the output is left as that raw True Range (unnormalized),
+       * matching the historical TRANGE-delegation behavior; every period > 1 is
+       * normalized by the close. The single general path handles all period >= 1.
+       */
+      /* The True Range of each bar is computed inline in a single
+       * pass. No temporary buffer is needed.
+       *
+       * The arithmetic order below is the bit-exactness contract
+       * (do not reorder or fuse operations):
+       *  - True Range: start from high-low, then compare/replace
+       *    with the two previous-close distances, in that order.
+       *  - Seed: the first 'period' True Range values are summed,
+       *    accumulated from 0.0 in input order, then divided by
+       *    the period.
+       *  - Wilder smoothing: multiply by period-1, add the True
+       *    Range, divide by period, as three separate statements.
+       *
+       * Each output is normalized by the close of its own bar; a
+       * close of zero yields 0.0.
+       *
+       * In-place (outReal being one of the input arrays) is
+       * supported: each output is written only after every input
+       * read at or before its bar, and the output index is always
+       * smaller than the bar index of any remaining read.
+       */
+      /* The first True Range needs the two price bars at
+       * startIdx-lookbackTotal+1 (a previous close is consumed).
+       */
+      today = startIdx - lookbackTotal + 1;
+      /* Seed the ATR with a simple average of the True Range
+       * for the first 'period' bars.
+       */
+      periodTotal = 0.0;
+      i = optInTimePeriod;
+      while( i-- > 0 ) {
+         /* Find the greatest of the 3 values. */
+         tempLT = inLow[today];
+         tempHT = inHigh[today];
+         tempCY = inClose[today - 1];
+         greatest = tempHT - tempLT;
+         /* val1 */
+         val2 = Math.Abs(tempCY - tempHT);
+         if( val2 > greatest ) {
+            greatest = val2;
+         }
+         val3 = Math.Abs(tempCY - tempLT);
+         if( val3 > greatest ) {
+            greatest = val3;
+         }
+         periodTotal += greatest;
+         today += 1;
+      }
+      prevATR = periodTotal / optInTimePeriod;
+      /* Subsequent value are smoothed using the
+       * previous ATR value (Wilder's approach).
+       *  1) Multiply the previous ATR by 'period-1'.
+       *  2) Add today TR value.
+       *  3) Divide by 'period'.
+       */
+      /* Skip the unstable period. */
+      i = this.unstablePeriod[(int)FuncUnstId.NATR];
+      while( i != 0 ) {
+         /* Find the greatest of the 3 values. */
+         tempLT = inLow[today];
+         tempHT = inHigh[today];
+         tempCY = inClose[today - 1];
+         greatest = tempHT - tempLT;
+         /* val1 */
+         val2 = Math.Abs(tempCY - tempHT);
+         if( val2 > greatest ) {
+            greatest = val2;
+         }
+         val3 = Math.Abs(tempCY - tempLT);
+         if( val3 > greatest ) {
+            greatest = val3;
+         }
+         prevATR *= optInTimePeriod - 1;
+         prevATR += greatest;
+         prevATR /= optInTimePeriod;
+         today += 1;
+         i -= 1;
+      }
+      /* Now start to write the final NATR in the caller
+       * provided outReal.
+       */
+      outIdx = 1;
+      if( optInTimePeriod <= 1 ) {
+         /* No smoothing: emit the raw True Range (unnormalized). */
+         outReal[0 * outStride] = prevATR;
+      } else {
+         tempValue = inClose[startIdx];
+         if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+            outReal[0 * outStride] = prevATR / tempValue * 100.0;
+         } else {
+            outReal[0 * outStride] = 0.0;
+         }
+      }
+      /* Now do the number of requested NATR. */
+      nbATR = endIdx - startIdx + 1;
+      while( --nbATR != 0 ) {
+         /* Find the greatest of the 3 values. */
+         tempLT = inLow[today];
+         tempHT = inHigh[today];
+         tempCY = inClose[today - 1];
+         greatest = tempHT - tempLT;
+         /* val1 */
+         val2 = Math.Abs(tempCY - tempHT);
+         if( val2 > greatest ) {
+            greatest = val2;
+         }
+         val3 = Math.Abs(tempCY - tempLT);
+         if( val3 > greatest ) {
+            greatest = val3;
+         }
+         prevATR *= optInTimePeriod - 1;
+         prevATR += greatest;
+         prevATR /= optInTimePeriod;
+         if( optInTimePeriod <= 1 ) {
+            /* No smoothing: emit the raw True Range (unnormalized). */
+            outReal[outIdx * outStride] = prevATR;
+         } else {
+            tempValue = inClose[today];
+            if( !((-0.00000000000001 < tempValue) && (tempValue < 0.00000000000001)) ) {
+               outReal[outIdx * outStride] = prevATR / tempValue * 100.0;
+            } else {
+               outReal[outIdx * outStride] = 0.0;
+            }
+         }
+         outIdx += 1;
+         today += 1;
+      }
+      outBegIdx = startIdx;
+      outNBElement = outIdx;
+      /* Capture the live batch state into the handle. */
+      sp.optInTimePeriod = optInTimePeriod;
+      sp.prevATR = prevATR;
+      sp.tempValue = tempValue;
+      sp.val3 = val3;
+      sp.lag1_inClose = inClose[historyLen - 1];
+      sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode NATR_OpenBody( NATR_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod )
+   {
+      double[] sink_outReal = new double[1];
+      return NATR_OpenCore( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+   }
+
+   private RetCode NATR_OpenAndFillBody( NATR_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outReal, inHigh) || ReferenceEquals(outReal, inLow) || ReferenceEquals(outReal, inClose) ) {
+         return RetCode.BadParam;
+      }
+      return NATR_OpenCore( sp, inHigh, inLow, inClose, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+   }
+
+   private RetCode NATR_OpenAndFillInternalBody( NATR_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      return NATR_OpenCore(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+   }
+
+   /* NATR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal NATR_Stream NATR_OpenAndFillInternal( double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      NATR_Stream sp = new NATR_Stream(this);
+      RetCode retCode = NATR_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("NATR", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind NATR_Open (composition seam). */
+   internal NATR_Stream NATR_OpenInternal( double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod )
+   {
+      NATR_Stream sp = new NATR_Stream(this);
+      RetCode retCode = NATR_OpenBody(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("NATR", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>NATR</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="NATR_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>NATR</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>NATR_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>NATR_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="NATR_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>NATR_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public NATR_Stream NATR_Open( double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod )
+   {
+      return NATR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
+   }
+
+   /// <summary><c>NATR_Open</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>NATR</c> produces over the
+   /// same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - NATR_Lookback(...)</c> values and
+   /// must not alias the inputs or each other — this path writes the outputs and
+   /// then reads the input tail to seed its rings, so the batch tier's in-place
+   /// allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="NATR_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="NATR_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="outReal">ATR as a percentage of the close. Must hold at least <c>historyLen -
+   /// NATR_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>NATR_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public NATR_Stream NATR_OpenAndFill( double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, double[] outReal )
+   {
+      NATR_Stream sp = new NATR_Stream(this);
+      RetCode retCode = NATR_OpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("NATR", "openAndFill", retCode);
+   }
 }

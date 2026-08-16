@@ -286,4 +286,301 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>AVGDEV</c> stream: one value per closed bar, bit-identical to
+   /// <c>AVGDEV</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.AVGDEV_Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class AVGDEV_Stream
+   {
+      internal Core core;
+      internal int optInTimePeriod;
+      internal int winPos_i;
+      internal int winCap_i;
+      internal double[] win_i_inReal = [];
+      internal double cur_outReal;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal AVGDEV_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>AVGDEV_OpenAndFill</c> filled, or
+      /// <see cref="OutRange.Empty"/> when this handle came from a plain open
+      /// (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal AVGDEV_Stream( AVGDEV_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.winPos_i = other.winPos_i;
+         this.winCap_i = other.winCap_i;
+         this.win_i_inReal = new double[other.win_i_inReal.Length];
+         Array.Copy( other.win_i_inReal, this.win_i_inReal, other.win_i_inReal.Length );
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( AVGDEV_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.winPos_i = other.winPos_i;
+         this.winCap_i = other.winCap_i;
+         if( this.win_i_inReal.Length != other.win_i_inReal.Length ) {
+            this.win_i_inReal = new double[other.win_i_inReal.Length];
+         }
+         Array.Copy( other.win_i_inReal, this.win_i_inReal, other.win_i_inReal.Length );
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inReal">source series.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public double Update( double inReal )
+      {
+         core.AVGDEV_StreamStep(this, inReal);
+         return cur_outReal;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a throwaway copy, which for this handle's shape is cheaper than
+      /// reusing one.</para>
+      /// </remarks>
+      /// <param name="inReal">source series.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public double Peek( double inReal )
+      {
+         AVGDEV_Stream scratch = new AVGDEV_Stream(this);
+         core.AVGDEV_StreamStep(scratch, inReal);
+         return scratch.cur_outReal;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public double Value => cur_outReal;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public AVGDEV_Stream Clone()
+      {
+         return new AVGDEV_Stream(this);
+      }
+   }
+
+   internal void AVGDEV_StreamStep( AVGDEV_Stream sp, double inReal )
+   {
+      double todaySum = 0.0;
+      double todayDev = 0.0;
+      int i = 0;
+      sp.win_i_inReal[sp.winPos_i] = inReal;
+      todaySum = 0.0;
+      for( i = 0; i < sp.optInTimePeriod; i += 1 ) {
+         todaySum += sp.win_i_inReal[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
+      }
+      todayDev = 0.0;
+      for( i = 0; i < sp.optInTimePeriod; i += 1 ) {
+         todayDev += Math.Abs(sp.win_i_inReal[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] - todaySum / sp.optInTimePeriod);
+      }
+      sp.cur_outReal = todayDev / sp.optInTimePeriod;
+      sp.winPos_i = sp.winPos_i + 1;
+      if( sp.winPos_i >= sp.winCap_i ) {
+         sp.winPos_i = 0;
+      }
+   }
+
+   private RetCode AVGDEV_OpenCore( AVGDEV_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      int today = 0;
+      int outIdx = 0;
+      int lookback = 0;
+      int historyLen = inReal.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInTimePeriod == int.MinValue ) {
+         optInTimePeriod = 14;
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      lookback = optInTimePeriod - 1;
+      if( startIdx < lookback ) {
+         startIdx = lookback;
+      }
+      today = startIdx;
+      /* Make sure there is still something to evaluate. */
+      if( today > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      /* Process the initial DM and TR */
+      outBegIdx = today;
+      outIdx = 0;
+      while( today <= endIdx ) {
+         double todaySum;
+         double todayDev;
+         int i;
+         todaySum = 0.0;
+         for( i = 0; i < optInTimePeriod; i += 1 ) {
+            todaySum += inReal[today - i];
+         }
+         todayDev = 0.0;
+         for( i = 0; i < optInTimePeriod; i += 1 ) {
+            todayDev += Math.Abs(inReal[today - i] - todaySum / optInTimePeriod);
+         }
+         outReal[outIdx * outStride] = todayDev / optInTimePeriod;
+         outIdx += 1;
+         today += 1;
+      }
+      outNBElement = outIdx;
+      /* Capture the live batch state into the handle. */
+      int cap_i = (int)(optInTimePeriod);
+      if( cap_i < 1 || cap_i > historyLen ) {
+         return RetCode.InternalError;
+      }
+      double[] capWin_i_inReal = new double[cap_i];
+      Array.Copy(inReal, historyLen - cap_i, capWin_i_inReal, 0, cap_i);
+      sp.optInTimePeriod = optInTimePeriod;
+      sp.winPos_i = 0;
+      sp.winCap_i = cap_i;
+      sp.win_i_inReal = capWin_i_inReal;
+      sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode AVGDEV_OpenBody( AVGDEV_Stream sp, double[] inReal, int startIdx, int optInTimePeriod )
+   {
+      double[] sink_outReal = new double[1];
+      return AVGDEV_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+   }
+
+   private RetCode AVGDEV_OpenAndFillBody( AVGDEV_Stream sp, double[] inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outReal, inReal) ) {
+         return RetCode.BadParam;
+      }
+      return AVGDEV_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+   }
+
+   private RetCode AVGDEV_OpenAndFillInternalBody( AVGDEV_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      return AVGDEV_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+   }
+
+   /* AVGDEV_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal AVGDEV_Stream AVGDEV_OpenAndFillInternal( double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      AVGDEV_Stream sp = new AVGDEV_Stream(this);
+      RetCode retCode = AVGDEV_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("AVGDEV", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind AVGDEV_Open (composition seam). */
+   internal AVGDEV_Stream AVGDEV_OpenInternal( double[] inReal, int startIdx, int optInTimePeriod )
+   {
+      AVGDEV_Stream sp = new AVGDEV_Stream(this);
+      RetCode retCode = AVGDEV_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("AVGDEV", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>AVGDEV</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="AVGDEV_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>AVGDEV</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>AVGDEV_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>AVGDEV_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inReal">source series. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="AVGDEV_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>AVGDEV_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public AVGDEV_Stream AVGDEV_Open( double[] inReal, int optInTimePeriod )
+   {
+      return AVGDEV_OpenInternal(inReal, 0, optInTimePeriod);
+   }
+
+   /// <summary><c>AVGDEV_Open</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>AVGDEV</c> produces over
+   /// the same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - AVGDEV_Lookback(...)</c> values
+   /// and must not alias the inputs or each other — this path writes the outputs
+   /// and then reads the input tail to seed its rings, so the batch tier's
+   /// in-place allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="AVGDEV_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inReal">source series. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="AVGDEV_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="outReal">mean absolute deviation over the window. Must hold at least <c>historyLen
+   /// - AVGDEV_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>AVGDEV_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public AVGDEV_Stream AVGDEV_OpenAndFill( double[] inReal, int optInTimePeriod, double[] outReal )
+   {
+      AVGDEV_Stream sp = new AVGDEV_Stream(this);
+      RetCode retCode = AVGDEV_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("AVGDEV", "openAndFill", retCode);
+   }
 }

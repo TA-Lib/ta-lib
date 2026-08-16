@@ -467,4 +467,525 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>VAR</c> stream: one value per closed bar, bit-identical to
+   /// <c>VAR</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.VAR_Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class VAR_Stream
+   {
+      internal Core core;
+      internal int optInTimePeriod;
+      internal double optInNbDev;
+      internal double shift;
+      internal double periodTotal1;
+      internal double periodTotal2;
+      internal double meanValue1;
+      internal double variance;
+      internal double invPeriod;
+      internal int j;
+      internal int trailingIdx;
+      internal int windowStart;
+      internal int nbInitialElementNeeded;
+      internal int barsSinceReseed;
+      internal int i;
+      internal int xMask;
+      internal double[] x_inReal = [];
+      internal double cur_outReal;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal VAR_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>VAR_OpenAndFill</c> filled, or <see cref="OutRange.Empty"/>
+      /// when this handle came from a plain open (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal VAR_Stream( VAR_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.optInNbDev = other.optInNbDev;
+         this.shift = other.shift;
+         this.periodTotal1 = other.periodTotal1;
+         this.periodTotal2 = other.periodTotal2;
+         this.meanValue1 = other.meanValue1;
+         this.variance = other.variance;
+         this.invPeriod = other.invPeriod;
+         this.j = other.j;
+         this.trailingIdx = other.trailingIdx;
+         this.windowStart = other.windowStart;
+         this.nbInitialElementNeeded = other.nbInitialElementNeeded;
+         this.barsSinceReseed = other.barsSinceReseed;
+         this.i = other.i;
+         this.xMask = other.xMask;
+         this.x_inReal = new double[other.x_inReal.Length];
+         Array.Copy( other.x_inReal, this.x_inReal, other.x_inReal.Length );
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( VAR_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.optInNbDev = other.optInNbDev;
+         this.shift = other.shift;
+         this.periodTotal1 = other.periodTotal1;
+         this.periodTotal2 = other.periodTotal2;
+         this.meanValue1 = other.meanValue1;
+         this.variance = other.variance;
+         this.invPeriod = other.invPeriod;
+         this.j = other.j;
+         this.trailingIdx = other.trailingIdx;
+         this.windowStart = other.windowStart;
+         this.nbInitialElementNeeded = other.nbInitialElementNeeded;
+         this.barsSinceReseed = other.barsSinceReseed;
+         this.i = other.i;
+         this.xMask = other.xMask;
+         if( this.x_inReal.Length != other.x_inReal.Length ) {
+            this.x_inReal = new double[other.x_inReal.Length];
+         }
+         Array.Copy( other.x_inReal, this.x_inReal, other.x_inReal.Length );
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inReal">Source series.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public double Update( double inReal )
+      {
+         core.VAR_StreamStep(this, inReal);
+         return cur_outReal;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a throwaway copy, which for this handle's shape is cheaper than
+      /// reusing one.</para>
+      /// </remarks>
+      /// <param name="inReal">Source series.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public double Peek( double inReal )
+      {
+         VAR_Stream scratch = new VAR_Stream(this);
+         core.VAR_StreamStep(scratch, inReal);
+         return scratch.cur_outReal;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public double Value => cur_outReal;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public VAR_Stream Clone()
+      {
+         return new VAR_Stream(this);
+      }
+   }
+
+   internal void VAR_StreamStep( VAR_Stream sp, double inReal )
+   {
+      double tempReal = 0.0;
+      if( sp.i >= 1073741824 ) {
+         int rebaseShift = sp.trailingIdx & ~sp.xMask;
+         sp.i -= rebaseShift;
+         sp.trailingIdx -= rebaseShift;
+         sp.j -= rebaseShift;
+         sp.windowStart -= rebaseShift;
+      }
+      sp.x_inReal[sp.i & sp.xMask] = inReal;
+      /* Add the incoming value, measured against the shift. */
+      tempReal = sp.x_inReal[sp.i & sp.xMask] - sp.shift;
+      sp.periodTotal1 += tempReal;
+      tempReal *= tempReal;
+      sp.periodTotal2 += tempReal;
+      sp.meanValue1 = sp.periodTotal1 * sp.invPeriod;
+      sp.variance = sp.periodTotal2 * sp.invPeriod - sp.meanValue1 * sp.meanValue1;
+      /* Remove the trailing value (prepares the next window). */
+      tempReal = sp.x_inReal[sp.trailingIdx & sp.xMask] - sp.shift;
+      sp.periodTotal1 -= tempReal;
+      tempReal *= tempReal;
+      sp.periodTotal2 -= tempReal;
+      sp.trailingIdx += 1;
+      /* Re-anchor the shift and rebuild the running sums with a fresh two-pass
+       * when the shift is stale enough that the subtraction loses digits - i.e.
+       * the variance has shrunk below 1e-6 of the mean squared deviation it is
+       * extracted from (that ratio bounds the cancellation error to ~eps/1e-6 ~
+       * 2e-10, so partial cancellation, not just total collapse, is caught); OR
+       * when the value just removed sat so far from the shift that its squared term
+       * (tempReal) dwarfs the surviving sum (a large outlier passing through the
+       * window buries the small terms below its ulp, and the residual left when it
+       * leaves is cancellation garbage); OR at least every 32 windows so a slow
+       * drift stays bounded regardless of the series length. The strict `<` also
+       * leaves an exactly-constant window (variance 0, scale 0) alone instead of
+       * reseeding it every bar. Guarantees a non-negative output.
+       */
+      sp.barsSinceReseed -= 1;
+      if( sp.variance < 0.000001 * (sp.periodTotal2 * sp.invPeriod) || tempReal > 1000000.0 * sp.periodTotal2 || sp.barsSinceReseed <= 0 ) {
+         sp.barsSinceReseed = 32 * sp.optInTimePeriod;
+         sp.windowStart = sp.i - sp.nbInitialElementNeeded;
+         tempReal = 0.0;
+         for( sp.j = sp.windowStart; sp.j <= sp.i; sp.j += 1 ) {
+            tempReal += sp.x_inReal[sp.j & sp.xMask];
+         }
+         sp.shift = tempReal * sp.invPeriod;
+         sp.periodTotal1 = 0.0;
+         sp.periodTotal2 = 0.0;
+         for( sp.j = sp.windowStart; sp.j <= sp.i; sp.j += 1 ) {
+            tempReal = sp.x_inReal[sp.j & sp.xMask] - sp.shift;
+            sp.periodTotal1 += tempReal;
+            tempReal *= tempReal;
+            sp.periodTotal2 += tempReal;
+         }
+         sp.meanValue1 = sp.periodTotal1 * sp.invPeriod;
+         sp.variance = sp.periodTotal2 * sp.invPeriod - sp.meanValue1 * sp.meanValue1;
+         /* A variance is non-negative by definition, but this one is extracted
+          * as a difference of two nearly equal quantities, so its SIGN is not
+          * guaranteed: on a window sitting entirely inside a flat stretch every
+          * deviation is the same rounding residual and the subtraction is pure
+          * cancellation, landing either side of zero. Enforce the invariant.
+          *
+          * Clamping HERE and not at the output write is what keeps this off the
+          * per-bar path, and it is sufficient because a negative variance always
+          * reseeds on the same bar - the guard above covers all three cases:
+          * periodTotal2 > 0 makes its first disjunct `negative < positive`;
+          * periodTotal2 < 0 makes the second disjunct's right side negative,
+          * which the squared tempReal always exceeds; periodTotal2 == 0 reduces
+          * the first to `variance < 0`. CHANGING THAT GUARD MEANS RE-CHECKING
+          * THIS - the alternative is an unconditional clamp at the output write,
+          * which needs no such argument but does cost ~3%.
+          */
+         if( sp.variance < 0.0 ) {
+            sp.variance = 0.0;
+         }
+         /* Re-remove the trailing value under the new shift so the carried state
+          * matches the non-reseed path.
+          */
+         tempReal = sp.x_inReal[sp.windowStart & sp.xMask] - sp.shift;
+         sp.periodTotal1 -= tempReal;
+         tempReal *= tempReal;
+         sp.periodTotal2 -= tempReal;
+      }
+      sp.cur_outReal = sp.variance;
+      sp.i += 1;
+   }
+
+   private RetCode VAR_OpenCore( VAR_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, double optInNbDev, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      double tempReal = 0;
+      double shift = 0;
+      double periodTotal1 = 0;
+      double periodTotal2 = 0;
+      double meanValue1 = 0;
+      double variance = 0;
+      double invPeriod = 0;
+      int i = 0;
+      int j = 0;
+      int outIdx = 0;
+      int trailingIdx = 0;
+      int windowStart = 0;
+      int nbInitialElementNeeded = 0;
+      int barsSinceReseed = 0;
+      int historyLen = inReal.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInTimePeriod == int.MinValue ) {
+         optInTimePeriod = 5;
+      } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( optInNbDev == TA_REAL_DEFAULT ) {
+         optInNbDev = 1e0;
+      } else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX ) {
+         return RetCode.BadParam;
+      }
+      /* Identify the minimum number of price bar needed to calculate
+       * at least one output.
+       */
+      nbInitialElementNeeded = optInTimePeriod - 1;
+      /* Move up the start index if there is not enough initial data. */
+      if( startIdx < nbInitialElementNeeded ) {
+         startIdx = nbInitialElementNeeded;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      invPeriod = 1.0 / (double)optInTimePeriod;
+      /* Measure deviations against a shift near the window: the running sums
+       * periodTotal1 = sum(inReal-shift) and periodTotal2 = sum((inReal-shift)^2)
+       * stay at variance scale, so variance = periodTotal2/period - mean^2 no longer
+       * subtracts two ~mean^2 quantities. Anchor the shift to the first window value
+       * (also gives an exact 0 for period 1, with no division by period-1).
+       */
+      trailingIdx = startIdx - nbInitialElementNeeded;
+      shift = inReal[trailingIdx];
+      periodTotal1 = 0.0;
+      periodTotal2 = 0.0;
+      for( j = trailingIdx; j < startIdx; j += 1 ) {
+         tempReal = inReal[j] - shift;
+         periodTotal1 += tempReal;
+         tempReal *= tempReal;
+         periodTotal2 += tempReal;
+      }
+      /* inReal and outReal may be the same buffer: each trailing value is consumed
+       * before its slot is overwritten by the output.
+       */
+      i = startIdx;
+      outIdx = 0;
+      barsSinceReseed = 32 * optInTimePeriod;
+      do {
+         /* Add the incoming value, measured against the shift. */
+         tempReal = inReal[i] - shift;
+         periodTotal1 += tempReal;
+         tempReal *= tempReal;
+         periodTotal2 += tempReal;
+         meanValue1 = periodTotal1 * invPeriod;
+         variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+         /* Remove the trailing value (prepares the next window). */
+         tempReal = inReal[trailingIdx] - shift;
+         periodTotal1 -= tempReal;
+         tempReal *= tempReal;
+         periodTotal2 -= tempReal;
+         trailingIdx += 1;
+         /* Re-anchor the shift and rebuild the running sums with a fresh two-pass
+          * when the shift is stale enough that the subtraction loses digits - i.e.
+          * the variance has shrunk below 1e-6 of the mean squared deviation it is
+          * extracted from (that ratio bounds the cancellation error to ~eps/1e-6 ~
+          * 2e-10, so partial cancellation, not just total collapse, is caught); OR
+          * when the value just removed sat so far from the shift that its squared term
+          * (tempReal) dwarfs the surviving sum (a large outlier passing through the
+          * window buries the small terms below its ulp, and the residual left when it
+          * leaves is cancellation garbage); OR at least every 32 windows so a slow
+          * drift stays bounded regardless of the series length. The strict `<` also
+          * leaves an exactly-constant window (variance 0, scale 0) alone instead of
+          * reseeding it every bar. Guarantees a non-negative output.
+          */
+         barsSinceReseed -= 1;
+         if( variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
+            barsSinceReseed = 32 * optInTimePeriod;
+            windowStart = i - nbInitialElementNeeded;
+            tempReal = 0.0;
+            for( j = windowStart; j <= i; j += 1 ) {
+               tempReal += inReal[j];
+            }
+            shift = tempReal * invPeriod;
+            periodTotal1 = 0.0;
+            periodTotal2 = 0.0;
+            for( j = windowStart; j <= i; j += 1 ) {
+               tempReal = inReal[j] - shift;
+               periodTotal1 += tempReal;
+               tempReal *= tempReal;
+               periodTotal2 += tempReal;
+            }
+            meanValue1 = periodTotal1 * invPeriod;
+            variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+            /* A variance is non-negative by definition, but this one is extracted
+             * as a difference of two nearly equal quantities, so its SIGN is not
+             * guaranteed: on a window sitting entirely inside a flat stretch every
+             * deviation is the same rounding residual and the subtraction is pure
+             * cancellation, landing either side of zero. Enforce the invariant.
+             *
+             * Clamping HERE and not at the output write is what keeps this off the
+             * per-bar path, and it is sufficient because a negative variance always
+             * reseeds on the same bar - the guard above covers all three cases:
+             * periodTotal2 > 0 makes its first disjunct `negative < positive`;
+             * periodTotal2 < 0 makes the second disjunct's right side negative,
+             * which the squared tempReal always exceeds; periodTotal2 == 0 reduces
+             * the first to `variance < 0`. CHANGING THAT GUARD MEANS RE-CHECKING
+             * THIS - the alternative is an unconditional clamp at the output write,
+             * which needs no such argument but does cost ~3%.
+             */
+            if( variance < 0.0 ) {
+               variance = 0.0;
+            }
+            /* Re-remove the trailing value under the new shift so the carried state
+             * matches the non-reseed path.
+             */
+            tempReal = inReal[windowStart] - shift;
+            periodTotal1 -= tempReal;
+            tempReal *= tempReal;
+            periodTotal2 -= tempReal;
+         }
+         outReal[outIdx++ * outStride] = variance;
+         i += 1;
+      } while( i <= endIdx );
+      /* All done. Indicate the output limits and return. */
+      outNBElement = outIdx;
+      outBegIdx = startIdx;
+      /* Capture the live batch state into the handle. */
+      int capX = i - trailingIdx + 1;
+      if( capX < 1 || capX > historyLen ) {
+         return RetCode.InternalError;
+      }
+      int physX = 1;
+      while( physX < capX ) {
+         physX <<= 1;
+      }
+      double[] capX_inReal = new double[physX];
+      for( int fillJ = historyLen - capX; fillJ < historyLen; fillJ++ ) {
+         capX_inReal[fillJ & (physX - 1)] = inReal[fillJ];
+      }
+      sp.optInTimePeriod = optInTimePeriod;
+      sp.optInNbDev = optInNbDev;
+      sp.shift = shift;
+      sp.periodTotal1 = periodTotal1;
+      sp.periodTotal2 = periodTotal2;
+      sp.meanValue1 = meanValue1;
+      sp.variance = variance;
+      sp.invPeriod = invPeriod;
+      sp.j = j;
+      sp.trailingIdx = trailingIdx;
+      sp.windowStart = windowStart;
+      sp.nbInitialElementNeeded = nbInitialElementNeeded;
+      sp.barsSinceReseed = barsSinceReseed;
+      sp.i = i;
+      sp.xMask = physX - 1;
+      sp.x_inReal = capX_inReal;
+      sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode VAR_OpenBody( VAR_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, double optInNbDev )
+   {
+      double[] sink_outReal = new double[1];
+      return VAR_OpenCore( sp, inReal, startIdx, optInTimePeriod, optInNbDev, out _, out _, sink_outReal, 0 );
+   }
+
+   private RetCode VAR_OpenAndFillBody( VAR_Stream sp, double[] inReal, int optInTimePeriod, double optInNbDev, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outReal, inReal) ) {
+         return RetCode.BadParam;
+      }
+      return VAR_OpenCore( sp, inReal, 0, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal, 1 );
+   }
+
+   private RetCode VAR_OpenAndFillInternalBody( VAR_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, double optInNbDev, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      return VAR_OpenCore(sp, inReal, startIdx, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal, 1);
+   }
+
+   /* VAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal VAR_Stream VAR_OpenAndFillInternal( double[] inReal, int startIdx, int optInTimePeriod, double optInNbDev, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      VAR_Stream sp = new VAR_Stream(this);
+      RetCode retCode = VAR_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("VAR", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind VAR_Open (composition seam). */
+   internal VAR_Stream VAR_OpenInternal( double[] inReal, int startIdx, int optInTimePeriod, double optInNbDev )
+   {
+      VAR_Stream sp = new VAR_Stream(this);
+      RetCode retCode = VAR_OpenBody(sp, inReal, startIdx, optInTimePeriod, optInNbDev);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("VAR", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>VAR</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="VAR_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>VAR</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>VAR_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>VAR_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inReal">Source series. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="VAR_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInNbDev">As in the batch call; see <see cref="VAR_Lookback"/> for its default and
+   /// range (<c>-4e37</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>VAR_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public VAR_Stream VAR_Open( double[] inReal, int optInTimePeriod, double optInNbDev )
+   {
+      return VAR_OpenInternal(inReal, 0, optInTimePeriod, optInNbDev);
+   }
+
+   /// <summary><c>VAR_Open</c> that also fills the output array(s) over the whole history
+   /// in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>VAR</c> produces over the
+   /// same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - VAR_Lookback(...)</c> values and
+   /// must not alias the inputs or each other — this path writes the outputs and
+   /// then reads the input tail to seed its rings, so the batch tier's in-place
+   /// allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="VAR_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inReal">Source series. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="VAR_Lookback"/> for its default and
+   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="optInNbDev">As in the batch call; see <see cref="VAR_Lookback"/> for its default and
+   /// range (<c>-4e37</c> selects the default).</param>
+   /// <param name="outReal">Rolling population variance. Must hold at least <c>historyLen -
+   /// VAR_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>VAR_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public VAR_Stream VAR_OpenAndFill( double[] inReal, int optInTimePeriod, double optInNbDev, double[] outReal )
+   {
+      VAR_Stream sp = new VAR_Stream(this);
+      RetCode retCode = VAR_OpenAndFillBody(sp, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("VAR", "openAndFill", retCode);
+   }
 }

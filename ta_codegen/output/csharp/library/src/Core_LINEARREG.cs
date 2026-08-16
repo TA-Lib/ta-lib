@@ -352,4 +352,374 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>LINEARREG</c> stream: one value per closed bar, bit-identical to
+   /// <c>LINEARREG</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.LINEARREG_Open"/>. There is no close and nothing
+   /// to dispose — the handle is ordinary managed state, and an unreferenced
+   /// handle is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class LINEARREG_Stream
+   {
+      internal Core core;
+      internal int optInTimePeriod;
+      internal double SumX;
+      internal double SumXY;
+      internal double SumY;
+      internal double Divisor;
+      internal double trailingValue;
+      internal int ringPos_trailingIdx;
+      internal int ringCap_trailingIdx;
+      internal double[] ring_trailingIdx_inReal = [];
+      internal double cur_outReal;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal LINEARREG_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>LINEARREG_OpenAndFill</c> filled, or
+      /// <see cref="OutRange.Empty"/> when this handle came from a plain open
+      /// (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal LINEARREG_Stream( LINEARREG_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.SumX = other.SumX;
+         this.SumXY = other.SumXY;
+         this.SumY = other.SumY;
+         this.Divisor = other.Divisor;
+         this.trailingValue = other.trailingValue;
+         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
+         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
+         this.ring_trailingIdx_inReal = new double[other.ring_trailingIdx_inReal.Length];
+         Array.Copy( other.ring_trailingIdx_inReal, this.ring_trailingIdx_inReal, other.ring_trailingIdx_inReal.Length );
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( LINEARREG_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.SumX = other.SumX;
+         this.SumXY = other.SumXY;
+         this.SumY = other.SumY;
+         this.Divisor = other.Divisor;
+         this.trailingValue = other.trailingValue;
+         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
+         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
+         if( this.ring_trailingIdx_inReal.Length != other.ring_trailingIdx_inReal.Length ) {
+            this.ring_trailingIdx_inReal = new double[other.ring_trailingIdx_inReal.Length];
+         }
+         Array.Copy( other.ring_trailingIdx_inReal, this.ring_trailingIdx_inReal, other.ring_trailingIdx_inReal.Length );
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inReal">Series to fit.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public double Update( double inReal )
+      {
+         core.LINEARREG_StreamStep(this, inReal);
+         return cur_outReal;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a throwaway copy, which for this handle's shape is cheaper than
+      /// reusing one.</para>
+      /// </remarks>
+      /// <param name="inReal">Series to fit.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public double Peek( double inReal )
+      {
+         LINEARREG_Stream scratch = new LINEARREG_Stream(this);
+         core.LINEARREG_StreamStep(scratch, inReal);
+         return scratch.cur_outReal;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public double Value => cur_outReal;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public LINEARREG_Stream Clone()
+      {
+         return new LINEARREG_Stream(this);
+      }
+   }
+
+   internal void LINEARREG_StreamStep( LINEARREG_Stream sp, double inReal )
+   {
+      double m = 0.0;
+      double b = 0.0;
+      if( sp.ringCap_trailingIdx == 0 ) {
+         sp.ring_trailingIdx_inReal[0] = inReal;
+      }
+      sp.SumXY = sp.SumXY + sp.SumY - (double)sp.optInTimePeriod * sp.trailingValue;
+      sp.SumY = sp.SumY - sp.trailingValue + inReal;
+      m = (sp.optInTimePeriod * sp.SumXY - sp.SumX * sp.SumY) / sp.Divisor;
+      b = (sp.SumY - m * sp.SumX) / (double)sp.optInTimePeriod;
+      sp.trailingValue = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
+      sp.cur_outReal = Math.FusedMultiplyAdd(m, (double)(sp.optInTimePeriod - 1), b);
+      sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
+      sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
+      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+         sp.ringPos_trailingIdx = 0;
+      }
+   }
+
+   private RetCode LINEARREG_OpenCore( LINEARREG_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      int outIdx = 0;
+      int today = 0;
+      int lookbackTotal = 0;
+      int trailingIdx = 0;
+      double SumX = 0;
+      double SumXY = 0;
+      double SumY = 0;
+      double SumXSqr = 0;
+      double Divisor = 0;
+      double m = 0;
+      double b = 0;
+      int i = 0;
+      double tempValue1 = 0;
+      double trailingValue = 0;
+      int historyLen = inReal.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInTimePeriod == int.MinValue ) {
+         optInTimePeriod = 14;
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      /* Linear Regression is a concept also known as the
+       * "least squares method" or "best fit." Linear
+       * Regression attempts to fit a straight line between
+       * several data points in such a way that distance
+       * between each data point and the line is minimized.
+       *
+       * For each point, a straight line over the specified
+       * previous bar period is determined in terms
+       * of y = b + m*x:
+       *
+       * TA_LINEARREG          : Returns b+m*(period-1)
+       * TA_LINEARREG_SLOPE    : Returns 'm'
+       * TA_LINEARREG_ANGLE    : Returns 'm' in degree.
+       * TA_LINEARREG_INTERCEPT: Returns 'b'
+       * TA_TSF                : Returns b+m*(period)
+       */
+      /* Adjust startIdx to account for the lookback period. */
+      lookbackTotal = LINEARREG_Lookback(optInTimePeriod);
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      outIdx = 0;
+      /* Index into the output. */
+      today = startIdx;
+      trailingIdx = startIdx - lookbackTotal;
+      SumX = (double)optInTimePeriod * (optInTimePeriod - 1) * 0.5;
+      SumXSqr = (double)optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6.0;
+      Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
+      /* Prime the two data-dependent window sums for the first output with a
+       * one-time full-window scan. SumX/SumXSqr/Divisor are period-only constants;
+       * SumY = sum of the window, SumXY = sum of i*value (i the reversed
+       * 0..period-1 position).
+       */
+      SumXY = 0;
+      SumY = 0;
+      for( i = optInTimePeriod; i-- != 0;  ) {
+         tempValue1 = inReal[today - i];
+         SumY += tempValue1;
+         SumXY += (double)i * tempValue1;
+      }
+      m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+      b = (SumY - m * SumX) / (double)optInTimePeriod;
+      trailingValue = inReal[trailingIdx++];
+      outReal[outIdx++ * outStride] = Math.FusedMultiplyAdd(m, (double)(optInTimePeriod - 1), b);
+      today += 1;
+      /* Slide the window one bar at a time, keeping both sums in O(1): advancing
+       * the window raises every retained value's weight by 1 (adds SumY) and drops
+       * the departing value at full weight (subtracts period*trailingValue). Same
+       * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
+       * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
+       * Each departing value is read before the output write of the same bar:
+       * with outReal==inReal (in-place, #130) that write lands on the cell the
+       * next iteration departs from.
+       */
+      while( today <= endIdx ) {
+         SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
+         SumY = SumY - trailingValue + inReal[today];
+         m = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+         b = (SumY - m * SumX) / (double)optInTimePeriod;
+         trailingValue = inReal[trailingIdx++];
+         outReal[outIdx++ * outStride] = Math.FusedMultiplyAdd(m, (double)(optInTimePeriod - 1), b);
+         today += 1;
+      }
+      outBegIdx = startIdx;
+      outNBElement = outIdx;
+      /* Capture the live batch state into the handle. */
+      int cap_trailingIdx = today - trailingIdx;
+      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+         return RetCode.InternalError;
+      }
+      int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
+      double[] capRing_trailingIdx_inReal = new double[allocN_trailingIdx];
+      Array.Copy(inReal, historyLen - cap_trailingIdx, capRing_trailingIdx_inReal, 0, cap_trailingIdx);
+      sp.optInTimePeriod = optInTimePeriod;
+      sp.SumX = SumX;
+      sp.SumXY = SumXY;
+      sp.SumY = SumY;
+      sp.Divisor = Divisor;
+      sp.trailingValue = trailingValue;
+      sp.ringPos_trailingIdx = 0;
+      sp.ringCap_trailingIdx = cap_trailingIdx;
+      sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
+      sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode LINEARREG_OpenBody( LINEARREG_Stream sp, double[] inReal, int startIdx, int optInTimePeriod )
+   {
+      double[] sink_outReal = new double[1];
+      return LINEARREG_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+   }
+
+   private RetCode LINEARREG_OpenAndFillBody( LINEARREG_Stream sp, double[] inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outReal, inReal) ) {
+         return RetCode.BadParam;
+      }
+      return LINEARREG_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+   }
+
+   private RetCode LINEARREG_OpenAndFillInternalBody( LINEARREG_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      return LINEARREG_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+   }
+
+   /* LINEARREG_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal LINEARREG_Stream LINEARREG_OpenAndFillInternal( double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      LINEARREG_Stream sp = new LINEARREG_Stream(this);
+      RetCode retCode = LINEARREG_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("LINEARREG", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind LINEARREG_Open (composition seam). */
+   internal LINEARREG_Stream LINEARREG_OpenInternal( double[] inReal, int startIdx, int optInTimePeriod )
+   {
+      LINEARREG_Stream sp = new LINEARREG_Stream(this);
+      RetCode retCode = LINEARREG_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("LINEARREG", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>LINEARREG</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="LINEARREG_Stream.Value"/> starts at the last
+   /// history bar's value — bit-identical to what <c>LINEARREG</c> reports for
+   /// that bar.</para>
+   /// <para>The history must hold at least <c>LINEARREG_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>LINEARREG_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inReal">Series to fit. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="LINEARREG_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>LINEARREG_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public LINEARREG_Stream LINEARREG_Open( double[] inReal, int optInTimePeriod )
+   {
+      return LINEARREG_OpenInternal(inReal, 0, optInTimePeriod);
+   }
+
+   /// <summary><c>LINEARREG_Open</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>LINEARREG</c> produces
+   /// over the same series, so no separate batch call is needed for the warm-up
+   /// plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - LINEARREG_Lookback(...)</c> values
+   /// and must not alias the inputs or each other — this path writes the outputs
+   /// and then reads the input tail to seed its rings, so the batch tier's
+   /// in-place allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="LINEARREG_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inReal">Series to fit. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="LINEARREG_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="outReal">Regression line value at the window endpoint. Must hold at least
+   /// <c>historyLen - LINEARREG_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>LINEARREG_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public LINEARREG_Stream LINEARREG_OpenAndFill( double[] inReal, int optInTimePeriod, double[] outReal )
+   {
+      LINEARREG_Stream sp = new LINEARREG_Stream(this);
+      RetCode retCode = LINEARREG_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("LINEARREG", "openAndFill", retCode);
+   }
 }

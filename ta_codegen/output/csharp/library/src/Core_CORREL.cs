@@ -393,4 +393,438 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>CORREL</c> stream: one value per closed bar, bit-identical to
+   /// <c>CORREL</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.CORREL_Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class CORREL_Stream
+   {
+      internal Core core;
+      internal int optInTimePeriod;
+      internal double sumXY;
+      internal double sumX;
+      internal double sumY;
+      internal double sumX2;
+      internal double sumY2;
+      internal double x;
+      internal double y;
+      internal double trailingX;
+      internal double trailingY;
+      internal double tempReal;
+      internal int ringPos_trailingIdx;
+      internal int ringCap_trailingIdx;
+      internal double[] ring_trailingIdx_inReal0 = [];
+      internal double[] ring_trailingIdx_inReal1 = [];
+      internal double cur_outReal;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal CORREL_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>CORREL_OpenAndFill</c> filled, or
+      /// <see cref="OutRange.Empty"/> when this handle came from a plain open
+      /// (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal CORREL_Stream( CORREL_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.sumXY = other.sumXY;
+         this.sumX = other.sumX;
+         this.sumY = other.sumY;
+         this.sumX2 = other.sumX2;
+         this.sumY2 = other.sumY2;
+         this.x = other.x;
+         this.y = other.y;
+         this.trailingX = other.trailingX;
+         this.trailingY = other.trailingY;
+         this.tempReal = other.tempReal;
+         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
+         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
+         this.ring_trailingIdx_inReal0 = new double[other.ring_trailingIdx_inReal0.Length];
+         Array.Copy( other.ring_trailingIdx_inReal0, this.ring_trailingIdx_inReal0, other.ring_trailingIdx_inReal0.Length );
+         this.ring_trailingIdx_inReal1 = new double[other.ring_trailingIdx_inReal1.Length];
+         Array.Copy( other.ring_trailingIdx_inReal1, this.ring_trailingIdx_inReal1, other.ring_trailingIdx_inReal1.Length );
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( CORREL_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.sumXY = other.sumXY;
+         this.sumX = other.sumX;
+         this.sumY = other.sumY;
+         this.sumX2 = other.sumX2;
+         this.sumY2 = other.sumY2;
+         this.x = other.x;
+         this.y = other.y;
+         this.trailingX = other.trailingX;
+         this.trailingY = other.trailingY;
+         this.tempReal = other.tempReal;
+         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
+         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
+         if( this.ring_trailingIdx_inReal0.Length != other.ring_trailingIdx_inReal0.Length ) {
+            this.ring_trailingIdx_inReal0 = new double[other.ring_trailingIdx_inReal0.Length];
+         }
+         Array.Copy( other.ring_trailingIdx_inReal0, this.ring_trailingIdx_inReal0, other.ring_trailingIdx_inReal0.Length );
+         if( this.ring_trailingIdx_inReal1.Length != other.ring_trailingIdx_inReal1.Length ) {
+            this.ring_trailingIdx_inReal1 = new double[other.ring_trailingIdx_inReal1.Length];
+         }
+         Array.Copy( other.ring_trailingIdx_inReal1, this.ring_trailingIdx_inReal1, other.ring_trailingIdx_inReal1.Length );
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /* Peek's reusable scratch — one per thread, see CopyFrom. */
+      [ThreadStatic] private static CORREL_Stream? peekScratch;
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inReal0">First data series (X)</param>
+      /// <param name="inReal1">Second data series (Y)</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public double Update( double inReal0, double inReal1 )
+      {
+         core.CORREL_StreamStep(this, inReal0, inReal1);
+         return cur_outReal;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a scratch handle held per thread and reused, so the copy
+      /// allocates nothing after the first peek of this indicator on this thread.
+      /// That scratch is retained for the life of the thread.</para>
+      /// </remarks>
+      /// <param name="inReal0">First data series (X)</param>
+      /// <param name="inReal1">Second data series (Y)</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public double Peek( double inReal0, double inReal1 )
+      {
+         CORREL_Stream? scratch = peekScratch;
+         if( scratch is null ) {
+            scratch = new CORREL_Stream(this);
+            peekScratch = scratch;
+         } else {
+            scratch.CopyFrom(this);
+         }
+         core.CORREL_StreamStep(scratch, inReal0, inReal1);
+         return scratch.cur_outReal;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public double Value => cur_outReal;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public CORREL_Stream Clone()
+      {
+         return new CORREL_Stream(this);
+      }
+   }
+
+   internal void CORREL_StreamStep( CORREL_Stream sp, double inReal0, double inReal1 )
+   {
+      if( sp.ringCap_trailingIdx == 0 ) {
+         sp.ring_trailingIdx_inReal0[0] = inReal0;
+         sp.ring_trailingIdx_inReal1[0] = inReal1;
+      }
+      /* Remove trailing values */
+      sp.sumX -= sp.trailingX;
+      sp.sumX2 -= sp.trailingX * sp.trailingX;
+      sp.sumXY -= sp.trailingX * sp.trailingY;
+      sp.sumY -= sp.trailingY;
+      sp.sumY2 -= sp.trailingY * sp.trailingY;
+      /* Add new values */
+      sp.x = inReal0;
+      sp.sumX += sp.x;
+      sp.sumX2 += sp.x * sp.x;
+      sp.y = inReal1;
+      sp.sumXY += sp.x * sp.y;
+      sp.sumY += sp.y;
+      sp.sumY2 += sp.y * sp.y;
+      /* Output new coefficient.
+       * Save first the trailing values since the input
+       * and output might be the same array,
+       */
+      sp.trailingX = sp.ring_trailingIdx_inReal0[sp.ringPos_trailingIdx];
+      sp.trailingY = sp.ring_trailingIdx_inReal1[sp.ringPos_trailingIdx];
+      sp.tempReal = (sp.sumX2 - sp.sumX * sp.sumX / sp.optInTimePeriod) * (sp.sumY2 - sp.sumY * sp.sumY / sp.optInTimePeriod);
+      if( !(sp.tempReal < 0.00000000000001) ) {
+         sp.cur_outReal = (sp.sumXY - sp.sumX * sp.sumY / sp.optInTimePeriod) / Math.Sqrt(sp.tempReal);
+      } else {
+         sp.cur_outReal = 0.0;
+      }
+      sp.ring_trailingIdx_inReal0[sp.ringPos_trailingIdx] = inReal0;
+      sp.ring_trailingIdx_inReal1[sp.ringPos_trailingIdx] = inReal1;
+      sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
+      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+         sp.ringPos_trailingIdx = 0;
+      }
+   }
+
+   private RetCode CORREL_OpenCore( CORREL_Stream sp, double[] inReal0, double[] inReal1, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      double sumXY = 0;
+      double sumX = 0;
+      double sumY = 0;
+      double sumX2 = 0;
+      double sumY2 = 0;
+      double x = 0;
+      double y = 0;
+      double trailingX = 0;
+      double trailingY = 0;
+      double tempReal = 0;
+      int lookbackTotal = 0;
+      int today = 0;
+      int trailingIdx = 0;
+      int outIdx = 0;
+      int historyLen = inReal0.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 || inReal1.Length != inReal0.Length ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInTimePeriod == int.MinValue ) {
+         optInTimePeriod = 30;
+      } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      lookbackTotal = optInTimePeriod - 1;
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      outBegIdx = startIdx;
+      trailingIdx = startIdx - lookbackTotal;
+      /* Calculate the initial values. */
+      sumY2 = 0.0;
+      sumX2 = sumY2;
+      sumY = sumX2;
+      sumX = sumY;
+      sumXY = sumX;
+      for( today = trailingIdx; today <= startIdx; today += 1 ) {
+         x = inReal0[today];
+         sumX += x;
+         sumX2 += x * x;
+         y = inReal1[today];
+         sumXY += x * y;
+         sumY += y;
+         sumY2 += y * y;
+      }
+      /* Write the first output.
+       * Save first the trailing values since the input
+       * and output might be the same array,
+       */
+      trailingX = inReal0[trailingIdx];
+      trailingY = inReal1[trailingIdx++];
+      tempReal = (sumX2 - sumX * sumX / optInTimePeriod) * (sumY2 - sumY * sumY / optInTimePeriod);
+      if( !(tempReal < 0.00000000000001) ) {
+         outReal[0 * outStride] = (sumXY - sumX * sumY / optInTimePeriod) / Math.Sqrt(tempReal);
+      } else {
+         outReal[0 * outStride] = 0.0;
+      }
+      /* Tight loop to do subsequent values. */
+      outIdx = 1;
+      while( today <= endIdx ) {
+         /* Remove trailing values */
+         sumX -= trailingX;
+         sumX2 -= trailingX * trailingX;
+         sumXY -= trailingX * trailingY;
+         sumY -= trailingY;
+         sumY2 -= trailingY * trailingY;
+         /* Add new values */
+         x = inReal0[today];
+         sumX += x;
+         sumX2 += x * x;
+         y = inReal1[today++];
+         sumXY += x * y;
+         sumY += y;
+         sumY2 += y * y;
+         /* Output new coefficient.
+          * Save first the trailing values since the input
+          * and output might be the same array,
+          */
+         trailingX = inReal0[trailingIdx];
+         trailingY = inReal1[trailingIdx++];
+         tempReal = (sumX2 - sumX * sumX / optInTimePeriod) * (sumY2 - sumY * sumY / optInTimePeriod);
+         if( !(tempReal < 0.00000000000001) ) {
+            outReal[outIdx++ * outStride] = (sumXY - sumX * sumY / optInTimePeriod) / Math.Sqrt(tempReal);
+         } else {
+            outReal[outIdx++ * outStride] = 0.0;
+         }
+      }
+      outNBElement = outIdx;
+      /* Capture the live batch state into the handle. */
+      int cap_trailingIdx = today - trailingIdx;
+      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+         return RetCode.InternalError;
+      }
+      int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
+      double[] capRing_trailingIdx_inReal0 = new double[allocN_trailingIdx];
+      Array.Copy(inReal0, historyLen - cap_trailingIdx, capRing_trailingIdx_inReal0, 0, cap_trailingIdx);
+      double[] capRing_trailingIdx_inReal1 = new double[allocN_trailingIdx];
+      Array.Copy(inReal1, historyLen - cap_trailingIdx, capRing_trailingIdx_inReal1, 0, cap_trailingIdx);
+      sp.optInTimePeriod = optInTimePeriod;
+      sp.sumXY = sumXY;
+      sp.sumX = sumX;
+      sp.sumY = sumY;
+      sp.sumX2 = sumX2;
+      sp.sumY2 = sumY2;
+      sp.x = x;
+      sp.y = y;
+      sp.trailingX = trailingX;
+      sp.trailingY = trailingY;
+      sp.tempReal = tempReal;
+      sp.ringPos_trailingIdx = 0;
+      sp.ringCap_trailingIdx = cap_trailingIdx;
+      sp.ring_trailingIdx_inReal0 = capRing_trailingIdx_inReal0;
+      sp.ring_trailingIdx_inReal1 = capRing_trailingIdx_inReal1;
+      sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode CORREL_OpenBody( CORREL_Stream sp, double[] inReal0, double[] inReal1, int startIdx, int optInTimePeriod )
+   {
+      double[] sink_outReal = new double[1];
+      return CORREL_OpenCore( sp, inReal0, inReal1, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+   }
+
+   private RetCode CORREL_OpenAndFillBody( CORREL_Stream sp, double[] inReal0, double[] inReal1, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outReal, inReal0) || ReferenceEquals(outReal, inReal1) ) {
+         return RetCode.BadParam;
+      }
+      return CORREL_OpenCore( sp, inReal0, inReal1, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+   }
+
+   private RetCode CORREL_OpenAndFillInternalBody( CORREL_Stream sp, double[] inReal0, double[] inReal1, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      return CORREL_OpenCore(sp, inReal0, inReal1, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+   }
+
+   /* CORREL_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal CORREL_Stream CORREL_OpenAndFillInternal( double[] inReal0, double[] inReal1, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      CORREL_Stream sp = new CORREL_Stream(this);
+      RetCode retCode = CORREL_OpenAndFillInternalBody(sp, inReal0, inReal1, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("CORREL", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind CORREL_Open (composition seam). */
+   internal CORREL_Stream CORREL_OpenInternal( double[] inReal0, double[] inReal1, int startIdx, int optInTimePeriod )
+   {
+      CORREL_Stream sp = new CORREL_Stream(this);
+      RetCode retCode = CORREL_OpenBody(sp, inReal0, inReal1, startIdx, optInTimePeriod);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("CORREL", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>CORREL</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="CORREL_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>CORREL</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>CORREL_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>CORREL_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inReal0">First data series (X) The warm-up history, oldest bar first.</param>
+   /// <param name="inReal1">Second data series (Y) The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="CORREL_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CORREL_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public CORREL_Stream CORREL_Open( double[] inReal0, double[] inReal1, int optInTimePeriod )
+   {
+      return CORREL_OpenInternal(inReal0, inReal1, 0, optInTimePeriod);
+   }
+
+   /// <summary><c>CORREL_Open</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>CORREL</c> produces over
+   /// the same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - CORREL_Lookback(...)</c> values
+   /// and must not alias the inputs or each other — this path writes the outputs
+   /// and then reads the input tail to seed its rings, so the batch tier's
+   /// in-place allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="CORREL_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inReal0">First data series (X) The warm-up history, oldest bar first.</param>
+   /// <param name="inReal1">Second data series (Y) The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="CORREL_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="outReal">Correlation coefficient r in [-1, 1]. Must hold at least <c>historyLen -
+   /// CORREL_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CORREL_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public CORREL_Stream CORREL_OpenAndFill( double[] inReal0, double[] inReal1, int optInTimePeriod, double[] outReal )
+   {
+      CORREL_Stream sp = new CORREL_Stream(this);
+      RetCode retCode = CORREL_OpenAndFillBody(sp, inReal0, inReal1, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("CORREL", "openAndFill", retCode);
+   }
 }

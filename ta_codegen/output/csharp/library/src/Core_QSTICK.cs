@@ -340,4 +340,365 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
+   /**** Streaming API *****/
+
+   /// <summary>A live <c>QSTICK</c> stream: one value per closed bar, bit-identical to
+   /// <c>QSTICK</c> over the same series.</summary>
+   /// <remarks>
+   /// <para>Open with <see cref="Core.QSTICK_Open"/>. There is no close and nothing to
+   /// dispose — the handle is ordinary managed state, and an unreferenced handle
+   /// is simply collected.</para>
+   /// <para>Concurrency: a handle is single-writer — <see cref="Update"/>,
+   /// <see cref="Peek"/>, <see cref="Value"/> and <see cref="Clone"/> must not
+   /// race with an <c>Update</c> on the same handle. With no concurrent
+   /// <c>Update</c>, <c>Peek</c>, <c>Value</c> and <c>Clone</c> never write the
+   /// handle. Independent handles (a <c>Clone</c> result included) are fully
+   /// independent.</para>
+   /// <para>Not serializable by design, and the constructors are internal so no
+   /// partially built handle can be minted: to checkpoint, retain the history
+   /// and re-open — the result is bit-identical by contract.</para>
+   /// </remarks>
+   public sealed class QSTICK_Stream
+   {
+      internal Core core;
+      internal int optInTimePeriod;
+      internal double periodTotal;
+      internal double tempReal;
+      internal int ringPos_trailingIdx;
+      internal int ringCap_trailingIdx;
+      internal double[] ring_trailingIdx_inOpen = [];
+      internal double[] ring_trailingIdx_inClose = [];
+      internal double cur_outReal;
+      internal OutRange fillRange = OutRange.Empty;
+
+      internal QSTICK_Stream( Core core ) { this.core = core; }
+
+      /// <summary>The range <c>QSTICK_OpenAndFill</c> filled, or
+      /// <see cref="OutRange.Empty"/> when this handle came from a plain open
+      /// (which fills nothing).</summary>
+      /// <remarks>
+      /// <para>A successful <c>OpenAndFill</c> always writes at least one value, so
+      /// <see cref="OutRange.IsEmpty"/> tells the two apart.</para>
+      /// </remarks>
+      public OutRange FillRange => fillRange;
+
+      internal QSTICK_Stream( QSTICK_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.periodTotal = other.periodTotal;
+         this.tempReal = other.tempReal;
+         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
+         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
+         this.ring_trailingIdx_inOpen = new double[other.ring_trailingIdx_inOpen.Length];
+         Array.Copy( other.ring_trailingIdx_inOpen, this.ring_trailingIdx_inOpen, other.ring_trailingIdx_inOpen.Length );
+         this.ring_trailingIdx_inClose = new double[other.ring_trailingIdx_inClose.Length];
+         Array.Copy( other.ring_trailingIdx_inClose, this.ring_trailingIdx_inClose, other.ring_trailingIdx_inClose.Length );
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      internal void CopyFrom( QSTICK_Stream other )
+      {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.periodTotal = other.periodTotal;
+         this.tempReal = other.tempReal;
+         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
+         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
+         if( this.ring_trailingIdx_inOpen.Length != other.ring_trailingIdx_inOpen.Length ) {
+            this.ring_trailingIdx_inOpen = new double[other.ring_trailingIdx_inOpen.Length];
+         }
+         Array.Copy( other.ring_trailingIdx_inOpen, this.ring_trailingIdx_inOpen, other.ring_trailingIdx_inOpen.Length );
+         if( this.ring_trailingIdx_inClose.Length != other.ring_trailingIdx_inClose.Length ) {
+            this.ring_trailingIdx_inClose = new double[other.ring_trailingIdx_inClose.Length];
+         }
+         Array.Copy( other.ring_trailingIdx_inClose, this.ring_trailingIdx_inClose, other.ring_trailingIdx_inClose.Length );
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /* Peek's reusable scratch — one per thread, see CopyFrom. */
+      [ThreadStatic] private static QSTICK_Stream? peekScratch;
+
+      /// <summary>Commit one closed bar; always produces the new current value.</summary>
+      /// <remarks>
+      /// <para>Never throws after a successful open, and allocates nothing — neither
+      /// handle state nor a return value.</para>
+      /// </remarks>
+      /// <param name="inOpen">Open price of each bar.</param>
+      /// <param name="inClose">Close price of each bar.</param>
+      /// <returns>The value at the bar just committed.</returns>
+      public double Update( double inOpen, double inClose )
+      {
+         core.QSTICK_StreamStep(this, inOpen, inClose);
+         return cur_outReal;
+      }
+
+      /// <summary>Evaluate a forming bar without committing it.</summary>
+      /// <remarks>
+      /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
+      /// would return — it is the same generated code, run on a copy. Never writes
+      /// this handle, so peeks may run concurrently with each other.</para>
+      /// <para>It runs on a scratch handle held per thread and reused, so the copy
+      /// allocates nothing after the first peek of this indicator on this thread.
+      /// That scratch is retained for the life of the thread.</para>
+      /// </remarks>
+      /// <param name="inOpen">Open price of each bar.</param>
+      /// <param name="inClose">Close price of each bar.</param>
+      /// <returns>What <see cref="Update"/> would return for this bar.</returns>
+      public double Peek( double inOpen, double inClose )
+      {
+         QSTICK_Stream? scratch = peekScratch;
+         if( scratch is null ) {
+            scratch = new QSTICK_Stream(this);
+            peekScratch = scratch;
+         } else {
+            scratch.CopyFrom(this);
+         }
+         core.QSTICK_StreamStep(scratch, inOpen, inClose);
+         return scratch.cur_outReal;
+      }
+
+      /// <summary>The value at the most recently committed bar — the last history bar right
+      /// after open, then whatever the latest <see cref="Update"/> returned.</summary>
+      /// <remarks>
+      /// <para><see cref="Peek"/> does not change it.</para>
+      /// </remarks>
+      public double Value => cur_outReal;
+
+      /// <summary>An independent deep copy of this stream: both evolve separately from here
+      /// on.</summary>
+      /// <returns>The new, independent handle.</returns>
+      public QSTICK_Stream Clone()
+      {
+         return new QSTICK_Stream(this);
+      }
+   }
+
+   internal void QSTICK_StreamStep( QSTICK_Stream sp, double inOpen, double inClose )
+   {
+      if( sp.ringCap_trailingIdx == 0 ) {
+         sp.ring_trailingIdx_inOpen[0] = inOpen;
+         sp.ring_trailingIdx_inClose[0] = inClose;
+      }
+      sp.periodTotal += (double)(inClose - inOpen);
+      sp.tempReal = sp.periodTotal;
+      sp.periodTotal -= (double)(sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] - sp.ring_trailingIdx_inOpen[sp.ringPos_trailingIdx]);
+      sp.cur_outReal = sp.tempReal / (double)sp.optInTimePeriod;
+      sp.ring_trailingIdx_inOpen[sp.ringPos_trailingIdx] = inOpen;
+      sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] = inClose;
+      sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
+      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+         sp.ringPos_trailingIdx = 0;
+      }
+   }
+
+   private RetCode QSTICK_OpenCore( QSTICK_Stream sp, double[] inOpen, double[] inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      double periodTotal = 0;
+      double tempReal = 0;
+      int i = 0;
+      int outIdx = 0;
+      int trailingIdx = 0;
+      int lookbackTotal = 0;
+      int historyLen = inOpen.Length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 || inClose.Length != inOpen.Length ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInTimePeriod == int.MinValue ) {
+         optInTimePeriod = 10;
+      } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      /* Qstick (Chande & Kroll, The New Technical Trader, 1994): a simple moving
+       * average of the candle body, close minus open. Above zero means bodies
+       * were predominantly bullish over the window; the zero crossings are the
+       * signal.
+       *
+       * This is ta_codegen/input/sma/sma.c with inReal[x] replaced by
+       * (inClose[x] - inOpen[x]), and deliberately nothing else: the same
+       * running-sum order, the same read-before-write of the trailing term, and
+       * the same divide by the period. Keeping the arithmetic identical is what
+       * makes the composed reference in test_composite.c -- TA_SUB followed by
+       * TA_SMA -- bit-exact rather than merely close, so any future drift in
+       * either path is a hard failure instead of a tolerance argument.
+       *
+       * In particular the last statement divides; it does NOT multiply by a
+       * precomputed 1/period. Tulip's qstick.c multiplies, which costs it up to
+       * one ULP against TA_SMA. Dividing buys the memcmp differential, which is
+       * the stronger of the two gates.
+       */
+      /* Identify the minimum number of price bar needed
+       * to calculate at least one output.
+       */
+      lookbackTotal = (int)(optInTimePeriod - 1);
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      /* Do the MA calculation using tight loops. */
+      /* Add-up the initial period, except for the last value. */
+      periodTotal = 0.0;
+      trailingIdx = startIdx - lookbackTotal;
+      i = trailingIdx;
+      if( optInTimePeriod > 1 ) {
+         while( i < startIdx ) {
+            periodTotal += (double)(inClose[i] - inOpen[i]);
+            i = i + 1;
+         }
+      }
+      /* Proceed with the calculation for the requested range.
+       * Note that this algorithm allows outReal to be the same
+       * buffer as either input.
+       */
+      outIdx = 0;
+      while( i <= endIdx ) {
+         periodTotal += (double)(inClose[i] - inOpen[i]);
+         i = i + 1;
+         tempReal = periodTotal;
+         periodTotal -= (double)(inClose[trailingIdx] - inOpen[trailingIdx]);
+         trailingIdx = trailingIdx + 1;
+         outReal[outIdx * outStride] = tempReal / (double)optInTimePeriod;
+         outIdx = outIdx + 1;
+      }
+      /* All done. Indicate the output limits and return. */
+      outNBElement = outIdx;
+      outBegIdx = startIdx;
+      /* Capture the live batch state into the handle. */
+      int cap_trailingIdx = i - trailingIdx;
+      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+         return RetCode.InternalError;
+      }
+      int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
+      double[] capRing_trailingIdx_inOpen = new double[allocN_trailingIdx];
+      Array.Copy(inOpen, historyLen - cap_trailingIdx, capRing_trailingIdx_inOpen, 0, cap_trailingIdx);
+      double[] capRing_trailingIdx_inClose = new double[allocN_trailingIdx];
+      Array.Copy(inClose, historyLen - cap_trailingIdx, capRing_trailingIdx_inClose, 0, cap_trailingIdx);
+      sp.optInTimePeriod = optInTimePeriod;
+      sp.periodTotal = periodTotal;
+      sp.tempReal = tempReal;
+      sp.ringPos_trailingIdx = 0;
+      sp.ringCap_trailingIdx = cap_trailingIdx;
+      sp.ring_trailingIdx_inOpen = capRing_trailingIdx_inOpen;
+      sp.ring_trailingIdx_inClose = capRing_trailingIdx_inClose;
+      sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
+      return RetCode.Success;
+   }
+
+   private RetCode QSTICK_OpenBody( QSTICK_Stream sp, double[] inOpen, double[] inClose, int startIdx, int optInTimePeriod )
+   {
+      double[] sink_outReal = new double[1];
+      return QSTICK_OpenCore( sp, inOpen, inClose, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+   }
+
+   private RetCode QSTICK_OpenAndFillBody( QSTICK_Stream sp, double[] inOpen, double[] inClose, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      outBegIdx = 0;
+      outNBElement = 0;
+      if( ReferenceEquals(outReal, inOpen) || ReferenceEquals(outReal, inClose) ) {
+         return RetCode.BadParam;
+      }
+      return QSTICK_OpenCore( sp, inOpen, inClose, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+   }
+
+   private RetCode QSTICK_OpenAndFillInternalBody( QSTICK_Stream sp, double[] inOpen, double[] inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      return QSTICK_OpenCore(sp, inOpen, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+   }
+
+   /* QSTICK_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   internal QSTICK_Stream QSTICK_OpenAndFillInternal( double[] inOpen, double[] inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   {
+      QSTICK_Stream sp = new QSTICK_Stream(this);
+      RetCode retCode = QSTICK_OpenAndFillInternalBody(sp, inOpen, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("QSTICK", "openAndFill", retCode);
+   }
+
+   /* Internal startIdx-anchored open behind QSTICK_Open (composition seam). */
+   internal QSTICK_Stream QSTICK_OpenInternal( double[] inOpen, double[] inClose, int startIdx, int optInTimePeriod )
+   {
+      QSTICK_Stream sp = new QSTICK_Stream(this);
+      RetCode retCode = QSTICK_OpenBody(sp, inOpen, inClose, startIdx, optInTimePeriod);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("QSTICK", "open", retCode);
+   }
+
+   /// <summary>Open a live <c>QSTICK</c> stream over the warm-up history.</summary>
+   /// <remarks>
+   /// <para>The handle's <see cref="QSTICK_Stream.Value"/> starts at the last history
+   /// bar's value — bit-identical to what <c>QSTICK</c> reports for that bar.</para>
+   /// <para>The history must hold at least <c>QSTICK_Lookback(...) + 1</c> bars
+   /// (unstable-period aware). Nothing is written to any caller array; use
+   /// <c>QSTICK_OpenAndFill</c> to get the warm-up values as well.</para>
+   /// </remarks>
+   /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="QSTICK_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <returns>The open stream handle.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>QSTICK_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
+   /// have different lengths.</exception>
+   /// <exception cref="System.NullReferenceException">An input array is null. (Unlike the C library, the managed tier does not
+   /// pre-validate nulls; the first array access throws.)</exception>
+   public QSTICK_Stream QSTICK_Open( double[] inOpen, double[] inClose, int optInTimePeriod )
+   {
+      return QSTICK_OpenInternal(inOpen, inClose, 0, optInTimePeriod);
+   }
+
+   /// <summary><c>QSTICK_Open</c> that also fills the output array(s) over the whole
+   /// history in the same single pass.</summary>
+   /// <remarks>
+   /// <para>The values written are bit-identical to what <c>QSTICK</c> produces over
+   /// the same series, so no separate batch call is needed for the warm-up plot.</para>
+   /// <para>Output arrays must hold <c>historyLen - QSTICK_Lookback(...)</c> values
+   /// and must not alias the inputs or each other — this path writes the outputs
+   /// and then reads the input tail to seed its rings, so the batch tier's
+   /// in-place allowance does not carry over here.</para>
+   /// <para>The range written is reported on the returned handle:
+   /// <see cref="QSTICK_Stream.FillRange"/>.</para>
+   /// </remarks>
+   /// <param name="inOpen">Open price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
+   /// <param name="optInTimePeriod">As in the batch call; see <see cref="QSTICK_Lookback"/> for its default
+   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// <param name="outReal">Average candle body over the window. Must hold at least <c>historyLen -
+   /// QSTICK_Lookback(...)</c> values.</param>
+   /// <returns>The open stream handle, with its fill range set.</returns>
+   /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>QSTICK_Lookback(...) + 1</c> bars.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, the input series
+   /// have different lengths, or an output array aliases an input or another
+   /// output.</exception>
+   /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
+   /// does not pre-validate nulls; the first array access throws.)</exception>
+   public QSTICK_Stream QSTICK_OpenAndFill( double[] inOpen, double[] inClose, int optInTimePeriod, double[] outReal )
+   {
+      QSTICK_Stream sp = new QSTICK_Stream(this);
+      RetCode retCode = QSTICK_OpenAndFillBody(sp, inOpen, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      sp.fillRange = new OutRange(outBegIdx, outNBElement);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      throw StreamFailure("QSTICK", "openAndFill", retCode);
+   }
 }
