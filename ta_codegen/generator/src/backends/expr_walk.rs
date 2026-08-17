@@ -163,15 +163,35 @@ pub trait ExprEmitter {
     /// Render an `Expr::Literal` (floating-point constant). Whole values gain a
     /// `.0` suffix (`3` → `3.0`); others use Rust's default `f64` formatting. This
     /// is byte-identical across the C, Rust and Java backends.
+    ///
+    /// One case the plain formatting gets *wrong*, reachable since the lexer
+    /// learned exponents (`1e-13`): a whole value at or above 1e15 misses the
+    /// `.0` branch above, and Rust's `Display` for `f64` never uses exponent
+    /// notation, so what comes out is a run of digits carrying neither `.` nor
+    /// `e`. In C that is an *integer* constant — a different type — and past
+    /// `LLONG_MAX` an ill-formed one. Those switch to `{:e}` (`1e300`), spelled
+    /// the same way in C, Rust, Java and C#.
+    ///
+    /// Deliberately corrective only, not cosmetic. A small literal keeps its
+    /// positional spelling — `1e-13` in the input renders as
+    /// `0.0000000000001`, the same double, long but valid everywhere. Emitting
+    /// exponent form there reads better but re-spells constants already in the
+    /// corpus (`0.000001` in `var.c` → `1e-6`, 10 generated files), which is a
+    /// deliberate re-spelling to make on its own, not a side effect of teaching
+    /// the lexer a token.
     fn literal(&self, f: f64) -> String {
         #[allow(clippy::float_cmp)]
         let is_whole = f == f.floor() && f.abs() < 1e15;
         if is_whole {
             #[allow(clippy::cast_possible_truncation)]
             let i = f as i64;
-            format!("{i}.0")
+            return format!("{i}.0");
+        }
+        let s = format!("{f}");
+        if s.contains(['.', 'e', 'E']) {
+            s
         } else {
-            format!("{f}")
+            format!("{f:e}")
         }
     }
 
@@ -213,6 +233,87 @@ pub trait ExprEmitter {
             Expr::PreIncrement(inner) => self.pre_increment(inner),
             Expr::PreDecrement(inner) => self.pre_decrement(inner),
             Expr::Ternary(cond, then_expr, else_expr) => self.ternary(cond, then_expr, else_expr),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// `literal` is a provided method that reads nothing off `self`, so the
+    /// required half of the trait only has to exist, not work.
+    struct Probe;
+
+    macro_rules! unused {
+        ($($name:ident($($arg:ident: $ty:ty),*)),* $(,)?) => {
+            $(fn $name(&self $(, $arg: $ty)*) -> String { unimplemented!() })*
+        };
+    }
+
+    impl ExprEmitter for Probe {
+        unused! {
+            var(_n: &str),
+            array_access(_n: &str, _i: &Expr),
+            binop(_l: &Expr, _o: &BinOp, _r: &Expr),
+            cast(_t: &VarType, _i: &Expr),
+            func_call(_n: &str, _a: &[Expr]),
+            pointer_deref(_n: &str),
+            address_of(_i: &Expr),
+            post_increment(_i: &Expr),
+            post_decrement(_i: &Expr),
+            pre_increment(_i: &Expr),
+            pre_decrement(_i: &Expr),
+            ternary(_c: &Expr, _t: &Expr, _e: &Expr),
+        }
+    }
+
+    /// Every spelling below has to be a valid FLOATING constant in C, Rust,
+    /// Java and C# at once -- the four backends share this one renderer, so a
+    /// form only three of them accept breaks the fourth's build, not a value
+    /// gate. Reachable since the lexer learned exponents; no shipped input
+    /// body has a literal outside the middle band.
+    #[test]
+    fn literal_spellings() {
+        let p = Probe;
+
+        // Unchanged middle band: the whole corpus lives here.
+        assert_eq!(p.literal(0.0), "0.0");
+        assert_eq!(p.literal(3.0), "3.0");
+        assert_eq!(p.literal(-2.0), "-2.0");
+        assert_eq!(p.literal(0.5), "0.5");
+        assert_eq!(p.literal(0.015), "0.015");
+        assert_eq!(p.literal(100.0), "100.0");
+
+        // A small literal keeps its positional spelling. Long, but the same
+        // double, and re-spelling it would move constants already in the
+        // corpus (var.c's 0.000001) for no semantic gain.
+        assert_eq!(p.literal(1e-13), "0.0000000000001");
+        assert_eq!(p.literal(0.000_001), "0.000001");
+        assert_eq!(p.literal(0.00012), "0.00012");
+
+        // A whole value past 1e15 misses the `.0` branch; positional form
+        // would emit an integer constant, and above LLONG_MAX an invalid one.
+        assert_eq!(p.literal(1e300), "1e300");
+        assert_eq!(p.literal(1e16), "1e16");
+
+        // Whatever the path, the result is never bare digits.
+        for v in [0.0, 3.0, 1e-13, 1e300, 1e16, 0.5, -2.5e-7, 1e15] {
+            let s = p.literal(v);
+            assert!(
+                s.contains(['.', 'e', 'E']),
+                "literal({v}) rendered as {s:?}, an integer constant in C"
+            );
+        }
+
+        // And it round-trips: the spelling names the same double it was given.
+        for v in [1e-13, -2.5e-7, 1e300, 1e16, 0.015, 0.5, 123.456, 1e15] {
+            let s = p.literal(v);
+            assert_eq!(
+                s.parse::<f64>().unwrap().to_bits(),
+                v.to_bits(),
+                "literal({v}) rendered {s:?}, which is a different double"
+            );
         }
     }
 }

@@ -1,0 +1,18 @@
+name: SYNTH9
+group: Math Operators
+hint: Synthetic gate function 9 - scientific-notation float literals (never shipped)
+flags: [stream]
+inputs:
+  - name: inPriceHLC
+    type: price
+    price_components: [high, low, close]
+outputs:
+  - name: outNegExp
+    type: real
+    flags: [line]
+  - name: outPosExp
+    type: real
+    flags: [line]
+  - name: outBigExp
+    type: real
+    flags: [line]

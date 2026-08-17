@@ -1027,6 +1027,25 @@ fn tokenize_with_comments(
                     i += 1;
                 }
             }
+            // Exponent (1e-13, 2.5E+3, 1e9). An exponent makes the constant a
+            // float even with no '.' -- C says so, and `1e9` parsed as an int
+            // would silently change the type of the expression around it.
+            // Only consumed when a digit really follows, so an identifier
+            // butted against a number (`2exp`) still fails as a bad token
+            // rather than being half-swallowed here.
+            if i < chars.len() && (chars[i] == 'e' || chars[i] == 'E') {
+                let mut j = i + 1;
+                if j < chars.len() && (chars[j] == '+' || chars[j] == '-') {
+                    j += 1;
+                }
+                if j < chars.len() && chars[j].is_ascii_digit() {
+                    is_float = true;
+                    i = j;
+                    while i < chars.len() && chars[i].is_ascii_digit() {
+                        i += 1;
+                    }
+                }
+            }
             if is_float {
                 // Skip trailing 'f' suffix (e.g., 0.0f)
                 if i < chars.len() && chars[i] == 'f' {
@@ -4234,6 +4253,42 @@ TA_RetCode test_func(int startIdx, int endIdx, int *outBegIdx, int *outNBElement
     fn test_tokenize_leading_dot_float() {
         let tokens = tokenize(".5");
         assert_eq!(tokens, vec![Token::Number(0.5)]);
+    }
+
+    /// Scientific notation. No shipped `ta_codegen/input/` body writes a float
+    /// this way -- the `1e-14` occurrences in var.c / tema.c / t3.c /
+    /// marketfi.c are all inside comments -- so the corpus proves nothing here
+    /// and these cases are the only coverage the lexer has.
+    #[test]
+    fn test_tokenize_scientific_notation() {
+        // Negative exponent: what used to lex as Ident("e") and then abort with
+        // "Expected '=' or compound assignment after 'e'".
+        assert_eq!(tokenize("1e-13"), vec![Token::Number(1e-13)]);
+        assert_eq!(tokenize("2.5e-3"), vec![Token::Number(2.5e-3)]);
+        // Explicit and implicit positive exponents, upper and lower case.
+        assert_eq!(tokenize("1e+9"), vec![Token::Number(1e9)]);
+        assert_eq!(tokenize("1E6"), vec![Token::Number(1e6)]);
+        assert_eq!(tokenize("1.5E+3"), vec![Token::Number(1500.0)]);
+        // An exponent makes it a float even with no '.': IntNumber here would
+        // silently change the type of the surrounding expression.
+        assert_eq!(tokenize("3e2"), vec![Token::Number(300.0)]);
+        assert_eq!(tokenize("1e9f"), vec![Token::Number(1e9)]);
+        assert_eq!(tokenize(".5e1"), vec![Token::Number(5.0)]);
+        // In an expression, so the '-' is not stolen from a subtraction.
+        assert_eq!(
+            tokenize("x + 1e-13"),
+            vec![
+                Token::Ident("x".to_string()),
+                Token::Op("+".to_string()),
+                Token::Number(1e-13),
+            ]
+        );
+        // And a bare 'e' after a number is still not an exponent: no digit
+        // follows, so the number ends and the identifier stands on its own.
+        assert_eq!(
+            tokenize("2 exp"),
+            vec![Token::IntNumber(2), Token::Ident("exp".to_string())]
+        );
     }
 
     #[test]
