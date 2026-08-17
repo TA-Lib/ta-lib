@@ -639,12 +639,10 @@ class Core {
           int maxIdx_oscBuffer;
           int ringPos_trailingFastIdx;
           int ringCap_trailingFastIdx;
-          double[] ring_trailingFastIdx_inHigh;
-          double[] ring_trailingFastIdx_inLow;
+          double[] ring_trailingFastIdx_derived;
           int ringPos_trailingSlowIdx;
           int ringCap_trailingSlowIdx;
-          double[] ring_trailingSlowIdx_inHigh;
-          double[] ring_trailingSlowIdx_inLow;
+          double[] ring_trailingSlowIdx_derived;
           int cbSize_oscBuffer;
           double[] cb_oscBuffer;
           double cur_outReal;
@@ -675,12 +673,10 @@ class Core {
              this.maxIdx_oscBuffer = other.maxIdx_oscBuffer;
              this.ringPos_trailingFastIdx = other.ringPos_trailingFastIdx;
              this.ringCap_trailingFastIdx = other.ringCap_trailingFastIdx;
-             this.ring_trailingFastIdx_inHigh = other.ring_trailingFastIdx_inHigh.clone();
-             this.ring_trailingFastIdx_inLow = other.ring_trailingFastIdx_inLow.clone();
+             this.ring_trailingFastIdx_derived = other.ring_trailingFastIdx_derived.clone();
              this.ringPos_trailingSlowIdx = other.ringPos_trailingSlowIdx;
              this.ringCap_trailingSlowIdx = other.ringCap_trailingSlowIdx;
-             this.ring_trailingSlowIdx_inHigh = other.ring_trailingSlowIdx_inHigh.clone();
-             this.ring_trailingSlowIdx_inLow = other.ring_trailingSlowIdx_inLow.clone();
+             this.ring_trailingSlowIdx_derived = other.ring_trailingSlowIdx_derived.clone();
              this.cbSize_oscBuffer = other.cbSize_oscBuffer;
              this.cb_oscBuffer = other.cb_oscBuffer.clone();
              this.cur_outReal = other.cur_outReal;
@@ -701,27 +697,17 @@ class Core {
              this.maxIdx_oscBuffer = other.maxIdx_oscBuffer;
              this.ringPos_trailingFastIdx = other.ringPos_trailingFastIdx;
              this.ringCap_trailingFastIdx = other.ringCap_trailingFastIdx;
-             if( this.ring_trailingFastIdx_inHigh != null && this.ring_trailingFastIdx_inHigh.length == other.ring_trailingFastIdx_inHigh.length ) {
-                System.arraycopy( other.ring_trailingFastIdx_inHigh, 0, this.ring_trailingFastIdx_inHigh, 0, other.ring_trailingFastIdx_inHigh.length );
+             if( this.ring_trailingFastIdx_derived != null && this.ring_trailingFastIdx_derived.length == other.ring_trailingFastIdx_derived.length ) {
+                System.arraycopy( other.ring_trailingFastIdx_derived, 0, this.ring_trailingFastIdx_derived, 0, other.ring_trailingFastIdx_derived.length );
              } else {
-                this.ring_trailingFastIdx_inHigh = other.ring_trailingFastIdx_inHigh.clone();
-             }
-             if( this.ring_trailingFastIdx_inLow != null && this.ring_trailingFastIdx_inLow.length == other.ring_trailingFastIdx_inLow.length ) {
-                System.arraycopy( other.ring_trailingFastIdx_inLow, 0, this.ring_trailingFastIdx_inLow, 0, other.ring_trailingFastIdx_inLow.length );
-             } else {
-                this.ring_trailingFastIdx_inLow = other.ring_trailingFastIdx_inLow.clone();
+                this.ring_trailingFastIdx_derived = other.ring_trailingFastIdx_derived.clone();
              }
              this.ringPos_trailingSlowIdx = other.ringPos_trailingSlowIdx;
              this.ringCap_trailingSlowIdx = other.ringCap_trailingSlowIdx;
-             if( this.ring_trailingSlowIdx_inHigh != null && this.ring_trailingSlowIdx_inHigh.length == other.ring_trailingSlowIdx_inHigh.length ) {
-                System.arraycopy( other.ring_trailingSlowIdx_inHigh, 0, this.ring_trailingSlowIdx_inHigh, 0, other.ring_trailingSlowIdx_inHigh.length );
+             if( this.ring_trailingSlowIdx_derived != null && this.ring_trailingSlowIdx_derived.length == other.ring_trailingSlowIdx_derived.length ) {
+                System.arraycopy( other.ring_trailingSlowIdx_derived, 0, this.ring_trailingSlowIdx_derived, 0, other.ring_trailingSlowIdx_derived.length );
              } else {
-                this.ring_trailingSlowIdx_inHigh = other.ring_trailingSlowIdx_inHigh.clone();
-             }
-             if( this.ring_trailingSlowIdx_inLow != null && this.ring_trailingSlowIdx_inLow.length == other.ring_trailingSlowIdx_inLow.length ) {
-                System.arraycopy( other.ring_trailingSlowIdx_inLow, 0, this.ring_trailingSlowIdx_inLow, 0, other.ring_trailingSlowIdx_inLow.length );
-             } else {
-                this.ring_trailingSlowIdx_inLow = other.ring_trailingSlowIdx_inLow.clone();
+                this.ring_trailingSlowIdx_derived = other.ring_trailingSlowIdx_derived.clone();
              }
              this.cbSize_oscBuffer = other.cbSize_oscBuffer;
              if( this.cb_oscBuffer != null && this.cb_oscBuffer.length == other.cb_oscBuffer.length ) {
@@ -799,12 +785,10 @@ class Core {
        {
           double medianPrice = 0.0;
           if( sp.ringCap_trailingFastIdx == 0 ) {
-             sp.ring_trailingFastIdx_inHigh[0] = inHigh;
-             sp.ring_trailingFastIdx_inLow[0] = inLow;
+             sp.ring_trailingFastIdx_derived[0] = (inHigh + inLow) / 2.0;
           }
           if( sp.ringCap_trailingSlowIdx == 0 ) {
-             sp.ring_trailingSlowIdx_inHigh[0] = inHigh;
-             sp.ring_trailingSlowIdx_inLow[0] = inLow;
+             sp.ring_trailingSlowIdx_derived[0] = (inHigh + inLow) / 2.0;
           }
           medianPrice = (inHigh + inLow) / 2.0;
           sp.sumFast += medianPrice;
@@ -813,8 +797,8 @@ class Core {
            * mirroring the add-new / snapshot / subtract-old order of TA_SMA.
            */
           sp.osc = sp.sumFast / (double)sp.optInFastPeriod - sp.sumSlow / (double)sp.optInSlowPeriod;
-          sp.sumFast -= (sp.ring_trailingFastIdx_inHigh[sp.ringPos_trailingFastIdx] + sp.ring_trailingFastIdx_inLow[sp.ringPos_trailingFastIdx]) / 2.0;
-          sp.sumSlow -= (sp.ring_trailingSlowIdx_inHigh[sp.ringPos_trailingSlowIdx] + sp.ring_trailingSlowIdx_inLow[sp.ringPos_trailingSlowIdx]) / 2.0;
+          sp.sumFast -= sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx];
+          sp.sumSlow -= sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx];
           /* Today's oscillator enters the signal window at its own slot, and the
            * bar leaving that window is read only after the ring has advanced onto
            * it -- writing first is what makes the slot the loop is about to
@@ -837,14 +821,12 @@ class Core {
            * the collision ao.c has to guard against.
            */
           sp.cur_outReal = sp.tempReal;
-          sp.ring_trailingFastIdx_inHigh[sp.ringPos_trailingFastIdx] = inHigh;
-          sp.ring_trailingFastIdx_inLow[sp.ringPos_trailingFastIdx] = inLow;
+          sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx] = (inHigh + inLow) / 2.0;
           sp.ringPos_trailingFastIdx = sp.ringPos_trailingFastIdx + 1;
           if( sp.ringPos_trailingFastIdx >= sp.ringCap_trailingFastIdx ) {
              sp.ringPos_trailingFastIdx = 0;
           }
-          sp.ring_trailingSlowIdx_inHigh[sp.ringPos_trailingSlowIdx] = inHigh;
-          sp.ring_trailingSlowIdx_inLow[sp.ringPos_trailingSlowIdx] = inLow;
+          sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx] = (inHigh + inLow) / 2.0;
           sp.ringPos_trailingSlowIdx = sp.ringPos_trailingSlowIdx + 1;
           if( sp.ringPos_trailingSlowIdx >= sp.ringCap_trailingSlowIdx ) {
              sp.ringPos_trailingSlowIdx = 0;
@@ -1035,19 +1017,19 @@ class Core {
              return RetCode.InternalError;
           }
           int allocN_trailingFastIdx = (cap_trailingFastIdx > 0)? cap_trailingFastIdx : 1;
-          double[] capRing_trailingFastIdx_inHigh = new double[allocN_trailingFastIdx];
-          System.arraycopy(inHigh, historyLen - cap_trailingFastIdx, capRing_trailingFastIdx_inHigh, 0, cap_trailingFastIdx);
-          double[] capRing_trailingFastIdx_inLow = new double[allocN_trailingFastIdx];
-          System.arraycopy(inLow, historyLen - cap_trailingFastIdx, capRing_trailingFastIdx_inLow, 0, cap_trailingFastIdx);
+          double[] capRing_trailingFastIdx_derived = new double[allocN_trailingFastIdx];
+          for( int fillJ = historyLen - cap_trailingFastIdx; fillJ < historyLen; fillJ++ ) {
+             capRing_trailingFastIdx_derived[fillJ - (historyLen - cap_trailingFastIdx)] = (inHigh[fillJ] + inLow[fillJ]) / 2.0;
+          }
           int cap_trailingSlowIdx = i - trailingSlowIdx;
           if( cap_trailingSlowIdx < 0 || cap_trailingSlowIdx > historyLen ) {
              return RetCode.InternalError;
           }
           int allocN_trailingSlowIdx = (cap_trailingSlowIdx > 0)? cap_trailingSlowIdx : 1;
-          double[] capRing_trailingSlowIdx_inHigh = new double[allocN_trailingSlowIdx];
-          System.arraycopy(inHigh, historyLen - cap_trailingSlowIdx, capRing_trailingSlowIdx_inHigh, 0, cap_trailingSlowIdx);
-          double[] capRing_trailingSlowIdx_inLow = new double[allocN_trailingSlowIdx];
-          System.arraycopy(inLow, historyLen - cap_trailingSlowIdx, capRing_trailingSlowIdx_inLow, 0, cap_trailingSlowIdx);
+          double[] capRing_trailingSlowIdx_derived = new double[allocN_trailingSlowIdx];
+          for( int fillJ = historyLen - cap_trailingSlowIdx; fillJ < historyLen; fillJ++ ) {
+             capRing_trailingSlowIdx_derived[fillJ - (historyLen - cap_trailingSlowIdx)] = (inHigh[fillJ] + inLow[fillJ]) / 2.0;
+          }
           int capCb_oscBuffer = maxIdx_oscBuffer + 1;
           if( capCb_oscBuffer > historyLen + 1 ) {
              return RetCode.InternalError;
@@ -1064,12 +1046,10 @@ class Core {
           sp.maxIdx_oscBuffer = maxIdx_oscBuffer;
           sp.ringPos_trailingFastIdx = 0;
           sp.ringCap_trailingFastIdx = cap_trailingFastIdx;
-          sp.ring_trailingFastIdx_inHigh = capRing_trailingFastIdx_inHigh;
-          sp.ring_trailingFastIdx_inLow = capRing_trailingFastIdx_inLow;
+          sp.ring_trailingFastIdx_derived = capRing_trailingFastIdx_derived;
           sp.ringPos_trailingSlowIdx = 0;
           sp.ringCap_trailingSlowIdx = cap_trailingSlowIdx;
-          sp.ring_trailingSlowIdx_inHigh = capRing_trailingSlowIdx_inHigh;
-          sp.ring_trailingSlowIdx_inLow = capRing_trailingSlowIdx_inLow;
+          sp.ring_trailingSlowIdx_derived = capRing_trailingSlowIdx_derived;
           sp.cbSize_oscBuffer = capCb_oscBuffer;
           sp.cb_oscBuffer = oscBuffer;
           sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
@@ -6656,12 +6636,10 @@ class Core {
           double tempReal;
           int ringPos_trailingFastIdx;
           int ringCap_trailingFastIdx;
-          double[] ring_trailingFastIdx_inHigh;
-          double[] ring_trailingFastIdx_inLow;
+          double[] ring_trailingFastIdx_derived;
           int ringPos_trailingSlowIdx;
           int ringCap_trailingSlowIdx;
-          double[] ring_trailingSlowIdx_inHigh;
-          double[] ring_trailingSlowIdx_inLow;
+          double[] ring_trailingSlowIdx_derived;
           double cur_outReal;
           OutRange fillRange = OutRange.EMPTY;
 
@@ -6685,12 +6663,10 @@ class Core {
              this.tempReal = other.tempReal;
              this.ringPos_trailingFastIdx = other.ringPos_trailingFastIdx;
              this.ringCap_trailingFastIdx = other.ringCap_trailingFastIdx;
-             this.ring_trailingFastIdx_inHigh = other.ring_trailingFastIdx_inHigh.clone();
-             this.ring_trailingFastIdx_inLow = other.ring_trailingFastIdx_inLow.clone();
+             this.ring_trailingFastIdx_derived = other.ring_trailingFastIdx_derived.clone();
              this.ringPos_trailingSlowIdx = other.ringPos_trailingSlowIdx;
              this.ringCap_trailingSlowIdx = other.ringCap_trailingSlowIdx;
-             this.ring_trailingSlowIdx_inHigh = other.ring_trailingSlowIdx_inHigh.clone();
-             this.ring_trailingSlowIdx_inLow = other.ring_trailingSlowIdx_inLow.clone();
+             this.ring_trailingSlowIdx_derived = other.ring_trailingSlowIdx_derived.clone();
              this.cur_outReal = other.cur_outReal;
              this.fillRange = other.fillRange;
           }
@@ -6704,27 +6680,17 @@ class Core {
              this.tempReal = other.tempReal;
              this.ringPos_trailingFastIdx = other.ringPos_trailingFastIdx;
              this.ringCap_trailingFastIdx = other.ringCap_trailingFastIdx;
-             if( this.ring_trailingFastIdx_inHigh != null && this.ring_trailingFastIdx_inHigh.length == other.ring_trailingFastIdx_inHigh.length ) {
-                System.arraycopy( other.ring_trailingFastIdx_inHigh, 0, this.ring_trailingFastIdx_inHigh, 0, other.ring_trailingFastIdx_inHigh.length );
+             if( this.ring_trailingFastIdx_derived != null && this.ring_trailingFastIdx_derived.length == other.ring_trailingFastIdx_derived.length ) {
+                System.arraycopy( other.ring_trailingFastIdx_derived, 0, this.ring_trailingFastIdx_derived, 0, other.ring_trailingFastIdx_derived.length );
              } else {
-                this.ring_trailingFastIdx_inHigh = other.ring_trailingFastIdx_inHigh.clone();
-             }
-             if( this.ring_trailingFastIdx_inLow != null && this.ring_trailingFastIdx_inLow.length == other.ring_trailingFastIdx_inLow.length ) {
-                System.arraycopy( other.ring_trailingFastIdx_inLow, 0, this.ring_trailingFastIdx_inLow, 0, other.ring_trailingFastIdx_inLow.length );
-             } else {
-                this.ring_trailingFastIdx_inLow = other.ring_trailingFastIdx_inLow.clone();
+                this.ring_trailingFastIdx_derived = other.ring_trailingFastIdx_derived.clone();
              }
              this.ringPos_trailingSlowIdx = other.ringPos_trailingSlowIdx;
              this.ringCap_trailingSlowIdx = other.ringCap_trailingSlowIdx;
-             if( this.ring_trailingSlowIdx_inHigh != null && this.ring_trailingSlowIdx_inHigh.length == other.ring_trailingSlowIdx_inHigh.length ) {
-                System.arraycopy( other.ring_trailingSlowIdx_inHigh, 0, this.ring_trailingSlowIdx_inHigh, 0, other.ring_trailingSlowIdx_inHigh.length );
+             if( this.ring_trailingSlowIdx_derived != null && this.ring_trailingSlowIdx_derived.length == other.ring_trailingSlowIdx_derived.length ) {
+                System.arraycopy( other.ring_trailingSlowIdx_derived, 0, this.ring_trailingSlowIdx_derived, 0, other.ring_trailingSlowIdx_derived.length );
              } else {
-                this.ring_trailingSlowIdx_inHigh = other.ring_trailingSlowIdx_inHigh.clone();
-             }
-             if( this.ring_trailingSlowIdx_inLow != null && this.ring_trailingSlowIdx_inLow.length == other.ring_trailingSlowIdx_inLow.length ) {
-                System.arraycopy( other.ring_trailingSlowIdx_inLow, 0, this.ring_trailingSlowIdx_inLow, 0, other.ring_trailingSlowIdx_inLow.length );
-             } else {
-                this.ring_trailingSlowIdx_inLow = other.ring_trailingSlowIdx_inLow.clone();
+                this.ring_trailingSlowIdx_derived = other.ring_trailingSlowIdx_derived.clone();
              }
              this.cur_outReal = other.cur_outReal;
              this.fillRange = other.fillRange;
@@ -6796,12 +6762,10 @@ class Core {
        {
           double medianPrice = 0.0;
           if( sp.ringCap_trailingFastIdx == 0 ) {
-             sp.ring_trailingFastIdx_inHigh[0] = inHigh;
-             sp.ring_trailingFastIdx_inLow[0] = inLow;
+             sp.ring_trailingFastIdx_derived[0] = (inHigh + inLow) / 2.0;
           }
           if( sp.ringCap_trailingSlowIdx == 0 ) {
-             sp.ring_trailingSlowIdx_inHigh[0] = inHigh;
-             sp.ring_trailingSlowIdx_inLow[0] = inLow;
+             sp.ring_trailingSlowIdx_derived[0] = (inHigh + inLow) / 2.0;
           }
           medianPrice = (inHigh + inLow) / 2.0;
           sp.sumFast += medianPrice;
@@ -6816,17 +6780,15 @@ class Core {
            * value it had just overwritten whenever the caller aliases outReal
            * over inHigh or inLow.
            */
-          sp.sumFast -= (sp.ring_trailingFastIdx_inHigh[sp.ringPos_trailingFastIdx] + sp.ring_trailingFastIdx_inLow[sp.ringPos_trailingFastIdx]) / 2.0;
-          sp.sumSlow -= (sp.ring_trailingSlowIdx_inHigh[sp.ringPos_trailingSlowIdx] + sp.ring_trailingSlowIdx_inLow[sp.ringPos_trailingSlowIdx]) / 2.0;
+          sp.sumFast -= sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx];
+          sp.sumSlow -= sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx];
           sp.cur_outReal = sp.tempReal;
-          sp.ring_trailingFastIdx_inHigh[sp.ringPos_trailingFastIdx] = inHigh;
-          sp.ring_trailingFastIdx_inLow[sp.ringPos_trailingFastIdx] = inLow;
+          sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx] = (inHigh + inLow) / 2.0;
           sp.ringPos_trailingFastIdx = sp.ringPos_trailingFastIdx + 1;
           if( sp.ringPos_trailingFastIdx >= sp.ringCap_trailingFastIdx ) {
              sp.ringPos_trailingFastIdx = 0;
           }
-          sp.ring_trailingSlowIdx_inHigh[sp.ringPos_trailingSlowIdx] = inHigh;
-          sp.ring_trailingSlowIdx_inLow[sp.ringPos_trailingSlowIdx] = inLow;
+          sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx] = (inHigh + inLow) / 2.0;
           sp.ringPos_trailingSlowIdx = sp.ringPos_trailingSlowIdx + 1;
           if( sp.ringPos_trailingSlowIdx >= sp.ringCap_trailingSlowIdx ) {
              sp.ringPos_trailingSlowIdx = 0;
@@ -6963,19 +6925,19 @@ class Core {
              return RetCode.InternalError;
           }
           int allocN_trailingFastIdx = (cap_trailingFastIdx > 0)? cap_trailingFastIdx : 1;
-          double[] capRing_trailingFastIdx_inHigh = new double[allocN_trailingFastIdx];
-          System.arraycopy(inHigh, historyLen - cap_trailingFastIdx, capRing_trailingFastIdx_inHigh, 0, cap_trailingFastIdx);
-          double[] capRing_trailingFastIdx_inLow = new double[allocN_trailingFastIdx];
-          System.arraycopy(inLow, historyLen - cap_trailingFastIdx, capRing_trailingFastIdx_inLow, 0, cap_trailingFastIdx);
+          double[] capRing_trailingFastIdx_derived = new double[allocN_trailingFastIdx];
+          for( int fillJ = historyLen - cap_trailingFastIdx; fillJ < historyLen; fillJ++ ) {
+             capRing_trailingFastIdx_derived[fillJ - (historyLen - cap_trailingFastIdx)] = (inHigh[fillJ] + inLow[fillJ]) / 2.0;
+          }
           int cap_trailingSlowIdx = i - trailingSlowIdx;
           if( cap_trailingSlowIdx < 0 || cap_trailingSlowIdx > historyLen ) {
              return RetCode.InternalError;
           }
           int allocN_trailingSlowIdx = (cap_trailingSlowIdx > 0)? cap_trailingSlowIdx : 1;
-          double[] capRing_trailingSlowIdx_inHigh = new double[allocN_trailingSlowIdx];
-          System.arraycopy(inHigh, historyLen - cap_trailingSlowIdx, capRing_trailingSlowIdx_inHigh, 0, cap_trailingSlowIdx);
-          double[] capRing_trailingSlowIdx_inLow = new double[allocN_trailingSlowIdx];
-          System.arraycopy(inLow, historyLen - cap_trailingSlowIdx, capRing_trailingSlowIdx_inLow, 0, cap_trailingSlowIdx);
+          double[] capRing_trailingSlowIdx_derived = new double[allocN_trailingSlowIdx];
+          for( int fillJ = historyLen - cap_trailingSlowIdx; fillJ < historyLen; fillJ++ ) {
+             capRing_trailingSlowIdx_derived[fillJ - (historyLen - cap_trailingSlowIdx)] = (inHigh[fillJ] + inLow[fillJ]) / 2.0;
+          }
           sp.optInFastPeriod = optInFastPeriod;
           sp.optInSlowPeriod = optInSlowPeriod;
           sp.sumFast = sumFast;
@@ -6983,12 +6945,10 @@ class Core {
           sp.tempReal = tempReal;
           sp.ringPos_trailingFastIdx = 0;
           sp.ringCap_trailingFastIdx = cap_trailingFastIdx;
-          sp.ring_trailingFastIdx_inHigh = capRing_trailingFastIdx_inHigh;
-          sp.ring_trailingFastIdx_inLow = capRing_trailingFastIdx_inLow;
+          sp.ring_trailingFastIdx_derived = capRing_trailingFastIdx_derived;
           sp.ringPos_trailingSlowIdx = 0;
           sp.ringCap_trailingSlowIdx = cap_trailingSlowIdx;
-          sp.ring_trailingSlowIdx_inHigh = capRing_trailingSlowIdx_inHigh;
-          sp.ring_trailingSlowIdx_inLow = capRing_trailingSlowIdx_inLow;
+          sp.ring_trailingSlowIdx_derived = capRing_trailingSlowIdx_derived;
           sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
           return RetCode.Success;
        }
@@ -121958,8 +121918,7 @@ class Core {
           double tempReal;
           int ringPos_trailingIdx;
           int ringCap_trailingIdx;
-          double[] ring_trailingIdx_inOpen;
-          double[] ring_trailingIdx_inClose;
+          double[] ring_trailingIdx_derived;
           double cur_outReal;
           OutRange fillRange = OutRange.EMPTY;
 
@@ -121981,8 +121940,7 @@ class Core {
              this.tempReal = other.tempReal;
              this.ringPos_trailingIdx = other.ringPos_trailingIdx;
              this.ringCap_trailingIdx = other.ringCap_trailingIdx;
-             this.ring_trailingIdx_inOpen = other.ring_trailingIdx_inOpen.clone();
-             this.ring_trailingIdx_inClose = other.ring_trailingIdx_inClose.clone();
+             this.ring_trailingIdx_derived = other.ring_trailingIdx_derived.clone();
              this.cur_outReal = other.cur_outReal;
              this.fillRange = other.fillRange;
           }
@@ -121994,22 +121952,14 @@ class Core {
              this.tempReal = other.tempReal;
              this.ringPos_trailingIdx = other.ringPos_trailingIdx;
              this.ringCap_trailingIdx = other.ringCap_trailingIdx;
-             if( this.ring_trailingIdx_inOpen != null && this.ring_trailingIdx_inOpen.length == other.ring_trailingIdx_inOpen.length ) {
-                System.arraycopy( other.ring_trailingIdx_inOpen, 0, this.ring_trailingIdx_inOpen, 0, other.ring_trailingIdx_inOpen.length );
+             if( this.ring_trailingIdx_derived != null && this.ring_trailingIdx_derived.length == other.ring_trailingIdx_derived.length ) {
+                System.arraycopy( other.ring_trailingIdx_derived, 0, this.ring_trailingIdx_derived, 0, other.ring_trailingIdx_derived.length );
              } else {
-                this.ring_trailingIdx_inOpen = other.ring_trailingIdx_inOpen.clone();
-             }
-             if( this.ring_trailingIdx_inClose != null && this.ring_trailingIdx_inClose.length == other.ring_trailingIdx_inClose.length ) {
-                System.arraycopy( other.ring_trailingIdx_inClose, 0, this.ring_trailingIdx_inClose, 0, other.ring_trailingIdx_inClose.length );
-             } else {
-                this.ring_trailingIdx_inClose = other.ring_trailingIdx_inClose.clone();
+                this.ring_trailingIdx_derived = other.ring_trailingIdx_derived.clone();
              }
              this.cur_outReal = other.cur_outReal;
              this.fillRange = other.fillRange;
           }
-
-          /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-          private static final ThreadLocal<QSTICK_Stream> PEEK_SCRATCH = new ThreadLocal<>();
 
           /**
            * Commit one closed bar, returning the new current value.
@@ -122034,21 +121984,13 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return (it is the same
            * generated code, run on a copy). Never writes this handle, so peeks may
-           * run concurrently with each other. It runs on a scratch handle held per thread and
-           * reused, so the copy allocates nothing after the first peek of this
-           * indicator on this thread. That scratch is retained for the life of
-           * the thread.
+           * run concurrently with each other. It runs on a throwaway copy, which for this
+           * handle's shape is cheaper than reusing one.
            */
           public double peek( double inOpen, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
                 throw new IllegalArgumentException("QSTICK peek: BadParam");
-             QSTICK_Stream scratch = PEEK_SCRATCH.get();
-             if( scratch == null ) {
-                scratch = new QSTICK_Stream(this);
-                PEEK_SCRATCH.set(scratch);
-             } else {
-                scratch.copyFrom(this);
-             }
+             QSTICK_Stream scratch = new QSTICK_Stream(this);
              core.QSTICK_StreamStep(scratch, inOpen, inClose);
              return scratch.cur_outReal;
           }
@@ -122073,15 +122015,13 @@ class Core {
        void QSTICK_StreamStep( QSTICK_Stream sp, double inOpen, double inClose )
        {
           if( sp.ringCap_trailingIdx == 0 ) {
-             sp.ring_trailingIdx_inOpen[0] = inOpen;
-             sp.ring_trailingIdx_inClose[0] = inClose;
+             sp.ring_trailingIdx_derived[0] = (double)(inClose - inOpen);
           }
           sp.periodTotal += (double)(inClose - inOpen);
           sp.tempReal = sp.periodTotal;
-          sp.periodTotal -= (double)(sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] - sp.ring_trailingIdx_inOpen[sp.ringPos_trailingIdx]);
+          sp.periodTotal -= sp.ring_trailingIdx_derived[sp.ringPos_trailingIdx];
           sp.cur_outReal = sp.tempReal / (double)sp.optInTimePeriod;
-          sp.ring_trailingIdx_inOpen[sp.ringPos_trailingIdx] = inOpen;
-          sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] = inClose;
+          sp.ring_trailingIdx_derived[sp.ringPos_trailingIdx] = (double)(inClose - inOpen);
           sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
           if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
              sp.ringPos_trailingIdx = 0;
@@ -122176,17 +122116,16 @@ class Core {
              return RetCode.InternalError;
           }
           int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
-          double[] capRing_trailingIdx_inOpen = new double[allocN_trailingIdx];
-          System.arraycopy(inOpen, historyLen - cap_trailingIdx, capRing_trailingIdx_inOpen, 0, cap_trailingIdx);
-          double[] capRing_trailingIdx_inClose = new double[allocN_trailingIdx];
-          System.arraycopy(inClose, historyLen - cap_trailingIdx, capRing_trailingIdx_inClose, 0, cap_trailingIdx);
+          double[] capRing_trailingIdx_derived = new double[allocN_trailingIdx];
+          for( int fillJ = historyLen - cap_trailingIdx; fillJ < historyLen; fillJ++ ) {
+             capRing_trailingIdx_derived[fillJ - (historyLen - cap_trailingIdx)] = (double)(inClose[fillJ] - inOpen[fillJ]);
+          }
           sp.optInTimePeriod = optInTimePeriod;
           sp.periodTotal = periodTotal;
           sp.tempReal = tempReal;
           sp.ringPos_trailingIdx = 0;
           sp.ringCap_trailingIdx = cap_trailingIdx;
-          sp.ring_trailingIdx_inOpen = capRing_trailingIdx_inOpen;
-          sp.ring_trailingIdx_inClose = capRing_trailingIdx_inClose;
+          sp.ring_trailingIdx_derived = capRing_trailingIdx_derived;
           sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
           return RetCode.Success;
        }

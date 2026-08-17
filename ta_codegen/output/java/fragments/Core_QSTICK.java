@@ -318,8 +318,7 @@
       double tempReal;
       int ringPos_trailingIdx;
       int ringCap_trailingIdx;
-      double[] ring_trailingIdx_inOpen;
-      double[] ring_trailingIdx_inClose;
+      double[] ring_trailingIdx_derived;
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
@@ -341,8 +340,7 @@
          this.tempReal = other.tempReal;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
-         this.ring_trailingIdx_inOpen = other.ring_trailingIdx_inOpen.clone();
-         this.ring_trailingIdx_inClose = other.ring_trailingIdx_inClose.clone();
+         this.ring_trailingIdx_derived = other.ring_trailingIdx_derived.clone();
          this.cur_outReal = other.cur_outReal;
          this.fillRange = other.fillRange;
       }
@@ -354,22 +352,14 @@
          this.tempReal = other.tempReal;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
-         if( this.ring_trailingIdx_inOpen != null && this.ring_trailingIdx_inOpen.length == other.ring_trailingIdx_inOpen.length ) {
-            System.arraycopy( other.ring_trailingIdx_inOpen, 0, this.ring_trailingIdx_inOpen, 0, other.ring_trailingIdx_inOpen.length );
+         if( this.ring_trailingIdx_derived != null && this.ring_trailingIdx_derived.length == other.ring_trailingIdx_derived.length ) {
+            System.arraycopy( other.ring_trailingIdx_derived, 0, this.ring_trailingIdx_derived, 0, other.ring_trailingIdx_derived.length );
          } else {
-            this.ring_trailingIdx_inOpen = other.ring_trailingIdx_inOpen.clone();
-         }
-         if( this.ring_trailingIdx_inClose != null && this.ring_trailingIdx_inClose.length == other.ring_trailingIdx_inClose.length ) {
-            System.arraycopy( other.ring_trailingIdx_inClose, 0, this.ring_trailingIdx_inClose, 0, other.ring_trailingIdx_inClose.length );
-         } else {
-            this.ring_trailingIdx_inClose = other.ring_trailingIdx_inClose.clone();
+            this.ring_trailingIdx_derived = other.ring_trailingIdx_derived.clone();
          }
          this.cur_outReal = other.cur_outReal;
          this.fillRange = other.fillRange;
       }
-
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<QSTICK_Stream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -394,21 +384,13 @@
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * run concurrently with each other. It runs on a throwaway copy, which for this
+       * handle's shape is cheaper than reusing one.
        */
       public double peek( double inOpen, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
             throw new IllegalArgumentException("QSTICK peek: BadParam");
-         QSTICK_Stream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new QSTICK_Stream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
-         }
+         QSTICK_Stream scratch = new QSTICK_Stream(this);
          core.QSTICK_StreamStep(scratch, inOpen, inClose);
          return scratch.cur_outReal;
       }
@@ -433,15 +415,13 @@
    void QSTICK_StreamStep( QSTICK_Stream sp, double inOpen, double inClose )
    {
       if( sp.ringCap_trailingIdx == 0 ) {
-         sp.ring_trailingIdx_inOpen[0] = inOpen;
-         sp.ring_trailingIdx_inClose[0] = inClose;
+         sp.ring_trailingIdx_derived[0] = (double)(inClose - inOpen);
       }
       sp.periodTotal += (double)(inClose - inOpen);
       sp.tempReal = sp.periodTotal;
-      sp.periodTotal -= (double)(sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] - sp.ring_trailingIdx_inOpen[sp.ringPos_trailingIdx]);
+      sp.periodTotal -= sp.ring_trailingIdx_derived[sp.ringPos_trailingIdx];
       sp.cur_outReal = sp.tempReal / (double)sp.optInTimePeriod;
-      sp.ring_trailingIdx_inOpen[sp.ringPos_trailingIdx] = inOpen;
-      sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] = inClose;
+      sp.ring_trailingIdx_derived[sp.ringPos_trailingIdx] = (double)(inClose - inOpen);
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
       if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
          sp.ringPos_trailingIdx = 0;
@@ -536,17 +516,16 @@
          return RetCode.InternalError;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
-      double[] capRing_trailingIdx_inOpen = new double[allocN_trailingIdx];
-      System.arraycopy(inOpen, historyLen - cap_trailingIdx, capRing_trailingIdx_inOpen, 0, cap_trailingIdx);
-      double[] capRing_trailingIdx_inClose = new double[allocN_trailingIdx];
-      System.arraycopy(inClose, historyLen - cap_trailingIdx, capRing_trailingIdx_inClose, 0, cap_trailingIdx);
+      double[] capRing_trailingIdx_derived = new double[allocN_trailingIdx];
+      for( int fillJ = historyLen - cap_trailingIdx; fillJ < historyLen; fillJ++ ) {
+         capRing_trailingIdx_derived[fillJ - (historyLen - cap_trailingIdx)] = (double)(inClose[fillJ] - inOpen[fillJ]);
+      }
       sp.optInTimePeriod = optInTimePeriod;
       sp.periodTotal = periodTotal;
       sp.tempReal = tempReal;
       sp.ringPos_trailingIdx = 0;
       sp.ringCap_trailingIdx = cap_trailingIdx;
-      sp.ring_trailingIdx_inOpen = capRing_trailingIdx_inOpen;
-      sp.ring_trailingIdx_inClose = capRing_trailingIdx_inClose;
+      sp.ring_trailingIdx_derived = capRing_trailingIdx_derived;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }

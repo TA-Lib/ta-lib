@@ -89,7 +89,8 @@ pub struct SubLagRing {
 /// slot). Batch code that iterates a buffer in storage order (CCI-class
 /// CIRCBUF sums) has a rotation-phase-dependent FP order and is handled by
 /// the CIRCBUF tranche, not this model.
-#[derive(Debug, Clone, PartialEq, Eq)]
+// No `Eq`: `derived` carries an `Expr`, which holds an f64 literal.
+#[derive(Debug, Clone, PartialEq)]
 pub struct RingSpec {
     /// The batch trailing index variable (dropped from the transition).
     pub var: String,
@@ -104,6 +105,24 @@ pub struct RingSpec {
     /// is >= fwd (batch legality guarantees it; Open re-checks and fails
     /// TA_INTERNAL_ERROR otherwise).
     pub fwd: i64,
+    /// Set when every read through this index is one derived scalar (#229).
+    /// `arrays` then holds the single synthetic slot name and this carries the
+    /// expression to evaluate per bar; `raw_arrays` keeps the columns it reads
+    /// so `open` can still backfill from history.
+    pub derived: Option<DerivedRing>,
+}
+
+/// One trailing index collapsed to a single derived scalar per bar.
+#[derive(Debug, Clone, PartialEq)]
+pub struct DerivedRing {
+    /// Synthetic slot name; the ring buffer is `ring_<var>_<slot>`.
+    pub slot: String,
+    /// The expression, written against the batch index variable. Its array
+    /// reads are all at that index; everything else in it is loop-invariant.
+    pub expr: Expr,
+    /// Columns `expr` reads, in signature order -- needed by the open-time
+    /// backfill, which evaluates `expr` per historical bar instead of copying.
+    pub raw_arrays: Vec<String>,
 }
 
 /// One bounded rescan window: an inner loop reads `in[cursor - w]` where `w`
@@ -1552,9 +1571,25 @@ pub fn analyze_region_scoped<'a>(
         windows: scanned_windows,
         out_index_vars,
     } = scanned;
+    // #229: a trailing index whose arrays are read ONLY through one derived
+    // scalar keeps a single ring of that scalar instead of one ring per array.
+    // `eligible_derived` holds back anything reading candle settings, so this
+    // is AO, AC and QSTICK today -- the candlestick tranche waits on whether a
+    // stream may freeze the range type at Open.
+    let derived_slots: BTreeMap<String, DerivedRing> =
+        eligible_derived(&steady_stmts, &trailing, &bar_inputs);
+    let steady_stmts = fold_derived_reads(&steady_stmts, &derived_slots);
+
     let ring_vars: BTreeSet<String> = trailing.keys().cloned().collect();
     check_window_disjoint(&scanned_windows, &ring_vars, &cursor)?;
-    let rings = assemble_rings(trailing.clone(), &ring_back, &ring_fwd, &bar_inputs);
+    let mut rings = assemble_rings(trailing.clone(), &ring_back, &ring_fwd, &bar_inputs);
+    for ring in &mut rings {
+        if let Some(dr) = derived_slots.get(&ring.var) {
+            ring.arrays = vec![dr.slot.clone()];
+            ring.derived = Some(dr.clone());
+        }
+    }
+    derived_ring_census(&steady_stmts, &trailing, &func.name);
     let windows = assemble_windows(scanned_windows, &bar_inputs);
 
     let out_feedback = collect_out_feedback(&steady_stmts, &outputs);
@@ -1578,7 +1613,17 @@ pub fn analyze_region_scoped<'a>(
         parity_field: parity.as_ref().map(|p| p.field.as_str()),
     };
     let (extrema, (mut state, temps)) =
-        classify_or_extrema(&ctx, &ring_vars, &trailing, &windows, &circs)?;
+        classify_or_extrema(
+            &ctx,
+            &derived_slots
+                .values()
+                .map(|d| d.slot.clone())
+                .collect::<BTreeSet<_>>(),
+            &ring_vars,
+            &trailing,
+            &windows,
+            &circs,
+        )?;
     force_circ_index_state(&circs, &mut state, &temps);
     // The carried parity field is synthetic (no VarDecl): classify_locals skips
     // it, so append it as an ordinary int state field here (emitter seeds/flips
@@ -3946,6 +3991,7 @@ type Classified = (Vec<ScalarField>, Vec<ScalarField>);
 /// ring.
 fn classify_or_extrema(
     ctx: &ClassifyCtx,
+    derived_slots: &BTreeSet<String>,
     ring_vars: &BTreeSet<String>,
     trailing: &BTreeMap<String, BTreeSet<String>>,
     windows: &[WindowSpec],
@@ -3964,6 +4010,7 @@ fn classify_or_extrema(
             ctx.outputs,
             ctx.circ_extra,
             ctx.parity_field,
+            derived_slots,
         )
     };
     match run(ring_vars) {
@@ -4230,6 +4277,373 @@ fn derive_tier(
     }
 }
 
+/// How a subtree relates to one trailing index.
+enum VShape {
+    /// Contains no read at this index.
+    None,
+    /// Contains reads at this index, and the WHOLE subtree is a function of
+    /// that bar alone: every array read in it is at this index, and every
+    /// other leaf is a literal or a loop-invariant scalar.
+    Derived,
+    /// Contains reads at this index but is not a function of that bar alone --
+    /// it also reads another bar, or a loop-carried scalar.
+    Mixed,
+}
+
+/// Classify `expr` against trailing var `var`, collecting the MAXIMAL `Derived`
+/// subtrees. A subtree is maximal when it is Derived and its parent is not.
+fn classify_v(
+    expr: &Expr,
+    var: &str,
+    assigned: &BTreeSet<String>,
+    pure_calls: &BTreeSet<String>,
+    out: &mut Vec<Expr>,
+) -> VShape {
+    let kids: Vec<&Expr> = match expr {
+        Expr::ArrayAccess(_, idx) => {
+            // A read at `var` is Derived on its own; a read at any other index
+            // is Mixed -- it is another bar, so nothing here is a function of
+            // the trailing one.
+            return if expr_mentions(idx, var) {
+                VShape::Derived
+            } else {
+                VShape::Mixed
+            };
+        }
+        Expr::Literal(_) | Expr::IntLiteral(_) => return VShape::None,
+        Expr::Var(name) | Expr::PointerDeref(name) => {
+            // Written in the loop -> loop-carried, so a subtree naming it is
+            // not a function of the trailing bar. Everything else (parameters,
+            // settings, lookback constants) is invariant and harmless.
+            return if assigned.contains(name) {
+                VShape::Mixed
+            } else {
+                VShape::None
+            };
+        }
+        Expr::FuncCall(name, args) => {
+            if !pure_calls.contains(name) {
+                // Unknown callee: refuse to reason through it, but the args it
+                // was given may still hold maximal derived subtrees.
+                for arg in args {
+                    if matches!(
+                        classify_v(arg, var, assigned, pure_calls, out),
+                        VShape::Derived
+                    ) {
+                        out.push(arg.clone());
+                    }
+                }
+                return VShape::Mixed;
+            }
+            args.iter().collect()
+        }
+        Expr::BinOp(lhs, _, rhs) => vec![lhs.as_ref(), rhs.as_ref()],
+        Expr::Cast(_, inner)
+        | Expr::Not(inner)
+        | Expr::BitwiseNot(inner)
+        | Expr::AddressOf(inner) => vec![inner.as_ref()],
+        Expr::PostIncrement(inner)
+        | Expr::PostDecrement(inner)
+        | Expr::PreIncrement(inner)
+        | Expr::PreDecrement(inner) => {
+            // Mutating: never fold one into a ring.
+            if matches!(
+                classify_v(inner, var, assigned, pure_calls, out),
+                VShape::Derived
+            ) {
+                out.push((**inner).clone());
+            }
+            return VShape::Mixed;
+        }
+        Expr::Ternary(cond, then_e, else_e) => {
+            vec![cond.as_ref(), then_e.as_ref(), else_e.as_ref()]
+        }
+    };
+    let shapes: Vec<VShape> = kids
+        .iter()
+        .map(|kid| classify_v(kid, var, assigned, pure_calls, out))
+        .collect();
+    let any_derived = shapes.iter().any(|sh| matches!(sh, VShape::Derived));
+    let any_mixed = shapes.iter().any(|sh| matches!(sh, VShape::Mixed));
+    if any_derived && !any_mixed {
+        VShape::Derived
+    } else if any_derived || any_mixed {
+        // This node breaks the chain, so every Derived child was maximal.
+        for (kid, sh) in kids.iter().zip(shapes.iter()) {
+            if matches!(sh, VShape::Derived) {
+                out.push((*kid).clone());
+            }
+        }
+        VShape::Mixed
+    } else {
+        VShape::None
+    }
+}
+
+/// Names written anywhere in the steady loop -- everything else a scalar leaf
+/// can name is loop-invariant (a parameter, a setting, a lookback constant).
+fn assigned_in(stmts: &[Statement]) -> BTreeSet<String> {
+    let mut out = BTreeSet::new();
+    for st in stmts {
+        walk_stmt_targets(st, &mut out);
+    }
+    out
+}
+
+fn walk_stmt_targets(s: &Statement, out: &mut BTreeSet<String>) {
+    if let Statement::Assign { target, .. } = s {
+        expr_var_names(target, out);
+    }
+    if let Statement::VarDecl { name, .. } = s {
+        out.insert(name.clone());
+    }
+    walk_stmt_exprs(s, &mut |e| {
+        walk_expr(e, &mut |x| match x {
+            Expr::PostIncrement(t)
+            | Expr::PostDecrement(t)
+            | Expr::PreIncrement(t)
+            | Expr::PreDecrement(t) => expr_var_names(t, out),
+            _ => {}
+        });
+    });
+    match s {
+        Statement::While { body, .. } | Statement::DoWhile { body, .. } => {
+            for b in body {
+                walk_stmt_targets(b, out);
+            }
+        }
+        _ => {}
+    }
+}
+
+/// Helpers are pure functions of their arguments -- all fourteen in
+/// `input/helpers/` are single-expression or local-only bodies with no state.
+/// Listed rather than inferred for now; the analysis refuses any callee not
+/// named here, so an unlisted helper costs an optimization, never a wrong
+/// answer.
+fn pure_helper_names() -> BTreeSet<String> {
+    [
+        "ta_realbody",
+        "ta_candlecolor",
+        "ta_uppershadow",
+        "ta_lowershadow",
+        "ta_highlowrange",
+        "ta_realbodygapup",
+        "ta_realbodygapdown",
+        "ta_candlegapup",
+        "ta_candlegapdown",
+        "ta_candlerange",
+        "ta_true_range",
+        "ta_round_pos",
+        "ta_sar_rounding",
+    ]
+    .iter()
+    .map(|s| (*s).to_string())
+    .collect()
+}
+
+/// Two derived reads through the same trailing index differ only by the offset
+/// when they are the same function of a bar read at `v`, `v-4`, `v+1`, ...
+/// CDLMORNINGSTAR subtracts `ta_candlerange(..., [T])` and
+/// `ta_candlerange(..., [T+1])`; CDLRISEFALL3METHODS spans `[T-4]` to `[T]`.
+/// A ring already addresses multiple offsets through `back`/`fwd`, so the
+/// shape is compared with the index blanked out and the offsets recorded
+/// separately -- otherwise one derived function reads as several and the
+/// collapse is refused for the three functions that need it most.
+fn shape_key(e: &Expr) -> String {
+    fn blank(e: &Expr) -> Expr {
+        match e {
+            Expr::ArrayAccess(a, _) => Expr::ArrayAccess(a.clone(), Box::new(Expr::IntLiteral(0))),
+            Expr::BinOp(l, op, r) => {
+                Expr::BinOp(Box::new(blank(l)), op.clone(), Box::new(blank(r)))
+            }
+            Expr::FuncCall(n, args) => {
+                Expr::FuncCall(n.clone(), args.iter().map(blank).collect())
+            }
+            Expr::Cast(t, x) => Expr::Cast(t.clone(), Box::new(blank(x))),
+            Expr::Not(x) => Expr::Not(Box::new(blank(x))),
+            Expr::BitwiseNot(x) => Expr::BitwiseNot(Box::new(blank(x))),
+            Expr::Ternary(c, t, f) => Expr::Ternary(
+                Box::new(blank(c)),
+                Box::new(blank(t)),
+                Box::new(blank(f)),
+            ),
+            other => other.clone(),
+        }
+    }
+    format!("{:?}", blank(e))
+}
+
+/// #229: for each trailing index carrying more than one array, the distinct
+/// maximal derived subtrees its reads sit in. One shape covering every read
+/// means one ring of that scalar replaces the per-array rings.
+fn derived_ring_census(
+    stmts: &[Statement],
+    trailing: &BTreeMap<String, BTreeSet<String>>,
+    fname: &str,
+) {
+    if std::env::var("TA_RING_REPORT").is_err() {
+        return;
+    }
+    let assigned = assigned_in(stmts);
+    let pure = pure_helper_names();
+    for (v, arrs) in trailing {
+        if arrs.len() < 2 {
+            continue;
+        }
+        let mut shapes: Vec<Expr> = Vec::new();
+        for st in stmts {
+            walk_stmt_exprs(st, &mut |e| {
+                let mut found = Vec::new();
+                let sh = classify_v(e, v, &assigned, &pure, &mut found);
+                if matches!(sh, VShape::Derived) {
+                    found.push(e.clone());
+                }
+                shapes.extend(found);
+            });
+        }
+        let mut uniq: Vec<String> = shapes.iter().map(shape_key).collect();
+        uniq.sort();
+        uniq.dedup();
+        let saving = if uniq.len() == 1 && arrs.len() > 1 {
+            arrs.len() - 1
+        } else {
+            0
+        };
+        eprintln!(
+            "DERIVED\t{fname}\t{v}\tarrays={}\tshapes={}\tsaving={saving}",
+            arrs.len(),
+            uniq.len()
+        );
+    }
+}
+
+/// Candle settings reach an expression as `<Setting>_rangeType` and friends,
+/// resolved from the mutable globals. A derived ring freezes whatever they say
+/// when the bar is buffered, which is a semantic question rather than a
+/// mechanical one (#229), so expressions naming them are held back until that
+/// is settled. Everything else -- AO's `(high+low)/2`, QSTICK's `close-open` --
+/// is a pure function of the bar and can be collapsed today.
+fn mentions_candle_settings(e: &Expr) -> bool {
+    let mut found = false;
+    walk_expr(e, &mut |x| {
+        if let Expr::Var(n) = x {
+            if n.ends_with("_rangeType") || n.ends_with("_avgPeriod") || n.ends_with("_factor") {
+                found = true;
+            }
+        }
+    });
+    found
+}
+
+/// The eligible derived rings: one shape covering every read at that index,
+/// more than one array behind it, and no settings dependency.
+fn eligible_derived(
+    stmts: &[Statement],
+    trailing: &BTreeMap<String, BTreeSet<String>>,
+    bar_inputs: &[String],
+) -> BTreeMap<String, DerivedRing> {
+    let assigned = assigned_in(stmts);
+    let pure = pure_helper_names();
+    let mut out = BTreeMap::new();
+    for (v, arrs) in trailing {
+        if arrs.len() < 2 {
+            continue;
+        }
+        let mut shapes: Vec<Expr> = Vec::new();
+        for st in stmts {
+            walk_stmt_exprs(st, &mut |e| {
+                let mut found = Vec::new();
+                let sh = classify_v(e, v, &assigned, &pure, &mut found);
+                if matches!(sh, VShape::Derived) {
+                    found.push(e.clone());
+                }
+                shapes.extend(found);
+            });
+        }
+        if shapes.is_empty() {
+            continue;
+        }
+        let mut keys: Vec<String> = shapes.iter().map(shape_key).collect();
+        keys.sort();
+        keys.dedup();
+        if keys.len() != 1 {
+            continue;
+        }
+        let expr = shapes[0].clone();
+        if mentions_candle_settings(&expr) {
+            continue;
+        }
+        let mut raw: BTreeSet<String> = BTreeSet::new();
+        walk_expr(&expr, &mut |x| {
+            if let Expr::ArrayAccess(n, _) = x {
+                raw.insert(n.clone());
+            }
+        });
+        let raw_arrays: Vec<String> = bar_inputs
+            .iter()
+            .filter(|a| raw.contains(*a))
+            .cloned()
+            .collect();
+        if raw_arrays.len() < 2 {
+            continue;
+        }
+        out.insert(
+            v.clone(),
+            DerivedRing {
+                slot: "derived".to_string(),
+                expr,
+                raw_arrays,
+            },
+        );
+    }
+    out
+}
+
+/// Replace every maximal derived subtree at `var` with a read of the synthetic
+/// slot, keeping the original index expression so `classify_input_index` still
+/// resolves it to the same ring and `ring_offset_read` needs no change.
+///
+/// Must run BEFORE `rewrite_bar_reads`: that pass is bottom-up, so by the time
+/// it reaches the enclosing `FuncCall` its `ArrayAccess` children are already
+/// ring reads and the shape is gone. `rewrite_stmts` is bottom-up too, which is
+/// safe here only because the match is on the WHOLE shape -- a child of
+/// `ta_candlerange(...)` keys as `ArrayAccess(inOpen, _)` and cannot collide
+/// with the call's own key.
+fn fold_derived_reads(
+    stmts: &[Statement],
+    derived: &BTreeMap<String, DerivedRing>,
+) -> Vec<Statement> {
+    let mut cur = stmts.to_vec();
+    for (var, dr) in derived {
+        let key = shape_key(&dr.expr);
+        let var = var.clone();
+        let slot = dr.slot.clone();
+        cur = rewrite_stmts(
+            &cur,
+            &move |e: Expr| {
+                if shape_key(&e) != key {
+                    return e;
+                }
+                let mut idx: Option<Expr> = None;
+                walk_expr(&e, &mut |x| {
+                    if let Expr::ArrayAccess(_, i) = x {
+                        if idx.is_none() && expr_mentions(i, &var) {
+                            idx = Some((**i).clone());
+                        }
+                    }
+                });
+                match idx {
+                    Some(i) => Expr::ArrayAccess(slot.clone(), Box::new(i)),
+                    None => e,
+                }
+            },
+            &Some,
+        );
+    }
+    cur
+}
+
 /// Rings in a stable order: by variable name, arrays in signature order.
 fn assemble_rings(
     trailing: BTreeMap<String, BTreeSet<String>>,
@@ -4240,6 +4654,7 @@ fn assemble_rings(
     trailing
         .into_iter()
         .map(|(var, arrs)| RingSpec {
+            derived: None,
             back: ring_back
                 .get(&var)
                 .copied()
@@ -4290,6 +4705,9 @@ fn classify_locals(
     outputs: &[String],
     circ_extra: &[(String, VarType)],
     parity_field: Option<&str>,
+    // #229 synthetic slots: a folded derived ring reads `slot[trailingIdx]`,
+    // which is a real reference in the loop but never a declared symbol.
+    derived_slots: &BTreeSet<String>,
 ) -> Result<(Vec<ScalarField>, Vec<ScalarField>), StreamError> {
     let mut decls = BTreeMap::new();
     collect_var_decls(body, &mut decls);
@@ -4350,6 +4768,7 @@ fn classify_locals(
             || circ_buffers.contains(v)
             || param_names.contains(v)
             || bar_inputs.contains(v)
+            || derived_slots.contains(v)
             || outputs.contains(v)
             || candle_locals.contains(v)
             || Some(v.as_str()) == parity_field
@@ -5162,7 +5581,10 @@ fn insert_transition_prologue(
                             names.ring_buf(&ring.var, arr),
                             Box::new(Expr::Var(names.ring_pos(&ring.var))),
                         ),
-                        value: Expr::Var(names.bar(arr)),
+                        value: match &ring.derived {
+                            Some(dr) => derived_bar_value(dr, names),
+                            None => Expr::Var(names.bar(arr)),
+                        },
                         compound: false,
                     },
                 );
@@ -5562,6 +5984,80 @@ fn ring_offset_read(
     )
 }
 
+/// Is `name` the synthetic slot of some derived ring (#229)?
+fn is_derived_slot(model: &StreamModel, name: &str) -> bool {
+    model
+        .rings()
+        .iter()
+        .any(|r| r.derived.as_ref().is_some_and(|d| d.slot == name))
+}
+
+/// Resolve a read of a derived slot to the ring slot that holds it. The index
+/// expression is the batch's own, so this is the same resolution the raw
+/// columns get -- only the buffer name differs.
+fn derived_slot_read(
+    slot: &str,
+    idx: &Expr,
+    model: &StreamModel,
+    names: &dyn NameMap,
+) -> Option<Expr> {
+    let find = |v: &str| model.rings().iter().find(|r| r.var == v);
+    match classify_input_index(idx, &model.cursor) {
+        InputIndex::OtherVar(v) => {
+            let ring = find(&v)?;
+            Some(if ring.back > 0 {
+                ring_offset_read(ring, slot, Some(0), None, names)
+            } else {
+                Expr::ArrayAccess(
+                    names.ring_buf(&v, slot),
+                    Box::new(Expr::Var(names.ring_pos(&v))),
+                )
+            })
+        }
+        InputIndex::OtherVarLag(v, k) => {
+            Some(ring_offset_read(find(&v)?, slot, Some(k), None, names))
+        }
+        InputIndex::OtherVarWinLag(v, w) => Some(ring_offset_read(
+            find(&v)?,
+            slot,
+            None,
+            Some(Expr::Var(w)),
+            names,
+        )),
+        _ => None,
+    }
+}
+
+/// The value a derived ring stores for the CURRENT bar: the expression with
+/// every `in<Array>[idx]` swapped for the scalar `update` parameter carrying
+/// that array's bar. Same operations on the same doubles as the batch performs
+/// at subtraction time, which is what keeps the collapse bit-exact.
+fn derived_bar_value(dr: &DerivedRing, names: &dyn NameMap) -> Expr {
+    fn go(e: &Expr, names: &dyn NameMap) -> Expr {
+        match e {
+            Expr::ArrayAccess(arr, _) => Expr::Var(names.bar(arr)),
+            Expr::BinOp(lhs, op, rhs) => Expr::BinOp(
+                Box::new(go(lhs, names)),
+                op.clone(),
+                Box::new(go(rhs, names)),
+            ),
+            Expr::FuncCall(name, args) => {
+                Expr::FuncCall(name.clone(), args.iter().map(|a| go(a, names)).collect())
+            }
+            Expr::Cast(t, inner) => Expr::Cast(t.clone(), Box::new(go(inner, names))),
+            Expr::Not(inner) => Expr::Not(Box::new(go(inner, names))),
+            Expr::BitwiseNot(inner) => Expr::BitwiseNot(Box::new(go(inner, names))),
+            Expr::Ternary(cond, then_e, else_e) => Expr::Ternary(
+                Box::new(go(cond, names)),
+                Box::new(go(then_e, names)),
+                Box::new(go(else_e, names)),
+            ),
+            other => other.clone(),
+        }
+    }
+    go(&dr.expr, names)
+}
+
 /// `if (cap == 0) ring[0] = bar;` for every array of a ring — makes the
 /// zero-lag degenerate case read the current bar through the same slot.
 fn ring_cap0_guard(ring: &RingSpec, names: &dyn NameMap) -> Statement {
@@ -5573,7 +6069,10 @@ fn ring_cap0_guard(ring: &RingSpec, names: &dyn NameMap) -> Statement {
                 names.ring_buf(&ring.var, arr),
                 Box::new(Expr::IntLiteral(0)),
             ),
-            value: Expr::Var(names.bar(arr)),
+            value: match &ring.derived {
+                Some(dr) => derived_bar_value(dr, names),
+                None => Expr::Var(names.bar(arr)),
+            },
             compound: false,
         })
         .collect();
@@ -5603,6 +6102,9 @@ fn ring_cap0_guard(ring: &RingSpec, names: &dyn NameMap) -> Statement {
 /// mutually-exclusive arms of the period branch — one per path, not two per
 /// bar.)
 fn push_ring_advance(out: &mut Vec<Statement>, ring: &RingSpec, names: &dyn NameMap) {
+    // The dead-store elision above is orthogonal to what gets stored: a derived
+    // ring holds f(bar) rather than a raw column, so the value still comes from
+    // the expression when there is one.
     if ring.back == 0 {
         for arr in &ring.arrays {
             out.push(Statement::Assign {
@@ -5610,7 +6112,10 @@ fn push_ring_advance(out: &mut Vec<Statement>, ring: &RingSpec, names: &dyn Name
                     names.ring_buf(&ring.var, arr),
                     Box::new(Expr::Var(names.ring_pos(&ring.var))),
                 ),
-                value: Expr::Var(names.bar(arr)),
+                value: match &ring.derived {
+                    Some(dr) => derived_bar_value(dr, names),
+                    None => Expr::Var(names.bar(arr)),
+                },
                 compound: false,
             });
         }
@@ -5662,6 +6167,11 @@ fn rewrite_expr_for_transition(
         }
         Expr::ArrayAccess(n, idx) if state_names.contains(&n) => {
             Expr::ArrayAccess(names.state(&n), idx)
+        }
+        // #229 derived slot: not a real input column, so it must be matched
+        // before the bar-input arm and resolved by the ring it belongs to.
+        Expr::ArrayAccess(ref n, ref idx) if is_derived_slot(model, n) => {
+            derived_slot_read(n, idx, model, names).unwrap_or(e)
         }
         Expr::ArrayAccess(n, idx) if model.bar_inputs.contains(&n) => {
             match classify_input_index(&idx, &model.cursor) {

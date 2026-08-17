@@ -595,12 +595,10 @@ public partial class Core
       internal int maxIdx_oscBuffer;
       internal int ringPos_trailingFastIdx;
       internal int ringCap_trailingFastIdx;
-      internal double[] ring_trailingFastIdx_inHigh = [];
-      internal double[] ring_trailingFastIdx_inLow = [];
+      internal double[] ring_trailingFastIdx_derived = [];
       internal int ringPos_trailingSlowIdx;
       internal int ringCap_trailingSlowIdx;
-      internal double[] ring_trailingSlowIdx_inHigh = [];
-      internal double[] ring_trailingSlowIdx_inLow = [];
+      internal double[] ring_trailingSlowIdx_derived = [];
       internal int cbSize_oscBuffer;
       internal double[] cb_oscBuffer = [];
       internal double cur_outReal;
@@ -631,16 +629,12 @@ public partial class Core
          this.maxIdx_oscBuffer = other.maxIdx_oscBuffer;
          this.ringPos_trailingFastIdx = other.ringPos_trailingFastIdx;
          this.ringCap_trailingFastIdx = other.ringCap_trailingFastIdx;
-         this.ring_trailingFastIdx_inHigh = new double[other.ring_trailingFastIdx_inHigh.Length];
-         Array.Copy( other.ring_trailingFastIdx_inHigh, this.ring_trailingFastIdx_inHigh, other.ring_trailingFastIdx_inHigh.Length );
-         this.ring_trailingFastIdx_inLow = new double[other.ring_trailingFastIdx_inLow.Length];
-         Array.Copy( other.ring_trailingFastIdx_inLow, this.ring_trailingFastIdx_inLow, other.ring_trailingFastIdx_inLow.Length );
+         this.ring_trailingFastIdx_derived = new double[other.ring_trailingFastIdx_derived.Length];
+         Array.Copy( other.ring_trailingFastIdx_derived, this.ring_trailingFastIdx_derived, other.ring_trailingFastIdx_derived.Length );
          this.ringPos_trailingSlowIdx = other.ringPos_trailingSlowIdx;
          this.ringCap_trailingSlowIdx = other.ringCap_trailingSlowIdx;
-         this.ring_trailingSlowIdx_inHigh = new double[other.ring_trailingSlowIdx_inHigh.Length];
-         Array.Copy( other.ring_trailingSlowIdx_inHigh, this.ring_trailingSlowIdx_inHigh, other.ring_trailingSlowIdx_inHigh.Length );
-         this.ring_trailingSlowIdx_inLow = new double[other.ring_trailingSlowIdx_inLow.Length];
-         Array.Copy( other.ring_trailingSlowIdx_inLow, this.ring_trailingSlowIdx_inLow, other.ring_trailingSlowIdx_inLow.Length );
+         this.ring_trailingSlowIdx_derived = new double[other.ring_trailingSlowIdx_derived.Length];
+         Array.Copy( other.ring_trailingSlowIdx_derived, this.ring_trailingSlowIdx_derived, other.ring_trailingSlowIdx_derived.Length );
          this.cbSize_oscBuffer = other.cbSize_oscBuffer;
          this.cb_oscBuffer = new double[other.cb_oscBuffer.Length];
          Array.Copy( other.cb_oscBuffer, this.cb_oscBuffer, other.cb_oscBuffer.Length );
@@ -663,24 +657,16 @@ public partial class Core
          this.maxIdx_oscBuffer = other.maxIdx_oscBuffer;
          this.ringPos_trailingFastIdx = other.ringPos_trailingFastIdx;
          this.ringCap_trailingFastIdx = other.ringCap_trailingFastIdx;
-         if( this.ring_trailingFastIdx_inHigh.Length != other.ring_trailingFastIdx_inHigh.Length ) {
-            this.ring_trailingFastIdx_inHigh = new double[other.ring_trailingFastIdx_inHigh.Length];
+         if( this.ring_trailingFastIdx_derived.Length != other.ring_trailingFastIdx_derived.Length ) {
+            this.ring_trailingFastIdx_derived = new double[other.ring_trailingFastIdx_derived.Length];
          }
-         Array.Copy( other.ring_trailingFastIdx_inHigh, this.ring_trailingFastIdx_inHigh, other.ring_trailingFastIdx_inHigh.Length );
-         if( this.ring_trailingFastIdx_inLow.Length != other.ring_trailingFastIdx_inLow.Length ) {
-            this.ring_trailingFastIdx_inLow = new double[other.ring_trailingFastIdx_inLow.Length];
-         }
-         Array.Copy( other.ring_trailingFastIdx_inLow, this.ring_trailingFastIdx_inLow, other.ring_trailingFastIdx_inLow.Length );
+         Array.Copy( other.ring_trailingFastIdx_derived, this.ring_trailingFastIdx_derived, other.ring_trailingFastIdx_derived.Length );
          this.ringPos_trailingSlowIdx = other.ringPos_trailingSlowIdx;
          this.ringCap_trailingSlowIdx = other.ringCap_trailingSlowIdx;
-         if( this.ring_trailingSlowIdx_inHigh.Length != other.ring_trailingSlowIdx_inHigh.Length ) {
-            this.ring_trailingSlowIdx_inHigh = new double[other.ring_trailingSlowIdx_inHigh.Length];
+         if( this.ring_trailingSlowIdx_derived.Length != other.ring_trailingSlowIdx_derived.Length ) {
+            this.ring_trailingSlowIdx_derived = new double[other.ring_trailingSlowIdx_derived.Length];
          }
-         Array.Copy( other.ring_trailingSlowIdx_inHigh, this.ring_trailingSlowIdx_inHigh, other.ring_trailingSlowIdx_inHigh.Length );
-         if( this.ring_trailingSlowIdx_inLow.Length != other.ring_trailingSlowIdx_inLow.Length ) {
-            this.ring_trailingSlowIdx_inLow = new double[other.ring_trailingSlowIdx_inLow.Length];
-         }
-         Array.Copy( other.ring_trailingSlowIdx_inLow, this.ring_trailingSlowIdx_inLow, other.ring_trailingSlowIdx_inLow.Length );
+         Array.Copy( other.ring_trailingSlowIdx_derived, this.ring_trailingSlowIdx_derived, other.ring_trailingSlowIdx_derived.Length );
          this.cbSize_oscBuffer = other.cbSize_oscBuffer;
          if( this.cb_oscBuffer.Length != other.cb_oscBuffer.Length ) {
             this.cb_oscBuffer = new double[other.cb_oscBuffer.Length];
@@ -760,12 +746,10 @@ public partial class Core
    {
       double medianPrice = 0.0;
       if( sp.ringCap_trailingFastIdx == 0 ) {
-         sp.ring_trailingFastIdx_inHigh[0] = inHigh;
-         sp.ring_trailingFastIdx_inLow[0] = inLow;
+         sp.ring_trailingFastIdx_derived[0] = (inHigh + inLow) / 2.0;
       }
       if( sp.ringCap_trailingSlowIdx == 0 ) {
-         sp.ring_trailingSlowIdx_inHigh[0] = inHigh;
-         sp.ring_trailingSlowIdx_inLow[0] = inLow;
+         sp.ring_trailingSlowIdx_derived[0] = (inHigh + inLow) / 2.0;
       }
       medianPrice = (inHigh + inLow) / 2.0;
       sp.sumFast += medianPrice;
@@ -774,8 +758,8 @@ public partial class Core
        * mirroring the add-new / snapshot / subtract-old order of TA_SMA.
        */
       sp.osc = sp.sumFast / (double)sp.optInFastPeriod - sp.sumSlow / (double)sp.optInSlowPeriod;
-      sp.sumFast -= (sp.ring_trailingFastIdx_inHigh[sp.ringPos_trailingFastIdx] + sp.ring_trailingFastIdx_inLow[sp.ringPos_trailingFastIdx]) / 2.0;
-      sp.sumSlow -= (sp.ring_trailingSlowIdx_inHigh[sp.ringPos_trailingSlowIdx] + sp.ring_trailingSlowIdx_inLow[sp.ringPos_trailingSlowIdx]) / 2.0;
+      sp.sumFast -= sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx];
+      sp.sumSlow -= sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx];
       /* Today's oscillator enters the signal window at its own slot, and the
        * bar leaving that window is read only after the ring has advanced onto
        * it -- writing first is what makes the slot the loop is about to
@@ -798,14 +782,12 @@ public partial class Core
        * the collision ao.c has to guard against.
        */
       sp.cur_outReal = sp.tempReal;
-      sp.ring_trailingFastIdx_inHigh[sp.ringPos_trailingFastIdx] = inHigh;
-      sp.ring_trailingFastIdx_inLow[sp.ringPos_trailingFastIdx] = inLow;
+      sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx] = (inHigh + inLow) / 2.0;
       sp.ringPos_trailingFastIdx = sp.ringPos_trailingFastIdx + 1;
       if( sp.ringPos_trailingFastIdx >= sp.ringCap_trailingFastIdx ) {
          sp.ringPos_trailingFastIdx = 0;
       }
-      sp.ring_trailingSlowIdx_inHigh[sp.ringPos_trailingSlowIdx] = inHigh;
-      sp.ring_trailingSlowIdx_inLow[sp.ringPos_trailingSlowIdx] = inLow;
+      sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx] = (inHigh + inLow) / 2.0;
       sp.ringPos_trailingSlowIdx = sp.ringPos_trailingSlowIdx + 1;
       if( sp.ringPos_trailingSlowIdx >= sp.ringCap_trailingSlowIdx ) {
          sp.ringPos_trailingSlowIdx = 0;
@@ -999,19 +981,19 @@ public partial class Core
          return RetCode.InternalError;
       }
       int allocN_trailingFastIdx = (cap_trailingFastIdx > 0)? cap_trailingFastIdx : 1;
-      double[] capRing_trailingFastIdx_inHigh = new double[allocN_trailingFastIdx];
-      inHigh.Slice(historyLen - cap_trailingFastIdx, cap_trailingFastIdx).CopyTo(capRing_trailingFastIdx_inHigh);
-      double[] capRing_trailingFastIdx_inLow = new double[allocN_trailingFastIdx];
-      inLow.Slice(historyLen - cap_trailingFastIdx, cap_trailingFastIdx).CopyTo(capRing_trailingFastIdx_inLow);
+      double[] capRing_trailingFastIdx_derived = new double[allocN_trailingFastIdx];
+      for( int fillJ = historyLen - cap_trailingFastIdx; fillJ < historyLen; fillJ++ ) {
+         capRing_trailingFastIdx_derived[fillJ - (historyLen - cap_trailingFastIdx)] = (inHigh[fillJ] + inLow[fillJ]) / 2.0;
+      }
       int cap_trailingSlowIdx = i - trailingSlowIdx;
       if( cap_trailingSlowIdx < 0 || cap_trailingSlowIdx > historyLen ) {
          return RetCode.InternalError;
       }
       int allocN_trailingSlowIdx = (cap_trailingSlowIdx > 0)? cap_trailingSlowIdx : 1;
-      double[] capRing_trailingSlowIdx_inHigh = new double[allocN_trailingSlowIdx];
-      inHigh.Slice(historyLen - cap_trailingSlowIdx, cap_trailingSlowIdx).CopyTo(capRing_trailingSlowIdx_inHigh);
-      double[] capRing_trailingSlowIdx_inLow = new double[allocN_trailingSlowIdx];
-      inLow.Slice(historyLen - cap_trailingSlowIdx, cap_trailingSlowIdx).CopyTo(capRing_trailingSlowIdx_inLow);
+      double[] capRing_trailingSlowIdx_derived = new double[allocN_trailingSlowIdx];
+      for( int fillJ = historyLen - cap_trailingSlowIdx; fillJ < historyLen; fillJ++ ) {
+         capRing_trailingSlowIdx_derived[fillJ - (historyLen - cap_trailingSlowIdx)] = (inHigh[fillJ] + inLow[fillJ]) / 2.0;
+      }
       int capCb_oscBuffer = maxIdx_oscBuffer + 1;
       if( capCb_oscBuffer > historyLen + 1 ) {
          return RetCode.InternalError;
@@ -1028,12 +1010,10 @@ public partial class Core
       sp.maxIdx_oscBuffer = maxIdx_oscBuffer;
       sp.ringPos_trailingFastIdx = 0;
       sp.ringCap_trailingFastIdx = cap_trailingFastIdx;
-      sp.ring_trailingFastIdx_inHigh = capRing_trailingFastIdx_inHigh;
-      sp.ring_trailingFastIdx_inLow = capRing_trailingFastIdx_inLow;
+      sp.ring_trailingFastIdx_derived = capRing_trailingFastIdx_derived;
       sp.ringPos_trailingSlowIdx = 0;
       sp.ringCap_trailingSlowIdx = cap_trailingSlowIdx;
-      sp.ring_trailingSlowIdx_inHigh = capRing_trailingSlowIdx_inHigh;
-      sp.ring_trailingSlowIdx_inLow = capRing_trailingSlowIdx_inLow;
+      sp.ring_trailingSlowIdx_derived = capRing_trailingSlowIdx_derived;
       sp.cbSize_oscBuffer = capCb_oscBuffer;
       sp.cb_oscBuffer = oscBuffer;
       sp.cur_outReal = outReal[(outNBElement - 1) * outStride];

@@ -1708,6 +1708,52 @@ fn emit_identity_fast_path(
 /// with the state-struct literal. CIRCBUF capture MOVES the batch-materialized
 /// storage (contents AND rotation phase — the CCI-class summation-order
 /// requirement) instead of copying.
+/// A derived ring (#229) stores one scalar per bar, so `open` evaluates the
+/// expression over the history instead of copying a raw column. Mirrors
+/// `derived_fill_expr` in the C backend; both re-index every array read to the
+/// fill loop's counter.
+fn derived_fill_expr_rust(
+    dr: &streaming::DerivedRing,
+    idx_var: &str,
+    typing: &Typing,
+    opt_real_params: &[String],
+    registry: &Registry,
+    helpers: &HelperRegistry,
+) -> String {
+    fn reindex(e: &Expr, idx_var: &str) -> Expr {
+        match e {
+            Expr::ArrayAccess(arr, _) => {
+                Expr::ArrayAccess(arr.clone(), Box::new(Expr::Var(idx_var.to_string())))
+            }
+            Expr::BinOp(lhs, op, rhs) => Expr::BinOp(
+                Box::new(reindex(lhs, idx_var)),
+                op.clone(),
+                Box::new(reindex(rhs, idx_var)),
+            ),
+            Expr::FuncCall(name, args) => Expr::FuncCall(
+                name.clone(),
+                args.iter().map(|a| reindex(a, idx_var)).collect(),
+            ),
+            Expr::Cast(t, inner) => Expr::Cast(t.clone(), Box::new(reindex(inner, idx_var))),
+            Expr::Not(inner) => Expr::Not(Box::new(reindex(inner, idx_var))),
+            Expr::BitwiseNot(inner) => Expr::BitwiseNot(Box::new(reindex(inner, idx_var))),
+            Expr::Ternary(cond, then_e, else_e) => Expr::Ternary(
+                Box::new(reindex(cond, idx_var)),
+                Box::new(reindex(then_e, idx_var)),
+                Box::new(reindex(else_e, idx_var)),
+            ),
+            other => other.clone(),
+        }
+    }
+    render_expr(
+        &reindex(&dr.expr, idx_var),
+        &typing.ctx,
+        opt_real_params,
+        registry,
+        helpers,
+    )
+}
+
 #[allow(clippy::too_many_arguments, clippy::too_many_lines)]
 fn emit_capture(
     o: &mut String,
@@ -1723,6 +1769,12 @@ fn emit_capture(
     let state = state_type_name(func);
     let _ = counter;
 
+    let opt_real_params_cap: Vec<String> = func
+        .optional_inputs
+        .iter()
+        .filter(|p| matches!(p.param_type, ParamType::Real))
+        .map(|p| p.name.clone())
+        .collect();
     for ring in model.rings() {
         let v = &ring.var;
         let back = ring.back;
@@ -1772,6 +1824,24 @@ fn emit_capture(
                 let _ = writeln!(
                     o,
                     "                ring_{v}_{arr}[fillJ % cap_{v} as usize] = {arr}[fillJ];"
+                );
+                let _ = writeln!(o, "                fillJ += 1;");
+                let _ = writeln!(o, "            }}");
+                let _ = writeln!(o, "        }}");
+            } else if let Some(dr) = ring.derived.as_ref() {
+                // Derived ring: evaluate f(bar) per history bar (#229).
+                let rhs = derived_fill_expr_rust(
+                    dr, "fillJ", typing, &opt_real_params_cap, registry, helpers,
+                );
+                let _ = writeln!(o, "        {{");
+                let _ = writeln!(
+                    o,
+                    "            let mut fillJ: usize = historyLen - cap_{v} as usize;"
+                );
+                let _ = writeln!(o, "            while fillJ < historyLen {{");
+                let _ = writeln!(
+                    o,
+                    "                ring_{v}_{arr}[fillJ - (historyLen - cap_{v} as usize)] = {rhs};"
                 );
                 let _ = writeln!(o, "                fillJ += 1;");
                 let _ = writeln!(o, "            }}");

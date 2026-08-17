@@ -293,8 +293,7 @@ struct QSTICK_StreamState {
     tempReal: f64,
     ringPos_trailingIdx: usize,
     ringCap_trailingIdx: usize,
-    ring_trailingIdx_inOpen: Vec<f64>,
-    ring_trailingIdx_inClose: Vec<f64>,
+    ring_trailingIdx_derived: Vec<f64>,
 }
 
 #[allow(non_snake_case, dead_code)]
@@ -307,8 +306,7 @@ impl QSTICK_StreamState {
         self.tempReal = src.tempReal;
         self.ringPos_trailingIdx = src.ringPos_trailingIdx;
         self.ringCap_trailingIdx = src.ringCap_trailingIdx;
-        self.ring_trailingIdx_inOpen.clone_from(&src.ring_trailingIdx_inOpen);
-        self.ring_trailingIdx_inClose.clone_from(&src.ring_trailingIdx_inClose);
+        self.ring_trailingIdx_derived.clone_from(&src.ring_trailingIdx_derived);
     }
 }
 
@@ -321,15 +319,13 @@ impl QSTICK_StreamState {
 impl Core {
     fn QSTICK_step_internal(&self, sp: &mut QSTICK_StreamState, inOpen: f64, inClose: f64, outReal: &mut f64) {
         if sp.ringCap_trailingIdx == 0 {
-            sp.ring_trailingIdx_inOpen[0] = inOpen;
-            sp.ring_trailingIdx_inClose[0] = inClose;
+            sp.ring_trailingIdx_derived[0] = (inClose - inOpen) as f64;
         }
         sp.periodTotal += (inClose - inOpen) as f64;
         sp.tempReal = sp.periodTotal;
-        sp.periodTotal -= (sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] - sp.ring_trailingIdx_inOpen[sp.ringPos_trailingIdx]) as f64;
+        sp.periodTotal -= sp.ring_trailingIdx_derived[sp.ringPos_trailingIdx];
         (*outReal) = sp.tempReal / (sp.optInTimePeriod as f64);
-        sp.ring_trailingIdx_inOpen[sp.ringPos_trailingIdx] = inOpen;
-        sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] = inClose;
+        sp.ring_trailingIdx_derived[sp.ringPos_trailingIdx] = (inClose - inOpen) as f64;
         sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
         if sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx {
             sp.ringPos_trailingIdx = 0;
@@ -428,20 +424,21 @@ impl Core {
             return Err(RetCode::InternalError);
         }
         let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
-        let mut ring_trailingIdx_inOpen: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
-        ring_trailingIdx_inOpen[..cap_trailingIdx as usize]
-            .copy_from_slice(&inOpen[historyLen - cap_trailingIdx as usize..]);
-        let mut ring_trailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
-        ring_trailingIdx_inClose[..cap_trailingIdx as usize]
-            .copy_from_slice(&inClose[historyLen - cap_trailingIdx as usize..]);
+        let mut ring_trailingIdx_derived: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
+        {
+            let mut fillJ: usize = historyLen - cap_trailingIdx as usize;
+            while fillJ < historyLen {
+                ring_trailingIdx_derived[fillJ - (historyLen - cap_trailingIdx as usize)] = (inClose[(fillJ) as usize] - inOpen[(fillJ) as usize]) as f64;
+                fillJ += 1;
+            }
+        }
         let state = QSTICK_StreamState {
             optInTimePeriod,
             periodTotal,
             tempReal,
             ringPos_trailingIdx: 0_usize,
             ringCap_trailingIdx: cap_trailingIdx as usize,
-            ring_trailingIdx_inOpen,
-            ring_trailingIdx_inClose,
+            ring_trailingIdx_derived,
         };
         Ok(QSTICK_Stream { core: self.clone(), state })
     }
@@ -513,14 +510,6 @@ impl Core {
 
 }
 
-thread_local! {
-    /// `peek`'s reusable scratch handle (see `QSTICK_StreamState::restore_from`).
-    /// Taken for the duration of the step and put back after, so a
-    /// panicking step costs the scratch, never leaves it borrowed.
-    static QSTICK_PEEK_SCRATCH: std::cell::Cell<Option<Box<QSTICK_Stream>>> =
-        const { std::cell::Cell::new(None) };
-}
-
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl QSTICK_Stream {
@@ -548,8 +537,10 @@ impl QSTICK_Stream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return (it is the same code, run
     /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy it runs on is held per thread and reused,
-    /// so only the first peek of this function on a thread allocates.
+    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
+    /// often removed outright by the optimizer, which is why nothing is
+    /// reused here, but that is not a guarantee: budget for a clone of the
+    /// window and prefer `update` on a `clone()` in a hot loop.
     ///
     /// # Errors
     ///
@@ -560,13 +551,8 @@ impl QSTICK_Stream {
         if !inOpen.is_finite() || !inClose.is_finite() {
             return Err(RetCode::BadParam);
         }
-        QSTICK_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inOpen, inClose);
-            cell.set(Some(scratch));
-            value
-        })
+        let mut scratch = self.clone();
+        scratch.update(inOpen, inClose)
     }
 }
 

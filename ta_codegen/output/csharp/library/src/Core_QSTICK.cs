@@ -377,8 +377,7 @@ public partial class Core
       internal double tempReal;
       internal int ringPos_trailingIdx;
       internal int ringCap_trailingIdx;
-      internal double[] ring_trailingIdx_inOpen = [];
-      internal double[] ring_trailingIdx_inClose = [];
+      internal double[] ring_trailingIdx_derived = [];
       internal double cur_outReal;
       internal OutRange fillRange = OutRange.Empty;
 
@@ -401,10 +400,8 @@ public partial class Core
          this.tempReal = other.tempReal;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
-         this.ring_trailingIdx_inOpen = new double[other.ring_trailingIdx_inOpen.Length];
-         Array.Copy( other.ring_trailingIdx_inOpen, this.ring_trailingIdx_inOpen, other.ring_trailingIdx_inOpen.Length );
-         this.ring_trailingIdx_inClose = new double[other.ring_trailingIdx_inClose.Length];
-         Array.Copy( other.ring_trailingIdx_inClose, this.ring_trailingIdx_inClose, other.ring_trailingIdx_inClose.Length );
+         this.ring_trailingIdx_derived = new double[other.ring_trailingIdx_derived.Length];
+         Array.Copy( other.ring_trailingIdx_derived, this.ring_trailingIdx_derived, other.ring_trailingIdx_derived.Length );
          this.cur_outReal = other.cur_outReal;
          this.fillRange = other.fillRange;
       }
@@ -417,20 +414,13 @@ public partial class Core
          this.tempReal = other.tempReal;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
          this.ringCap_trailingIdx = other.ringCap_trailingIdx;
-         if( this.ring_trailingIdx_inOpen.Length != other.ring_trailingIdx_inOpen.Length ) {
-            this.ring_trailingIdx_inOpen = new double[other.ring_trailingIdx_inOpen.Length];
+         if( this.ring_trailingIdx_derived.Length != other.ring_trailingIdx_derived.Length ) {
+            this.ring_trailingIdx_derived = new double[other.ring_trailingIdx_derived.Length];
          }
-         Array.Copy( other.ring_trailingIdx_inOpen, this.ring_trailingIdx_inOpen, other.ring_trailingIdx_inOpen.Length );
-         if( this.ring_trailingIdx_inClose.Length != other.ring_trailingIdx_inClose.Length ) {
-            this.ring_trailingIdx_inClose = new double[other.ring_trailingIdx_inClose.Length];
-         }
-         Array.Copy( other.ring_trailingIdx_inClose, this.ring_trailingIdx_inClose, other.ring_trailingIdx_inClose.Length );
+         Array.Copy( other.ring_trailingIdx_derived, this.ring_trailingIdx_derived, other.ring_trailingIdx_derived.Length );
          this.cur_outReal = other.cur_outReal;
          this.fillRange = other.fillRange;
       }
-
-      /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static QSTICK_Stream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -458,9 +448,9 @@ public partial class Core
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
       /// would return — it is the same generated code, run on a copy. Never writes
       /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a scratch handle held per thread and reused, so it allocates
-      /// nothing after this thread's first peek of this indicator. That scratch is
-      /// retained for the life of the thread.</para>
+      /// <para>It runs on a fresh copy of this handle, so it allocates one — proportional
+      /// to the state this indicator carries. If you peek on every tick and that
+      /// matters, hold the value <see cref="Update"/> returns instead.</para>
       /// </remarks>
       /// <param name="inOpen">This bar's open price.</param>
       /// <param name="inClose">This bar's close price.</param>
@@ -468,13 +458,7 @@ public partial class Core
       public double Peek( double inOpen, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inClose) ) throw Core.StreamFailure("QSTICK", "peek", RetCode.BadParam);
-         QSTICK_Stream? scratch = peekScratch;
-         if( scratch is null ) {
-            scratch = new QSTICK_Stream(this);
-            peekScratch = scratch;
-         } else {
-            scratch.CopyFrom(this);
-         }
+         QSTICK_Stream scratch = new QSTICK_Stream(this);
          core.QSTICK_StreamStep(scratch, inOpen, inClose);
          return scratch.cur_outReal;
       }
@@ -498,15 +482,13 @@ public partial class Core
    internal void QSTICK_StreamStep( QSTICK_Stream sp, double inOpen, double inClose )
    {
       if( sp.ringCap_trailingIdx == 0 ) {
-         sp.ring_trailingIdx_inOpen[0] = inOpen;
-         sp.ring_trailingIdx_inClose[0] = inClose;
+         sp.ring_trailingIdx_derived[0] = (double)(inClose - inOpen);
       }
       sp.periodTotal += (double)(inClose - inOpen);
       sp.tempReal = sp.periodTotal;
-      sp.periodTotal -= (double)(sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] - sp.ring_trailingIdx_inOpen[sp.ringPos_trailingIdx]);
+      sp.periodTotal -= sp.ring_trailingIdx_derived[sp.ringPos_trailingIdx];
       sp.cur_outReal = sp.tempReal / (double)sp.optInTimePeriod;
-      sp.ring_trailingIdx_inOpen[sp.ringPos_trailingIdx] = inOpen;
-      sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] = inClose;
+      sp.ring_trailingIdx_derived[sp.ringPos_trailingIdx] = (double)(inClose - inOpen);
       sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
       if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
          sp.ringPos_trailingIdx = 0;
@@ -604,17 +586,16 @@ public partial class Core
          return RetCode.InternalError;
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
-      double[] capRing_trailingIdx_inOpen = new double[allocN_trailingIdx];
-      inOpen.Slice(historyLen - cap_trailingIdx, cap_trailingIdx).CopyTo(capRing_trailingIdx_inOpen);
-      double[] capRing_trailingIdx_inClose = new double[allocN_trailingIdx];
-      inClose.Slice(historyLen - cap_trailingIdx, cap_trailingIdx).CopyTo(capRing_trailingIdx_inClose);
+      double[] capRing_trailingIdx_derived = new double[allocN_trailingIdx];
+      for( int fillJ = historyLen - cap_trailingIdx; fillJ < historyLen; fillJ++ ) {
+         capRing_trailingIdx_derived[fillJ - (historyLen - cap_trailingIdx)] = (double)(inClose[fillJ] - inOpen[fillJ]);
+      }
       sp.optInTimePeriod = optInTimePeriod;
       sp.periodTotal = periodTotal;
       sp.tempReal = tempReal;
       sp.ringPos_trailingIdx = 0;
       sp.ringCap_trailingIdx = cap_trailingIdx;
-      sp.ring_trailingIdx_inOpen = capRing_trailingIdx_inOpen;
-      sp.ring_trailingIdx_inClose = capRing_trailingIdx_inClose;
+      sp.ring_trailingIdx_derived = capRing_trailingIdx_derived;
       sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
       return RetCode.Success;
    }

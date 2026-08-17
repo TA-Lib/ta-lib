@@ -446,16 +446,12 @@ struct TA_AC_Stream {
    int maxIdx_oscBuffer;
    int ringPos_trailingFastIdx;
    int ringCap_trailingFastIdx;
-   double *ring_trailingFastIdx_inHigh;
-   double *ringMirror_trailingFastIdx_inHigh;
-   double *ring_trailingFastIdx_inLow;
-   double *ringMirror_trailingFastIdx_inLow;
+   double *ring_trailingFastIdx_derived;
+   double *ringMirror_trailingFastIdx_derived;
    int ringPos_trailingSlowIdx;
    int ringCap_trailingSlowIdx;
-   double *ring_trailingSlowIdx_inHigh;
-   double *ringMirror_trailingSlowIdx_inHigh;
-   double *ring_trailingSlowIdx_inLow;
-   double *ringMirror_trailingSlowIdx_inLow;
+   double *ring_trailingSlowIdx_derived;
+   double *ringMirror_trailingSlowIdx_derived;
    int cbSize_oscBuffer;
    double *cb_oscBuffer;
    double *cbMirror_oscBuffer;
@@ -465,14 +461,10 @@ struct TA_AC_Stream {
 static void TA_AC_ReleaseInternal( struct TA_AC_Stream *sp )
 {
    if( !sp ) return;
-   if( sp->ring_trailingFastIdx_inHigh ) TA_Free( sp->ring_trailingFastIdx_inHigh );
-   if( sp->ringMirror_trailingFastIdx_inHigh ) TA_Free( sp->ringMirror_trailingFastIdx_inHigh );
-   if( sp->ring_trailingFastIdx_inLow ) TA_Free( sp->ring_trailingFastIdx_inLow );
-   if( sp->ringMirror_trailingFastIdx_inLow ) TA_Free( sp->ringMirror_trailingFastIdx_inLow );
-   if( sp->ring_trailingSlowIdx_inHigh ) TA_Free( sp->ring_trailingSlowIdx_inHigh );
-   if( sp->ringMirror_trailingSlowIdx_inHigh ) TA_Free( sp->ringMirror_trailingSlowIdx_inHigh );
-   if( sp->ring_trailingSlowIdx_inLow ) TA_Free( sp->ring_trailingSlowIdx_inLow );
-   if( sp->ringMirror_trailingSlowIdx_inLow ) TA_Free( sp->ringMirror_trailingSlowIdx_inLow );
+   if( sp->ring_trailingFastIdx_derived ) TA_Free( sp->ring_trailingFastIdx_derived );
+   if( sp->ringMirror_trailingFastIdx_derived ) TA_Free( sp->ringMirror_trailingFastIdx_derived );
+   if( sp->ring_trailingSlowIdx_derived ) TA_Free( sp->ring_trailingSlowIdx_derived );
+   if( sp->ringMirror_trailingSlowIdx_derived ) TA_Free( sp->ringMirror_trailingSlowIdx_derived );
    if( sp->cb_oscBuffer ) TA_Free( sp->cb_oscBuffer );
    if( sp->cbMirror_oscBuffer ) TA_Free( sp->cbMirror_oscBuffer );
    TA_Free( sp );
@@ -485,13 +477,11 @@ static void TA_AC_StepInternal( struct TA_AC_Stream *sp, double inHigh, double i
 
    if( sp->ringCap_trailingFastIdx == 0 )
    {
-      sp->ring_trailingFastIdx_inHigh[0] = inHigh;
-      sp->ring_trailingFastIdx_inLow[0] = inLow;
+      sp->ring_trailingFastIdx_derived[0] = (inHigh + inLow) / 2.0;
    }
    if( sp->ringCap_trailingSlowIdx == 0 )
    {
-      sp->ring_trailingSlowIdx_inHigh[0] = inHigh;
-      sp->ring_trailingSlowIdx_inLow[0] = inLow;
+      sp->ring_trailingSlowIdx_derived[0] = (inHigh + inLow) / 2.0;
    }
    medianPrice = (inHigh + inLow) / 2.0;
    sp->sumFast += medianPrice;
@@ -500,8 +490,8 @@ static void TA_AC_StepInternal( struct TA_AC_Stream *sp, double inHigh, double i
     * mirroring the add-new / snapshot / subtract-old order of TA_SMA.
     */
    sp->osc = sp->sumFast / (double)sp->optInFastPeriod - sp->sumSlow / (double)sp->optInSlowPeriod;
-   sp->sumFast -= (sp->ring_trailingFastIdx_inHigh[sp->ringPos_trailingFastIdx] + sp->ring_trailingFastIdx_inLow[sp->ringPos_trailingFastIdx]) / 2.0;
-   sp->sumSlow -= (sp->ring_trailingSlowIdx_inHigh[sp->ringPos_trailingSlowIdx] + sp->ring_trailingSlowIdx_inLow[sp->ringPos_trailingSlowIdx]) / 2.0;
+   sp->sumFast -= sp->ring_trailingFastIdx_derived[sp->ringPos_trailingFastIdx];
+   sp->sumSlow -= sp->ring_trailingSlowIdx_derived[sp->ringPos_trailingSlowIdx];
    /* Today's oscillator enters the signal window at its own slot, and the
     * bar leaving that window is read only after the ring has advanced onto
     * it -- writing first is what makes the slot the loop is about to
@@ -525,15 +515,13 @@ static void TA_AC_StepInternal( struct TA_AC_Stream *sp, double inHigh, double i
     * the collision ao.c has to guard against.
     */
    *outReal= sp->tempReal;
-   sp->ring_trailingFastIdx_inHigh[sp->ringPos_trailingFastIdx] = inHigh;
-   sp->ring_trailingFastIdx_inLow[sp->ringPos_trailingFastIdx] = inLow;
+   sp->ring_trailingFastIdx_derived[sp->ringPos_trailingFastIdx] = (inHigh + inLow) / 2.0;
    sp->ringPos_trailingFastIdx = sp->ringPos_trailingFastIdx + 1;
    if( sp->ringPos_trailingFastIdx >= sp->ringCap_trailingFastIdx )
    {
       sp->ringPos_trailingFastIdx = 0;
    }
-   sp->ring_trailingSlowIdx_inHigh[sp->ringPos_trailingSlowIdx] = inHigh;
-   sp->ring_trailingSlowIdx_inLow[sp->ringPos_trailingSlowIdx] = inLow;
+   sp->ring_trailingSlowIdx_derived[sp->ringPos_trailingSlowIdx] = (inHigh + inLow) / 2.0;
    sp->ringPos_trailingSlowIdx = sp->ringPos_trailingSlowIdx + 1;
    if( sp->ringPos_trailingSlowIdx >= sp->ringCap_trailingSlowIdx )
    {
@@ -763,31 +751,27 @@ static TA_RetCode TA_AC_OpenCore( struct TA_AC_Stream **stream, const double inH
       sp->ringCap_trailingFastIdx = (int)(i - trailingFastIdx);
       if( sp->ringCap_trailingFastIdx < 0 || sp->ringCap_trailingFastIdx > historyLen ) { TA_AC_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_trailingFastIdx > 0 ? sp->ringCap_trailingFastIdx : 1);
-        sp->ring_trailingFastIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingFastIdx_inHigh ) { TA_AC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingFastIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingFastIdx_inHigh ) { TA_AC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        memcpy( sp->ring_trailingFastIdx_inHigh, inHigh + (historyLen - sp->ringCap_trailingFastIdx), sizeof(double) * (size_t)sp->ringCap_trailingFastIdx );
-        sp->ring_trailingFastIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingFastIdx_inLow ) { TA_AC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingFastIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingFastIdx_inLow ) { TA_AC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        memcpy( sp->ring_trailingFastIdx_inLow, inLow + (historyLen - sp->ringCap_trailingFastIdx), sizeof(double) * (size_t)sp->ringCap_trailingFastIdx );
+        sp->ring_trailingFastIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_trailingFastIdx_derived ) { TA_AC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_trailingFastIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_trailingFastIdx_derived ) { TA_AC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_trailingFastIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_trailingFastIdx_derived[fillJ - (historyLen - sp->ringCap_trailingFastIdx)] = (inHigh[fillJ] + inLow[fillJ]) / 2.0;
+        }
       }
       sp->ringPos_trailingFastIdx = 0;
       sp->ringCap_trailingSlowIdx = (int)(i - trailingSlowIdx);
       if( sp->ringCap_trailingSlowIdx < 0 || sp->ringCap_trailingSlowIdx > historyLen ) { TA_AC_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       { size_t allocN = (size_t)(sp->ringCap_trailingSlowIdx > 0 ? sp->ringCap_trailingSlowIdx : 1);
-        sp->ring_trailingSlowIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingSlowIdx_inHigh ) { TA_AC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingSlowIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingSlowIdx_inHigh ) { TA_AC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        memcpy( sp->ring_trailingSlowIdx_inHigh, inHigh + (historyLen - sp->ringCap_trailingSlowIdx), sizeof(double) * (size_t)sp->ringCap_trailingSlowIdx );
-        sp->ring_trailingSlowIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingSlowIdx_inLow ) { TA_AC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingSlowIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingSlowIdx_inLow ) { TA_AC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        memcpy( sp->ring_trailingSlowIdx_inLow, inLow + (historyLen - sp->ringCap_trailingSlowIdx), sizeof(double) * (size_t)sp->ringCap_trailingSlowIdx );
+        sp->ring_trailingSlowIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ring_trailingSlowIdx_derived ) { TA_AC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        sp->ringMirror_trailingSlowIdx_derived = (double *)TA_Malloc( sizeof(double) * allocN );
+        if( !sp->ringMirror_trailingSlowIdx_derived ) { TA_AC_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+        { int fillJ;
+          for( fillJ = historyLen - sp->ringCap_trailingSlowIdx; fillJ < historyLen; fillJ++ )
+             sp->ring_trailingSlowIdx_derived[fillJ - (historyLen - sp->ringCap_trailingSlowIdx)] = (inHigh[fillJ] + inLow[fillJ]) / 2.0;
+        }
       }
       sp->ringPos_trailingSlowIdx = 0;
       sp->cbSize_oscBuffer = maxIdx_oscBuffer + 1;
@@ -873,14 +857,10 @@ TA_LIB_API TA_RetCode TA_AC_Peek( const TA_AC_Stream *stream, double inHigh, dou
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) ) return TA_BAD_PARAM;
    scratch = *stream;
-   scratch.ring_trailingFastIdx_inHigh = stream->ringMirror_trailingFastIdx_inHigh;
-   memcpy( scratch.ring_trailingFastIdx_inHigh, stream->ring_trailingFastIdx_inHigh, sizeof(double) * (size_t)(stream->ringCap_trailingFastIdx > 0 ? stream->ringCap_trailingFastIdx : 1) );
-   scratch.ring_trailingFastIdx_inLow = stream->ringMirror_trailingFastIdx_inLow;
-   memcpy( scratch.ring_trailingFastIdx_inLow, stream->ring_trailingFastIdx_inLow, sizeof(double) * (size_t)(stream->ringCap_trailingFastIdx > 0 ? stream->ringCap_trailingFastIdx : 1) );
-   scratch.ring_trailingSlowIdx_inHigh = stream->ringMirror_trailingSlowIdx_inHigh;
-   memcpy( scratch.ring_trailingSlowIdx_inHigh, stream->ring_trailingSlowIdx_inHigh, sizeof(double) * (size_t)(stream->ringCap_trailingSlowIdx > 0 ? stream->ringCap_trailingSlowIdx : 1) );
-   scratch.ring_trailingSlowIdx_inLow = stream->ringMirror_trailingSlowIdx_inLow;
-   memcpy( scratch.ring_trailingSlowIdx_inLow, stream->ring_trailingSlowIdx_inLow, sizeof(double) * (size_t)(stream->ringCap_trailingSlowIdx > 0 ? stream->ringCap_trailingSlowIdx : 1) );
+   scratch.ring_trailingFastIdx_derived = stream->ringMirror_trailingFastIdx_derived;
+   memcpy( scratch.ring_trailingFastIdx_derived, stream->ring_trailingFastIdx_derived, sizeof(double) * (size_t)(stream->ringCap_trailingFastIdx > 0 ? stream->ringCap_trailingFastIdx : 1) );
+   scratch.ring_trailingSlowIdx_derived = stream->ringMirror_trailingSlowIdx_derived;
+   memcpy( scratch.ring_trailingSlowIdx_derived, stream->ring_trailingSlowIdx_derived, sizeof(double) * (size_t)(stream->ringCap_trailingSlowIdx > 0 ? stream->ringCap_trailingSlowIdx : 1) );
    scratch.cb_oscBuffer = stream->cbMirror_oscBuffer;
    memcpy( scratch.cb_oscBuffer, stream->cb_oscBuffer, sizeof(double) * (size_t)stream->cbSize_oscBuffer );
    TA_AC_StepInternal( &scratch, inHigh, inLow, outReal );
