@@ -30,19 +30,19 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - (#78) CMake can now opt out of building the static or the shared library (both built by default). Thanks @BwL1289 !
 - (#75) More docs for DEMA, TEMA, T3, MFI, ULTOSC, KAMA and TRIX. Thanks @nehemiah888 !
 - New TA Functions:
-  - PVO: Percentage Volume Oscillator (#119)
+  - AC: Accelerator/Decelerator Oscillator (#228)
+  - AO: Awesome Oscillator (#227)
+  - CMF: Chaikin Money Flow (#134)
   - CMOU: Chande Momentum Oscillator, Unsmoothed (#124)
+  - EFI: Elder's Force Index (#206)
+  - HMA: Hull Moving Average (#139)
+  - MARKETFI: Market Facilitation Index (#230)
   - NVI: Negative Volume Index (#126)
   - PVI: Positive Volume Index (#126)
-  - VWMA: Volume Weighted Moving Average (#131)
-  - CMF: Chaikin Money Flow (#134)
-  - HMA: Hull Moving Average (#139).
-  - WAD: Williams' Accumulation/Distribution, the no-volume Achelis form (#200)
-  - EFI: Elder's Force Index (#206)
+  - PVO: Percentage Volume Oscillator (#119)
   - QSTICK: Qstick (#226)
-  - MARKETFI: Market Facilitation Index (#230)
-  - AO: Awesome Oscillator (#227)
-  - AC: Accelerator/Decelerator Oscillator (#228)
+  - VWMA: Volume Weighted Moving Average (#131)
+  - WAD: Williams' Accumulation/Distribution, the no-volume Achelis form (#200)
 - New MAType (for MA, BBANDS, STOCH etc...):
   - TA_MAType_HMA (#139)
   - TA_MAType_DEFAULT — selects that parameter's documented MA type (#182)
