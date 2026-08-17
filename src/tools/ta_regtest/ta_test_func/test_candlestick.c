@@ -860,6 +860,7 @@ static double pb_upsh( int i )  { return pbH[i] - (pbC[i] >= pbO[i] ? pbC[i] : p
 static double pb_losh( int i )  { return (pbC[i] >= pbO[i] ? pbO[i] : pbC[i]) - pbL[i]; }
 static int    pb_white( int i ) { return pbC[i] >= pbO[i]; }
 static double pb_bodylo( int i ){ return pbC[i] >= pbO[i] ? pbO[i] : pbC[i]; }
+static double pb_abs( double v ) { return v < 0.0 ? -v : v; }
 static double pb_bodyhi( int i ){ return pbC[i] >= pbO[i] ? pbC[i] : pbO[i]; }
 
 typedef void (*PbCondFn)( int i, int *c );
@@ -8475,6 +8476,192 @@ static void build_upsidegap2crows( void )
 
 }
 
+/* ---- Hard tier: CDLTASUKIGAP --------------------------------------------- *
+ *
+ * A gap, a candle that opens inside the second body and closes back into the
+ * gap without filling it. The decision is a TOP-LEVEL disjunction -- upside gap
+ * or downside gap -- which is why check_mcdc_conditions.py used to decline on
+ * it and why it sat blocked while the rest of the tier was built.
+ *
+ * IT NEEDED NO NEW AXIS. A decision that is itself a disjunction is ONE
+ * condition whose alternatives are conjunctions, which is exactly what pb_arm()
+ * declares, pb_flip_in() attributes a case to, and pb_signs() covers the
+ * selection of where the arms are colour-gated. The only change was letting the
+ * static count through: a top-level `||` now reads as one condition with its
+ * arms, the same reading a nested one already got. What looked like a missing
+ * branch mechanism was the arm mechanism one level up.
+ *
+ * SIX OF THE SIXTEEN TERMS ARE ENTAILED, three per arm, and every derivation
+ * comes from two other terms of the SAME arm:
+ *
+ *   term1 (the 2nd candle's colour) from terms 3 and 4. They put open(3rd)
+ *   below close(2nd) and above open(2nd), so close(2nd) > open(2nd).
+ *
+ *   term2 (the 3rd candle's colour) from terms 4 and 5. open(3rd) is above
+ *   open(2nd) and close(3rd) below it, so open(3rd) > close(3rd).
+ *
+ *   term0 (the gap itself) from terms 5 and 6. With term1 fixing the 2nd
+ *   candle's colour, its body floor is open(2nd); term 5 puts close(3rd) below
+ *   that and term 6 puts it above the 1st candle's body ceiling, so
+ *   open(2nd) > close(3rd) > ceiling(1st) -- which IS the gap.
+ *
+ * That last one is the same shape CDLUPSIDEGAP2CROWS turned up: the gap between
+ * the first two candles pinned by where the third one closes. Two patterns now,
+ * so it is worth checking rather than assuming a gap test is independent.
+ *
+ * Every derivation is price ordering with no threshold in it, so no choice of
+ * primer makes any of them flippable. A 120k-sample random search per term
+ * found no case breaking any of the six alone.
+ */
+static void cond_tasukigap( int i, int *c )
+{
+   double n = pb_avg(TA_Near, i-1);
+   c[0] = (  pb_bodylo(i-1) > pb_bodyhi(i-2) && pb_white(i-1) && !pb_white(i) &&
+             pbO[i] < pbC[i-1] && pbO[i] > pbO[i-1] &&
+             pbC[i] < pbO[i-1] && pbC[i] > pb_bodyhi(i-2) &&
+             pb_abs(pb_body(i-1) - pb_body(i)) < n )
+       || (  pb_bodyhi(i-1) < pb_bodylo(i-2) && !pb_white(i-1) && pb_white(i) &&
+             pbO[i] < pbO[i-1] && pbO[i] > pbC[i-1] &&
+             pbC[i] > pbO[i-1] && pbC[i] < pb_bodylo(i-2) &&
+             pb_abs(pb_body(i-1) - pb_body(i)) < n );
+}
+static void arm_tasukigap( int i, int cond, int arm, int *a )
+{
+   double n = pb_avg(TA_Near, i-1);
+   if( cond != 0 ) return;
+   if( arm == 0 )
+   {
+      a[0] = pb_bodylo(i-1) > pb_bodyhi(i-2);
+      a[1] = pb_white(i-1);   a[2] = !pb_white(i);
+      a[3] = pbO[i] < pbC[i-1];  a[4] = pbO[i] > pbO[i-1];
+      a[5] = pbC[i] < pbO[i-1];  a[6] = pbC[i] > pb_bodyhi(i-2);
+      a[7] = pb_abs(pb_body(i-1) - pb_body(i)) < n;
+   }
+   else
+   {
+      a[0] = pb_bodyhi(i-1) < pb_bodylo(i-2);
+      a[1] = !pb_white(i-1);  a[2] = pb_white(i);
+      a[3] = pbO[i] < pbO[i-1];  a[4] = pbO[i] > pbC[i-1];
+      a[5] = pbC[i] > pbO[i-1];  a[6] = pbC[i] < pb_bodylo(i-2);
+      a[7] = pb_abs(pb_body(i-1) - pb_body(i)) < n;
+   }
+}
+
+static void build_tasukigap( void )
+{
+  pb_conditions(1);
+  pb_signs(2);
+  pb_arm(0,0,8); pb_arm(0,1,8);
+  pb_arm_model(arm_tasukigap);
+
+  pb_waive_arm(0,0,0,"entailed by terms 5 and 6. Term 1 makes the 2nd candle white, so its body floor is open(2nd); term 5 puts close(3rd) below open(2nd) and term 6 puts it above the 1st candle's body ceiling, so open(2nd) > close(3rd) > ceiling(1st) -- which IS this gap");
+  pb_waive_arm(0,0,1,"entailed by terms 3 and 4: term 3 puts open(3rd) below close(2nd) and term 4 puts it above open(2nd), so close(2nd) > open(2nd) and the 2nd candle is white");
+  pb_waive_arm(0,0,2,"entailed by terms 4 and 5: open(3rd) is above open(2nd) and close(3rd) is below it, so open(3rd) > close(3rd) and the 3rd candle is black");
+  pb_waive_arm(0,1,0,"entailed by terms 5 and 6, mirrored. Term 1 makes the 2nd candle black, so its body ceiling is open(2nd); term 5 puts close(3rd) above open(2nd) and term 6 puts it below the 1st candle's body floor, so open(2nd) < close(3rd) < floor(1st)");
+  pb_waive_arm(0,1,1,"entailed by terms 3 and 4, mirrored: open(3rd) is below open(2nd) and above close(2nd), so open(2nd) > close(2nd) and the 2nd candle is black");
+  pb_waive_arm(0,1,2,"entailed by terms 4 and 5, mirrored: open(3rd) is above close(2nd) and close(3rd) is above open(2nd) with open(3rd) below open(2nd), so close(3rd) > open(3rd)");
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,117,109,116);
+  int t1=pb_bar(114,115,107,108);
+  pb_detect(t1,100,"detect upside gap: a white 2nd gapping above the 1st, and a black 3rd opening inside it and closing back into the gap");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(94,95,87,88);
+  int t2=pb_bar(90,97,89,96);
+  pb_detect(t2,-100,"detect downside gap: the mirror, firing the other output class");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,117,109,116);
+  int t3=pb_bar(116,117,108,109);
+  pb_flip_in(t3,0,0,3,"break c0 alt0 term3: 3rd opens 116 == close(2nd), the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,117,109,116);
+  int t4=pb_bar(110,111,104,105);
+  pb_flip_in(t4,0,0,4,"break c0 alt0 term4: 3rd opens 110 == open(2nd), the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,117,109,116);
+  int t5=pb_bar(115,116,109,110);
+  pb_flip_in(t5,0,0,5,"break c0 alt0 term5: 3rd closes 110 == open(2nd), the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,117,109,116);
+  int t6=pb_bar(111,112,103,104);
+  pb_flip_in(t6,0,0,6,"break c0 alt0 term6: 3rd closes 104 == the 1st body ceiling, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,117,109,116);
+  int t7=pb_bar(114,115,105,106);
+  pb_flip_in(t7,0,0,7,"break c0 alt0 term7: the two bodies differ by 2 == Near 2, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(94,95,87,88);
+  int t8=pb_bar(94,100,93,99);
+  pb_flip_in(t8,0,1,3,"break c0 alt1 term3: 3rd opens 94 == open(2nd), the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(94,95,87,88);
+  int t9=pb_bar(88,96,87,95);
+  pb_flip_in(t9,0,1,4,"break c0 alt1 term4: 3rd opens 88 == close(2nd), the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(94,95,87,88);
+  int t10=pb_bar(89,95,88,94);
+  pb_flip_in(t10,0,1,5,"break c0 alt1 term5: 3rd closes 94 == open(2nd), the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(94,95,87,88);
+  int t11=pb_bar(93,101,92,100);
+  pb_flip_in(t11,0,1,6,"break c0 alt1 term6: 3rd closes 100 == the 1st body floor, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(94,95,87,88);
+  int t12=pb_bar(90,99,89,98);
+  pb_flip_in(t12,0,1,7,"break c0 alt1 term7: the two bodies differ by 2 == Near 2, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(110,117,109,116);
+  int t13=pb_bar(114,115,107,108);
+  pb_control(t13,100,0,"restore c0 via alt0: every term of the upside-gap alternative holds");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(104,106,96,100);
+  pb_bar(94,95,87,88);
+  int t14=pb_bar(90,97,89,96);
+  pb_control(t14,-100,0,"restore c0 via alt1: every term of the downside-gap alternative holds");
+  pb_flat(8);
+
+}
+
 static ErrorNumber test_marquee_predicate_coverage( void )
 {
    ErrorNumber e;
@@ -8524,6 +8711,7 @@ static ErrorNumber test_marquee_predicate_coverage( void )
    pb_reset(); build_ladderbottom();        e = pb_check_mcdc("CDLLADDERBOTTOM",       TA_CDLLADDERBOTTOM,        cond_ladderbottom);        if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_unique3river();        e = pb_check_mcdc("CDLUNIQUE3RIVER",       TA_CDLUNIQUE3RIVER,        cond_unique3river);        if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_upsidegap2crows();     e = pb_check_mcdc("CDLUPSIDEGAP2CROWS",   TA_CDLUPSIDEGAP2CROWS,     cond_upsidegap2crows);     if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_tasukigap();           e = pb_check_mcdc("CDLTASUKIGAP",          TA_CDLTASUKIGAP,           cond_tasukigap);           if( e != TA_TEST_PASS ) return e;
    pb_report_totals();
    return TA_TEST_PASS;
 }

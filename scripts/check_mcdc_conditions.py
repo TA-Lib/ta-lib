@@ -207,8 +207,15 @@ def count_conditions(path):
     if expr is None:
         return None, "unterminated if( expression"
 
+    # A decision that is ITSELF a disjunction is one condition -- the same
+    # reading a nested `(B || C)` already gets. This used to decline, on the
+    # view that such a pattern needed a whole branch axis; it does not. Its
+    # alternatives are conjunctions, which is exactly what pb_arm() declares and
+    # pb_flip_in() attributes a case to, and pb_signs() covers the selection
+    # where the arms are colour-gated. The only thing that was missing was
+    # letting the count through.
     if len(_split_top(expr, "||")) > 1:
-        return None, "top-level || present; conjunct counting does not apply"
+        return 1, None
 
     total = 0
     for conj in _split_top(expr, "&&"):
@@ -266,8 +273,12 @@ def count_disjuncts(path):
         i += 1
     if expr is None:
         return None, "unterminated if( expression"
-    if len(_split_top(expr, "||")) > 1:
-        return None, "top-level || present; conjunct counting does not apply"
+    top = _split_top(expr, "||")
+    if len(top) > 1:
+        cols = [re.findall(r"ta_candlecolor\([^)]*\)\s*==\s*(-?1)", a) for a in top]
+        gated = (all(len(x) >= 1 for x in cols) and
+                 len(set(x[0] for x in cols)) == len(top))
+        return ({} if gated else {0: len(top)}), None
 
     out, idx = {}, 0
     for conj in _split_top(expr, "&&"):
@@ -342,8 +353,9 @@ def count_arms(path):
         i += 1
     if expr is None:
         return None, "unterminated if( expression"
-    if len(_split_top(expr, "||")) > 1:
-        return None, "top-level || present; conjunct counting does not apply"
+    top = _split_top(expr, "||")
+    if len(top) > 1:
+        return {0: [len(_split_top(_peel(a), "&&")) for a in top]}, None
 
     out, idx = {}, 0
     for conj in _split_top(expr, "&&"):
