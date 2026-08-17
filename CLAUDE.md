@@ -5,19 +5,11 @@
 All indicator code is **generated** by a single generator, **`ta_codegen`**
 (`ta_codegen/generator/`, Rust): it parses `ta_codegen/input/` → IR → renders
 per-backend (C, Java, C#, Rust). The C backend is generated **in place** into
-`src/ta_func` / `src/ta_abstract` (the shipped library); the Rust/Java/C# bindings
-live under `ta_codegen/output/`. It also generates the JSON-RPC test servers, the bench
-binary, `src/ta_func/ta_func_stream_private.h`, the `include/ta_defs.h` FuncUnstId enum, the
-shipped Java (`ta_codegen/output/java/library/.../Core.java`, `FuncUnstId.java`, `MAType.java`), and owns the
-build-system source lists (CMake `LIB_SOURCES`, `src/ta_func/Makefile.am`,
-`ta_func_list.txt`). It also generates the **ta-lib.org website** — one page per function
-under `website/src/functions/` (from each function's `ta_codegen/input/<name>/<name>.md`)
-plus a grouped `website/src/functions/index.md`, written directly into the VuePress site
-source tree (`website/`) — the one generated output that lives there rather than under
-`ta_codegen/output/`. (`docs/` itself now holds only hand-written dev-docs.)
-
-> The legacy C generator `gen_code` was **removed** in the canonical cutover (v0.7.1);
-> `ta_codegen` is the only generator.
+`src/ta_func` / `src/ta_abstract` (the shipped library); the Rust/Java/C#
+bindings live under `ta_codegen/output/`. `generate` owns every committed file it
+writes — the build-system source lists and the ta-lib.org function pages
+included — so "regenerate, then `git status` is clean" is a total gate over the
+tree.
 
 **Why the C is generated in place and not symlinked** to `ta_codegen/output/c`: a whole-dir
 symlink breaks autotools' per-dir libtool recursion (`make` enters the symlink's *physical*
@@ -28,17 +20,12 @@ released source tarball.
 
 **Build separation (important):** the C build systems (CMake + autotools) build **only
 C** — the library + the C tools (`ta_regtest`, `ta_bench`). `ta_codegen` is Rust and is
-built/run with cargo via the developer script `scripts/build.py` (`ta_codegen` /
-`generate` / `servers`); **CMake never invokes cargo**, so a C-only setup needs no Rust
-toolchain.
+built/run with cargo via the developer script `scripts/build.py`; **CMake never invokes
+cargo**, so a C-only setup needs no Rust toolchain.
 
-The correctness baseline that all `ta_codegen` backends are verified against is the
-frozen pre-cutover reference (the `reference-pre-cutover` tag, served as `ta_ref_serve`)
-plus the hardcoded `ta_regtest` expected values — the latter now in two tiers: the
-hand-written per-function tables, and `ta_test_legacy_data.h`, a full-precision freeze
-of what released v0.6.4 answered over the same 252-bar series (issue #188). The freeze
-needs no git tag and no second build, so unlike `--fuzz-064` it runs in every
-`./ta_regtest`. See `src/tools/ta_regtest/CLAUDE.md`.
+The correctness baseline that all `ta_codegen` backends are verified against is
+the frozen pre-cutover reference (the `reference-pre-cutover` tag, served as
+`ta_ref_serve`) plus the hardcoded `ta_regtest` expected values.
 
 See `ta_codegen/generator/CLAUDE.md` for ta_codegen internals and
 `src/tools/ta_regtest/CLAUDE.md` for the test-runner spec.
@@ -49,25 +36,16 @@ See `ta_codegen/generator/CLAUDE.md` for ta_codegen internals and
 (one directory per indicator).
 
 - **YAML** = data, config, enums, IDL. Pure definitions with no logic.
-  - MAType and FuncUnstId enums (`ta_codegen/input/enums.yaml`)
-  - Function metadata (inputs, outputs, optional params, groups) — per-function `<name>/<name>.yaml`
-  - Shared library types — RetCode, CandleSetting defaults, Compatibility — are hand-written templates the generator emits (NOT under `input/`, which is algorithms only, and not YAML); they live with the generator under `ta_codegen/generator/templates/` (e.g. `templates/rust/types.rs`, `templates/c/ta_retcode.c.template`)
 - **C source files** = logic. Anything with computation.
-  - Indicator implementations (`ta_codegen/input/<name>/<name>.c`)
-  - Helper functions (`ta_codegen/input/helpers/`)
-  - **No logic in YAML, ever.**
+- **No logic in YAML, ever.**
 
 No hand-coded string literals for type definitions or scaffolding in the codegen.
+
 Do not hand-edit **generated** files under `ta_codegen/output/` — they are
-overwritten on the next `generate`. Note some hand-written library source now
-lives under `output/` too (the Java shared types under
-`output/java/library/src/main/java/io/github/talib/` — `CoreBuilder`, `OutRange`,
-`CandleSetting`, and `Core.java`'s scaffolding outside the GENCODE markers; the
-suites under `src/test/java/`; and `output/java/library/pom.xml`, hand-written
-like the C# `TALib.csproj`); the generator preserves those and never overwrites
-them. The Java tree is in Maven standard layout because `pom.xml` publishes it to
-Maven Central — the split source roots are what keep the test package out of the
-jar, the sources jar and the javadoc.
+overwritten on the next `generate`. The converse trap: some hand-written source
+lives under `output/` too (the Java shared types, `pom.xml`, `Core.java` outside
+the GENCODE markers, the test suites, the C# `TALib.csproj`); the generator
+preserves those and never overwrites them.
 
 ## Quick Reference Commands
 
@@ -107,84 +85,32 @@ cargo test                                       # ta_codegen's own test suite
 ## Cross-Language Regression Testing
 
 `ta_regtest` is the **universal test runner** for all languages. Instead of
-linking against each language's compiled code, it drives **JSON-RPC servers**
-generated by `ta_codegen`:
+linking against each language's compiled code, it drives one generated JSON-RPC
+server per language over stdin/stdout and compares every call against the C
+reference. Flags, tolerances and the individual gates are specified in
+`src/tools/ta_regtest/CLAUDE.md`.
 
-```
-ta_regtest (C)
-    ↓ JSON-RPC over stdin/stdout
-    ├── ta_codegen_serve_c      (C server)
-    ├── ta_codegen_serve_rust   (Rust server)
-    ├── TaCodegenServe.class    (Java server)
-    └── TaCodegenServe          (C# server)
-```
-
-Each server exposes its language's generated indicator code, reports available
-functions via `list_functions`, returns `timing_ns` with each call, and supports
-`set_unstable_period` / `set_compatibility` for global state.
-
-`codegen_pipe.c/h` handles subprocess management and JSON-RPC communication.
-`test_codegen.c` has a generic callback driven by `TA_ForEachFunc` enumeration —
-it covers every indicator automatically using ta_abstract function metadata,
-including price inputs (OHLCV), multi-output functions (BBANDS=3, MACD=3,
-STOCH=2), integer outputs (CDL* patterns), real optional params, and all 20
-unstable-period functions. It produces a timing summary, cross-language
-comparison table, and JSONL report.
-
-`server_verify.c` additionally lets the hand-written ta_regtest test functions
-verify each call against the language servers **bitwise** — same inputs (sent
-losslessly as hex-of-IEEE-bits), same algorithm ⇒ same bits — reusing the shared
-`codegen_output_hash`/`codegen_hash_compare` core with `--xlang-hash` (issue
-#115; zero tolerance except a narrow Java-transcendental one). Note: it must be
-registered in BOTH `CMakeLists.txt` and the autotools `Makefile.am` (the
-dist-verification CI path builds with autotools — a missing entry there breaks
-the nightly).
-`scripts/build.py check-source-lists` verifies the two lists agree (also run
-by the dev nightly regen-check job).
-
-`scripts/synth_gate.py` (nightly `synth-gate` job; same script locally) tests
-generator constructs no shipped indicator uses, via throwaway-worktree synthetic
-functions — see `ta_codegen/generator/input_synth/README.md`.
-
-### `--function=CSV` Filter
-
-The `--function` flag accepts a comma-separated list of names, substring-matched
-against test group descriptions:
-
-| Filter Value | Test Group(s) Matched |
-|-------------|----------------------|
-| `MATH` | MATH,VECTOR,DCPERIOD/PHASE,TRENDLINE/MODE (includes MULT) |
-| `Moving Averages` | All Moving Averages (includes SMA) |
-| `RSI` | RSI,CMO + STOCH,STOCHF,STOCHRSI (substring match) |
-| `BBANDS` | BBANDS |
-| `ADX` | ADX,ADXR,DI,DM,DX |
-
-Without `--function`, all test groups run.
+A new ta_regtest source file must be registered in BOTH `CMakeLists.txt` and the
+autotools `Makefile.am` — the dist-verification CI path builds with autotools, so
+a missing entry there breaks the nightly. `scripts/build.py check-source-lists`
+verifies the two agree. `scripts/synth_gate.py` (nightly, and runnable locally)
+covers generator constructs no shipped indicator uses.
 
 ## Rust Backend
 
 Generated Rust lives in `ta_codegen/output/rust/` — a Cargo workspace: `library/`
 is the shipped `ta-lib` crate, `tools/` holds the JSON-RPC server/bench.
+Indicators are methods on a `Core` struct, one file per indicator.
 
-- TA-Lib exports a `Core` struct (`src/ta_func/types.rs`, with `RetCode`);
-  indicators are methods on `Core`, one file per indicator extending it via
-  `impl Core` blocks.
-- The public API uses `f64` slices (`&[f64]` / `&mut [f64]`), `usize` indices,
-  and `i32` optional params.
-- Each indicator generates a `<NAME>_Lookback` and a guarded `<NAME>` (validates
-  params, pre-computes optimization values, holds the algorithm). Indexing is
-  safe: the crate is `#![forbid(unsafe_code)]`, so a violated bounds precondition
-  panics — never undefined behavior. The body carries a bounds-assert preamble
-  (the LLVM proof that elides per-access bounds checks); it is skipped when the
-  lookback clamp means the call computes nothing, so a call that returns
-  `Success` with zero elements cannot panic.
+- Indexing is safe: the crate is `#![forbid(unsafe_code)]`, so a violated bounds
+  precondition panics — never undefined behavior. Each body carries a
+  bounds-assert preamble (the LLVM proof that elides per-access bounds checks);
+  it is skipped when the lookback clamp means the call computes nothing, so a
+  call that returns `Success` with zero elements cannot panic.
 - **Cross-indicator calls target the guarded entry point.**
-- Functions with extra internal params (e.g., EMA's k factor) expose them on an
-  `<NAME>_Private` variant; the guarded variant pre-computes them and delegates.
-- Rustdoc is generated from each function's canonical `<name>.md`
-  (`backends/rust_doc.rs`), including a runnable doctest per function; crate
-  docs/README/Cargo metadata come from the scaffolding in `main.rs`. Verify with
-  `cargo doc --no-deps` (warning-free) and `cargo test --doc` in the crate.
+- Rustdoc, including a runnable doctest per function, is generated from each
+  function's canonical `<name>.md`. Verify with `cargo doc --no-deps`
+  (warning-free) and `cargo test --doc` in the crate.
 
 ## Adding or Modifying an Indicator
 
@@ -198,250 +124,25 @@ is the shipped `ta-lib` crate, `tools/` holds the JSON-RPC server/bench.
 
 The `/new-ta-func` skill automates picking up and resuming this work.
 
-## Build Configuration
+## Two build flags that must stay in step
 
-### Dependencies
-- CMake 3.18+
-- C compiler (clang/gcc)
-- Rust toolchain (`rustup`)
-- For server testing: JDK (`javac` + `java`) and .NET SDK (`dotnet`)
-
-`scripts/build.py` checks the prerequisites per target and configures CMake
-automatically on first run.
-
-## Performance Testing
-
-```bash
-# Full pipeline (builds everything, regens, tests, benchmarks)
-scripts/regtest.py
-
-# Benchmark specific indicators (trustworthy — isolated, high iterations)
-cd bin && ./ta_bench --language=cref,c --function=RSI,SMA --points=100000 --iters=500
-
-# Full benchmark (noisy — use for overview, verify outliers in isolation)
-cd bin && ./ta_bench --language=cref,c --points=100000 --iters=200
-```
-
-**Gotcha:** `ta_ref_serve` is statically linked — rebuild when `libta-lib.a`
-changes or benchmarks are invalid. `regtest.py` handles this automatically.
-
-Both hand-written benches report the **spread** of their own repeated passes,
-because a bare median is silent about whether the box was quiet enough for it
-to mean anything — at `--iters=50` the same five functions read 0.57–0.81x, at
-`--iters=200` they read 1.00x. Read the spread before the ratio. `--max-spread=N`
-(percent, default 25) exits non-zero when the run is too noisy to interpret, and
-`ta_bench_direct --jsonl=PATH` appends a run record for tracking over time.
-
-`ta_bench_direct`'s ratio is `ta_bench_cg` (single TU, `-flto`) over
-`libta-lib.a` (separate TUs, no LTO) — **a build-configuration difference, not
-an algorithm one**, which is why binary layout alone can move it further than
-the old ±10% colour band. It now colours only outside `--no-signal` (default
-1.20x) and only when the row's own spread is narrower than the effect claimed.
-`--reps=N` samples both arms instead of just the reference.
-
-`ta_bench` sends `no_output:1`, so servers return timings without serialising
-the output arrays — it only ever reads `timing_ns`. Without it a 100k-point run
-spends ~97% of its wall clock formatting and parsing JSON nobody looks at.
-Anything that needs the values (`--codegen`, `--xlang-hash`, `server_verify`)
-simply omits the flag. `cref` is a frozen binary and predates it, so runs
-including `cref` stay slower than C-only ones.
-
-### The same source, six binaries
-
-Every benchmark ratio in this tree compares two *builds*, and they are not the
-same build. Measured `.text` on x86-64 gcc:
-
-| binary | build | TU model | bytes |
-|---|---|---|---|
-| `libta-lib.a` | CMake Release | separate TUs, no LTO | 2,890,487 |
-| `libta-lib.so` | CMake Release | separate TUs, PIC | 2,870,694 |
-| `ta_codegen_serve_c` | `gcc -O3 -flto` | single TU + ta_abstract | 3,940,182 |
-| `ta_bench_stream` | `gcc -O3 -flto` | single TU + streaming | 1,955,238 |
-| `ta_bench_cg` | `gcc -O3 -flto` | single TU, indicators only | 1,021,939 |
-| autotools `libta-lib` | libtool | separate TUs, no LTO | not built here |
-
-3.9x between the extremes, from identical source. The generator's flags live in
-one place (`COMMON_GCC_FLAGS`, `main.rs`); two flags are set by all three build
-systems (CMake, autotools, the generator) and must stay in step:
+The generator's flags live in one place (`COMMON_GCC_FLAGS`, `main.rs`); two
+flags are set by all three build systems (CMake, autotools, the generator) and
+must stay in step:
 
 - `-ffp-contract=off` — load-bearing for the FMA contract (PR #96), **not** a
   performance knob.
 - `-fno-math-errno` — purely a performance knob (issue #192), and the one part
-  of `-ffast-math` that cannot change a value. ISO C requires `sqrt()` to set
-  `errno` on a domain error; that obligation alone is what keeps GCC from
-  emitting the bare instruction and from vectorizing any loop containing it. The
-  library never reads `errno`. Adding it took `TA_SQRT` −52% and `TA_STDDEV`
-  −24% (the sqrt map is over half of STDDEV's batch cost — `TA_VAR`, which is
-  STDDEV without the map, did not move). BBANDS, CORREL and HMA also call
-  `sqrt` and did not move: theirs is not in a vectorizable map.
+  of `-ffast-math` that cannot change a value. Do **not** weaken it to
+  `-ffast-math` on the strength of that: the same output-hashing harness shows
+  `-ffast-math` changing 70 functions. It is not effect-free either — it lets
+  STDDEV's sqrt map vectorize and raise `FE_INVALID` on lanes the scalar guard
+  skipped (values unaffected). That, and why clamping the radicand does not fix
+  it, are in `CMakeLists.txt` next to the flag.
 
-  Value-safety is checked by hashing every function's output in both builds. Do
-  not weaken it to `-ffast-math` on the strength of that: the same harness shows
-  `-ffast-math` changing 70 functions.
+## Benchmarking
 
-  It is not effect-free, though, and no output-comparing gate can see what it
-  changes. Vectorizing STDDEV's map if-converts it, so `sqrtpd` runs on lanes the
-  scalar guard skipped and raises `FE_INVALID` on a slightly-negative variance —
-  reachable on a flat stretch, where the subtraction is pure cancellation. Values
-  are unaffected. Details, and why clamping the radicand does not fix it, are in
-  `CMakeLists.txt` next to the flag.
-
-Which tool measures which:
-
-- `ta_bench_direct` — C-ref column is `libta-lib.a`, C column is `ta_bench_cg`.
-  Its ratio is therefore rows 1 vs 5 above.
-- `ta_bench --language=c` — `ta_codegen_serve_c` (row 3), *not* `ta_bench_cg`.
-- `ta_bench --language=cref` — `ta_ref_serve`, the frozen pre-cutover source.
-  Different code, not just a different build; the only cross-*version* number.
-- `ta_bench_stream` — itself, both arms, which is why its speedup column is the
-  one ratio here that isn't cross-configuration.
-
-Consequences worth internalising before quoting any number: a function's ns from
-`ta_bench_direct` and from `ta_bench --language=c` are not comparable; a ratio
-near 1.0 in `ta_bench_direct` means single-TU + LTO bought nothing for that
-function, not that the two are the same code path; and layout alone moves these
-ratios further than the old ±10% colour band allowed, which is why the band is
-now 1.20x and spread-gated.
-
-### Streaming vs batch
-
-`ta_bench_stream` answers the question streaming has to justify itself on: is
-`TA_<NAME>_Update` actually cheaper than recomputing the last bar with the batch
-call? Its `speedup` column is `batch_last_ns / update_ns` — above 1 means
-streaming wins. Both halves are measured in one TU, one input, one layout, so
-unlike `ta_bench_direct`'s ratio it is not comparing two build configurations.
-
-```bash
-cd bin && ./ta_bench_stream --points=20000 --iters=50
-./ta_bench_stream --points=20000 --iters=50 --min-ratio=0.35   # exits 1 if any func is below
-```
-
-`ta_bench_stream` is **C only**. For the Rust and Java streaming tiers,
-`scripts/stream_ab.py` A/Bs `update` (or `peek`) per bar — or `open`, which times
-the whole warm-up instead of one bar — between the working tree
-and a git revision — same generated harness compiled against two copies of the
-library, interleaved rounds with alternating arm order, every streaming function
-so the untouched ones are the control. It reads only the generated Rust crate and
-Java fragments (no ta_abstract, no servers, no C build) and derives every call
-from the emitted signatures, so adding an indicator needs no edit there.
-
-**C# streams too, but has no lane in either tool** — there is no C# row in any
-benchmark table, and `ta_bench --mode=open` answers `unsupported_mode` for it.
-So the C# peek-scratch election is Java's predicate shipped unchanged, and the
-emitted docs deliberately state what `Peek` allocates rather than claiming it is
-cheaper, which is a comparison nothing here has measured. Adding a C# lane needs
-a control arm first: reproduce a *known* effect (switch the copy constructor to
-`Clone()` and require ~2x on array-owning functions while the array-less ones
-stay flat) before trusting the tool to settle an unknown one.
-
-```bash
-scripts/stream_ab.py --base=origin/dev                                  # both languages
-scripts/stream_ab.py --base=HEAD~1 --lang=rust --call=peek --mark=MIN,MAX
-scripts/stream_ab.py --base=origin/dev --call=open --mark=BBANDS,STDDEV   # the Open tier
-```
-
-Current shape: median ~1.6x, but **~25 stream slower than
-batch** and another ~50 sit under 1.5x. Recursive/multi-stage state wins big
-(`HT_TRENDLINE` ~24x, `TRIX`/`TEMA` ~16x); window-recomputers and stateless
-patterns lose (`AVGDEV`, `MAVP`, `MIDPRICE`, `WILLR`, CDL*) because the handle
-buys nothing and costs indirection. Those losers overlap the rolling-extremum
-family — see the corpus note below.
-
-`--min-ratio` is a cliff detector, not a quality bar: run to run the worst ratio
-moves 0.42–0.50 and the worst function's *name* changes, so a threshold near 1.0
-just flaps. 0.35 has headroom while still failing on a real regression.
-
-### Benchmark input corpus
-
-Some indicators have input-dependent cost, so which series you measure on is
-part of the measurement. `src/tools/ta_bench/bench_corpus.h` holds the corpus —
-one deterministic generator, shared by `ta_bench`, `ta_bench_direct` and the
-generated `ta_bench_cg` / `ta_bench_stream`. Select a class with `--shape=`:
-
-```bash
-cd bin && ./ta_bench --list-shapes            # the input classes and what each reaches
-
-# random walk (default: the historical seed-42 series) and GBM — the acceptance gate
-./ta_bench --language=cref,c --function=WILLR --shape=randwalk --iters=500
-./ta_bench --language=cref,c --function=WILLR --shape=gbm      --iters=500
-
-# alternating trend/chop legs — the class rolling min/max degrades on
-for s in trend-chop-0.5p trend-chop-1p trend-chop-2p trend-chop-4p; do
-  ./ta_bench --language=cref,c --function=WILLR --shape=$s --period=30 --iters=500
-done
-```
-
-The rolling min/max caches the window extremum and rescans the window when that
-extremum is the bar dropping out of it, so its cost depends on how often that
-happens. On a zero-drift walk the rate decays as ~1/sqrt(period); on a trending
-leg it is set by the drift/noise ratio instead and barely moves with the period,
-so the two separate further the longer the window (1.1x the rescan rate at
-period 14, 3x at period 200). `randwalk` alone cannot see that — issue #147.
-
-The tail shapes are not peers: `constant` is the worst case at `2*(period-1)`
-comparisons per bar, exactly twice `mono-up`/`mono-down`. Flat input pins both
-extrema because the rescan compares with strict `>`/`<` and leaves the cached
-index on `trailingIdx`, so the `>=`/`<=` fast-path arms never run; a monotone
-ramp pins only one of the two.
-
-**Which tier that still describes** matters, because #147 replaced half of it.
-The batch tier of MIN, MAX, MINMAX, MIDPOINT, MIDPRICE and WILLR is now a Van
-Herk / Gil-Werman block scan: branchless, a fixed number of comparisons per bar
-at any period, input-independent. So for those six, `constant`, `mono-*` and
-`trend-chop-*` all cost the same through `ta_bench --language=c` (the batch
-call) and the shape sweep says nothing about them. The rescan — and everything
-above — is still what STOCH and STOCHF run, and still what the *streaming* tier
-of all six runs, which is what `ta_bench --shape=... --mode=open` and
-`ta_bench_stream`'s `update_ns` measure. Reach for the shape sweep when the arm
-under test is one of those; for the six functions' batch arm it is inert.
-
-`--shape` is opt-in and `randwalk` reproduces the pre-corpus series bit for bit,
-so a default run costs and measures exactly what it did before. `--seed` picks
-the stream; `--regime-period` the window the trend/chop regime length is relative
-to (defaults to `--period` when given, else 14); `--trend-strength` the trend-leg
-drift in per-bar standard deviations (default 0.5 — sweep it to see how the cost
-responds to trend/noise). `--verify-corpus` checks every shape is reproducible
-and produces valid OHLC, at the `--points` you pass it.
-
-`--list-shapes` groups the classes by what they are for, and the grouping
-matters. The rescan rate depends only on the *rank order* of the bars, so
-`randwalk-lo`, `randwalk-hi` and `gbm` cannot move it however much they change
-the magnitudes — measured within 1% of `randwalk` at period 14/30/200. They are
-controls, useful for numerical-conditioning questions (deadbands, cancellation,
-ratio-based indicators), not stressors. Only `trend-chop-*` varies the rescan
-rate; `mono-*` and `constant` are the analytic tail.
-
-One documented exemption in `--verify-corpus`: the walk family floors `low` at
-1.0 but leaves `close` unclamped, so `low <= min(open,close)` fails on 32 bars of
-`randwalk` at n=100000 (11 with a negative close). That is inherited from the
-pre-corpus generator and is preserved deliberately — clamping `close` would break
-the byte-for-byte reproduction of the historical seed-42 series, which matters
-more on a timing-only corpus. Every other predicate holds for every shape.
-
-The corpus is timing-only — it is never hashed and is unrelated to
-`fuzz_data.h`, whose `FUZZ_*` shape list is iterated by `--fuzz-064` /
-`--xlang-hash`. Keep it that way: adding a shape there changes what those gates
-compare (see the note at `test_variants.c:148`).
-
-## Project Structure
-
-```
-ta-lib/
-├── bin/                      # Built executables (ta_regtest, ta_bench, ta_codegen, servers)
-├── cmake-build/              # CMake build directory
-├── ta_codegen/input/             # SOURCE OF TRUTH: per-indicator C logic + YAML metadata
-│   ├── <name>/<name>.c       # Indicator logic
-│   ├── helpers/              # Shared helper functions
-│   └── types/                # Enums, RetCode, CandleSettings, etc. (YAML)
-├── ta_codegen/output/        # Generated per-language products, each split library/ (shipped) + tools/ (server/bench)
-│   ├── c/tools/              # C server + bench (the C library ships from src/ — the backcompat exception)
-│   ├── rust/{library,tools}/ # library/ = ta-lib crate; tools/ = server/bench (a Cargo workspace)
-│   ├── java/{library,tools,fragments}/ # library/ = shipped io.github.talib package + generated metadata registry (the Maven project); tools/ = JSON-RPC server; fragments/ = per-function method bodies, a generator intermediate that ships nowhere
-│   └── csharp/{library,tools}/ # library/ = shipped TALib package (src/ generated incl. the TALib.Metadata registry, scaffolding hand-written); tools/ = managed JSON-RPC server
-├── ta_codegen/generator/         # The Rust code generator (see its CLAUDE.md)
-├── src/
-│   ├── ta_func/              # The shipped C library, generated in place by ta_codegen
-│   └── tools/
-│       └── ta_regtest/       # Universal test runner (see its CLAUDE.md)
-└── scripts/                  # build.py, regtest.py, sync.py, package.py, ...
-```
+The `ta-bench` skill covers it: `ta_bench`, `ta_bench_direct`, `ta_bench_stream`
+and `scripts/stream_ab.py`; what each ratio actually compares (the same source
+builds six different binaries); streaming vs batch; and the `--shape=` input
+corpus.

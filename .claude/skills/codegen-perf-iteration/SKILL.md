@@ -36,7 +36,7 @@ cp cmake-build/bin/ta_bench_direct bin/
 ```bash
 cd bin && ./ta_regtest --codegen --language=c
 ```
-**Must be 161/161 pass.** If ANY function fails, stop and fix before benchmarking.
+**Every function must pass.** If ANY fails, stop and fix before benchmarking.
 
 ### BENCHMARK
 
@@ -122,7 +122,7 @@ After fixing, go back to GENERATE and repeat the full loop.
 
 | Gate | Criterion | How to Check |
 |------|-----------|-------------|
-| Correctness | 161/161 pass | `ta_regtest --codegen --language=c` |
+| Correctness | every function passes | `ta_regtest --codegen --language=c` |
 | Core parity | RSI, SMA, EMA, MACD, STOCH within 1.05x | `ta_bench_direct --function=RSI,SMA,EMA,MACD,STOCH --iters=500` |
 | CDL performance | 53+ CDL patterns faster, <=3 slower | `ta_bench_direct --function=CDL --iters=300` |
 | No regressions | No indicator >1.15x in isolation | Compare against saved baseline |
@@ -146,7 +146,7 @@ For one-off runs: just invoke `/codegen-perf-iteration` directly.
 1. **Never wait for human input.** Log questions to `.plans/perf-iteration-questions.md`, pick faster-to-test approach, keep going.
 2. **One change per cycle.** Don't fix three things at once.
 3. **Use subagents for analysis.** Dispatch one subagent per slow indicator — they read assembly, count cycles, find root causes.
-4. **Trust isolation over full-run.** Full 161-indicator run has ~10-20% noise from icache. Isolated `ta_bench_direct` runs are the best available signal — but check the `+-` column, they are not automatically ground truth.
+4. **Trust isolation over full-run.** A full-corpus run has ~10-20% noise from icache. Isolated `ta_bench_direct` runs are the best available signal — but check the `+-` column, they are not automatically ground truth.
 5. **Revert failures quickly.** Don't spend 3 cycles saving a bad idea.
 6. **Consult external AI when stuck.** 2+ failed cycles on the same indicator → get a second opinion.
 7. **Log everything.** Each iteration → `.plans/perf-iteration-log.md`: what changed, why, before/after, outcome.

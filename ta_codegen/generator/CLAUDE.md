@@ -147,12 +147,6 @@ Value gates that need the *generated* library live in the crate itself, as
 5. For each indicator, ta_regtest calls the C reference AND sends the same call to the server
 6. `compare_codegen_output()` validates retCode, outBegIdx, outNbElement, and output values match
 
-### What This Replaced
-
-- **Rust FFI layer** (`rust/ffi/`) — legacy `extern "C"` wrappers letting C call Rust directly. Deleted in favor of server architecture.
-- **Hand-written Rust test files** (`rust/tests/mult_test.rs`, `sma_test.rs`, `rsi_test.rs`) — legacy from manual porting phase. Deleted; all indicator testing goes through ta_regtest.
-- **`ta_regtest_rust` CMake target** — linked ta_regtest against Rust staticlib. Deleted; replaced by server-based approach.
-
 ### Server Protocol
 
 JSON-RPC over stdin/stdout.
@@ -181,16 +175,6 @@ JSON-RPC over stdin/stdout.
 ```json
 {"retCode": 0, "outBegIdx": 14, "outNBElement": 50, "outInteger": [...]}
 ```
-
-**Server protocol is complete:**
-- `list_functions` — servers report available indicators with parameter metadata
-- `set_unstable_period` / `set_compatibility` — global state management implemented
-- `timing_ns` — execution timing returned with every response
-- All 20 unstable-period functions mapped in `func_unst_id()`
-- Real-valued optional params use `json_find_double` (e.g., BBANDS `optInNbDevUp`, SAR `optInAcceleration`)
-- Price input support (OHLCV arrays) for STOCH, BBANDS, ADX, MACD, etc.
-- Multi-output support (BBANDS=3, MACD=3, STOCH=2) with `outReal`, `outReal1`, `outReal2`
-- Integer output support (CDL* patterns, MINMAXINDEX) with `outInteger`
 
 ## Alternate implementations (`PRAGMA TA_ALT`)
 
@@ -360,10 +344,6 @@ C's `while (i-- > 0)` idiom lets an unsigned counter wrap past zero; the Rust
 backend emits `wrapping_sub(1)` for post/pre-decrement so debug builds (and
 doctests) behave like the regtest-verified release builds instead of panicking
 on `attempt to subtract with overflow`.
-
-### Known Code Quality Issues (non-blocking)
-
-1. **`collect_for_loop_vars`** doesn't recurse into nested structures
 
 ## Linting
 
