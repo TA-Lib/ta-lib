@@ -1,7 +1,10 @@
 name: SYNTH1
 group: Math Operators
 hint: Synthetic gate function 1 - bitwise operators and truthiness (never shipped)
-flags: [stream]
+# `path_dependent`: `acc` is a rotate/xor hash carried across every bar of the
+# main loop, so a later startIdx can never reconstruct it from the warm-up
+# window. Selects TA_STABLE_SKIP for the range-stability leg (issue #127).
+flags: [stream, path_dependent]
 inputs:
   - name: inReal
     type: real

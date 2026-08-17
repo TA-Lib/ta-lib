@@ -39,6 +39,11 @@ Two mechanics worth knowing before touching the script:
    the whole family, so the gate picks it up with no other change.
 2. Give it `flags: [stream]` and integer outputs where possible — integer
    comparisons are exact in every gate, and streaming coverage is the point.
+   Add `path_dependent` too if the body carries state across the main loop that
+   a later `startIdx` cannot rebuild from its warm-up window: the
+   range-stability leg compares a sub-range call against a full-range one, and
+   without the flag it fails `RANGE TEST FAILED (code=162)`. SYNTH1 and SYNTH4
+   both need it, and each says why on the flag.
 3. Run `python3 scripts/synth_gate.py` until green.
 
 Rules of thumb for staying language-neutral (the gate compares bitwise):

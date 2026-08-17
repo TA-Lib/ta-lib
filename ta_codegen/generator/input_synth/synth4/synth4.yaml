@@ -1,7 +1,17 @@
 name: SYNTH4
 group: Math Operators
 hint: Synthetic gate function 4 - explicit _private variant with a decoupled real param (never shipped)
-flags: [stream]
+# `path_dependent`: `state` CONVERGES (EMA-style), so this reads like a mislabel.
+# It is not. The flag's only job is to select TA_STABLE_SKIP for the
+# range-stability leg, and cross-range comparison really is meaningless here: the
+# residual after the fixed warm-up is ~(1-k)^n — still ~13% at 30 bars — and
+# `(int)(state*8)` quantizes it to whole integers (610 vs 617 at startIdx 30).
+# Do NOT "correct" this to an UNSTABLE_MAP row. That is reachable for an integer
+# output (test_codegen.c coerces it onto the real comparator, as for
+# HT_TRENDMODE), but the id would be false — the warm-up is hardcoded
+# optInTimePeriod-1 and ignores TA_SetUnstablePeriod — leaving doRangeTestEx's
+# unstable-period sweep inert, the very vacuity 1f79172f2 was written to kill.
+flags: [stream, path_dependent]
 inputs:
   - name: inReal
     type: real
