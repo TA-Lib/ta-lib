@@ -10305,6 +10305,133 @@ static void build_3inside( void )
   pb_flat(8);
 }
 
+/* CDLSTICKSANDWICH -- two black candles closing at the same price with a
+ * white one trapped between them.
+ *
+ *   c0  black(i-2)
+ *   c1  white(i-1)
+ *   c2  black(i)
+ *   c3  low(i-1) > close(i-2)
+ *   c4  close(i) <= close(i-2) + avg(Equal, i-2)
+ *   c5  close(i) >= close(i-2) - avg(Equal, i-2)
+ *
+ * avg(Equal) is 0.05 of a HighLow range over five bars, and it is read at i-2,
+ * so it depends on the five PRIMER bars alone -- none of the three pattern
+ * candles is inside that window. The primers give a range of 10, so the band
+ * is 0.5 wide and its edges land on 100.5 and 99.5 exactly. That is what makes
+ * c4 and c5 pinnable: both are inclusive sites, neither can be pinned by a
+ * flip, and each has a control sitting exactly on its edge instead.
+ *
+ * Because eq does not depend on the pattern candles, the c0 scenario can turn
+ * the first candle white while leaving its CLOSE at 100 -- so c3, c4 and c5 all
+ * keep reading the same numbers and only the colour moves. The minimal white
+ * candle is a doji, since the library's colour test is close >= open, so the
+ * flip is open == close rather than an obviously white body.
+ */
+static void cond_sticksandwich( int i, int *c )
+{
+   double eq = pb_avg(TA_Equal, i-2);
+   c[0] = !pb_white(i-2);
+   c[1] =  pb_white(i-1);
+   c[2] = !pb_white(i);
+   c[3] = pbL[i-1] > pbC[i-2];
+   c[4] = pbC[i] <= pbC[i-2] + eq;
+   c[5] = pbC[i] >= pbC[i-2] - eq;
+}
+
+static void build_sticksandwich( void )
+{
+  pb_conditions(6);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);                   /* HighLow range 10 -> avg(Equal) 0.5 */
+  pb_bar(112,112.5,99.5,100);              /* 1st: black, closes 100 */
+  pb_bar(102,106.5,101.5,106);             /* 2nd: white, low 101.5 above 100 */
+  int d=pb_bar(105,105.5,99,100);          /* 3rd: black, closes 100 -- dead centre */
+  pb_detect(d,100,"detect: black/white/black, 3rd closing on the 1st's close");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,100.5,99.5,100);              /* 1st is a doji: close == open is WHITE */
+  pb_bar(102,106.5,101.5,106);
+  int f0=pb_bar(105,105.5,99,100);
+  pb_flip(f0,0,"break c0: 1st is a doji, and close >= open counts as white");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100.5,100.5,99.5,100);            /* one step black, same close */
+  pb_bar(102,106.5,101.5,106);
+  int k0=pb_bar(105,105.5,99,100);
+  pb_control(k0,100,0,"restore c0: open 100.5 above close 100, black again");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,112.5,99.5,100);
+  pb_bar(106,106.5,101.5,102);             /* 2nd black, low unchanged at 101.5 */
+  int f1=pb_bar(105,105.5,99,100);
+  pb_flip(f1,1,"break c1: 2nd is black, its low still above the 1st close");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,112.5,99.5,100);
+  pb_bar(102,106.5,101.5,102);             /* doji: white by the same rule as c0 */
+  int k1=pb_bar(105,105.5,99,100);
+  pb_control(k1,100,1,"restore c1: 2nd is a doji, which is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,112.5,99.5,100);
+  pb_bar(102,106.5,101.5,106);
+  int f2=pb_bar(100,100.5,99.5,100);       /* 3rd doji -> white, close still 100 */
+  pb_flip(f2,2,"break c2: 3rd is a doji, and close >= open counts as white");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,112.5,99.5,100);
+  pb_bar(102,106.5,101.5,106);
+  int k2=pb_bar(100.5,100.5,99.5,100);
+  pb_control(k2,100,2,"restore c2: open 100.5 above close 100, black again");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,112.5,99.5,100);
+  pb_bar(102,106.5,100,106);               /* 2nd low 100 == the 1st close */
+  int f3=pb_bar(105,105.5,99,100);
+  pb_flip(f3,3,"break c3: 2nd low 100 == the 1st close, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,112.5,99.5,100);
+  pb_bar(102,106.5,100.5,106);
+  int k3=pb_bar(105,105.5,99,100);
+  pb_control(k3,100,3,"restore c3: 2nd low 100.5 > 100");
+  pb_flat(8);
+
+  /* c4 and c5 are the band's two inclusive edges. A flip can only land clear of
+   * the edge, never on it; the controls are what sit on 100.5 and 99.5. */
+  pb_primer(12,100,2,4);
+  pb_bar(112,112.5,99.5,100);
+  pb_bar(102,106.5,101.5,106);
+  int f4=pb_bar(105,105.5,99,100.75);      /* above the band top 100.5 */
+  pb_flip(f4,4,"break c4: 3rd closes 100.75, above the band top 100.5");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,112.5,99.5,100);
+  pb_bar(102,106.5,101.5,106);
+  int k4=pb_bar(105,105.5,99,100.5);
+  pb_control(k4,100,4,"restore c4 on the edge: 3rd closes 100.5 == the band top, and <= admits it");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,112.5,99.5,100);
+  pb_bar(102,106.5,101.5,106);
+  int f5=pb_bar(105,105.5,99,99.25);       /* below the band bottom 99.5 */
+  pb_flip(f5,5,"break c5: 3rd closes 99.25, below the band bottom 99.5");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,112.5,99.5,100);
+  pb_bar(102,106.5,101.5,106);
+  int k5=pb_bar(105,105.5,99,99.5);
+  pb_control(k5,100,5,"restore c5 on the edge: 3rd closes 99.5 == the band bottom, and >= admits it");
+  pb_flat(8);
+}
+
 static ErrorNumber test_marquee_predicate_coverage( void )
 {
    ErrorNumber e;
@@ -10365,6 +10492,7 @@ static ErrorNumber test_marquee_predicate_coverage( void )
    pb_reset(); build_kicking();         e = pb_check_mcdc("CDLKICKING",         TA_CDLKICKING,         cond_kicking);         if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_kickingbylength(); e = pb_check_mcdc("CDLKICKINGBYLENGTH", TA_CDLKICKINGBYLENGTH, cond_kickingbylength); if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_3inside();         e = pb_check_mcdc("CDL3INSIDE",         TA_CDL3INSIDE,         cond_3inside);         if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_sticksandwich();   e = pb_check_mcdc("CDLSTICKSANDWICH",   TA_CDLSTICKSANDWICH,   cond_sticksandwich);   if( e != TA_TEST_PASS ) return e;
    pb_report_totals();
    return TA_TEST_PASS;
 }
