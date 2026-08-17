@@ -1496,6 +1496,15 @@ static ErrorNumber test_hikkake_predicate_coverage( void )
    c = pb_close(82.0);        pb_expect(c,-200,"bear confirm @82 (pins savedLow vs i-2=80)");   pb_flat(6);
    d = pb_hk_win(-1,0,0,0,0); pb_expect(d,-100,"bear detect");
    c = pb_close(87.0);        pb_expect(c,0,"bear no-confirm @87 (pins savedLow vs i=90)");     pb_flat(6);
+   /* ON the confirmation boundary. The two cases above straddle it by 2 and 5
+    * points, which says nothing about whether the compare is strict: relaxing
+    * both `>` and `<` to inclusive passed this entire suite. A confirmation
+    * needs a close STRICTLY past the 2nd candle's edge, so a close sitting
+    * exactly on it must not confirm. */
+   d = pb_hk_win(+1,0,0,0,0); pb_expect(d,100,"bull detect");
+   c = pb_close(115.0);       pb_expect(c,0,"bull close == savedHigh 115 -> no confirm, the test is strict"); pb_flat(6);
+   d = pb_hk_win(-1,0,0,0,0); pb_expect(d,-100,"bear detect");
+   c = pb_close(85.0);        pb_expect(c,0,"bear close == savedLow 85 -> no confirm, the test is strict");   pb_flat(6);
    d = pb_hk_win(+1,0,0,0,0); pb_expect(d,100,"bull detect (i+3 confirm)");
    pb_barm(112.0,108.0); pb_barm(113.0,107.0);
    c = pb_barm(130.0,118.0);  pb_expect(c,200,"confirm at i+3 (edge in-window)"); pb_flat(6);
@@ -1526,6 +1535,11 @@ static ErrorNumber test_hikkake_predicate_coverage( void )
    c = pb_close(82.0);   pb_expect(c,-200,"mod bear confirm @82 (pins patternLow vs i-2=80)");     pb_flat(8);
    d = pb_mod_win(-1,0); pb_expect(d,-100,"mod bear detect");
    c = pb_close(90.0);   pb_expect(c,0,"mod no-confirm @90 (pins patternLow vs i=95)");            pb_flat(8);
+   /* ON the confirmation boundary -- see the note on the CDLHIKKAKE pair. */
+   d = pb_mod_win(+1,0); pb_expect(d,100,"mod bull detect");
+   c = pb_close(115.0);  pb_expect(c,0,"mod close == patternHigh 115 -> no confirm, the test is strict"); pb_flat(8);
+   d = pb_mod_win(-1,0); pb_expect(d,-100,"mod bear detect");
+   c = pb_close(85.0);   pb_expect(c,0,"mod close == patternLow 85 -> no confirm, the test is strict");   pb_flat(8);
    d = pb_mod_win(+1,0); pb_expect(d,100,"mod bull detect (i+3 edge)");
    pb_flat(2);
    c = pb_close(125.0);  pb_expect(c,200,"mod confirm at i+3 edge (pins patternCount=4)");         pb_flat(8);
