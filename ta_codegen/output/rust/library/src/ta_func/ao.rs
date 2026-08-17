@@ -356,12 +356,10 @@ struct AO_StreamState {
     tempReal: f64,
     ringPos_trailingFastIdx: usize,
     ringCap_trailingFastIdx: usize,
-    ring_trailingFastIdx_inHigh: Vec<f64>,
-    ring_trailingFastIdx_inLow: Vec<f64>,
+    ring_trailingFastIdx_derived: Vec<f64>,
     ringPos_trailingSlowIdx: usize,
     ringCap_trailingSlowIdx: usize,
-    ring_trailingSlowIdx_inHigh: Vec<f64>,
-    ring_trailingSlowIdx_inLow: Vec<f64>,
+    ring_trailingSlowIdx_derived: Vec<f64>,
 }
 
 #[allow(non_snake_case, dead_code)]
@@ -376,12 +374,10 @@ impl AO_StreamState {
         self.tempReal = src.tempReal;
         self.ringPos_trailingFastIdx = src.ringPos_trailingFastIdx;
         self.ringCap_trailingFastIdx = src.ringCap_trailingFastIdx;
-        self.ring_trailingFastIdx_inHigh.clone_from(&src.ring_trailingFastIdx_inHigh);
-        self.ring_trailingFastIdx_inLow.clone_from(&src.ring_trailingFastIdx_inLow);
+        self.ring_trailingFastIdx_derived.clone_from(&src.ring_trailingFastIdx_derived);
         self.ringPos_trailingSlowIdx = src.ringPos_trailingSlowIdx;
         self.ringCap_trailingSlowIdx = src.ringCap_trailingSlowIdx;
-        self.ring_trailingSlowIdx_inHigh.clone_from(&src.ring_trailingSlowIdx_inHigh);
-        self.ring_trailingSlowIdx_inLow.clone_from(&src.ring_trailingSlowIdx_inLow);
+        self.ring_trailingSlowIdx_derived.clone_from(&src.ring_trailingSlowIdx_derived);
     }
 }
 
@@ -395,12 +391,10 @@ impl Core {
     fn AO_step_internal(&self, sp: &mut AO_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
         let mut medianPrice: f64 = 0.0_f64;
         if sp.ringCap_trailingFastIdx == 0 {
-            sp.ring_trailingFastIdx_inHigh[0] = inHigh;
-            sp.ring_trailingFastIdx_inLow[0] = inLow;
+            sp.ring_trailingFastIdx_derived[0] = (inHigh + inLow) / 2.0;
         }
         if sp.ringCap_trailingSlowIdx == 0 {
-            sp.ring_trailingSlowIdx_inHigh[0] = inHigh;
-            sp.ring_trailingSlowIdx_inLow[0] = inLow;
+            sp.ring_trailingSlowIdx_derived[0] = (inHigh + inLow) / 2.0;
         }
         medianPrice = (inHigh + inLow) / 2.0;
         sp.sumFast += medianPrice;
@@ -413,17 +407,15 @@ impl Core {
         // outIdx exactly, so a store hoisted above this would read back the
         // value it had just overwritten whenever the caller aliases outReal
         // over inHigh or inLow.
-        sp.sumFast -= (sp.ring_trailingFastIdx_inHigh[sp.ringPos_trailingFastIdx] + sp.ring_trailingFastIdx_inLow[sp.ringPos_trailingFastIdx]) / 2.0;
-        sp.sumSlow -= (sp.ring_trailingSlowIdx_inHigh[sp.ringPos_trailingSlowIdx] + sp.ring_trailingSlowIdx_inLow[sp.ringPos_trailingSlowIdx]) / 2.0;
+        sp.sumFast -= sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx];
+        sp.sumSlow -= sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx];
         (*outReal) = sp.tempReal;
-        sp.ring_trailingFastIdx_inHigh[sp.ringPos_trailingFastIdx] = inHigh;
-        sp.ring_trailingFastIdx_inLow[sp.ringPos_trailingFastIdx] = inLow;
+        sp.ring_trailingFastIdx_derived[sp.ringPos_trailingFastIdx] = (inHigh + inLow) / 2.0;
         sp.ringPos_trailingFastIdx = sp.ringPos_trailingFastIdx + 1;
         if sp.ringPos_trailingFastIdx >= sp.ringCap_trailingFastIdx {
             sp.ringPos_trailingFastIdx = 0;
         }
-        sp.ring_trailingSlowIdx_inHigh[sp.ringPos_trailingSlowIdx] = inHigh;
-        sp.ring_trailingSlowIdx_inLow[sp.ringPos_trailingSlowIdx] = inLow;
+        sp.ring_trailingSlowIdx_derived[sp.ringPos_trailingSlowIdx] = (inHigh + inLow) / 2.0;
         sp.ringPos_trailingSlowIdx = sp.ringPos_trailingSlowIdx + 1;
         if sp.ringPos_trailingSlowIdx >= sp.ringCap_trailingSlowIdx {
             sp.ringPos_trailingSlowIdx = 0;
@@ -561,23 +553,27 @@ impl Core {
             return Err(RetCode::InternalError);
         }
         let allocN_trailingFastIdx: usize = if cap_trailingFastIdx > 0 { cap_trailingFastIdx as usize } else { 1 };
-        let mut ring_trailingFastIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_trailingFastIdx];
-        ring_trailingFastIdx_inHigh[..cap_trailingFastIdx as usize]
-            .copy_from_slice(&inHigh[historyLen - cap_trailingFastIdx as usize..]);
-        let mut ring_trailingFastIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_trailingFastIdx];
-        ring_trailingFastIdx_inLow[..cap_trailingFastIdx as usize]
-            .copy_from_slice(&inLow[historyLen - cap_trailingFastIdx as usize..]);
+        let mut ring_trailingFastIdx_derived: Vec<f64> = vec![0.0_f64; allocN_trailingFastIdx];
+        {
+            let mut fillJ: usize = historyLen - cap_trailingFastIdx as usize;
+            while fillJ < historyLen {
+                ring_trailingFastIdx_derived[fillJ - (historyLen - cap_trailingFastIdx as usize)] = (inHigh[(fillJ) as usize] + inLow[(fillJ) as usize]) / 2.0;
+                fillJ += 1;
+            }
+        }
         let cap_trailingSlowIdx: i64 = (i as i64) - (trailingSlowIdx as i64);
         if cap_trailingSlowIdx < 0 || cap_trailingSlowIdx > historyLen as i64 {
             return Err(RetCode::InternalError);
         }
         let allocN_trailingSlowIdx: usize = if cap_trailingSlowIdx > 0 { cap_trailingSlowIdx as usize } else { 1 };
-        let mut ring_trailingSlowIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_trailingSlowIdx];
-        ring_trailingSlowIdx_inHigh[..cap_trailingSlowIdx as usize]
-            .copy_from_slice(&inHigh[historyLen - cap_trailingSlowIdx as usize..]);
-        let mut ring_trailingSlowIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_trailingSlowIdx];
-        ring_trailingSlowIdx_inLow[..cap_trailingSlowIdx as usize]
-            .copy_from_slice(&inLow[historyLen - cap_trailingSlowIdx as usize..]);
+        let mut ring_trailingSlowIdx_derived: Vec<f64> = vec![0.0_f64; allocN_trailingSlowIdx];
+        {
+            let mut fillJ: usize = historyLen - cap_trailingSlowIdx as usize;
+            while fillJ < historyLen {
+                ring_trailingSlowIdx_derived[fillJ - (historyLen - cap_trailingSlowIdx as usize)] = (inHigh[(fillJ) as usize] + inLow[(fillJ) as usize]) / 2.0;
+                fillJ += 1;
+            }
+        }
         let state = AO_StreamState {
             optInFastPeriod,
             optInSlowPeriod,
@@ -586,12 +582,10 @@ impl Core {
             tempReal,
             ringPos_trailingFastIdx: 0_usize,
             ringCap_trailingFastIdx: cap_trailingFastIdx as usize,
-            ring_trailingFastIdx_inHigh,
-            ring_trailingFastIdx_inLow,
+            ring_trailingFastIdx_derived,
             ringPos_trailingSlowIdx: 0_usize,
             ringCap_trailingSlowIdx: cap_trailingSlowIdx as usize,
-            ring_trailingSlowIdx_inHigh,
-            ring_trailingSlowIdx_inLow,
+            ring_trailingSlowIdx_derived,
         };
         Ok(AO_Stream { core: self.clone(), state })
     }

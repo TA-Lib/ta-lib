@@ -1645,6 +1645,44 @@ fn capture_value_expr(func: &FuncDef) -> String {
 /// needed in Java), build the buffers, then store every handle field.
 /// CIRCBUF capture MOVES the batch-materialized storage reference (contents
 /// AND rotation phase — the CCI-class summation-order requirement).
+/// Derived ring (#229): `open` evaluates f(bar) over the history instead of
+/// copying a raw column, which no longer exists under that name. Mirrors
+/// `derived_fill_expr` (C) and `derived_fill_expr_rust`.
+fn derived_fill_expr_java(
+    dr: &streaming::DerivedRing,
+    idx_var: &str,
+    ctx: &JavaRenderCtx,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+) -> String {
+    fn reindex(e: &Expr, idx_var: &str) -> Expr {
+        match e {
+            Expr::ArrayAccess(arr, _) => {
+                Expr::ArrayAccess(arr.clone(), Box::new(Expr::Var(idx_var.to_string())))
+            }
+            Expr::BinOp(lhs, op, rhs) => Expr::BinOp(
+                Box::new(reindex(lhs, idx_var)),
+                op.clone(),
+                Box::new(reindex(rhs, idx_var)),
+            ),
+            Expr::FuncCall(name, args) => Expr::FuncCall(
+                name.clone(),
+                args.iter().map(|a| reindex(a, idx_var)).collect(),
+            ),
+            Expr::Cast(t, inner) => Expr::Cast(t.clone(), Box::new(reindex(inner, idx_var))),
+            Expr::Not(inner) => Expr::Not(Box::new(reindex(inner, idx_var))),
+            Expr::BitwiseNot(inner) => Expr::BitwiseNot(Box::new(reindex(inner, idx_var))),
+            Expr::Ternary(cond, then_e, else_e) => Expr::Ternary(
+                Box::new(reindex(cond, idx_var)),
+                Box::new(reindex(then_e, idx_var)),
+                Box::new(reindex(else_e, idx_var)),
+            ),
+            other => other.clone(),
+        }
+    }
+    render_expr(&reindex(&dr.expr, idx_var), ctx, registry, helpers)
+}
+
 #[allow(clippy::too_many_arguments, clippy::too_many_lines)]
 fn emit_capture(
     o: &mut String,
@@ -1691,6 +1729,19 @@ fn emit_capture(
                     "      for( int fillJ = historyLen - cap_{v}; fillJ < historyLen; fillJ++ ) {{"
                 );
                 let _ = writeln!(o, "         capRing_{v}_{arr}[fillJ % cap_{v}] = {arr}[fillJ];");
+                let _ = writeln!(o, "      }}");
+            } else if let Some(dr) = ring.derived.as_ref() {
+                let empty_fill = HashSet::new();
+                let fill_ctx = stream_ctx(&empty_fill, counter, stream_fma);
+                let rhs = derived_fill_expr_java(dr, "fillJ", &fill_ctx, registry, helpers);
+                let _ = writeln!(
+                    o,
+                    "      for( int fillJ = historyLen - cap_{v}; fillJ < historyLen; fillJ++ ) {{"
+                );
+                let _ = writeln!(
+                    o,
+                    "         capRing_{v}_{arr}[fillJ - (historyLen - cap_{v})] = {rhs};"
+                );
                 let _ = writeln!(o, "      }}");
             } else {
                 let _ = writeln!(

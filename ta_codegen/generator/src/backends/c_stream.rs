@@ -3395,6 +3395,118 @@ fn pre_fail_stmt(pre_fail: &str) -> String {
 /// Peek's scratch mirrors are pre-allocated. On the identity path
 /// (`with_state == false`) capacities are zero and 1-slot buffers keep the
 /// transition's cap-0 guard and Peek's mirror copy well-defined.
+/// A derived ring stores one scalar per bar, so `open` cannot memcpy a raw
+/// column into it -- it has to evaluate the expression over the history. The
+/// expression is rendered with every array read re-indexed to `idx_var`, the
+/// fill loop's counter (#229).
+fn derived_fill_expr(
+    dr: &streaming::DerivedRing,
+    idx_var: &str,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+) -> String {
+    fn reindex(e: &Expr, idx_var: &str) -> Expr {
+        match e {
+            Expr::ArrayAccess(arr, _) => {
+                Expr::ArrayAccess(arr.clone(), Box::new(Expr::Var(idx_var.to_string())))
+            }
+            Expr::BinOp(lhs, op, rhs) => Expr::BinOp(
+                Box::new(reindex(lhs, idx_var)),
+                op.clone(),
+                Box::new(reindex(rhs, idx_var)),
+            ),
+            Expr::FuncCall(name, args) => Expr::FuncCall(
+                name.clone(),
+                args.iter().map(|a| reindex(a, idx_var)).collect(),
+            ),
+            Expr::Cast(t, inner) => Expr::Cast(t.clone(), Box::new(reindex(inner, idx_var))),
+            Expr::Not(inner) => Expr::Not(Box::new(reindex(inner, idx_var))),
+            Expr::BitwiseNot(inner) => Expr::BitwiseNot(Box::new(reindex(inner, idx_var))),
+            Expr::Ternary(cond, then_e, else_e) => Expr::Ternary(
+                Box::new(reindex(cond, idx_var)),
+                Box::new(reindex(then_e, idx_var)),
+                Box::new(reindex(else_e, idx_var)),
+            ),
+            other => other.clone(),
+        }
+    }
+    render_expression(&reindex(&dr.expr, idx_var), registry, helpers, counter)
+}
+
+/// Emit one ring's per-slot allocation and its open-time fill. Split out of
+/// `alloc_and_capture` because the derived case (#229) turned the fill from a
+/// single `memcpy` into three shapes and pushed that function past the
+/// line limit.
+fn emit_ring_slots(
+    s: &mut String,
+    ring: &streaming::RingSpec,
+    v: &str,
+    pad: &str,
+    fail: &str,
+    with_state: bool,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+) {
+    for arr in &ring.arrays {
+        let _ = writeln!(
+            s,
+            "{pad}  sp->ring_{v}_{arr} = (double *)TA_Malloc( sizeof(double) * allocN );"
+        );
+        let _ = writeln!(s, "{pad}  if( !sp->ring_{v}_{arr} ) {fail}");
+        let _ = writeln!(
+            s,
+            "{pad}  sp->ringMirror_{v}_{arr} = (double *)TA_Malloc( sizeof(double) * allocN );"
+        );
+        let _ = writeln!(s, "{pad}  if( !sp->ringMirror_{v}_{arr} ) {fail}");
+        if with_state {
+            // A derived ring holds f(bar), not a raw column, so both fill
+            // shapes evaluate the expression per bar instead of copying.
+            let fill_val = ring
+                .derived
+                .as_ref()
+                .map(|dr| derived_fill_expr(dr, "fillJ", registry, helpers, counter));
+            if ring.back > 0 {
+                let rhs = fill_val.clone().unwrap_or_else(|| format!("{arr}[fillJ]"));
+                let _ = writeln!(s, "{pad}  {{ int fillJ;");
+                let _ = writeln!(
+                    s,
+                    "{pad}    for( fillJ = historyLen - sp->ringCap_{v}; fillJ < historyLen; fillJ++ )"
+                );
+                let _ = writeln!(
+                    s,
+                    "{pad}       sp->ring_{v}_{arr}[fillJ % sp->ringCap_{v}] = {rhs};"
+                );
+                let _ = writeln!(s, "{pad}  }}");
+            } else if let Some(rhs) = fill_val {
+                let _ = writeln!(s, "{pad}  {{ int fillJ;");
+                let _ = writeln!(
+                    s,
+                    "{pad}    for( fillJ = historyLen - sp->ringCap_{v}; fillJ < historyLen; fillJ++ )"
+                );
+                let _ = writeln!(
+                    s,
+                    "{pad}       sp->ring_{v}_{arr}[fillJ - (historyLen - sp->ringCap_{v})] = {rhs};"
+                );
+                let _ = writeln!(s, "{pad}  }}");
+            } else {
+                let _ = writeln!(
+                    s,
+                    "{pad}  memcpy( sp->ring_{v}_{arr}, {arr} + (historyLen - sp->ringCap_{v}), sizeof(double) * (size_t)sp->ringCap_{v} );"
+                );
+            }
+        } else {
+            // Identity path never reads the ring, but Peek's mirror
+            // memcpy must not copy uninitialized heap (MSan).
+            let _ = writeln!(
+            s,
+                "{pad}  memset( sp->ring_{v}_{arr}, 0, sizeof(double) * allocN );"
+            );
+        }
+    }
+}
+
 #[allow(clippy::too_many_lines)]
 fn alloc_and_capture(
     func: &FuncDef,
@@ -3495,44 +3607,9 @@ fn alloc_and_capture(
             s,
             "{pad}{{ size_t allocN = (size_t)(sp->ringCap_{v} > 0 ? sp->ringCap_{v} : 1);"
         );
-        for arr in &ring.arrays {
-            let _ = writeln!(
-                s,
-                "{pad}  sp->ring_{v}_{arr} = (double *)TA_Malloc( sizeof(double) * allocN );"
-            );
-            let _ = writeln!(s, "{pad}  if( !sp->ring_{v}_{arr} ) {fail}");
-            let _ = writeln!(
-                s,
-                "{pad}  sp->ringMirror_{v}_{arr} = (double *)TA_Malloc( sizeof(double) * allocN );"
-            );
-            let _ = writeln!(s, "{pad}  if( !sp->ringMirror_{v}_{arr} ) {fail}");
-            if with_state {
-                if ring.back > 0 {
-                    let _ = writeln!(s, "{pad}  {{ int fillJ;");
-                    let _ = writeln!(
-                        s,
-                        "{pad}    for( fillJ = historyLen - sp->ringCap_{v}; fillJ < historyLen; fillJ++ )"
-                    );
-                    let _ = writeln!(
-                        s,
-                        "{pad}       sp->ring_{v}_{arr}[fillJ % sp->ringCap_{v}] = {arr}[fillJ];"
-                    );
-                    let _ = writeln!(s, "{pad}  }}");
-                } else {
-                    let _ = writeln!(
-                        s,
-                        "{pad}  memcpy( sp->ring_{v}_{arr}, {arr} + (historyLen - sp->ringCap_{v}), sizeof(double) * (size_t)sp->ringCap_{v} );"
-                    );
-                }
-            } else {
-                // Identity path never reads the ring, but Peek's mirror
-                // memcpy must not copy uninitialized heap (MSan).
-                let _ = writeln!(
-                    s,
-                    "{pad}  memset( sp->ring_{v}_{arr}, 0, sizeof(double) * allocN );"
-                );
-            }
-        }
+        emit_ring_slots(
+            &mut s, ring, v, pad, &fail, with_state, registry, helpers, counter,
+        );
         let _ = writeln!(s, "{pad}}}");
         if ring.back > 0 && with_state {
             let _ = writeln!(s, "{pad}sp->ringPos_{v} = historyLen % sp->ringCap_{v};");
