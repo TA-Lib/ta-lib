@@ -8319,6 +8319,162 @@ static void build_unique3river( void )
 
 }
 
+/* ---- Hard tier: CDLUPSIDEGAP2CROWS --------------------------------------- *
+ *
+ * A long white candle, a short black one gapping above it, and a black third
+ * that engulfs the second's body while still closing above the first. Nine
+ * conditions over three bars, two settings reads -- BodyLong at i-2 on an
+ * all-primer window, BodyShort at i-1 carrying the first body -- so a first
+ * body of 12 puts them on 2 and 3 exactly.
+ *
+ * TWO OF THE NINE ARE ENTAILED, AND ONE OF THEM IS THE GAP. That is the part
+ * worth reading, because a gap test is the last thing that looks redundant.
+ *
+ *   c4 (the 2nd gaps above the 1st). c0 makes the 1st white, so its body
+ *   ceiling is close(1st); c2 makes the 2nd black, so its body floor is
+ *   close(2nd). c8 puts close(3rd) above close(1st) and c7 puts it below
+ *   close(2nd). Chain those: close(2nd) > close(3rd) > close(1st) -- which IS
+ *   the gap. The two conditions describing where the THIRD candle closes pin
+ *   the relationship between the first two.
+ *
+ *   c5 (the 3rd is black). c2 gives open(2nd) > close(2nd), c6 puts open(3rd)
+ *   above open(2nd) and c7 puts close(3rd) below close(2nd), so
+ *   open(3rd) > open(2nd) > close(2nd) > close(3rd).
+ *
+ * Both derivations are price ordering with no threshold in them, so no choice
+ * of primer makes either flippable -- the same class as CDL3LINESTRIKE's c2 and
+ * CDLUNIQUE3RIVER's c0, rather than CDLSTALLEDPATTERN's primer-dependent pair.
+ * A 300k-sample random search over all three bars found no case breaking either
+ * one alone.
+ */
+static void cond_upsidegap2crows( int i, int *c )
+{
+   c[0] = pb_white(i-2);
+   c[1] = pb_body(i-2) > pb_avg(TA_BodyLong,  i-2);
+   c[2] = !pb_white(i-1);
+   c[3] = pb_body(i-1) <= pb_avg(TA_BodyShort, i-1);
+   c[4] = pb_bodylo(i-1) > pb_bodyhi(i-2);
+   c[5] = !pb_white(i);
+   c[6] = pbO[i] > pbO[i-1];
+   c[7] = pbC[i] < pbC[i-1];
+   c[8] = pbC[i] > pbC[i-2];
+}
+
+static void build_upsidegap2crows( void )
+{
+  pb_conditions(9);
+
+  pb_waive(4, "c0 makes the 1st candle white, so its body ceiling is close(1st); c2 makes the 2nd black, so its body floor is close(2nd). c8 puts close(3rd) above close(1st) and c7 puts it below close(2nd), so close(2nd) > close(3rd) > close(1st) -- which IS the gap this condition tests. c0, c2, c7 and c8 therefore entail it. Price ordering only; a 300k-sample random search found no case breaking it alone");
+  pb_waive(5, "c2 makes the 2nd candle black, so open(2nd) > close(2nd); c6 puts open(3rd) above open(2nd) and c7 puts close(3rd) below close(2nd), so open(3rd) > open(2nd) > close(2nd) > close(3rd) and the 3rd candle is black by construction. Price ordering only; same 300k-sample search found no case breaking it alone");
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  int z1=pb_bar(117,118,112,113);
+  pb_detect(z1,-100,"detect: a long white candle, a short black one gapping above it, and a black 3rd engulfing that body while closing above the 1st");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,99,100);
+  pb_bar(116,117,113,114);
+  int z2=pb_bar(117,118,112,113);
+  pb_flip(z2,0,"break c0: the 1st candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  int z3=pb_bar(117,118,112,113);
+  pb_control(z3,-100,0,"restore c0: the 1st candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,113,99,112);
+  pb_bar(116,117,113,114);
+  int z4=pb_bar(117,118,112,113);
+  pb_flip(z4,1,"break c1: 1st body 2 == avg 2, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(109,113,99,112);
+  pb_bar(116,117,113,114);
+  int z5=pb_bar(117,118,112,113);
+  pb_control(z5,-100,1,"restore c1: 1st body 3 > avg 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(114,117,113,116);
+  int z6=pb_bar(117,118,112,113);
+  pb_flip(z6,2,"break c2: the 2nd candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  int z7=pb_bar(117,118,112,113);
+  pb_control(z7,-100,2,"restore c2: the 2nd candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(117,118,113,113.5);
+  int z8=pb_bar(118,119,112,113);
+  pb_flip(z8,3,"break c3: 2nd body 3.5 above the BodyShort average 3");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(117,118,113,114);
+  int z9=pb_bar(118,119,112,113);
+  pb_control(z9,-100,3,"restore c3: 2nd body 3 == avg 3, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  int z10=pb_bar(116,118,112,113);
+  pb_flip(z10,6,"break c6: 3rd opens 116 == the 2nd open, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  int z11=pb_bar(116.5,118,112,113);
+  pb_control(z11,-100,6,"restore c6: 3rd opens 116.5 > the 2nd open 116");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  int z12=pb_bar(117,118,112,114);
+  pb_flip(z12,7,"break c7: 3rd closes 114 == the 2nd close, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  int z13=pb_bar(117,118,112,113.5);
+  pb_control(z13,-100,7,"restore c7: 3rd closes 113.5 < the 2nd close 114");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  int z14=pb_bar(117,118,111,112);
+  pb_flip(z14,8,"break c8: 3rd closes 112 == the 1st close, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  pb_bar(116,117,113,114);
+  int z15=pb_bar(117,118,112,112.5);
+  pb_control(z15,-100,8,"restore c8: 3rd closes 112.5 > the 1st close 112");
+  pb_flat(8);
+
+}
+
 static ErrorNumber test_marquee_predicate_coverage( void )
 {
    ErrorNumber e;
@@ -8367,6 +8523,7 @@ static ErrorNumber test_marquee_predicate_coverage( void )
    pb_reset(); build_identical3crows();     e = pb_check_mcdc("CDLIDENTICAL3CROWS",   TA_CDLIDENTICAL3CROWS,     cond_identical3crows);     if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_ladderbottom();        e = pb_check_mcdc("CDLLADDERBOTTOM",       TA_CDLLADDERBOTTOM,        cond_ladderbottom);        if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_unique3river();        e = pb_check_mcdc("CDLUNIQUE3RIVER",       TA_CDLUNIQUE3RIVER,        cond_unique3river);        if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_upsidegap2crows();     e = pb_check_mcdc("CDLUPSIDEGAP2CROWS",   TA_CDLUPSIDEGAP2CROWS,     cond_upsidegap2crows);     if( e != TA_TEST_PASS ) return e;
    pb_report_totals();
    return TA_TEST_PASS;
 }
