@@ -54,6 +54,74 @@ extern "C" {
 
 
 /*
+ * TA_AC - Accelerator/Decelerator Oscillator
+ * 
+ * Input  = High, Low
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInFastPeriod:(From 2 to 100000)
+ *    Period of the fast MA
+ * 
+ * optInSlowPeriod:(From 2 to 100000)
+ *    Period of the slow MA
+ * 
+ * optInSignalPeriod:(From 2 to 100000)
+ *    Smoothing for the signal line (period length)
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_AC( int    startIdx,
+                             int    endIdx,
+                                        const double inHigh[],
+                                        const double inLow[],
+                                        int           optInFastPeriod, /* From 2 to 100000 */
+                                        int           optInSlowPeriod, /* From 2 to 100000 */
+                                        int           optInSignalPeriod, /* From 2 to 100000 */
+                                        int          *outBegIdx,
+                                        int          *outNBElement,
+                                        double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_AC( int    startIdx,
+                               int    endIdx,
+                                          const float  inHigh[],
+                                          const float  inLow[],
+                                          int           optInFastPeriod, /* From 2 to 100000 */
+                                          int           optInSlowPeriod, /* From 2 to 100000 */
+                                          int           optInSignalPeriod, /* From 2 to 100000 */
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
+
+TA_LIB_API int TA_AC_Lookback( int           optInFastPeriod, /* From 2 to 100000 */
+                                        int           optInSlowPeriod, /* From 2 to 100000 */
+                                        int           optInSignalPeriod );  /* From 2 to 100000 */
+
+
+
+/*
+ * Streaming API for TA_AC — incremental per-bar evaluation.
+ * See docs/streaming-api-design.md.
+ */
+typedef struct TA_AC_Stream TA_AC_Stream;
+
+TA_LIB_API TA_RetCode TA_AC_Open( TA_AC_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, double *outReal );
+
+TA_LIB_API TA_RetCode TA_AC_Update( TA_AC_Stream *stream, double inHigh, double inLow, double *outReal );
+
+TA_LIB_API TA_RetCode TA_AC_Peek( const TA_AC_Stream *stream, double inHigh, double inLow, double *outReal );
+
+TA_LIB_API TA_RetCode TA_AC_Close( TA_AC_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history — bit-identical to TA_AC( 0, historyLen-1,
+ * ... ).
+ */
+TA_LIB_API TA_RetCode TA_AC_OpenAndFill( TA_AC_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
  * TA_ACCBANDS - Acceleration Bands
  * 
  * Input  = High, Low, Close

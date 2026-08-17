@@ -47,6 +47,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 
 ## Momentum Indicators
 
+- [AC](/functions/ac.md) — Accelerator/Decelerator Oscillator
 - [ADX](/functions/adx.md) — Average Directional Movement Index
 - [ADXR](/functions/adxr.md) — Average Directional Movement Index Rating
 - [AO](/functions/ao.md) — Awesome Oscillator

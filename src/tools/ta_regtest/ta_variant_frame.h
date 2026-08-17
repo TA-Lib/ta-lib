@@ -112,6 +112,52 @@ typedef struct {
    int                  delegatesToPrivate;
 } TA_VariantEntry;
 
+static TA_RetCode TA_AC_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_AC(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               (int)optIn[0] /* optInFastPeriod */,
+               (int)optIn[1] /* optInSlowPeriod */,
+               (int)optIn[2] /* optInSignalPeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_AC_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_AC(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               (int)optIn[0] /* optInFastPeriod */,
+               (int)optIn[1] /* optInSlowPeriod */,
+               (int)optIn[2] /* optInSignalPeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+
+static const TA_VInputKind TA_VIn_AC[] = { TA_VIN_HIGH, TA_VIN_LOW };
+static const TA_VOptSpec TA_VOpt_AC[] = {
+   { "optInFastPeriod", TA_VOPT_INT, 2.0, 100000.0, 5.0 },
+   { "optInSlowPeriod", TA_VOPT_INT, 2.0, 100000.0, 34.0 },
+   { "optInSignalPeriod", TA_VOPT_INT, 2.0, 100000.0, 5.0 },
+};
+
 static TA_RetCode TA_ACCBANDS_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -7104,6 +7150,8 @@ static const TA_VOptSpec TA_VOpt_WMA[] = {
 };
 
 static const TA_VariantEntry TA_VariantTable[] = {
+   { "AC", TA_AC_VFrameD, TA_AC_VFrameS,
+     2, TA_VIn_AC, 3, TA_VOpt_AC, 1, 0, 0 },
    { "ACCBANDS", TA_ACCBANDS_VFrameD, TA_ACCBANDS_VFrameS,
      3, TA_VIn_ACCBANDS, 1, TA_VOpt_ACCBANDS, 3, 0, 0 },
    { "ACOS", TA_ACOS_VFrameD, TA_ACOS_VFrameS,
@@ -7452,6 +7500,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_WMA, 1, TA_VOpt_WMA, 1, 0, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 173
+#define TA_VARIANT_TABLE_SIZE 174
 
 #endif /* TA_VARIANT_FRAME_H */

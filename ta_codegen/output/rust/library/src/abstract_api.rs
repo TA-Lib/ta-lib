@@ -34,6 +34,7 @@ use crate::MAType;
 #[non_exhaustive]
 #[allow(non_camel_case_types)]
 pub enum FuncId {
+    AC,
     ACCBANDS,
     ACOS,
     AD,
@@ -211,7 +212,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 173;
+    pub const COUNT: usize = 174;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNCS[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -394,7 +395,18 @@ impl FuncInfo {
 }
 
 /// All function metadata, indexed by [`FuncId`]. Link-time const, in `.rodata`.
-pub static FUNCS: [FuncInfo; 173] = [
+pub static FUNCS: [FuncInfo; 174] = [
+    FuncInfo {
+        id: FuncId::AC,
+        name: "AC",
+        group: Group::MomentumIndicators,
+        hint: "Accelerator/Decelerator Oscillator",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of the fast MA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 5, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Period of the slow MA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 34, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSignalPeriod", display_name: "Signal Period", hint: "Smoothing for the signal line (period length)", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 5, suggested: (4, 200, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000010) }, ],
+        unst_id: None,
+    },
     FuncInfo {
         id: FuncId::ACCBANDS,
         name: "ACCBANDS",
@@ -2306,6 +2318,7 @@ pub static FUNCS: [FuncInfo; 173] = [
 /// and faster than C's linear `strcmp` scan, with zero allocation/dependencies.
 pub fn get_func_handle(name: &str) -> Option<FuncId> {
     Some(match name {
+        "AC" => FuncId::AC,
         "ACCBANDS" => FuncId::ACCBANDS,
         "ACOS" => FuncId::ACOS,
         "AD" => FuncId::AD,
@@ -2724,6 +2737,7 @@ impl<'a> ParamHolder<'a> {
     /// [`RetCode::BadParam`] if a bound optional parameter is out of range.
     pub fn lookback(&self) -> Result<usize, RetCode> {
         let lb = match self.func {
+            FuncId::AC => self.core.AC_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
             FuncId::ACCBANDS => self.core.ACCBANDS_Lookback(self.int_opt[0]),
             FuncId::ACOS => self.core.ACOS_Lookback(),
             FuncId::AD => self.core.AD_Lookback(),
@@ -2927,6 +2941,15 @@ impl<'a> ParamHolder<'a> {
         let mut beg: usize = 0;
         let mut nb: usize = 0;
         let rc = match self.func {
+            FuncId::AC => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.AC(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
             FuncId::ACCBANDS => {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;

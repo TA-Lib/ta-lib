@@ -50,6 +50,7 @@
  *  081226 KL     EFI legs: EMA-of-force differential (#206).
  *  081226 KL     QSTICK legs: SMA-of-body differential plus two book vectors.
  *  081626 MF,CC  AO legs: two-SMA-of-median differential plus two oracles (#227).
+ *  081726 MF,CC  AC legs: AO-less-its-own-SMA differential plus one oracle (#228).
  */
 
 /* Description:
@@ -201,6 +202,12 @@ static ErrorNumber test_ao_inverted_pair( const TA_History *history );
 static ErrorNumber test_ao_inplace( const TA_History *history );
 static ErrorNumber test_ao_param_reject( const TA_History *history );
 static ErrorNumber test_ao_reference_anchoring( const TA_History *history );
+static ErrorNumber test_ac_differential( const TA_History *history );
+static ErrorNumber test_ac_oracle( const TA_History *history );
+static ErrorNumber test_ac_inverted_pair( const TA_History *history );
+static ErrorNumber test_ac_inplace( const TA_History *history );
+static ErrorNumber test_ac_param_reject( const TA_History *history );
+static ErrorNumber test_ac_reference_anchoring( const TA_History *history );
 
 /**** Global functions definitions. ****/
 ErrorNumber test_func_composite( TA_History *history )
@@ -348,6 +355,30 @@ ErrorNumber test_func_composite( TA_History *history )
       return retValue;
 
    retValue = test_ao_reference_anchoring( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_ac_differential( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_ac_oracle( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_ac_inverted_pair( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_ac_inplace( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_ac_param_reject( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_ac_reference_anchoring( history );
    if( retValue != TA_TEST_PASS )
       return retValue;
 
@@ -3526,6 +3557,771 @@ static ErrorNumber test_ao_reference_anchoring( const TA_History *history )
               "reference from the unanchored one (%d pair(s) compared), so the "
               "differential leg would pass with a mis-anchored reference\n",
               nbPairs );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* ======================================================================
+ * AC - Bill Williams' Accelerator/Decelerator Oscillator (#228)
+ *
+ *    median_t = (high_t + low_t) / 2
+ *    AO_t     = SMA(median, fast)_t - SMA(median, slow)_t     (5 / 34)
+ *    AC_t     = AO_t - SMA(AO, signal)_t                      (5)
+ *
+ * Two legs, per this file's doctrine.
+ *
+ * (1) DIFFERENTIAL, bit-exact. The reference is TA_AO, TA_SMA and TA_SUB -
+ *     three shipped primitives, no new numerical logic. TA_AO is called at
+ *     the bar AC's own oscillator series starts on, which is AC's clamped
+ *     startIdx less the signal window; TA_SMA then runs over that oscillator
+ *     array from its head. Both anchorings are load-bearing, for the reason
+ *     spelled out on leg (6): every running sum in the fused loop has been
+ *     through exactly the same number of add/subtract roll steps as the
+ *     reference's, and a reference anchored anywhere else disagrees in the
+ *     last ulp. Measured on this corpus, an unanchored reference disagrees on
+ *     35 of the 84 (grid x startIdx) cells.
+ *
+ * (2) EXTERNAL ORACLE, one arm. trading-signals 8.3.0 (npm, MIT), class
+ *     `AC` in momentum/AC/AC.js, driven live over this exact 252-bar corpus
+ *     and captured as hex-of-IEEE-bits so nothing is lost in transport. It
+ *     parameterises all three windows exactly as this does, and is NOT
+ *     circular: its moving average re-sums the stored window on every bar
+ *     (util/math/getAverage.js: `values.reduce((sum, x) => sum + x, 0) /
+ *     values.length`) where TA-Lib rolls a running total, so 202 of the 215
+ *     values at the default triple differ in the last bits. Agreement is
+ *     ulp-scale but NOT bitwise, which is why the values below are the
+ *     ORACLE'S and are compared at tolerance; freezing our own output here
+ *     would prove nothing about the formula.
+ *
+ * There is no second arm, and this is the one function in this file where
+ * that is a fact about the world rather than a choice: neither of the two
+ * oracle servers implements AC. Tulip Indicators' indicator directory has
+ * ao.c and no ac.c; pandas-ta-classic 0.6.52 has momentum/ao.py and no
+ * ac.py anywhere in its package tree. Both were checked, not assumed.
+ *
+ * The trading-signals capture was itself checked before being trusted, since
+ * a silently-wrong oracle is worse than none: every one of its 1024 captured
+ * values was compared against the same formula evaluated in EXACT rational
+ * arithmetic (Python Fraction over the corpus doubles, no rounding anywhere).
+ * Worst deviation 1.3e-13 absolute over the five parameter triples - i.e. it
+ * is a correctly-rounded evaluation of this formula, not merely a plausible
+ * one.
+ * ====================================================================== */
+
+/* Parameter triples. Covers the default; the legal floor on every axis;
+ * equal price windows at both ends (where AO is identically zero and so is
+ * AC); the off-default triples the oracle also pins; both orderings of an
+ * inverted price pair (no swap is performed - see ac.c and ao.c); the
+ * shortest legal signal window, where AC degenerates to half the bar-to-bar
+ * change in AO; a signal window longer than either price window; and a
+ * signal period longer than the corpus so the "nothing to evaluate" path is
+ * walked. */
+static const struct { int fast; int slow; int sig; } acGrid[] =
+{
+   {   5,  34,   5 },
+   {   2,   2,   2 },
+   {   2,   3,   3 },
+   {   3,  10,   4 },
+   {   2, 100,   7 },
+   { 100,   2,   5 },
+   {  10,   5,   5 },
+   {   5, 100,   2 },
+   {  99, 100,  30 },
+   { 100, 100,   2 },
+   {  10,  20,  30 },
+   {   5,  34, 300 },
+};
+#define NB_AC_GRID (sizeof(acGrid)/sizeof(acGrid[0]))
+
+/* startIdx values for the same differential. Unlike AO's, this grid MUST
+ * carry values above the lookback: at startIdx 0 the reference's TA_AO call
+ * clamps to exactly the same bar an unanchored one would, so no cell there
+ * can tell a correctly anchored reference from a careless one. See leg (6). */
+static const int acStartGrid[] = { 0, 1, 40, 60, 120, 200, 251 };
+#define NB_AC_START (sizeof(acStartGrid)/sizeof(acStartGrid[0]))
+
+/* AC external-oracle golden values.
+ *
+ * Every number below was read off a live trading-signals 8.3.0 run over
+ * TA_SREF_high/low_daily_ref_0_PRIV (node 22.21.1), transported as
+ * hex-of-IEEE-bits (#115) so the capture is lossless, and emitted
+ * mechanically - none was transcribed by hand. Five rows per triple, one per
+ * fifth of the output range, each the largest |value| in its fifth so the
+ * relative term governs rather than the near-zero floor.
+ *
+ * Measured full-corpus agreement between the shipped TA_AC and the arm:
+ *
+ *   5/34/5   : max abs 5.951e-14, max rel 2.521e-12, 4.820e-14 where |v|>=1
+ *   3/10/4   : max abs 5.684e-14, max rel 1.814e-12, 3.087e-14 where |v|>=1
+ *   2/100/7  : max abs 5.151e-14, max rel 5.288e-12, 3.289e-14 where |v|>=1
+ *   5/34/2   : max abs 3.553e-14, max rel 2.422e-12, 2.735e-14 where |v|>=1
+ *   10/20/30 : max abs 1.315e-13, max rel 3.641e-12, 9.381e-14 where |v|>=1
+ *
+ * The whole-corpus relative maxima all land at zero crossings, which AC has
+ * by construction - hence the mixed predicate below rather than a bare
+ * relative one. */
+static const struct { int fast; int slow; int sig; int beg; int nb; } acOracleShape[] =
+{
+   {   5,  34,   5,  37, 215 },
+   {   3,  10,   4,  12, 240 },
+   {   2, 100,   7, 105, 147 },
+   {   5,  34,   2,  34, 218 },
+   {  10,  20,  30,  48, 204 },
+};
+#define NB_AC_ORACLE_SHAPE (sizeof(acOracleShape)/sizeof(acOracleShape[0]))
+
+static const struct { int fast; int slow; int sig; int idx; double value; } acOracle[] =
+{
+   {   5,  34,  5,  42,   7.0632470588235465 },   /* bar  79 */
+   {   5,  34,  5,  43,   4.987732352941177  },   /* bar  80 */
+   {   5,  34,  5, 103,  -5.1706235294117819 },   /* bar 140 */
+   {   5,  34,  5, 160,  -3.3305117647058857 },   /* bar 197 */
+   {   5,  34,  5, 189,   5.2308470588235396 },   /* bar 226 */
+
+   {   3,  10,  4,  17,   2.6822499999999998 },   /* bar  29 */
+   {   3,  10,  4,  65,   7.3000416666666652 },   /* bar  77 */
+   {   3,  10,  4, 126,  -3.672791666666658  },   /* bar 138 */
+   {   3,  10,  4, 189,   2.8039583333333233 },   /* bar 201 */
+   {   3,  10,  4, 227,  -5.0104166666666643 },   /* bar 239 */
+
+   {   2, 100,  7,  12,   4.2657071428571491 },   /* bar 117 */
+   {   2, 100,  7,  34,  -8.1432607142857236 },   /* bar 139 */
+   {   2, 100,  7,  74,  -5.0883428571428428 },   /* bar 179 */
+   {   2, 100,  7,  98, -11.304242857142874  },   /* bar 203 */
+   {   2, 100,  7, 120,   9.6306071428571371 },   /* bar 225 */
+
+   {   5,  34,  2,  42,   1.1246544117647019 },   /* bar  76 */
+   {   5,  34,  2,  44,   2.0532720588235378 },   /* bar  78 */
+   {   5,  34,  2, 105,  -1.3852647058823493 },   /* bar 139 */
+   {   5,  34,  2, 162,  -1.0833235294117713 },   /* bar 196 */
+   {   5,  34,  2, 191,   1.5842352941176472 },   /* bar 225 */
+
+   {  10,  20, 30,  36,   6.3676749999999869 },   /* bar  84 */
+   {  10,  20, 30,  58,  -5.0599208333333152 },   /* bar 106 */
+   {  10,  20, 30,  98,  -7.3506833333333326 },   /* bar 146 */
+   {  10,  20, 30, 142,  -5.3971000000000338 },   /* bar 190 */
+   {  10,  20, 30, 184,   7.7485083333333389 },   /* bar 232 */
+};
+#define NB_AC_ORACLE (sizeof(acOracle)/sizeof(acOracle[0]))
+
+/* Relative band, from the measured agreement where |value| >= 1: the worst of
+ * the five triples is 9.381e-14, and the worst PINNED row is 1.264e-14. */
+#define AC_ORACLE_TOL 1e-12
+/* Near-zero absolute floor. AC crosses zero by construction, so a
+ * relative-only check is unbounded there. Sized ~15x the worst measured
+ * absolute agreement (1.315e-13). Every pinned |value| >= 1, so the relative
+ * term governs every row above; this keeps a later addition near a crossing
+ * from turning into a spurious failure. See checkOracleValue(). */
+#define AC_ORACLE_ABS 2e-12
+
+/* Build the bit-exact reference for one AC call: TA_AO over the oscillator's
+ * own range, TA_SMA over that array, then TA_SUB of the two aligned halves.
+ *
+ * aoStartIdx selects the anchoring, which is the whole point of leg (6): pass
+ * acBegIdx-(sig-1) for the contract, anything else to see it break.
+ *
+ * Returns 0 on success, or a non-zero ErrorNumber. On success *nbRef holds
+ * the element count, which the caller must find equal to AC's own. */
+static ErrorNumber ac_build_reference( const TA_History *history,
+                                       int fast, int slow, int sig,
+                                       int aoStartIdx, int endIdx,
+                                       double *aoBuf, double *smaBuf,
+                                       double *outRef, int *nbRef )
+{
+   TA_RetCode rc;
+   TA_Integer begAO, nbAO, begSma, nbSma, begSub, nbSub;
+
+   rc = TA_AO( aoStartIdx, endIdx, history->high, history->low,
+               fast, slow, &begAO, &nbAO, aoBuf );
+   if( rc != TA_SUCCESS || nbAO < sig )
+   {
+      printf( "AC reference Fail [fast %d slow %d sig %d]: TA_AO rc=%d nb=%d\n",
+              fast, slow, sig, (int)rc, (int)nbAO );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+
+   rc = TA_SMA( 0, nbAO - 1, aoBuf, sig, &begSma, &nbSma, smaBuf );
+   if( rc != TA_SUCCESS || begSma != sig - 1 )
+   {
+      printf( "AC reference Fail [fast %d slow %d sig %d]: TA_SMA rc=%d beg=%d\n",
+              fast, slow, sig, (int)rc, (int)begSma );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+
+   rc = TA_SUB( 0, nbSma - 1, &aoBuf[sig-1], smaBuf, &begSub, &nbSub, outRef );
+   if( rc != TA_SUCCESS || nbSub != nbSma )
+   {
+      printf( "AC reference Fail [fast %d slow %d sig %d]: TA_SUB rc=%d nb=%d\n",
+              fast, slow, sig, (int)rc, (int)nbSub );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+
+   *nbRef = (int)nbSub;
+   return TA_TEST_PASS;
+}
+
+/* (1) DIFFERENTIAL: AC == SUB( AO, SMA(AO,signal) ), bit-for-bit, over the
+ * parameter grid crossed with the startIdx grid. */
+static ErrorNumber test_ac_differential( const TA_History *history )
+{
+   unsigned int g, s;
+   int i, nbBars, nbChecked = 0;
+   ErrorNumber e;
+   TA_RetCode rcAC;
+   TA_Integer begAC, nbAC;
+   static TA_Real aoBuf[OUT_CAP];
+   static TA_Real smaBuf[OUT_CAP];
+   static TA_Real outAC[OUT_CAP];
+   static TA_Real outRef[OUT_CAP];
+
+   nbBars = (int)history->nbBars;
+
+   for( s = 0; s < NB_AC_START; s++ )
+   {
+      int startIdx = acStartGrid[s];
+
+      for( g = 0; g < NB_AC_GRID; g++ )
+      {
+         int fast = acGrid[g].fast;
+         int slow = acGrid[g].slow;
+         int sig  = acGrid[g].sig;
+         int lookback, refStart, nbRef;
+
+         rcAC = TA_AC( startIdx, nbBars - 1, history->high, history->low,
+                       fast, slow, sig, &begAC, &nbAC, outAC );
+         if( rcAC != TA_SUCCESS )
+         {
+            printf( "AC differential Fail [start %d fast %d slow %d sig %d]: retCode %d\n",
+                    startIdx, fast, slow, sig, (int)rcAC );
+            return TA_TESTUTIL_TFRR_BAD_RETCODE;
+         }
+
+         /* The lookback contract, checked against the closed form rather than
+          * against the reference (which shares TA_AC_Lookback with it). */
+         lookback = TA_AC_Lookback( fast, slow, sig );
+         if( lookback != (fast > slow ? fast : slow) - 1 + sig - 1 )
+         {
+            printf( "AC differential Fail [fast %d slow %d sig %d]: lookback %d, expected %d\n",
+                    fast, slow, sig, lookback,
+                    (fast > slow ? fast : slow) - 1 + sig - 1 );
+            return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+         }
+
+         refStart = startIdx < lookback ? lookback : startIdx;
+
+         if( refStart > nbBars - 1 )
+         {
+            /* Not enough data for a single output. */
+            if( nbAC != 0 )
+            {
+               printf( "AC differential Fail [start %d fast %d slow %d sig %d]: "
+                       "expected no output, got nb=%d\n",
+                       startIdx, fast, slow, sig, (int)nbAC );
+               return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+            }
+            continue;
+         }
+
+         if( begAC != refStart || nbAC != nbBars - refStart )
+         {
+            printf( "AC differential Fail [start %d fast %d slow %d sig %d]: "
+                    "range (%d,%d), expected (%d,%d)\n",
+                    startIdx, fast, slow, sig, (int)begAC, (int)nbAC,
+                    refStart, nbBars - refStart );
+            return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+         }
+
+         /* The reference, anchored on AC's OWN clamped startIdx - see the
+          * banner above and leg (6). */
+         e = ac_build_reference( history, fast, slow, sig,
+                                 refStart - (sig-1), nbBars - 1,
+                                 aoBuf, smaBuf, outRef, &nbRef );
+         if( e != TA_TEST_PASS )
+            return e;
+         if( nbRef != nbAC )
+         {
+            printf( "AC differential Fail [start %d fast %d slow %d sig %d]: "
+                    "reference nb %d vs AC nb %d\n",
+                    startIdx, fast, slow, sig, nbRef, (int)nbAC );
+            return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+         }
+
+         for( i = 0; i < nbAC; i++ )
+         {
+            if( memcmp( &outAC[i], &outRef[i], sizeof(double) ) != 0 )
+            {
+               printf( "AC differential Fail [start %d fast %d slow %d sig %d] at out[%d]: "
+                       "fused %.17g != compose %.17g (must be BIT-exact)\n",
+                       startIdx, fast, slow, sig, i, outAC[i], outRef[i] );
+               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+            }
+         }
+
+         /* Equal price windows make AO identically zero, so the signal
+          * average of it is zero and so is AC - sign included. Every
+          * subtraction in all three running sums has to cancel exactly. This
+          * is the one grid row whose expected value is known without any
+          * reference at all. */
+         if( fast == slow )
+         {
+            for( i = 0; i < nbAC; i++ )
+            {
+               if( outAC[i] != 0.0 )
+               {
+                  printf( "AC differential Fail [start %d fast=slow=%d sig %d] at out[%d]: "
+                          "%.17g, expected exactly 0\n",
+                          startIdx, fast, sig, i, outAC[i] );
+                  return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+               }
+            }
+         }
+
+         nbChecked++;
+
+         /* Cross-language: AC must also be bit-identical on every language
+          * server (no transcendental, so all four stay zero-tolerance). */
+         if( server_verify_active() )
+         {
+            e = server_verify( "AC", startIdx, nbBars - 1, history->nbBars,
+                               rcAC, begAC, nbAC,
+                               (const TA_Real*[]){ history->high, history->low, NULL },
+                               (double[]){ (double)fast, (double)slow, (double)sig }, 3,
+                               (const TA_Real*[]){ outAC, NULL }, NULL );
+            if( e != TA_TEST_PASS )
+               return e;
+         }
+      }
+   }
+
+   /* Non-vacuity: the grid must actually have compared something. A triple
+    * that silently stopped producing output would otherwise leave this leg
+    * green on zero comparisons. */
+   if( nbChecked < (int)(NB_AC_GRID * NB_AC_START) / 2 )
+   {
+      printf( "AC differential Fail: only %d of %d grid cells produced output\n",
+              nbChecked, (int)(NB_AC_GRID * NB_AC_START) );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (2) EXTERNAL-ORACLE: TA_AC against trading-signals 8.3.0. */
+static ErrorNumber test_ac_oracle( const TA_History *history )
+{
+   TA_RetCode retCode;
+   TA_Integer begIdx, nbElement;
+   static TA_Real out[OUT_CAP];
+   unsigned int k, c;
+   int nbCompared = 0;
+
+   for( c = 0; c < NB_AC_ORACLE_SHAPE; c++ )
+   {
+      int fast = acOracleShape[c].fast;
+      int slow = acOracleShape[c].slow;
+      int sig  = acOracleShape[c].sig;
+
+      retCode = TA_AC( 0, (int)history->nbBars - 1, history->high, history->low,
+                       fast, slow, sig, &begIdx, &nbElement, out );
+      if( retCode != TA_SUCCESS )
+      {
+         printf( "AC oracle Fail [fast %d slow %d sig %d]: retCode = %d\n",
+                 fast, slow, sig, (int)retCode );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+      if( begIdx != acOracleShape[c].beg || nbElement != acOracleShape[c].nb )
+      {
+         printf( "AC oracle Fail [fast %d slow %d sig %d]: shape got (%d,%d) expected (%d,%d)\n",
+                 fast, slow, sig, (int)begIdx, (int)nbElement,
+                 acOracleShape[c].beg, acOracleShape[c].nb );
+         return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+      }
+
+      for( k = 0; k < NB_AC_ORACLE; k++ )
+      {
+         int idx;
+         double want, got, err;
+         const char *mode;
+
+         if( acOracle[k].fast != fast || acOracle[k].slow != slow ||
+             acOracle[k].sig != sig )
+            continue;
+
+         idx  = acOracle[k].idx;
+         want = acOracle[k].value;
+         got  = out[idx];
+
+         if( !checkOracleValue( got, want, AC_ORACLE_TOL, AC_ORACLE_ABS, &err, &mode ) )
+         {
+            printf( "AC oracle Fail [trading-signals 8.3.0 fast %d slow %d sig %d] at out[%d]: "
+                    "got %.17g expected %.17g (%s=%.3e > rel %.3e / abs %.3e)\n",
+                    fast, slow, sig, idx, got, want,
+                    mode, err, AC_ORACLE_TOL, AC_ORACLE_ABS );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+         nbCompared++;
+      }
+   }
+
+   /* Every pinned row must have been reached: a parameter typo in either
+    * table would otherwise silently drop its rows and leave the leg passing
+    * on fewer. */
+   if( nbCompared != (int)NB_AC_ORACLE )
+   {
+      printf( "AC oracle Fail: compared %d value(s) but the table carries %d\n",
+              nbCompared, (int)NB_AC_ORACLE );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (3) INVERTED PAIR: TA_AC does NOT swap fast and slow, inheriting AO's
+ * ruling.
+ *
+ * Negating a series negates every partial sum, every average and every
+ * difference exactly in IEEE-754 - no rounding slack anywhere - so AC(10,5,s)
+ * must be the exact negation of AC(5,10,s), not merely close. That makes this
+ * the cheapest possible detector of a swap having been introduced: a swapped
+ * implementation returns the SAME array for both calls.
+ *
+ * The sign itself is pinned against an outside opinion one level down, by
+ * test_ao_inverted_pair against pandas-ta-classic; AC is a strictly
+ * increasing function of AO, so it cannot silently disagree about which way
+ * up the oscillator is while AO agrees. */
+static ErrorNumber test_ac_inverted_pair( const TA_History *history )
+{
+   TA_RetCode rcInv, rcFwd;
+   TA_Integer begInv, nbInv, begFwd, nbFwd;
+   static TA_Real outInv[OUT_CAP];
+   static TA_Real outFwd[OUT_CAP];
+   int nbBars = (int)history->nbBars;
+   int i, nbNonZero = 0;
+
+   rcInv = TA_AC( 0, nbBars - 1, history->high, history->low,
+                  10, 5, 5, &begInv, &nbInv, outInv );
+   rcFwd = TA_AC( 0, nbBars - 1, history->high, history->low,
+                  5, 10, 5, &begFwd, &nbFwd, outFwd );
+   if( rcInv != TA_SUCCESS || rcFwd != TA_SUCCESS )
+   {
+      printf( "AC inverted Fail: retCode %d / %d\n", (int)rcInv, (int)rcFwd );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+   if( begInv != begFwd || nbInv != nbFwd || begInv != 13 )
+   {
+      printf( "AC inverted Fail: ranges (%d,%d) and (%d,%d), expected both (13,%d)\n",
+              (int)begInv, (int)nbInv, (int)begFwd, (int)nbFwd, nbBars - 13 );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+
+   for( i = 0; i < nbInv; i++ )
+   {
+      if( outInv[i] != -outFwd[i] )
+      {
+         printf( "AC inverted Fail at out[%d]: AC(10,5,5)=%.17g but -AC(5,10,5)=%.17g\n",
+                 i, outInv[i], -outFwd[i] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      if( outInv[i] != 0.0 )
+         nbNonZero++;
+   }
+
+   /* An all-zero pair would satisfy the equality above while proving nothing
+    * about a swap, since 0 == -0 numerically. */
+   if( nbNonZero < nbInv / 2 )
+   {
+      printf( "AC inverted Fail: only %d of %d values are non-zero, so the "
+              "antisymmetry check is vacuous\n", nbNonZero, (int)nbInv );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (4) IN-PLACE ALIASING: outReal written over inHigh, then over inLow.
+ *
+ * Weaker than AO's leg of the same name, and the difference is worth writing
+ * down rather than copying the stronger claim across. For AO, a clamped
+ * startIdx puts the longer window's trailing index exactly on outIdx, so
+ * hoisting the store above the trailing reads is a live defect that only an
+ * aliased call can see. AC has slack: the signal window leaves both trailing
+ * indices at least optInSignalPeriod-1 bars ahead of outIdx, and the declared
+ * floor of that period is 2, so the collision is unreachable. Measured, not
+ * assumed - the same hoist applied to ac.c passes every leg here and the
+ * generic #130 gate too.
+ *
+ * So this leg is not sabotage-backed the way AO's is; it asserts the
+ * published calling convention holds, and stands as the regression guard if
+ * that slack is ever removed (admitting a signal period of 1 would remove
+ * it). Swept over startIdx because the trailing indices move with it. */
+static ErrorNumber test_ac_inplace( const TA_History *history )
+{
+   TA_RetCode rc;
+   TA_Integer begRef, nbRef, begAlias, nbAlias;
+   static TA_Real outRef[OUT_CAP];
+   static TA_Real work[OUT_CAP];
+   int nbBars = (int)history->nbBars;
+   unsigned int g, s;
+   int i, which;
+
+   for( s = 0; s < NB_AC_START; s++ )
+   {
+      int startIdx = acStartGrid[s];
+
+      for( g = 0; g < NB_AC_GRID; g++ )
+      {
+         int fast = acGrid[g].fast;
+         int slow = acGrid[g].slow;
+         int sig  = acGrid[g].sig;
+
+         rc = TA_AC( startIdx, nbBars - 1, history->high, history->low,
+                     fast, slow, sig, &begRef, &nbRef, outRef );
+         if( rc != TA_SUCCESS )
+         {
+            printf( "AC inplace Fail [start %d fast %d slow %d sig %d]: reference retCode %d\n",
+                    startIdx, fast, slow, sig, (int)rc );
+            return TA_TESTUTIL_TFRR_BAD_RETCODE;
+         }
+         if( nbRef == 0 )
+            continue;
+
+         for( which = 0; which < 2; which++ )
+         {
+            const TA_Real *h = history->high;
+            const TA_Real *l = history->low;
+            const char *tag = which == 0 ? "outReal==inHigh" : "outReal==inLow";
+
+            /* Copy the aliased input into the output buffer and point that
+             * parameter at it, so out and that input are the same storage. */
+            for( i = 0; i < nbBars; i++ )
+               work[i] = which == 0 ? history->high[i] : history->low[i];
+            if( which == 0 )
+               h = work;
+            else
+               l = work;
+
+            rc = TA_AC( startIdx, nbBars - 1, h, l, fast, slow, sig,
+                        &begAlias, &nbAlias, work );
+            if( rc != TA_SUCCESS || begAlias != begRef || nbAlias != nbRef )
+            {
+               printf( "AC inplace Fail [%s start %d fast %d slow %d sig %d]: "
+                       "rc=%d range (%d,%d) vs (%d,%d)\n",
+                       tag, startIdx, fast, slow, sig, (int)rc,
+                       (int)begAlias, (int)nbAlias, (int)begRef, (int)nbRef );
+               return TA_TESTUTIL_TFRR_BAD_RETCODE;
+            }
+
+            for( i = 0; i < nbRef; i++ )
+            {
+               if( memcmp( &work[i], &outRef[i], sizeof(double) ) != 0 )
+               {
+                  printf( "AC inplace Fail [%s start %d fast %d slow %d sig %d] at out[%d]: "
+                          "aliased %.17g != separate %.17g\n",
+                          tag, startIdx, fast, slow, sig, i, work[i], outRef[i] );
+                  return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+               }
+            }
+         }
+      }
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (5) PARAMETER FLOOR. All three of AC's periods are declared [2, 100000],
+ * matching AO's pair and MACD's fast/slow. Period 1 is therefore NOT an
+ * accepted value on any axis, even though SMA(x,1) is well defined - so the
+ * answer to "does AC(1,100,5) match the composite?" is that AC(1,100,5) is a
+ * guarded reject, not a computed answer. Pinned here because the range is a
+ * published API contract, and because it is the one part of the
+ * accepted-range question the differential grid cannot express. */
+static ErrorNumber test_ac_param_reject( const TA_History *history )
+{
+   TA_RetCode rc;
+   TA_Integer beg, nb;
+   static TA_Real out[OUT_CAP];
+   static const struct { int fast; int slow; int sig; } badTriple[] =
+   {
+      {   1, 100,   5 },   /* fast below the floor   */
+      { 100,   1,   5 },   /* slow below the floor   */
+      {   5,  34,   1 },   /* signal below the floor */
+      {   1,   1,   1 },   /* all three              */
+      {   0,  34,   5 },
+      {   5,   0,   5 },
+      {   5,  34,   0 },
+      {  -1,  34,   5 },
+      {   5,  -1,   5 },
+      {   5,  34,  -1 },
+      { 100001, 34,  5 },  /* above the ceiling      */
+      {   5, 100001, 5 },
+      {   5,  34, 100001 },
+   };
+   unsigned int k;
+   int nbBars = (int)history->nbBars;
+
+   for( k = 0; k < sizeof(badTriple)/sizeof(badTriple[0]); k++ )
+   {
+      rc = TA_AC( 0, nbBars - 1, history->high, history->low,
+                  badTriple[k].fast, badTriple[k].slow, badTriple[k].sig,
+                  &beg, &nb, out );
+      if( rc != TA_BAD_PARAM )
+      {
+         printf( "AC param reject Fail [fast %d slow %d sig %d]: retCode %d, "
+                 "expected TA_BAD_PARAM(%d)\n",
+                 badTriple[k].fast, badTriple[k].slow, badTriple[k].sig,
+                 (int)rc, (int)TA_BAD_PARAM );
+         return TA_TESTUTIL_TFRR_BAD_PARAM;
+      }
+   }
+
+   /* And the boundary itself is accepted, so the floor is a floor and not an
+    * off-by-one that rejects the smallest legal triple. */
+   rc = TA_AC( 0, nbBars - 1, history->high, history->low, 2, 2, 2,
+               &beg, &nb, out );
+   if( rc != TA_SUCCESS || beg != 2 || nb != nbBars - 2 )
+   {
+      printf( "AC param reject Fail: the legal floor (2,2,2) was refused or mis-shaped "
+              "(rc=%d beg=%d nb=%d)\n", (int)rc, (int)beg, (int)nb );
+      return TA_TESTUTIL_TFRR_BAD_PARAM;
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (6) THE ANCHORING DISCIPLINE ITSELF, and the non-vacuity of the grid that
+ * enforces it.
+ *
+ * Leg (1) is bit-exact only because the reference's TA_AO call starts at AC's
+ * own clamped startIdx less the signal window. TA_SMA - which TA_AO is two of,
+ * and which the reference then runs a third time over the oscillator array -
+ * seeds its running sum at startIdx-(period-1) and rolls add-new / snapshot /
+ * subtract-trailing once per bar, so how many roll steps a sum has been
+ * through at a given output bar depends on where the call started, and each
+ * step rounds.
+ *
+ * The danger this leg exists for is sharper here than it was for AO. At
+ * startIdx 0 the reference's TA_AO clamps to exactly the bar an unanchored
+ * TA_AO(0, ...) clamps to, so the two references are the SAME CALL and agree
+ * on every value, for every triple, by construction. A differential written
+ * the natural unanchored way and tested only from bar 0 would therefore be
+ * GREEN over the entire parameter grid while proving nothing at all - which
+ * is why acStartGrid carries values above the lookback.
+ *
+ * So this leg asserts two things leg (1) cannot:
+ *   (a) the anchored reference is bit-exact -- the contract; and
+ *   (b) at least one cell in acGrid x acStartGrid actually SEPARATES anchored
+ *       from unanchored. Without (b), leg (1) could be silently reduced to
+ *       cells where the two agree and no gate in the tree would notice.
+ */
+static ErrorNumber test_ac_reference_anchoring( const TA_History *history )
+{
+   unsigned int g, s;
+   int i, nbBars, nbCells = 0, nbSeparating = 0;
+   TA_RetCode rc;
+   TA_Integer begAC, nbAC, begAO, nbAO, begSma, nbSma;
+   ErrorNumber e;
+   static TA_Real aoBuf[OUT_CAP];
+   static TA_Real smaBuf[OUT_CAP];
+   static TA_Real outAC[OUT_CAP];
+   static TA_Real outRef[OUT_CAP];
+
+   nbBars = (int)history->nbBars;
+
+   for( s = 0; s < NB_AC_START; s++ )
+   {
+      for( g = 0; g < NB_AC_GRID; g++ )
+      {
+         int fast = acGrid[g].fast;
+         int slow = acGrid[g].slow;
+         int sig  = acGrid[g].sig;
+         int startIdx = acStartGrid[s];
+         int nbRef, anchoredBad = 0, unanchoredBad = 0;
+
+         rc = TA_AC( startIdx, nbBars - 1, history->high, history->low,
+                     fast, slow, sig, &begAC, &nbAC, outAC );
+         if( rc != TA_SUCCESS )
+         {
+            printf( "AC anchoring Fail [start %d fast %d slow %d sig %d]: retCode %d\n",
+                    startIdx, fast, slow, sig, (int)rc );
+            return TA_TESTUTIL_TFRR_BAD_RETCODE;
+         }
+         if( nbAC == 0 )
+            continue;            /* lookback exceeds the corpus; nothing to compare */
+         nbCells++;
+
+         /* (a) ANCHORED. Must be bit-exact. */
+         e = ac_build_reference( history, fast, slow, sig,
+                                 begAC - (sig-1), nbBars - 1,
+                                 aoBuf, smaBuf, outRef, &nbRef );
+         if( e != TA_TEST_PASS )
+            return e;
+         if( nbRef != nbAC )
+         {
+            printf( "AC anchoring Fail [start %d fast %d slow %d sig %d]: "
+                    "anchored reference nb %d vs AC nb %d\n",
+                    startIdx, fast, slow, sig, nbRef, (int)nbAC );
+            return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+         }
+         for( i = 0; i < nbAC; i++ )
+         {
+            if( memcmp( &outAC[i], &outRef[i], sizeof(double) ) != 0 )
+               anchoredBad++;
+         }
+         if( anchoredBad != 0 )
+         {
+            printf( "AC anchoring Fail [start %d fast %d slow %d sig %d]: the ANCHORED "
+                    "reference differs on %d of %d value(s) - leg (1)'s premise is broken\n",
+                    startIdx, fast, slow, sig, anchoredBad, (int)nbAC );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+
+         /* (b) UNANCHORED: the whole chain from bar 0, aligned by absolute
+          * bar. Not a contract - just counted, to prove the grid can tell the
+          * two apart. */
+         if( TA_AO( 0, nbBars - 1, history->high, history->low,
+                    fast, slow, &begAO, &nbAO, aoBuf ) != TA_SUCCESS ||
+             TA_SMA( 0, nbAO - 1, aoBuf, sig, &begSma, &nbSma, smaBuf ) != TA_SUCCESS )
+         {
+            printf( "AC anchoring Fail [start %d fast %d slow %d sig %d]: unanchored "
+                    "reference rc\n", startIdx, fast, slow, sig );
+            return TA_TESTUTIL_TFRR_BAD_RETCODE;
+         }
+         for( i = 0; i < nbAC; i++ )
+         {
+            int jAO = (begAC + i) - begAO;      /* index into the AO array  */
+            int jSma = jAO - begSma;            /* index into the SMA array */
+            double want;
+            if( jSma < 0 || jAO >= nbAO || jSma >= nbSma )
+               continue;
+            want = aoBuf[jAO] - smaBuf[jSma];
+            if( memcmp( &outAC[i], &want, sizeof(double) ) != 0 )
+               unanchoredBad++;
+         }
+         if( unanchoredBad != 0 )
+            nbSeparating++;
+      }
+   }
+
+   if( nbCells < (int)(NB_AC_GRID * NB_AC_START) / 2 )
+   {
+      printf( "AC anchoring Fail: only %d of %d cells produced output\n",
+              nbCells, (int)(NB_AC_GRID * NB_AC_START) );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+
+   /* THE NON-VACUITY ASSERTION. If this fires, acStartGrid has been reduced to
+    * values at or below the lookback (where the two references are the same
+    * call) or acGrid to triples where they happen to agree, and leg (1) is no
+    * longer evidence that the reference is anchored correctly. Restore a
+    * startIdx well above the lookback - 60, 120 and 200 all separate on this
+    * corpus, 35 cells in total. */
+   if( nbSeparating == 0 )
+   {
+      printf( "AC anchoring Fail: no cell separates the anchored reference from "
+              "the unanchored one (%d cell(s) compared), so the differential leg "
+              "would pass with a mis-anchored reference\n", nbCells );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
 

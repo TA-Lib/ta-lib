@@ -88,6 +88,7 @@ public final class Functions {
 
    private static Map<String, FunctionInfo> build() {
       Map<String, FunctionInfo> m = new LinkedHashMap<>();
+      put(m, f_AC());
       put(m, f_ACCBANDS());
       put(m, f_ACOS());
       put(m, f_AD());
@@ -266,6 +267,34 @@ public final class Functions {
 
    private static void put(Map<String, FunctionInfo> m, FunctionInfo f) {
       m.put(f.name(), f);
+   }
+
+   private static FunctionInfo f_AC() {
+      return new FunctionInfo(
+         "AC", "Momentum Indicators", "Accelerator/Decelerator Oscillator", 0x02000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInFastPeriod", 0x00000000,
+               "Fast Period", "Period of the fast MA", 5.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInSlowPeriod", 0x00000000,
+               "Slow Period", "Period of the slow MA", 34.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInSignalPeriod", 0x00000000,
+               "Signal Period", "Smoothing for the signal line (period length)", 5.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000010)
+         ));
    }
 
    private static FunctionInfo f_ACCBANDS() {

@@ -49,6 +49,31 @@
 
 /* NEVER CALL directly these functions! Use TA_CallFunc. */
 
+TA_RetCode TA_AC_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_AC(
+               startIdx,
+               endIdx,
+               params->in[0].data.inPrice.high, /* inHigh */
+               params->in[0].data.inPrice.low, /* inLow */
+               params->optIn[0].data.optInInteger, /* optInFastPeriod*/
+               params->optIn[1].data.optInInteger, /* optInSlowPeriod*/
+               params->optIn[2].data.optInInteger, /* optInSignalPeriod*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_AC_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_AC_Lookback(params->optIn[0].data.optInInteger, /* optInFastPeriod*/
+                    params->optIn[1].data.optInInteger, /* optInSlowPeriod*/
+                    params->optIn[2].data.optInInteger /* optInSignalPeriod*/ );
+}
 TA_RetCode TA_ACCBANDS_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

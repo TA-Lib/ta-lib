@@ -111,6 +111,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
     {
         _all =
         [
+            MakeAc(),
             MakeAccbands(),
             MakeAcos(),
             MakeAd(),
@@ -322,6 +323,34 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         => ((IEnumerable<FunctionInfo>)_all).GetEnumerator();
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+    private static FunctionInfo MakeAc() => new(
+        name: "AC",
+        group: FunctionGroup.MomentumIndicators,
+        hint: "Accelerator/Decelerator Oscillator",
+        flags: FunctionFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceHL", PriceComponents.High | PriceComponents.Low, [PriceComponents.High, PriceComponents.Low]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInFastPeriod", "Fast Period", "Period of the fast MA", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 5, 4, 200, 1)),
+            new OptInputInfo("optInSlowPeriod", "Slow Period", "Period of the slow MA", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 34, 4, 200, 1)),
+            new OptInputInfo("optInSignalPeriod", "Signal Period", "Smoothing for the signal line (period length)", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 5, 4, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Histogram),
+        ],
+        lookback: static (core, c) => core.AC_Lookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2)),
+        invoke: static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.AC(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        });
 
     private static FunctionInfo MakeAccbands() => new(
         name: "ACCBANDS",

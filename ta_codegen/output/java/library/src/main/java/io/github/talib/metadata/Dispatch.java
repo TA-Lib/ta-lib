@@ -56,6 +56,9 @@ final class Dispatch {
    static OutRange call(ParamHolder h, int startIdx, int endIdx) {
       Core core = h.core();
       switch (h.info().name()) {
+         case "AC":
+            return core.AC(
+               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.intOpt(1), h.intOpt(2), h.realOutput(0));
          case "ACCBANDS":
             return core.ACCBANDS(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOutput(0), h.realOutput(1), h.realOutput(2));
@@ -586,6 +589,8 @@ final class Dispatch {
    static int lookback(ParamHolder h) {
       Core core = h.core();
       switch (h.info().name()) {
+         case "AC":
+            return core.AC_Lookback(h.intOpt(0), h.intOpt(1), h.intOpt(2));
          case "ACCBANDS":
             return core.ACCBANDS_Lookback(h.intOpt(0));
          case "ACOS":

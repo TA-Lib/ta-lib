@@ -38,6 +38,78 @@
 #include "ta_abstract.h"
 #include "ta_def_ui.h"
 
+/* AC BEGIN */
+static const TA_OptInputParameterInfo TA_DEF_UI_D_AC_FastPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInFastPeriod",
+   0,
+
+   "Fast Period",
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
+   5,
+   "Period of the fast MA",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_AC_SlowPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInSlowPeriod",
+   0,
+
+   "Slow Period",
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
+   34,
+   "Period of the slow MA",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_AC_SignalPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInSignalPeriod",
+   0,
+
+   "Signal Period",
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
+   5,
+   "Smoothing for the signal line (period length)",
+
+   NULL
+};
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_AC_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_HISTO };
+
+static const TA_InputParameterInfo    *TA_AC_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HL,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_AC_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real_AC_Default,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_AC_OptInputs[] =
+{ &TA_DEF_UI_D_AC_FastPeriod,
+  &TA_DEF_UI_D_AC_SlowPeriod,
+  &TA_DEF_UI_D_AC_SignalPeriod,
+  NULL
+};
+
+DEF_FUNCTION( AC,
+              TA_GroupId_MomentumIndicators,
+              "Accelerator/Decelerator Oscillator",
+              TA_FUNC_FLG_STREAM
+             );
+/* AC END */
+
 /* ACCBANDS BEGIN */
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_ACCBANDS_UpperBand =
                                { TA_Output_Real, "outRealUpperBand", TA_OUT_UPPER_LIMIT };
@@ -528,6 +600,7 @@ DEF_FUNCTION( AVGPRICE,
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableA[] =
 {
+   ADD_TO_TABLE(AC),
    ADD_TO_TABLE(ACCBANDS),
    ADD_TO_TABLE(ACOS),
    ADD_TO_TABLE(AD),

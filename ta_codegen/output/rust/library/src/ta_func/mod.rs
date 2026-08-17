@@ -82,6 +82,7 @@ mod scratch_election;
 mod stream_finite;
 
 // Generated indicator modules:
+mod ac;
 mod accbands;
 mod acos;
 mod ad;
@@ -257,6 +258,7 @@ mod willr;
 mod wma;
 
 // Generated stream handles (one per streamable indicator):
+pub use ac::AC_Stream;
 pub use accbands::ACCBANDS_Stream;
 pub use acos::ACOS_Stream;
 pub use ad::AD_Stream;

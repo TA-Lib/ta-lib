@@ -284,6 +284,7 @@ include_directories(
 # [ta_codegen begin LIB_SOURCES]
 set(LIB_SOURCES
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_utility.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_AC.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_ACCBANDS.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_ACOS.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_AD.c"

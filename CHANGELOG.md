@@ -39,10 +39,11 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - HMA: Hull Moving Average (#139).
   - WAD: Williams' Accumulation/Distribution, the no-volume Achelis form (#200)
   - EFI: Elder's Force Index (#206)
-  - QSTICK: Qstick (ta-lib-proposal-drafts#24)
-  - MARKETFI: Market Facilitation Index, a bar's range per unit of volume (ta-lib-proposal-drafts#23)
-  - AO: Awesome Oscillator, Bill Williams' fast-minus-slow SMA of the median price (#227)
-- New MAType (for MA, BBANDS, STOCK etc...):
+  - QSTICK: Qstick (#226)
+  - MARKETFI: Market Facilitation Index (#230)
+  - AO: Awesome Oscillator (#227)
+  - AC: Accelerator/Decelerator Oscillator (#228)
+- New MAType (for MA, BBANDS, STOCH etc...):
   - TA_MAType_HMA (#139)
   - TA_MAType_DEFAULT — selects that parameter's documented MA type (#182)
 

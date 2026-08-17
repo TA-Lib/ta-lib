@@ -1,3 +1,4 @@
+AC                  Accelerator/Decelerator Oscillator
 ACCBANDS            Acceleration Bands
 ACOS                Vector Trigonometric ACos
 AD                  Chaikin A/D Line

@@ -47,6 +47,15 @@
 #endif
 
 
+TA_RetCode TA_AC_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_AC_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 TA_RetCode TA_ACCBANDS_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
