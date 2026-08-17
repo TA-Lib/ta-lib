@@ -727,19 +727,19 @@ static ErrorNumber testTAFunction_ALL( void )
                                 "HT_DCPERIOD,HT_DCPHASE,HT_TRENDLINE,HT_TRENDMODE,MEDPRICE" );
    DO_TEST( test_func_ma,       "All Moving Averages,"
                                 "SMA,EMA,WMA,DEMA,TEMA,TRIMA,KAMA,MAMA,T3,MA" );
-   DO_TEST( test_func_per_hl,   "AROON,CORREL,BETA,MIDPRICE" );
+   DO_TEST( test_func_per_hl,   "AROON,AROONOSC,CORREL,BETA,MIDPRICE" );
    DO_TEST( test_func_per_hlc,  "CCI,WILLR,ULTOSC,NATR,ACCBANDS,WAD" );
    DO_TEST( test_func_per_ohlc, "BOP,AVGPRICE" );
    DO_TEST( test_func_rsi,      "RSI,CMO" );
    DO_TEST( test_func_imi, "IMI" );
    DO_TEST( test_func_minmax,   "MIN,MAX,MININDEX,MAXINDEX,MINMAX,MINMAXINDEX,MIDPOINT" );
-   DO_TEST( test_func_po,       "PO,APO" );
-   DO_TEST( test_func_adx,      "ADX,ADXR,DI,DM,DX" );
+   DO_TEST( test_func_po,       "PO,APO,PPO" );
+   DO_TEST( test_func_adx,      "ADX,ADXR,DI,DM,DX,PLUS_DI,PLUS_DM,MINUS_DI,MINUS_DM" );
    DO_TEST( test_func_sar,      "SAR,SAREXT" );
    DO_TEST( test_func_stoch,    "STOCH,STOCHF,STOCHRSI" );
    DO_TEST( test_func_per_hlcv, "MFI,AD,ADOSC" );
    DO_TEST( test_func_per_cv,   "NVI,PVI" );
-   DO_TEST( test_func_1in_2out, "PHASOR,SINE" );
+   DO_TEST( test_func_1in_2out, "PHASOR,SINE,HT_PHASOR,HT_SINE" );
    DO_TEST( test_func_per_ema,  "TRIX" );
    DO_TEST( test_func_macd,     "MACD,MACDFIX,MACDEXT" );
    DO_TEST( test_func_mom_roc,  "MOM,ROC,ROCP,ROCR,ROCR100" );
@@ -756,7 +756,7 @@ static ErrorNumber testTAFunction_ALL( void )
    /* The tag is what --function= substring-matches, so every function the
     * group covers must appear in it: --function=VWMA matched nothing before
     * VWMA was named here (issue #137). */
-   DO_TEST( test_func_composite, "PVO,VWMA,CMF,HMA,EFI,QSTICK,AO,AC,COMPOSITE" );
+   DO_TEST( test_func_composite, "PVO,VWMA,CMF,HMA,EFI,QSTICK,AO,AC,SUM,COMPOSITE" );
    DO_TEST( test_func_marketfi, "MARKETFI" );
    DO_TEST( test_func_cmf,       "CMF" );
    DO_TEST( test_func_cmou,      "CMOU" );
@@ -784,8 +784,11 @@ static ErrorNumber testTAFunction_ALL( void )
               functionFilter );
       printf( "        The filter is a substring match against the GROUP TAG in\n" );
       printf( "        ta_regtest.c's DO_TEST list, not against the function name.\n" );
-      printf( "        Add the name to the tag of the group that covers it, or use\n" );
-      printf( "        a tag that exists.\n" );
+      printf( "        Some functions have no hand-written group at all (the plain\n" );
+      printf( "        vector math, LINEARREG*, TSF, OBV, TYPPRICE, WCLPRICE); they\n" );
+      printf( "        are covered by the systematic sweeps, which enumerate every\n" );
+      printf( "        function through ta_abstract -- reach those with --codegen or\n" );
+      printf( "        --xlang-hash. Otherwise add the name to its group's tag.\n" );
       return TA_REGTEST_FILTER_MATCHED_NOTHING;
    }
 
