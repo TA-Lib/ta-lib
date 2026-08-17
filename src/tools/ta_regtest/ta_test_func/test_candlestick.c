@@ -9970,6 +9970,167 @@ static void build_kicking( void )
   pb_control(k7b,-100,7,"restore c7 alt1: high 92.5 < prior low 93.5");
   pb_flat(8);
 }
+static void cond_kickingbylength( int i, int *c )
+{
+   double vs1 = pb_avg(TA_ShadowVeryShort, i-1);
+   double vs0 = pb_avg(TA_ShadowVeryShort, i);
+   c[0] = pb_white(i-1) != pb_white(i);
+   c[1] = pb_body(i-1) >  pb_avg(TA_BodyLong, i-1);
+   c[2] = pb_upsh(i-1) <  vs1;
+   c[3] = pb_losh(i-1) <  vs1;
+   c[4] = pb_body(i)   >  pb_avg(TA_BodyLong, i);
+   c[5] = pb_upsh(i)   <  vs0;
+   c[6] = pb_losh(i)   <  vs0;
+   c[7] = ( !pb_white(i-1) && pbL[i] > pbH[i-1] )
+       || (  pb_white(i-1) && pbH[i] < pbL[i-1] );
+}
+
+/* The scenario the two KICKINGs share. CDLKICKING reports this candle's
+ * colour, CDLKICKINGBYLENGTH the colour of whichever body is longer, so a
+ * builder whose longer body is always the current one cannot tell them apart.
+ * Every scenario below keeps the FIRST body longer (12 against 5), which is
+ * what makes the two functions disagree and gives each its own expected value.
+ */
+/* c7's alternatives are a colour selector plus a gap test. The selector is
+ * waived as in BELTHOLD; the gap test is the term the boundary flip attacks. */
+static void arm_kickingbylength( int i, int cond, int arm, int *a )
+{
+   if( cond != 7 ) return;
+   if( arm == 0 ) { a[0] = !pb_white(i-1); a[1] = pbL[i] > pbH[i-1]; }
+   else           { a[0] =  pb_white(i-1); a[1] = pbH[i] < pbL[i-1]; }
+}
+
+static void build_kickingbylength( void )
+{
+  pb_conditions(8);
+  pb_signs(2);
+  pb_arm(7,0,2); pb_arm(7,1,2);
+  pb_arm_model(arm_kickingbylength);
+  pb_waive_arm(7,0,0,"the arm's own colour selector -- it chooses the arm, and the class it chooses is fired by pb_signs(2)");
+  pb_waive_arm(7,1,0,"the arm's own colour selector -- it chooses the arm, and the class it chooses is fired by pb_signs(2)");
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(106,106.5,93.5,94);               /* 1st: black marubozu, body 12, shadows 0.5 */
+  int d=pb_bar(107,112.5,107,112);       /* 2nd: white marubozu, body 5, gaps up */
+  pb_detect(d,-100,"detect: opposite marubozus, 2nd gaps up over 106.5");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(106,106.5,93.5,94);
+  int f0=pb_bar(112,112.5,107,107.5);      /* BLACK like the 1st, low 107 keeps the gap */
+  pb_flip(f0,0,"break c0: both candles are black");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(106,106.5,93.5,94);
+  int k0=pb_bar(107,112.5,107,112);
+  pb_control(k0,-100,0,"restore c0: opposite colours");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(96,96.5,93.5,94);                 /* 1st body 2 == avg at i-1 */
+  int f1=pb_bar(107,112.5,107,112);
+  pb_flip(f1,1,"break c1: first body 2 == avg 2, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(106,106.5,93.5,94);
+  int k1=pb_bar(107,112.5,107,112);
+  pb_control(k1,-100,1,"restore c1: first body 12 > 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(106,107,93.5,94);                 /* 1st upper shadow 1 == avg at i-1 */
+  int f2=pb_bar(108,113,107.5,112.5);
+  pb_flip(f2,2,"break c2: first upper shadow 1 == avg 1, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(106,106.5,93.5,94);
+  int k2=pb_bar(107,112.5,107,112);
+  pb_control(k2,-100,2,"restore c2: first upper shadow 0.5 < 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(106,106.5,93,94);                 /* 1st lower shadow 1 == avg at i-1 */
+  int f3=pb_bar(107,112.5,107,112);
+  pb_flip(f3,3,"break c3: first lower shadow 1 == avg 1, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(106,106.5,93.5,94);
+  int k3=pb_bar(107,112.5,107,112);
+  pb_control(k3,-100,3,"restore c3: first lower shadow 0.5 < 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(106,106.5,93.5,94);
+  int f4=pb_bar(107,110.5,107,110);      /* 2nd body 3 == avg at i */
+  pb_flip(f4,4,"break c4: second body 3 == avg 3, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(106,106.5,93.5,94);
+  int k4=pb_bar(107,112.5,107,112);
+  pb_control(k4,-100,4,"restore c4: second body 5 > 3");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(106,106.5,93.5,94);
+  int f5=pb_bar(107,113.03,107,112);     /* 2nd upper shadow 1.03 == avg at i */
+  pb_flip(f5,5,"break c5: second upper shadow 1.03 == avg 1.03, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(106,106.5,93.5,94);
+  int k5=pb_bar(107,112.5,107,112);
+  pb_control(k5,-100,5,"restore c5: second upper shadow 0.5 < 1.03");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(106,106.5,93.5,94);
+  int f6=pb_bar(108,112,106.97,111.5);     /* 2nd lower shadow 1.03 == avg at i */
+  pb_flip(f6,6,"break c6: second lower shadow 1.03 == avg 1.03, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(106,106.5,93.5,94);
+  int k6=pb_bar(107,112.5,107,112);
+  pb_control(k6,-100,6,"restore c6: second lower shadow 0.5 < 1.03");
+  pb_flat(8);
+
+  /* c7 moves the SECOND bar, never the first. The first bar's range is what
+   * sets avg(ShadowVeryShort, i) -- dropping its high from 106.5 to 106 shifts
+   * that threshold from 1.03 to 1.025, which would quietly move c5's and c6's
+   * flips off the boundary they are placed on a few lines above. Same coupling
+   * as the prior bar entering the window at i: changing one bar's geometry
+   * re-prices the other bar's conditions, and nothing goes red when it does. */
+  pb_primer(12,100,2,4);
+  pb_bar(106,106.5,93.5,94);
+  int f7=pb_bar(107,112.5,106.5,112);    /* low 106.5 == prior high: no gap */
+  pb_flip_in(f7,7,0,1,"break c7 alt0 term1: low(i) 106.5 == high(i-1) 106.5, the gap test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(106,106.5,93.5,94);
+  int k7=pb_bar(107,112.5,107,112);        /* low 107 clears the prior high 106.5 */
+  pb_control(k7,-100,7,"restore c7: low 107 > prior high 106.5");
+  pb_flat(8);
+  /* The other output class: a WHITE first marubozu with a black second one
+   * gapping DOWN -- c7's second disjunct. Both bodies keep the first longer,
+   * which is also what will separate KICKINGBYLENGTH from this function. */
+  pb_primer(12,100,2,4);
+  pb_bar(94,106.5,93.5,106);               /* 1st: white marubozu, body 12, shadows 0.5 */
+  int db=pb_bar(92,92.5,86,86.5);          /* 2nd: black marubozu, gaps down under 93.5 */
+  pb_detect(db,100,"detect white-first: opposite marubozus, 2nd gaps down under 93.5");
+  pb_flat(8);
+
+  /* The white-first arm's gap term, on its own boundary: high(i) exactly at
+   * low(i-1) makes candlegapdown false while the colour selector stays true. */
+  pb_primer(12,100,2,4);
+  pb_bar(90,93.5,89.5,93);                 /* 1st: white marubozu, body 3 */
+  int f7b=pb_bar(89,89.5,85,85.5);         /* high 89.5 == prior low 89.5: no gap */
+  pb_flip_in(f7b,7,1,1,"break c7 alt1 term1: high(i) 89.5 == low(i-1) 89.5, the gap test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(94,106.5,93.5,106);
+  int k7b=pb_bar(92,92.5,86,86.5);
+  pb_control(k7b,100,7,"restore c7 alt1: high 92.5 < prior low 93.5");
+  pb_flat(8);
+}
 
 static ErrorNumber test_marquee_predicate_coverage( void )
 {
@@ -10029,6 +10190,7 @@ static ErrorNumber test_marquee_predicate_coverage( void )
    pb_reset(); build_hikkakemod();          e = pb_check_mcdc("CDLHIKKAKEMOD",         TA_CDLHIKKAKEMOD,          cond_hikkakemod);          if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_separatinglines(); e = pb_check_mcdc("CDLSEPARATINGLINES", TA_CDLSEPARATINGLINES, cond_separatinglines); if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_kicking();         e = pb_check_mcdc("CDLKICKING",         TA_CDLKICKING,         cond_kicking);         if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_kickingbylength(); e = pb_check_mcdc("CDLKICKINGBYLENGTH", TA_CDLKICKINGBYLENGTH, cond_kickingbylength); if( e != TA_TEST_PASS ) return e;
    pb_report_totals();
    return TA_TEST_PASS;
 }
