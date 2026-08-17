@@ -10132,6 +10132,179 @@ static void build_kickingbylength( void )
   pb_flat(8);
 }
 
+/* CDL3INSIDE -- a harami that resolves: a long body, a short one engulfed by
+ * it, then a third candle of the first's opposite colour closing past the
+ * first's open.
+ *
+ *   c0  bodyhi(i-1) < bodyhi(i-2)
+ *   c1  bodylo(i-1) > bodylo(i-2)
+ *   c2  ( white(i-2) && black(i) && close(i) < open(i-2) )
+ *       || ( black(i-2) && white(i) && close(i) > open(i-2) )
+ *   c3  realbody(i-2) > avg(BodyLong, i-2)
+ *   c4  realbody(i-1) <= avg(BodyShort, i-1)
+ *
+ * The first pattern here whose disjuncts carry THREE terms rather than two, so
+ * the arm axis has real work: past the waived colour selector, each arm still
+ * holds the third candle's colour and its close-out, and the two have to be
+ * broken one at a time. They are not independent by construction -- turning the
+ * third candle white to break the colour term will also lift its close above
+ * open(i-2) unless the whole candle is moved down first, which is why the two
+ * flips below sit at different price levels rather than being one bar edited
+ * two ways.
+ *
+ * c3 and c4 read averages over two different windows, and the first candle's
+ * body is inside the second window: avg(BodyShort, i-1) is (9*primer + body(i-2))/10.
+ * So c3's flip, which shortens the first body, moves c4's threshold as well.
+ * The second body is kept far below that threshold in that scenario so the
+ * move cannot break c4 as collateral.
+ *
+ * c4 is the inclusive site and cannot be pinned by a flip -- there is no
+ * minimal violating value above a <= -- so the control sits exactly on the
+ * edge instead, at a second body of 3.0 against a threshold of 3.0.
+ */
+static void cond_3inside( int i, int *c )
+{
+   c[0] = pb_bodyhi(i-1) < pb_bodyhi(i-2);
+   c[1] = pb_bodylo(i-1) > pb_bodylo(i-2);
+   c[2] = (  pb_white(i-2) && !pb_white(i) && pbC[i] < pbO[i-2] )
+       || ( !pb_white(i-2) &&  pb_white(i) && pbC[i] > pbO[i-2] );
+   c[3] = pb_body(i-2) >  pb_avg(TA_BodyLong,  i-2);
+   c[4] = pb_body(i-1) <= pb_avg(TA_BodyShort, i-1);
+}
+
+static void arm_3inside( int i, int cond, int arm, int *a )
+{
+   if( cond != 2 ) return;
+   if( arm == 0 ) { a[0] =  pb_white(i-2); a[1] = !pb_white(i); a[2] = pbC[i] < pbO[i-2]; }
+   else           { a[0] = !pb_white(i-2); a[1] =  pb_white(i); a[2] = pbC[i] > pbO[i-2]; }
+}
+
+static void build_3inside( void )
+{
+  pb_conditions(5);
+  pb_signs(2);
+  pb_arm(2,0,3); pb_arm(2,1,3);
+  pb_arm_model(arm_3inside);
+  pb_waive_arm(2,0,0,"the arm's own colour selector -- it chooses the arm, and the class it chooses is fired by pb_signs(2)");
+  pb_waive_arm(2,1,0,"the arm's own colour selector -- it chooses the arm, and the class it chooses is fired by pb_signs(2)");
+
+  /* avg(BodyLong, i-2) is 2 -- ten primer bars. avg(BodyShort, i-1) is
+   * (9*2 + body(i-2))/10, which is 3.0 exactly while the first body is 12. */
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(100,112.5,99.5,112);              /* 1st: white, body 12 > 2 */
+  pb_bar(105,106.5,104.5,106);             /* 2nd: body 1 <= 3, inside 100..112 */
+  int d=pb_bar(99,99.5,94.5,95);           /* 3rd: black, closes 95 below open 100 */
+  pb_detect(d,-100,"detect: white long, engulfed short, black closing out below");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,112.5,99.5,112);
+  pb_bar(111,112.5,110.5,112);             /* 2nd top 112 == 1st top */
+  int f0=pb_bar(99,99.5,94.5,95);
+  pb_flip(f0,0,"break c0: 2nd body top 112 == 1st body top, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,112.5,99.5,112);
+  pb_bar(111,112.5,110.5,111.5);           /* top 111.5, one step inside */
+  int k0=pb_bar(99,99.5,94.5,95);
+  pb_control(k0,-100,0,"restore c0: 2nd body top 111.5 < 112");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,112.5,99.5,112);
+  pb_bar(100,101.5,99.5,101);              /* 2nd bottom 100 == 1st bottom */
+  int f1=pb_bar(99,99.5,94.5,95);
+  pb_flip(f1,1,"break c1: 2nd body bottom 100 == 1st body bottom, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,112.5,99.5,112);
+  pb_bar(100.5,101.5,99.5,101);
+  int k1=pb_bar(99,99.5,94.5,95);
+  pb_control(k1,-100,1,"restore c1: 2nd body bottom 100.5 > 100");
+  pb_flat(8);
+
+  /* The third candle's colour, with the close-out held: moving the whole
+   * candle down to 94..96 keeps close below open(i-2) while it turns white. */
+  pb_primer(12,100,2,4);
+  pb_bar(100,112.5,99.5,112);
+  pb_bar(105,106.5,104.5,106);
+  int f2a=pb_bar(94,96.5,93.5,96);
+  pb_flip_in(f2a,2,0,1,"break c2 alt0 term1: 3rd is white, and still closes at 96 below open 100");
+  pb_flat(8);
+  /* The close-out, with the colour held: black, but closing exactly ON
+   * open(i-2) rather than below it. */
+  pb_primer(12,100,2,4);
+  pb_bar(100,112.5,99.5,112);
+  pb_bar(105,106.5,104.5,106);
+  int f2b=pb_bar(105,105.5,99.5,100);
+  pb_flip_in(f2b,2,0,2,"break c2 alt0 term2: 3rd is black but closes at 100 == open(i-2), the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,112.5,99.5,112);
+  pb_bar(105,106.5,104.5,106);
+  int k2=pb_bar(105,105.5,99,99.5);
+  pb_control(k2,-100,2,"restore c2: 3rd black closing at 99.5 below 100");
+  pb_flat(8);
+
+  /* c3 shortens the first body onto its threshold. That also drops
+   * avg(BodyShort, i-1) from 3.0 to 2.0, so the second body is 0.5 here --
+   * well under either -- and c4 survives the move. */
+  pb_primer(12,100,2,4);
+  pb_bar(100,102.5,99.5,102);              /* 1st body 2 == avg 2 */
+  pb_bar(101,101.8,100.7,101.5);           /* body 0.5, inside 100..102 */
+  int f3=pb_bar(99,99.5,94.5,95);
+  pb_flip(f3,3,"break c3: 1st body 2 == avg 2, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,103,99.5,102.5);              /* 1st body 2.5 */
+  pb_bar(101,101.8,100.7,101.5);
+  int k3=pb_bar(99,99.5,94.5,95);
+  pb_control(k3,-100,3,"restore c3: 1st body 2.5 > 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,112.5,99.5,112);
+  pb_bar(105,109.5,104.5,109);             /* 2nd body 4 > 3 */
+  int f4=pb_bar(99,99.5,94.5,95);
+  pb_flip(f4,4,"break c4: 2nd body 4 > avg 3");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,112.5,99.5,112);
+  pb_bar(105,108.5,104.5,108);             /* 2nd body 3.0 == avg 3.0 */
+  int k4=pb_bar(99,99.5,94.5,95);
+  pb_control(k4,-100,4,"restore c4 on the edge: 2nd body 3.0 == avg 3.0, and <= admits it");
+  pb_flat(8);
+
+  /* The BLACK-first arm. Everything above is white-first, which leaves the
+   * other half of c2 and the +100 class untouched. */
+  pb_primer(12,100,2,4);
+  pb_bar(112,112.5,99.5,100);              /* 1st: black, body 12 */
+  pb_bar(106,106.5,104.5,105);             /* 2nd: body 1, inside 100..112 */
+  int db=pb_bar(113,118.5,112.5,118);      /* 3rd: white, closes 118 above open 112 */
+  pb_detect(db,100,"detect black-first: the mirror, output +100");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,112.5,99.5,100);
+  pb_bar(106,106.5,104.5,105);
+  int f2c=pb_bar(120,120.5,117.5,118);
+  pb_flip_in(f2c,2,1,1,"break c2 alt1 term1: 3rd is black, and still closes at 118 above open 112");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,112.5,99.5,100);
+  pb_bar(106,106.5,104.5,105);
+  int f2d=pb_bar(110,112.5,109.5,112);
+  pb_flip_in(f2d,2,1,2,"break c2 alt1 term2: 3rd is white but closes at 112 == open(i-2), the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(112,112.5,99.5,100);
+  pb_bar(106,106.5,104.5,105);
+  int k2b=pb_bar(112,113,109.5,112.5);
+  pb_control(k2b,100,2,"restore c2 black-first: 3rd white closing at 112.5 above 112");
+  pb_flat(8);
+}
+
 static ErrorNumber test_marquee_predicate_coverage( void )
 {
    ErrorNumber e;
@@ -10191,6 +10364,7 @@ static ErrorNumber test_marquee_predicate_coverage( void )
    pb_reset(); build_separatinglines(); e = pb_check_mcdc("CDLSEPARATINGLINES", TA_CDLSEPARATINGLINES, cond_separatinglines); if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_kicking();         e = pb_check_mcdc("CDLKICKING",         TA_CDLKICKING,         cond_kicking);         if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_kickingbylength(); e = pb_check_mcdc("CDLKICKINGBYLENGTH", TA_CDLKICKINGBYLENGTH, cond_kickingbylength); if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_3inside();         e = pb_check_mcdc("CDL3INSIDE",         TA_CDL3INSIDE,         cond_3inside);         if( e != TA_TEST_PASS ) return e;
    pb_report_totals();
    return TA_TEST_PASS;
 }
