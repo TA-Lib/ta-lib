@@ -1,6 +1,6 @@
 # Generated Streaming (Incremental) API for ta_codegen
 
-Status: complete in all four languages — C, Rust, Java and .NET stream all 172 functions, each verified bit-exact against its own batch tier by `ta_regtest --codegen`. Planned for release 0.8.1.
+Status: complete in all four languages — C, Rust, Java and .NET stream every function in the corpus, each verified bit-exact against its own batch tier by `ta_regtest --codegen`. Planned for release 0.8.1.
 
 ## Design
 
