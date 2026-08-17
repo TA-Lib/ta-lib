@@ -12,7 +12,7 @@ ta_regtest validates TA-Lib indicator implementations. It has two modes:
 
 | Flag | Description |
 |------|-------------|
-| `--function=CSV` | Substring filter — matched against the **group tag** in `DO_TEST`, not the function name. A function absent from its group's tag is unreachable by this filter (that is why the composite group is tagged `PVO,VWMA,COMPOSITE`). |
+| `--function=CSV` | Substring filter — matched against the **group tag** in `DO_TEST`, not the function name. A function absent from its group's tag is unreachable by this filter (that is why the composite group is tagged `PVO,VWMA,COMPOSITE`). A tag element ending in `*` is a **prefix claim** instead: `All Candlesticks,CDL*` reaches all 61 candlesticks without spelling them out, and keeps reaching a 62nd. **A filter matching no group is now an error** (`TA_REGTEST_FILTER_MATCHED_NOTHING`) on a run with no `--codegen`/`--xlang-hash`/`--fuzz-064` — those legs filter by real function name and legitimately match no group. |
 | `--codegen` | Run codegen verification after C reference tests |
 | `--language=CSV` | Filter languages for codegen verification (e.g., `c,rust,java`) |
 | `-p` | Profile mode |
@@ -437,8 +437,8 @@ worktree, no second build, no network.
 
 Note the tag names no function, breaking the house rule that every function a
 group covers appears in its tag — 148 names will not fit, and the group is
-all-or-nothing anyway. So `--function=SMA` does **not** reach it; `--function=LEGACY`
-(or `064`, or `FROZEN`) does, and a bare run always does.
+all-or-nothing anyway. So `--function=SMA` does **not** reach *this* group;
+`--function=LEGACY` (or `064`, or `FROZEN`) does, and a bare run always does.
 
 **Why it exists.** `checkExpectedValue` compares against an absolute `0.01`
 window, and the hand-written constants carry 2–6 significant digits. That window

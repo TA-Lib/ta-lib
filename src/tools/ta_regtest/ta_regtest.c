@@ -629,6 +629,39 @@ static ErrorNumber test_codegen_with_simulator( void )
 /* Check if any CSV token in 'filter' appears as a substring in 'tags'.
  * Returns 1 if match found (or filter is NULL), 0 otherwise.
  */
+/* Does any '*'-suffixed element of `tags` prefix `token`?
+ *
+ * A tag element ending in '*' is a PREFIX CLAIM: the group covers every
+ * function whose name starts with it. The plain substring rule asks whether the
+ * TAG contains the user's token, so reaching a family of functions otherwise
+ * means spelling every member into the tag -- which is what issue #137 did for
+ * the composite group, and it goes stale the moment a new member lands. It went
+ * stale here: all 61 CDL* names were unreachable, so `--function=CDLDOJI` ran
+ * the candlestick group zero times and still printed "All tests succeeded".
+ */
+static int tagPrefixMatches(const char *tags, const char *token)
+{
+   const char *p = tags;
+
+   while( *p )
+   {
+      const char *star = strchr(p, '*');
+      const char *start;
+      size_t len;
+
+      if( star == NULL )
+         return 0;
+      start = star;
+      while( start > tags && start[-1] != ',' )
+         start--;
+      len = (size_t)(star - start);
+      if( len > 0 && strncmp(token, start, len) == 0 )
+         return 1;
+      p = star + 1;
+   }
+   return 0;
+}
+
 static int matchesFilter(const char *filter, const char *tags)
 {
    char filterCopy[1024];
@@ -645,6 +678,8 @@ static int matchesFilter(const char *filter, const char *tags)
    {
       if( strstr(tags, token) != NULL )
          return 1;
+      if( tagPrefixMatches(tags, token) )
+         return 1;
       token = strtok(NULL, ",");
    }
    return 0;
@@ -654,6 +689,7 @@ static ErrorNumber testTAFunction_ALL( void )
 {
    ErrorNumber retValue;
    TA_History history;
+   int nbGroupsRun = 0;
 
    history.nbBars = 252;
    history.open   = TA_SREF_open_daily_ref_0_PRIV;
@@ -674,6 +710,7 @@ static ErrorNumber testTAFunction_ALL( void )
       { \
       if( matchesFilter(functionFilter, str) ) \
       { \
+         nbGroupsRun++; \
          printf( "%50s: Testing....", str ); \
          fflush(stdout); \
          showFeedback(); \
@@ -686,8 +723,10 @@ static ErrorNumber testTAFunction_ALL( void )
          fflush(stdout); \
       } \
       }
-   DO_TEST( test_func_1in_1out, "MATH,VECTOR,DCPERIOD/PHASE,TRENDLINE/MODE" );
-   DO_TEST( test_func_ma,       "All Moving Averages" );
+   DO_TEST( test_func_1in_1out, "MATH,VECTOR,DCPERIOD/PHASE,TRENDLINE/MODE,"
+                                "HT_DCPERIOD,HT_DCPHASE,HT_TRENDLINE,HT_TRENDMODE,MEDPRICE" );
+   DO_TEST( test_func_ma,       "All Moving Averages,"
+                                "SMA,EMA,WMA,DEMA,TEMA,TRIMA,KAMA,MAMA,T3,MA" );
    DO_TEST( test_func_per_hl,   "AROON,CORREL,BETA,MIDPRICE" );
    DO_TEST( test_func_per_hlc,  "CCI,WILLR,ULTOSC,NATR,ACCBANDS,WAD" );
    DO_TEST( test_func_per_ohlc, "BOP,AVGPRICE" );
@@ -711,7 +750,9 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_period_boundary, "PERIOD1/BOUNDARY" );
    DO_TEST( test_func_mavp,     "MAVP/GROUPING" );
    DO_TEST( test_func_s_overflow, "MATH,ADD,SUB,MULT,DIV" );
-   DO_TEST( test_candlestick,   "All Candlesticks" );
+   /* CDL* is a prefix claim: this one group covers every candlestick, so
+    * naming any of them reaches it without the tag listing all 61. */
+   DO_TEST( test_candlestick,   "All Candlesticks,CDL*" );
    /* The tag is what --function= substring-matches, so every function the
     * group covers must appear in it: --function=VWMA matched nothing before
     * VWMA was named here (issue #137). */
@@ -726,6 +767,27 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_legacy,    "LEGACY,064,FROZEN" );
    DO_TEST( test_func_stream_finite,
             "SMA,MINUS_DI,MA,MAVP,BBANDS,STOCH,CDLDOJI,STREAM,FINITE" );
+
+   /* A filter that matched nothing must not read as success. The group tags are
+    * hand-maintained and cover far fewer names than the library exports, so a
+    * plausible `--function=SMA` selected zero groups and still printed "All
+    * tests succeeded" -- the failure mode that hid the candlestick gap above.
+    *
+    * Only fail when these groups were the whole job: --codegen, --xlang-hash
+    * and --fuzz-064 filter by REAL function name and legitimately run for names
+    * no group tag carries (scripts/synth_gate.py drives --function=SYNTH that
+    * way). There, zero groups here is expected, not an error. */
+   if( functionFilter != NULL && nbGroupsRun == 0 &&
+       !doCodegenTest && !doXlangHash && !doFuzz064 )
+   {
+      printf( "\nFAILED: --function=%s matched no test group, so nothing ran.\n",
+              functionFilter );
+      printf( "        The filter is a substring match against the GROUP TAG in\n" );
+      printf( "        ta_regtest.c's DO_TEST list, not against the function name.\n" );
+      printf( "        Add the name to the tag of the group that covers it, or use\n" );
+      printf( "        a tag that exists.\n" );
+      return TA_REGTEST_FILTER_MATCHED_NOTHING;
+   }
 
    return TA_TEST_PASS; /* All tests succeeded. */
 }

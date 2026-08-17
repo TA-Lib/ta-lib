@@ -427,6 +427,10 @@ typedef enum
   TA_STREAM_FINITE_SETUP_FAILED      = 1594,
   TA_STREAM_FINITE_VACUOUS           = 1595,
 
+  /* --function= named something no test group covers, on a run that had
+   * nothing else to do. Reported rather than passed silently. */
+  TA_REGTEST_FILTER_MATCHED_NOTHING  = 1600,
+
   TA_LAST_VALID_ERROR = 0xFFFF
 } ErrorNumber;
 #endif
