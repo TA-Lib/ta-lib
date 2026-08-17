@@ -10612,6 +10612,272 @@ static void build_xsidegap3methods( void )
   pb_flat(8);
 }
 
+/* CDLCONCEALBABYSWALL -- four black candles: two marubozus, a third that gaps
+ * down but throws a shadow back up into the second's body, and a fourth that
+ * swallows the third whole.
+ *
+ *   c0..c3   black(i-3), black(i-2), black(i-1), black(i)
+ *   c4,c5    the 1st candle's two shadows < avg(ShadowVeryShort, i-3)
+ *   c6,c7    the 2nd candle's two shadows < avg(ShadowVeryShort, i-2)
+ *   c8       bodyhi(i-1) < bodylo(i-2)                     -- gap down
+ *   c9       uppershadow(i-1) > avg(ShadowVeryShort, i-1)  -- but a real shadow
+ *   c10      high(i-1) > close(i-2)                        -- reaching the body
+ *   c11,c12  high(i) > high(i-1) and low(i) < low(i-1)     -- engulfed
+ *
+ * Thirteen conditions, and the settings average is read at THREE different
+ * lags -- i-3, i-2 and i-1 -- off a rolling array the library carries per bar.
+ * The windows overlap: the one at i-2 contains the 1st candle, the one at i-1
+ * contains the 1st and the 2nd.
+ *
+ * The three thresholds are 1.0, 1.25 and 1.5 here, and they are DIFFERENT ON
+ * PURPOSE. My first draft gave the first two candles the primers' own range,
+ * which left all three averages at 1.0 -- every flip still pinned, every
+ * condition still covered, and the gate completely blind to which window each
+ * test reads. Rewiring c6 to read the i-3 window, or c9 to read the i-2 one,
+ * changed six and three call sites and the suite stayed green. Equal
+ * thresholds make the wiring unobservable no matter how exact they are.
+ *
+ * Giving the 1st and 2nd candles a HighLow range of 35 against the primers' 10
+ * separates them: avg(i-3) stays 1.0 on primers alone, avg(i-2) becomes 1.25,
+ * avg(i-1) becomes 1.5. All three are dyadic, so a shadow can still be placed
+ * bitwise ON each of them -- a threshold that only prints as a short decimal is
+ * not enough, since the shadow is a difference of two prices and has to land on
+ * the same double the library computes.
+ *
+ * The controls for c6 and c7 sit at 1.0, which is deliberately the value of the
+ * NEIGHBOURING window: they fire only if the test reads i-2, and fail if it
+ * reads i-3.
+ *
+ * The four colour flips are dojis, and a doji cannot hold a range of 35 while
+ * keeping both shadows small, so those scenarios do move the later thresholds.
+ * Everything reading them has slack far wider than the move.
+ */
+static void cond_concealbabyswall( int i, int *c )
+{
+   c[0]  = !pb_white(i-3);
+   c[1]  = !pb_white(i-2);
+   c[2]  = !pb_white(i-1);
+   c[3]  = !pb_white(i);
+   c[4]  = pb_losh(i-3) < pb_avg(TA_ShadowVeryShort, i-3);
+   c[5]  = pb_upsh(i-3) < pb_avg(TA_ShadowVeryShort, i-3);
+   c[6]  = pb_losh(i-2) < pb_avg(TA_ShadowVeryShort, i-2);
+   c[7]  = pb_upsh(i-2) < pb_avg(TA_ShadowVeryShort, i-2);
+   c[8]  = pb_bodyhi(i-1) < pb_bodylo(i-2);
+   c[9]  = pb_upsh(i-1) > pb_avg(TA_ShadowVeryShort, i-1);
+   c[10] = pbH[i-1] > pbC[i-2];
+   c[11] = pbH[i] > pbH[i-1];
+   c[12] = pbL[i] < pbL[i-1];
+}
+
+static void build_concealbabyswall( void )
+{
+  pb_conditions(13);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);                   /* primer range 10 -> avg(i-3) = 1.0 */
+  pb_bar(135,135.5,100.5,101);            /* 1st: black marubozu, range 35 -> avg(i-2) = 1.25 */
+  pb_bar(100,100.5,65.5,66);            /* 2nd: black marubozu, range 35 -> avg(i-1) = 1.5  */
+  pb_bar(65,69,62.5,63);                 /* 3rd: gaps below 66, high 69 reaches back up */
+  int d=pb_bar(70,70.5,60.5,61);        /* 4th: swallows the 3rd, shadows included */
+  pb_detect(d,100,"detect: two marubozus, a gapped third with a shadow, a fourth engulfing it");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(105,105.5,104.5,105);
+  pb_bar(100,100.5,65.5,66);
+  pb_bar(65,69,62.5,63);
+  int f0=pb_bar(70,70.5,60.5,61);
+  pb_flip(f0,0,"break c0: 1st is a doji, and close >= open counts as white");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(105.5,105.5,104.5,105);
+  pb_bar(100,100.5,65.5,66);
+  pb_bar(65,69,62.5,63);
+  int k0=pb_bar(70,70.5,60.5,61);
+  pb_control(k0,100,0,"restore c0: 1st open 105.5 above its close, black again");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(135,135.5,100.5,101);
+  pb_bar(67,67.5,66.5,67);
+  pb_bar(65,69,62.5,63);
+  int f1=pb_bar(70,70.5,60.5,61);
+  pb_flip(f1,1,"break c1: 2nd is a doji, placed at 67 so the gap and the 3rd high both survive");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(135,135.5,100.5,101);
+  pb_bar(67.5,67.5,66.5,67);
+  pb_bar(65,69,62.5,63);
+  int k1=pb_bar(70,70.5,60.5,61);
+  pb_control(k1,100,1,"restore c1: 2nd open 67.5 above its close, black again");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(135,135.5,100.5,101);
+  pb_bar(100,100.5,65.5,66);
+  pb_bar(65,69,62.5,65);
+  int f2=pb_bar(70,70.5,60.5,61);
+  pb_flip(f2,2,"break c2: 3rd is a doji, its body top and shadow unchanged");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(135,135.5,100.5,101);
+  pb_bar(100,100.5,65.5,66);
+  pb_bar(65.5,69,62.5,65);
+  int k2=pb_bar(70,70.5,60.5,61);
+  pb_control(k2,100,2,"restore c2: 3rd open 65.5 above its close, black again");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(135,135.5,100.5,101);
+  pb_bar(100,100.5,65.5,66);
+  pb_bar(65,69,62.5,63);
+  int f3=pb_bar(70,70.5,60.5,70);
+  pb_flip(f3,3,"break c3: 4th is a doji, its high and low unchanged");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(135,135.5,100.5,101);
+  pb_bar(100,100.5,65.5,66);
+  pb_bar(65,69,62.5,63);
+  int k3=pb_bar(70.5,70.5,60.5,70);
+  pb_control(k3,100,3,"restore c3: 4th open 70.5 above its close, black again");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(135,135.5,100,101);
+  pb_bar(100,100.5,65.5,66);
+  pb_bar(65,69,62.5,63);
+  int f4=pb_bar(70,70.5,60.5,61);
+  pb_flip(f4,4,"break c4: 1st lower shadow 1.0 == avg(i-3) 1.0, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(135,135.5,100.25,101);
+  pb_bar(100,100.5,65.5,66);
+  pb_bar(65,69,62.5,63);
+  int k4=pb_bar(70,70.5,60.5,61);
+  pb_control(k4,100,4,"restore c4: 1st lower shadow 0.75 < 1.0");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(135,136,100.5,101);
+  pb_bar(100,100.5,65.5,66);
+  pb_bar(65,69,62.5,63);
+  int f5=pb_bar(70,70.5,60.5,61);
+  pb_flip(f5,5,"break c5: 1st upper shadow 1.0 == avg(i-3) 1.0, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(135,135.75,100.5,101);
+  pb_bar(100,100.5,65.5,66);
+  pb_bar(65,69,62.5,63);
+  int k5=pb_bar(70,70.5,60.5,61);
+  pb_control(k5,100,5,"restore c5: 1st upper shadow 0.75 < 1.0");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(135,135.5,100.5,101);
+  pb_bar(100,100.5,64.75,66);
+  pb_bar(65,69,62.5,63);
+  int f6=pb_bar(70,70.5,60.5,61);
+  pb_flip(f6,6,"break c6: 2nd lower shadow 1.25 == avg(i-2) 1.25, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(135,135.5,100.5,101);
+  pb_bar(100,100.5,65,66);
+  pb_bar(65,69,62.5,63);
+  int k6=pb_bar(70,70.5,60.5,61);
+  pb_control(k6,100,6,"restore c6: 2nd lower shadow 1.0 < 1.25 -- and 1.0 is avg(i-3), so a window mix-up fails here");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(135,135.5,100.5,101);
+  pb_bar(100,101.25,65.5,66);
+  pb_bar(65,69,62.5,63);
+  int f7=pb_bar(70,70.5,60.5,61);
+  pb_flip(f7,7,"break c7: 2nd upper shadow 1.25 == avg(i-2) 1.25, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(135,135.5,100.5,101);
+  pb_bar(100,101,65.5,66);
+  pb_bar(65,69,62.5,63);
+  int k7=pb_bar(70,70.5,60.5,61);
+  pb_control(k7,100,7,"restore c7: 2nd upper shadow 1.0 < 1.25 -- likewise pinned between the two windows");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(135,135.5,100.5,101);
+  pb_bar(100,100.5,65.5,66);
+  pb_bar(66,69,62.5,63);
+  int f8=pb_bar(70,70.5,60.5,61);
+  pb_flip(f8,8,"break c8: 3rd body top 66 == the 2nd body bottom, the gap test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(135,135.5,100.5,101);
+  pb_bar(100,100.5,65.5,66);
+  pb_bar(65.75,69,62.5,63);
+  int k8=pb_bar(70,70.5,60.5,61);
+  pb_control(k8,100,8,"restore c8: 3rd body top 65.75 < 66");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(135,135.5,100.5,101);
+  pb_bar(100,100.5,65.5,66);
+  pb_bar(65,66.5,62.5,63);
+  int f9=pb_bar(70,70.5,60.5,61);
+  pb_flip(f9,9,"break c9: 3rd upper shadow 1.5 == avg(i-1) 1.5, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(135,135.5,100.5,101);
+  pb_bar(100,100.5,65.5,66);
+  pb_bar(65,66.75,62.5,63);
+  int k9=pb_bar(70,70.5,60.5,61);
+  pb_control(k9,100,9,"restore c9: 3rd upper shadow 1.75 > 1.5");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(135,135.5,100.5,101);
+  pb_bar(100,100.5,65.5,66);
+  pb_bar(64,66,62.5,63);
+  int f10=pb_bar(70,70.5,60.5,61);
+  pb_flip(f10,10,"break c10: 3rd high 66 == the 2nd close, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(135,135.5,100.5,101);
+  pb_bar(100,100.5,65.5,66);
+  pb_bar(64,66.25,62.5,63);
+  int k10=pb_bar(70,70.5,60.5,61);
+  pb_control(k10,100,10,"restore c10: 3rd high 66.25 > the 2nd close 66");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(135,135.5,100.5,101);
+  pb_bar(100,100.5,65.5,66);
+  pb_bar(65,69,62.5,63);
+  int f11=pb_bar(69,69,60.5,61);
+  pb_flip(f11,11,"break c11: 4th high 69 == the 3rd high, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(135,135.5,100.5,101);
+  pb_bar(100,100.5,65.5,66);
+  pb_bar(65,69,62.5,63);
+  int k11=pb_bar(69.25,69.25,60.5,61);
+  pb_control(k11,100,11,"restore c11: 4th high 69.25 > 69");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(135,135.5,100.5,101);
+  pb_bar(100,100.5,65.5,66);
+  pb_bar(65,69,62.5,63);
+  int f12=pb_bar(70,70.5,62.5,63);
+  pb_flip(f12,12,"break c12: 4th low 62.5 == the 3rd low, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(135,135.5,100.5,101);
+  pb_bar(100,100.5,65.5,66);
+  pb_bar(65,69,62.5,63);
+  int k12=pb_bar(70,70.5,62.25,63);
+  pb_control(k12,100,12,"restore c12: 4th low 62.25 < 62.5");
+  pb_flat(8);
+
+}
+
 static ErrorNumber test_marquee_predicate_coverage( void )
 {
    ErrorNumber e;
@@ -10674,6 +10940,7 @@ static ErrorNumber test_marquee_predicate_coverage( void )
    pb_reset(); build_3inside();         e = pb_check_mcdc("CDL3INSIDE",         TA_CDL3INSIDE,         cond_3inside);         if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_sticksandwich();   e = pb_check_mcdc("CDLSTICKSANDWICH",   TA_CDLSTICKSANDWICH,   cond_sticksandwich);   if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_xsidegap3methods(); e = pb_check_mcdc("CDLXSIDEGAP3METHODS", TA_CDLXSIDEGAP3METHODS, cond_xsidegap3methods); if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_concealbabyswall(); e = pb_check_mcdc("CDLCONCEALBABYSWALL", TA_CDLCONCEALBABYSWALL, cond_concealbabyswall); if( e != TA_TEST_PASS ) return e;
    pb_report_totals();
    return TA_TEST_PASS;
 }
