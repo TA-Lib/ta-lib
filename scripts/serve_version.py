@@ -138,6 +138,14 @@ def post_version_funcs(current_root, version_root):
     return sorted(_func_names(current_root) - _func_names(version_root))
 
 
+# One list_functions entry line, split so the leading comma can be added or
+# removed. Group 'comma' is present on every entry except the alphabetically
+# first, which opens the JSON array.
+_LIST_ENTRY_RE = re.compile(
+    r'^(?P<head>[^\n]*json_appendf\([^\n]*?, ")(?P<comma>,?)(?P<tail>\\"TA_[A-Z0-9_]+\\"[^\n]*)$',
+    re.M)
+
+
 def filter_list_functions(src_text, post_funcs):
     """Remove post_funcs' entries from the serve's list_functions payload.
 
@@ -145,18 +153,32 @@ def filter_list_functions(src_text, post_funcs):
         pos = json_appendf(resp, resp_size, pos, ",\\"TA_PVO\\"");
     The escaped-quote token \\"TA_<NAME>\\" appears ONLY in list_functions (the
     dispatch chain uses the bare "TA_<NAME>"), so removing the whole line is
-    safe. Every non-first entry carries its own leading comma, so dropping a
-    middle/last entry keeps the JSON array valid. (A post-version function is a
-    new ADDITION, so it is never the alphabetically-first entry — currently
-    ACCBANDS — whose line has no leading comma; dropping that one would leave the
-    next entry's stray comma. Asserted below rather than silently mis-emitted.)"""
+    safe.
+
+    Only the alphabetically FIRST entry opens the array and so carries no
+    leading comma. Removing any other entry therefore keeps the JSON valid on
+    its own, but removing the first one would leave the next entry's comma
+    dangling — `{"functions":[,"TA_ACCBANDS",...]}`. AC (#228) is the first
+    post-version function to hit that: it sorts ahead of ACCBANDS, which had
+    been the first entry since the freeze. So the comma is re-normalized over
+    the surviving entries afterwards rather than assumed."""
     for name in post_funcs:
-        assert name > "ACCBANDS", (
-            "filter_list_functions: %s sorts before the first list_functions "
-            "entry; add leading-comma repair before removing it." % name)
         pattern = r'[^\n]*\\"TA_' + re.escape(name) + r'\\"[^\n]*\n'
         src_text, n = re.subn(pattern, '', src_text)
         assert n == 1, "filter_list_functions: expected 1 %s entry, removed %d" % (name, n)
+
+    # Re-normalize: exactly the first surviving entry opens the array.
+    entries = list(_LIST_ENTRY_RE.finditer(src_text))
+    assert entries, "filter_list_functions: no list_functions entries left"
+
+    def fixed(m, want_comma):
+        return m.group('head') + (',' if want_comma else '') + m.group('tail')
+
+    # Rebuild back-to-front so earlier spans stay valid.
+    for i, m in reversed(list(enumerate(entries))):
+        repl = fixed(m, i > 0)
+        if repl != m.group(0):
+            src_text = src_text[:m.start()] + repl + src_text[m.end():]
     return src_text
 
 
