@@ -5,6 +5,7 @@ ADD                 Vector Arithmetic Add
 ADOSC               Chaikin A/D Oscillator
 ADX                 Average Directional Movement Index
 ADXR                Average Directional Movement Index Rating
+AO                  Awesome Oscillator
 APO                 Absolute Price Oscillator
 AROON               Aroon
 AROONOSC            Aroon Oscillator

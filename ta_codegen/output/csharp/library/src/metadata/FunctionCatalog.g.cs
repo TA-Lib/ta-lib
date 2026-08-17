@@ -118,6 +118,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             MakeAdosc(),
             MakeAdx(),
             MakeAdxr(),
+            MakeAo(),
             MakeApo(),
             MakeAroon(),
             MakeAroonosc(),
@@ -496,6 +497,33 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         {
             RetCode rc = core.ADXR(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        });
+
+    private static FunctionInfo MakeAo() => new(
+        name: "AO",
+        group: FunctionGroup.MomentumIndicators,
+        hint: "Awesome Oscillator",
+        flags: FunctionFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceHL", PriceComponents.High | PriceComponents.Low, [PriceComponents.High, PriceComponents.Low]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInFastPeriod", "Fast Period", "Period of the fast MA", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 5, 4, 200, 1)),
+            new OptInputInfo("optInSlowPeriod", "Slow Period", "Period of the slow MA", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 34, 4, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Histogram),
+        ],
+        lookback: static (core, c) => core.AO_Lookback(c.IntOpt(0), c.IntOpt(1)),
+        invoke: static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.AO(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
 

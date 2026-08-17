@@ -49,6 +49,7 @@
  *  072226 MF,CC  HMA legs, incl. TA_MAType_HMA dispatch parity (#139).
  *  081226 KL     EFI legs: EMA-of-force differential (#206).
  *  081226 KL     QSTICK legs: SMA-of-body differential plus two book vectors.
+ *  081626 MF,CC  AO legs: two-SMA-of-median differential plus two oracles (#227).
  */
 
 /* Description:
@@ -194,6 +195,12 @@ static ErrorNumber test_qstick_period_one( const TA_History *history );
 static ErrorNumber test_qstick_flat( void );
 static ErrorNumber test_qstick_inplace( const TA_History *history );
 static ErrorNumber test_qstick_rounding_corpus( void );
+static ErrorNumber test_ao_differential( const TA_History *history );
+static ErrorNumber test_ao_oracle( const TA_History *history );
+static ErrorNumber test_ao_inverted_pair( const TA_History *history );
+static ErrorNumber test_ao_inplace( const TA_History *history );
+static ErrorNumber test_ao_param_reject( const TA_History *history );
+static ErrorNumber test_ao_reference_anchoring( const TA_History *history );
 
 /**** Global functions definitions. ****/
 ErrorNumber test_func_composite( TA_History *history )
@@ -317,6 +324,30 @@ ErrorNumber test_func_composite( TA_History *history )
       return retValue;
 
    retValue = test_qstick_rounding_corpus();
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_ao_differential( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_ao_oracle( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_ao_inverted_pair( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_ao_inplace( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_ao_param_reject( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_ao_reference_anchoring( history );
    if( retValue != TA_TEST_PASS )
       return retValue;
 
@@ -2767,4 +2798,736 @@ static ErrorNumber test_qstick_rounding_corpus( void )
 
    return TA_TEST_PASS;
 #undef QSTICK_RC_N
+}
+
+/* ======================================================================
+ * AO - Bill Williams' Awesome Oscillator (#227)
+ *
+ *    median_t = (high_t + low_t) / 2
+ *    AO_t     = SMA(median, fast)_t - SMA(median, slow)_t     (5 / 34)
+ *
+ * Two legs, per this file's doctrine.
+ *
+ * (1) DIFFERENTIAL, bit-exact. The reference is TA_MEDPRICE, two TA_SMA calls
+ *     and a TA_SUB - four shipped primitives, no new numerical logic. Both
+ *     SMA calls take the SAME startIdx as the AO call (clamped to AO's own
+ *     lookback), which is what makes the comparison bit-exact rather than
+ *     merely close: TA_SMA seeds its running sum at startIdx-(period-1), so a
+ *     reference that called it with startIdx 0 would accumulate the fast leg
+ *     over a completely different history and disagree in the last ulp. That
+ *     is measurable, not hypothetical - at 2/100 it disagrees on all 153
+ *     values while the anchored form matches all 153.
+ *
+ * (2) EXTERNAL ORACLE, two independent arms. Tulip Indicators 0.9.2 (ti_ao,
+ *     pinned SHA be18abb13e075ba866898dcc7cb52399603302a6) and
+ *     pandas-ta-classic 0.6.52 (pandas 3.0.3, numpy 2.5.1), both driven live
+ *     over this exact 252-bar corpus through the private ../ta-lib-oracles
+ *     servers. The two arms are NOT interchangeable: ti_ao hardcodes 5/34 and
+ *     refuses anything else, so it can only corroborate the default pair;
+ *     pandas honours both periods and is the only arm that reaches the
+ *     parametric space. Neither is circular - Tulip is independent C, and
+ *     pandas-ta's ao() calls its own sma() with talib defaulted off, so the
+ *     arm is pandas' rolling mean and not TA-Lib validating TA-Lib. Agreement
+ *     is ulp-scale but NOT bitwise, which is why the values below are the
+ *     ORACLES' and are compared at tolerance; freezing our own output here
+ *     would prove nothing about the formula.
+ *
+ * There is no "expected value" arm from a book: Williams publishes charts, not
+ * tables, and Tulip's own tests/untest.txt carries an `ao` entry with an EMPTY
+ * expected vector (its 15-bar smoke corpus is shorter than the 33-bar
+ * lookback). Running the oracle is the only way to get numbers, and that is
+ * what was done.
+ * ====================================================================== */
+
+/* Period pairs. Covers the default; the shortest legal pair; equal pairs at
+ * both ends (where AO is identically zero and every trailing subtraction must
+ * cancel to the bit); the off-default pairs the pandas arm also pins; both
+ * orderings of a small AND a large inverted pair (no swap is performed - see
+ * ao.c); adjacent periods, where the two windows differ by one bar; and a slow
+ * period longer than the corpus so the "nothing to evaluate" path is walked.
+ *
+ * The spread of the pair is what this grid is really sweeping. The reference
+ * anchors both TA_SMA calls at AO's own clamped startIdx, so each leg's running
+ * sum has been through exactly the same number of add/subtract roll steps as
+ * AO's - which is what makes the comparison bit-exact for EVERY pair rather
+ * than for the lucky ones. Measured on this corpus, an unanchored reference
+ * (TA_SMA called at startIdx 0) agrees for 5/34 and 3/10 and disagrees on all
+ * 153 values at 2/100 and 100/2; 6/100 agrees where 5/100 does not. That
+ * pattern is coincidence, not structure - no period's rolling sum is exact on
+ * this series - which is exactly why the anchoring is not optional. */
+static const struct { int fast; int slow; } aoGrid[] =
+{
+   {   5,  34 },
+   {   2,   2 },
+   {   2,   3 },
+   {   3,  10 },
+   {   2, 100 },
+   { 100,   2 },
+   {  10,   5 },
+   {  34,   5 },
+   {   5, 100 },
+   {  99, 100 },
+   { 100, 100 },
+   {   2, 300 },
+};
+#define NB_AO_GRID (sizeof(aoGrid)/sizeof(aoGrid[0]))
+
+/* startIdx values for the same differential. A non-zero startIdx moves both
+ * trailing indices off the array head; at startIdx 0 the two seed windows and
+ * the output window share an origin and an off-by-one between them is
+ * invisible. 251 leaves exactly one output. */
+static const int aoStartGrid[] = { 0, 1, 34, 40, 200, 251 };
+#define NB_AO_START (sizeof(aoStartGrid)/sizeof(aoStartGrid[0]))
+
+/* AO external-oracle golden values.
+ *
+ * Every number below was read off a live oracle run over
+ * TA_SREF_high/low_daily_ref_0_PRIV, transported as hex-of-IEEE-bits (#115) so
+ * the capture is lossless, and emitted mechanically - none was transcribed by
+ * hand. Rows are spread across each output range and every one has |value| >= 2
+ * so the relative term governs; the bar nearest a crossing is deliberately
+ * excluded (bar 44, AO = -0.119, where the disagreement is pure cancellation).
+ *
+ * Measured full-corpus agreement between the shipped TA_AO and each arm:
+ *
+ *   tulip  5/34  : max abs 1.563e-13, max rel 6.699e-13, 8.884e-14 where |v|>=1
+ *   pandas 5/34  : max abs 2.132e-13, max rel 6.925e-13, 1.244e-13 where |v|>=1
+ *   pandas 3/10  : max abs 1.563e-13, max rel 5.168e-12, 1.312e-13 where |v|>=1
+ *   pandas 2/100 : max abs 1.847e-13, max rel 2.324e-12, 9.127e-14 where |v|>=1
+ *
+ * The whole-corpus maxima land at crossings - tulip's 6.699e-13 is bar 167
+ * where AO = -0.1697 - which is exactly the spread ta_test_priv.h cites when
+ * explaining why a relative-only oracle check is wrong for an oscillator. */
+typedef enum { AO_ORC_TULIP = 0, AO_ORC_PANDAS = 1 } AoOracle;
+static const char * const aoOracleName[] = { "tulip 0.9.2", "pandas-ta-classic 0.6.52" };
+
+static const struct { int fast; int slow; int beg; int nb; } aoOracleShape[] =
+{
+   {   5,  34,  33, 219 },
+   {   3,  10,   9, 243 },
+   {   2, 100,  99, 153 },
+};
+#define NB_AO_ORACLE_SHAPE (sizeof(aoOracleShape)/sizeof(aoOracleShape[0]))
+
+static const struct { AoOracle src; int fast; int slow; int idx; double value; } aoOracle[] =
+{
+   { AO_ORC_TULIP,    5,  34,   0,  -3.3146323529411887 },   /* bar  33 */
+   { AO_ORC_TULIP,    5,  34,  54,  12.41173529411762   },   /* bar  87 */
+   { AO_ORC_TULIP,    5,  34, 110,  -2.107441176470573  },   /* bar 143 */
+   { AO_ORC_TULIP,    5,  34, 164, -13.103117647058895  },   /* bar 197 */
+   { AO_ORC_TULIP,    5,  34, 218,   2.5937941176469224 },   /* bar 251 */
+
+   { AO_ORC_PANDAS,   5,  34,   0,  -3.3146323529411745 },   /* bar  33 */
+   { AO_ORC_PANDAS,   5,  34,  54,  12.411735294117648  },   /* bar  87 */
+   { AO_ORC_PANDAS,   5,  34, 110,  -2.107441176470587  },   /* bar 143 */
+   { AO_ORC_PANDAS,   5,  34, 164, -13.103117647058795  },   /* bar 197 */
+   { AO_ORC_PANDAS,   5,  34, 218,   2.5937941176470787 },   /* bar 251 */
+
+   { AO_ORC_PANDAS,   3,  10,   3,   2.553750000000008  },   /* bar  12 */
+   { AO_ORC_PANDAS,   3,  10,  62,  -2.2715833333333393 },   /* bar  71 */
+   { AO_ORC_PANDAS,   3,  10, 121,   4.792833333333334  },   /* bar 130 */
+   { AO_ORC_PANDAS,   3,  10, 181,  -2.791499999999999  },   /* bar 190 */
+   { AO_ORC_PANDAS,   3,  10, 234,  -2.4710000000000036 },   /* bar 243 */
+
+   { AO_ORC_PANDAS,   2, 100,   0,  19.006375000000006  },   /* bar  99 */
+   { AO_ORC_PANDAS,   2, 100,  38,  21.3403             },   /* bar 137 */
+   { AO_ORC_PANDAS,   2, 100,  76,  11.81337499999998   },   /* bar 175 */
+   { AO_ORC_PANDAS,   2, 100, 114, -29.12644999999999   },   /* bar 213 */
+   { AO_ORC_PANDAS,   2, 100, 152,  -3.8640999999999934 },   /* bar 251 */
+};
+#define NB_AO_ORACLE (sizeof(aoOracle)/sizeof(aoOracle[0]))
+
+/* Relative band, from the measured agreement where |value| >= 1: the worst of
+ * the four arms is 1.312e-13, and the worst PINNED row is 7.670e-14. */
+#define AO_ORACLE_TOL 1e-12
+/* Near-zero absolute floor. AO crosses zero by construction, so a relative-only
+ * check is unbounded there. Sized ~10x the worst measured absolute agreement
+ * (2.132e-13). It does not govern any row above - every pinned |value| >= 2, so
+ * the relative term is at least 2e-12 - but it keeps a later addition near a
+ * crossing from turning into a spurious failure. See checkOracleValue(). */
+#define AO_ORACLE_ABS 2e-12
+
+/* pandas-ta-classic's ao() SWAPS an inverted pair before computing, so asking
+ * it for (10,5) returns its AO_5_10 column. TA-Lib does not swap: subtraction
+ * is exactly antisymmetric in IEEE-754, so our AO(10,5) is the exact negation
+ * of our AO(5,10) and therefore of pandas' answer, to the same ulp-scale
+ * agreement as everywhere else. Pinning it is what stops the "no swap" ruling
+ * from being quietly reverted into a swap - a swap would make these five rows
+ * come back with the wrong sign, a 2x relative error that no tolerance hides.
+ *
+ * Captured live: pandas-ta-classic 0.6.52, column AO_5_10, outBegIdx 9, 243
+ * values. Measured over the full corpus, max |ours + theirs| = 1.279e-13. */
+static const struct { int idx; double value; } aoOracleSwapped[] =
+{
+   {  15, -2.4810000000000088 },   /* bar  24 */
+   {  63, -2.007499999999993  },   /* bar  72 */
+   { 121,  3.4735000000000014 },   /* bar 130 */
+   { 181, -2.031499999999994  },   /* bar 190 */
+   { 235, -2.140500000000003  },   /* bar 244 */
+};
+#define NB_AO_ORACLE_SWAPPED (sizeof(aoOracleSwapped)/sizeof(aoOracleSwapped[0]))
+
+/* (1) DIFFERENTIAL: AO == SUB( SMA(MEDPRICE,fast), SMA(MEDPRICE,slow) ),
+ * bit-for-bit, over the period grid crossed with the startIdx grid. */
+static ErrorNumber test_ao_differential( const TA_History *history )
+{
+   unsigned int g, s;
+   int i, nbBars, nbChecked;
+   TA_RetCode rcAO, rcMed, rcFast, rcSlow, rcSub;
+   TA_Integer begAO, nbAO, begMed, nbMed, begFast, nbFast, begSlow, nbSlow, begSub, nbSub;
+   static TA_Real med[OUT_CAP];
+   static TA_Real smaFast[OUT_CAP];
+   static TA_Real smaSlow[OUT_CAP];
+   static TA_Real outAO[OUT_CAP];
+   static TA_Real outRef[OUT_CAP];
+
+   nbBars = (int)history->nbBars;
+   nbChecked = 0;
+
+   /* The median series, from the shipped TA_MEDPRICE rather than an inline
+    * loop: the reference must contain no new numerical logic of its own. */
+   rcMed = TA_MEDPRICE( 0, nbBars - 1, history->high, history->low,
+                        &begMed, &nbMed, med );
+   if( rcMed != TA_SUCCESS || begMed != 0 || nbMed != nbBars )
+   {
+      printf( "AO differential Fail: TA_MEDPRICE rc=%d beg=%d nb=%d (expected 0/%d)\n",
+              (int)rcMed, (int)begMed, (int)nbMed, nbBars );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+
+   for( s = 0; s < NB_AO_START; s++ )
+   {
+      int startIdx = aoStartGrid[s];
+
+      for( g = 0; g < NB_AO_GRID; g++ )
+      {
+         int fast = aoGrid[g].fast;
+         int slow = aoGrid[g].slow;
+         int lookback, refStart;
+
+         rcAO = TA_AO( startIdx, nbBars - 1, history->high, history->low,
+                       fast, slow, &begAO, &nbAO, outAO );
+         if( rcAO != TA_SUCCESS )
+         {
+            printf( "AO differential Fail [start %d fast %d slow %d]: retCode %d\n",
+                    startIdx, fast, slow, (int)rcAO );
+            return TA_TESTUTIL_TFRR_BAD_RETCODE;
+         }
+
+         /* The lookback contract, checked against the closed form rather than
+          * against the reference (which shares TA_AO_Lookback with it). */
+         lookback = TA_AO_Lookback( fast, slow );
+         if( lookback != (fast > slow ? fast : slow) - 1 )
+         {
+            printf( "AO differential Fail [fast %d slow %d]: lookback %d, expected %d\n",
+                    fast, slow, lookback, (fast > slow ? fast : slow) - 1 );
+            return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+         }
+
+         refStart = startIdx < lookback ? lookback : startIdx;
+
+         if( refStart > nbBars - 1 )
+         {
+            /* Not enough data for a single output. */
+            if( nbAO != 0 )
+            {
+               printf( "AO differential Fail [start %d fast %d slow %d]: "
+                       "expected no output, got nb=%d\n",
+                       startIdx, fast, slow, (int)nbAO );
+               return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+            }
+            continue;
+         }
+
+         if( begAO != refStart || nbAO != nbBars - refStart )
+         {
+            printf( "AO differential Fail [start %d fast %d slow %d]: "
+                    "range (%d,%d), expected (%d,%d)\n",
+                    startIdx, fast, slow, (int)begAO, (int)nbAO,
+                    refStart, nbBars - refStart );
+            return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+         }
+
+         /* The reference. Both SMA calls take AO's OWN clamped startIdx, which
+          * is what anchors their running sums identically to AO's - see the
+          * banner above. */
+         rcFast = TA_SMA( refStart, nbBars - 1, med, fast, &begFast, &nbFast, smaFast );
+         rcSlow = TA_SMA( refStart, nbBars - 1, med, slow, &begSlow, &nbSlow, smaSlow );
+         if( rcFast != TA_SUCCESS || rcSlow != TA_SUCCESS )
+         {
+            printf( "AO differential Fail [start %d fast %d slow %d]: "
+                    "reference TA_SMA rc %d / %d\n",
+                    startIdx, fast, slow, (int)rcFast, (int)rcSlow );
+            return TA_TESTUTIL_TFRR_BAD_RETCODE;
+         }
+         if( begFast != refStart || begSlow != refStart ||
+             nbFast != nbAO || nbSlow != nbAO )
+         {
+            printf( "AO differential Fail [start %d fast %d slow %d]: "
+                    "reference range fast(%d,%d) slow(%d,%d) vs AO(%d,%d)\n",
+                    startIdx, fast, slow, (int)begFast, (int)nbFast,
+                    (int)begSlow, (int)nbSlow, (int)begAO, (int)nbAO );
+            return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+         }
+
+         rcSub = TA_SUB( 0, nbAO - 1, smaFast, smaSlow, &begSub, &nbSub, outRef );
+         if( rcSub != TA_SUCCESS || nbSub != nbAO )
+         {
+            printf( "AO differential Fail [start %d fast %d slow %d]: "
+                    "TA_SUB rc=%d nb=%d\n",
+                    startIdx, fast, slow, (int)rcSub, (int)nbSub );
+            return TA_TESTUTIL_TFRR_BAD_RETCODE;
+         }
+
+         for( i = 0; i < nbAO; i++ )
+         {
+            if( memcmp( &outAO[i], &outRef[i], sizeof(double) ) != 0 )
+            {
+               printf( "AO differential Fail [start %d fast %d slow %d] at out[%d]: "
+                       "fused %.17g != compose %.17g (must be BIT-exact)\n",
+                       startIdx, fast, slow, i, outAO[i], outRef[i] );
+               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+            }
+         }
+
+         /* An equal pair must be identically zero, sign included: the two
+          * running sums walk the same bars in the same order, so every
+          * trailing subtraction has to cancel exactly. This is the one grid
+          * row whose expected value is known without any reference at all. */
+         if( fast == slow )
+         {
+            for( i = 0; i < nbAO; i++ )
+            {
+               if( outAO[i] != 0.0 )
+               {
+                  printf( "AO differential Fail [start %d fast=slow=%d] at out[%d]: "
+                          "%.17g, expected exactly 0\n",
+                          startIdx, fast, i, outAO[i] );
+                  return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+               }
+            }
+         }
+
+         nbChecked++;
+
+         /* Cross-language: AO must also be bit-identical on every language
+          * server (no transcendental, so all four stay zero-tolerance). */
+         if( server_verify_active() )
+         {
+            ErrorNumber e = server_verify( "AO", startIdx, nbBars - 1, history->nbBars,
+                                           rcAO, begAO, nbAO,
+                                           (const TA_Real*[]){ history->high, history->low, NULL },
+                                           (double[]){ (double)fast, (double)slow }, 2,
+                                           (const TA_Real*[]){ outAO, NULL }, NULL );
+            if( e != TA_TEST_PASS )
+               return e;
+         }
+      }
+   }
+
+   /* Non-vacuity: the grid must actually have compared something. A period
+    * pair that silently stopped producing output would otherwise leave this
+    * leg green on zero comparisons. */
+   if( nbChecked < (int)(NB_AO_GRID * NB_AO_START) / 2 )
+   {
+      printf( "AO differential Fail: only %d of %d grid cells produced output\n",
+              nbChecked, (int)(NB_AO_GRID * NB_AO_START) );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (2) EXTERNAL-ORACLE: TA_AO against Tulip Indicators and pandas-ta-classic. */
+static ErrorNumber test_ao_oracle( const TA_History *history )
+{
+   TA_RetCode retCode;
+   TA_Integer begIdx, nbElement;
+   static TA_Real out[OUT_CAP];
+   unsigned int k, c;
+   int nbCompared = 0;
+
+   for( c = 0; c < NB_AO_ORACLE_SHAPE; c++ )
+   {
+      int fast = aoOracleShape[c].fast;
+      int slow = aoOracleShape[c].slow;
+
+      retCode = TA_AO( 0, (int)history->nbBars - 1, history->high, history->low,
+                       fast, slow, &begIdx, &nbElement, out );
+      if( retCode != TA_SUCCESS )
+      {
+         printf( "AO oracle Fail [fast %d slow %d]: retCode = %d\n",
+                 fast, slow, (int)retCode );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+      if( begIdx != aoOracleShape[c].beg || nbElement != aoOracleShape[c].nb )
+      {
+         printf( "AO oracle Fail [fast %d slow %d]: shape got (%d,%d) expected (%d,%d)\n",
+                 fast, slow, (int)begIdx, (int)nbElement,
+                 aoOracleShape[c].beg, aoOracleShape[c].nb );
+         return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+      }
+
+      for( k = 0; k < NB_AO_ORACLE; k++ )
+      {
+         int idx;
+         double want, got, err;
+         const char *mode;
+
+         if( aoOracle[k].fast != fast || aoOracle[k].slow != slow )
+            continue;
+
+         idx  = aoOracle[k].idx;
+         want = aoOracle[k].value;
+         got  = out[idx];
+
+         if( !checkOracleValue( got, want, AO_ORACLE_TOL, AO_ORACLE_ABS, &err, &mode ) )
+         {
+            printf( "AO oracle Fail [%s fast %d slow %d] at out[%d]: "
+                    "got %.17g expected %.17g (%s=%.3e > rel %.3e / abs %.3e)\n",
+                    aoOracleName[aoOracle[k].src], fast, slow, idx, got, want,
+                    mode, err, AO_ORACLE_TOL, AO_ORACLE_ABS );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+         nbCompared++;
+      }
+   }
+
+   /* Every pinned row must have been reached: a period typo in either table
+    * would otherwise silently drop its rows and leave the leg passing on
+    * fewer. */
+   if( nbCompared != (int)NB_AO_ORACLE )
+   {
+      printf( "AO oracle Fail: compared %d value(s) but the table carries %d\n",
+              nbCompared, (int)NB_AO_ORACLE );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (3) INVERTED PAIR: TA_AO does NOT swap fast and slow. */
+static ErrorNumber test_ao_inverted_pair( const TA_History *history )
+{
+   TA_RetCode rcInv, rcFwd;
+   TA_Integer begInv, nbInv, begFwd, nbFwd;
+   static TA_Real outInv[OUT_CAP];
+   static TA_Real outFwd[OUT_CAP];
+   int nbBars = (int)history->nbBars;
+   unsigned int k;
+   int i;
+
+   rcInv = TA_AO( 0, nbBars - 1, history->high, history->low,
+                  10, 5, &begInv, &nbInv, outInv );
+   rcFwd = TA_AO( 0, nbBars - 1, history->high, history->low,
+                  5, 10, &begFwd, &nbFwd, outFwd );
+   if( rcInv != TA_SUCCESS || rcFwd != TA_SUCCESS )
+   {
+      printf( "AO inverted Fail: retCode %d / %d\n", (int)rcInv, (int)rcFwd );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+   if( begInv != begFwd || nbInv != nbFwd || begInv != 9 )
+   {
+      printf( "AO inverted Fail: ranges (%d,%d) and (%d,%d), expected both (9,%d)\n",
+              (int)begInv, (int)nbInv, (int)begFwd, (int)nbFwd, nbBars - 9 );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+
+   /* Exact antisymmetry. IEEE-754 subtraction gives fl(a-b) == -fl(b-a) with
+    * no rounding slack, so this is an equality, not a tolerance. It is also
+    * the cheapest possible detector of a swap having been reintroduced: a
+    * swapped implementation would make both calls return the same array. */
+   for( i = 0; i < nbInv; i++ )
+   {
+      if( outInv[i] != -outFwd[i] )
+      {
+         printf( "AO inverted Fail at out[%d]: AO(10,5)=%.17g but -AO(5,10)=%.17g\n",
+                 i, outInv[i], -outFwd[i] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+
+   /* And the sign is pinned against an outside opinion, not just against
+    * ourselves: pandas-ta-classic swaps, so its AO_5_10 answers our AO(10,5)
+    * negated. Without this, "no swap" would be self-certified. */
+   for( k = 0; k < NB_AO_ORACLE_SWAPPED; k++ )
+   {
+      int idx     = aoOracleSwapped[k].idx;
+      double want = -aoOracleSwapped[k].value;
+      double got  = outInv[idx];
+      double err;
+      const char *mode;
+
+      if( !checkOracleValue( got, want, AO_ORACLE_TOL, AO_ORACLE_ABS, &err, &mode ) )
+      {
+         printf( "AO inverted oracle Fail at out[%d]: got %.17g expected %.17g "
+                 "(%s=%.3e > rel %.3e / abs %.3e)\n",
+                 idx, got, want, mode, err, AO_ORACLE_TOL, AO_ORACLE_ABS );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (4) IN-PLACE ALIASING: outReal written over inHigh, then over inLow.
+ *
+ * This needs its own leg rather than an argument. When startIdx is clamped to
+ * the lookback, the longer window's trailing index equals outIdx exactly, so
+ * the bar the loop is about to subtract is the slot it is about to write. The
+ * implementation subtracts both trailing terms before storing; hoisting the
+ * store above them would corrupt the running sum without changing any value on
+ * a non-aliased call, so nothing else in the suite would notice. Swept over
+ * startIdx because the risky slot moves with it. */
+static ErrorNumber test_ao_inplace( const TA_History *history )
+{
+   TA_RetCode rc;
+   TA_Integer begRef, nbRef, begAlias, nbAlias;
+   static TA_Real outRef[OUT_CAP];
+   static TA_Real work[OUT_CAP];
+   int nbBars = (int)history->nbBars;
+   unsigned int g, s;
+   int i, which;
+
+   for( s = 0; s < NB_AO_START; s++ )
+   {
+      int startIdx = aoStartGrid[s];
+
+      for( g = 0; g < NB_AO_GRID; g++ )
+      {
+         int fast = aoGrid[g].fast;
+         int slow = aoGrid[g].slow;
+
+         rc = TA_AO( startIdx, nbBars - 1, history->high, history->low,
+                     fast, slow, &begRef, &nbRef, outRef );
+         if( rc != TA_SUCCESS )
+         {
+            printf( "AO inplace Fail [start %d fast %d slow %d]: reference retCode %d\n",
+                    startIdx, fast, slow, (int)rc );
+            return TA_TESTUTIL_TFRR_BAD_RETCODE;
+         }
+         if( nbRef == 0 )
+            continue;
+
+         for( which = 0; which < 2; which++ )
+         {
+            const TA_Real *h = history->high;
+            const TA_Real *l = history->low;
+            const char *tag = which == 0 ? "outReal==inHigh" : "outReal==inLow";
+
+            /* Copy the aliased input into the output buffer and point that
+             * parameter at it, so out and that input are the same storage. */
+            for( i = 0; i < nbBars; i++ )
+               work[i] = which == 0 ? history->high[i] : history->low[i];
+            if( which == 0 )
+               h = work;
+            else
+               l = work;
+
+            rc = TA_AO( startIdx, nbBars - 1, h, l, fast, slow,
+                        &begAlias, &nbAlias, work );
+            if( rc != TA_SUCCESS || begAlias != begRef || nbAlias != nbRef )
+            {
+               printf( "AO inplace Fail [%s start %d fast %d slow %d]: "
+                       "rc=%d range (%d,%d) vs (%d,%d)\n",
+                       tag, startIdx, fast, slow, (int)rc,
+                       (int)begAlias, (int)nbAlias, (int)begRef, (int)nbRef );
+               return TA_TESTUTIL_TFRR_BAD_RETCODE;
+            }
+
+            for( i = 0; i < nbRef; i++ )
+            {
+               if( memcmp( &work[i], &outRef[i], sizeof(double) ) != 0 )
+               {
+                  printf( "AO inplace Fail [%s start %d fast %d slow %d] at out[%d]: "
+                          "aliased %.17g != separate %.17g\n",
+                          tag, startIdx, fast, slow, i, work[i], outRef[i] );
+                  return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+               }
+            }
+         }
+      }
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (5) PARAMETER FLOOR. AO's periods are declared [2, 100000], matching MACD's
+ * fast/slow. Period 1 is therefore NOT an accepted value on either axis, even
+ * though SMA(x,1) is well defined and pandas-ta-classic does accept it - so
+ * the answer to "does AO(1,100) match the composite?" is that AO(1,100) is a
+ * guarded reject, not a computed answer. Pinned here because the range is a
+ * published API contract, and because it is the one part of the accepted-range
+ * question the differential grid cannot express. */
+static ErrorNumber test_ao_param_reject( const TA_History *history )
+{
+   TA_RetCode rc;
+   TA_Integer beg, nb;
+   static TA_Real out[OUT_CAP];
+   static const struct { int fast; int slow; } badPair[] =
+   {
+      {   1, 100 },   /* fast below the floor            */
+      { 100,   1 },   /* slow below the floor            */
+      {   1,   1 },   /* both                            */
+      {   0,  34 },
+      {   5,   0 },
+      {  -1,  34 },
+      {   5,  -1 },
+      { 100001, 34 }, /* above the ceiling               */
+      {   5, 100001 },
+   };
+   unsigned int k;
+   int nbBars = (int)history->nbBars;
+
+   for( k = 0; k < sizeof(badPair)/sizeof(badPair[0]); k++ )
+   {
+      rc = TA_AO( 0, nbBars - 1, history->high, history->low,
+                  badPair[k].fast, badPair[k].slow, &beg, &nb, out );
+      if( rc != TA_BAD_PARAM )
+      {
+         printf( "AO param reject Fail [fast %d slow %d]: retCode %d, expected TA_BAD_PARAM(%d)\n",
+                 badPair[k].fast, badPair[k].slow, (int)rc, (int)TA_BAD_PARAM );
+         return TA_TESTUTIL_TFRR_BAD_PARAM;
+      }
+   }
+
+   /* And the boundary itself is accepted, so the floor is a floor and not an
+    * off-by-one that rejects the smallest legal pair. */
+   rc = TA_AO( 0, nbBars - 1, history->high, history->low, 2, 2, &beg, &nb, out );
+   if( rc != TA_SUCCESS || beg != 1 || nb != nbBars - 1 )
+   {
+      printf( "AO param reject Fail: the legal floor (2,2) was refused or mis-shaped "
+              "(rc=%d beg=%d nb=%d)\n", (int)rc, (int)beg, (int)nb );
+      return TA_TESTUTIL_TFRR_BAD_PARAM;
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (6) THE ANCHORING DISCIPLINE ITSELF, and the non-vacuity of the grid that
+ * enforces it.
+ *
+ * Leg (1) is bit-exact only because both TA_SMA calls take AO's OWN clamped
+ * startIdx. TA_SMA seeds its running sum at startIdx-(period-1) and then rolls
+ * add-new / snapshot / subtract-trailing once per bar, so how many roll steps
+ * a sum has been through at a given output bar depends on where the call
+ * started. A reference calling TA_SMA at startIdx 0 gives the SHORTER leg
+ * max(fast,slow)-min(fast,slow) extra roll steps, and each step rounds.
+ *
+ * The danger this leg exists for: an unanchored reference still passes at
+ * plenty of period pairs. Measured on this corpus it is bit-exact at 5/34,
+ * 3/10, 34/5 and 6/100, and wrong on ALL 153 values at 2/100, 100/2, 5/100 and
+ * 99/100 - 6/100 agrees where 5/100 does not, one roll step apart. So the
+ * agreement is arithmetic coincidence, not structure (no period's rolling sum
+ * is exact on this series), and a differential written the natural unanchored
+ * way and tested only at the default pair would be GREEN while proving nothing.
+ *
+ * So this leg asserts two things leg (1) cannot:
+ *   (a) the anchored reference is bit-exact -- the contract; and
+ *   (b) at least one pair in aoGrid actually SEPARATES anchored from
+ *       unanchored. Without (b), leg (1) could be silently reduced to lucky
+ *       pairs and no gate in the tree would notice.
+ */
+static ErrorNumber test_ao_reference_anchoring( const TA_History *history )
+{
+   unsigned int g;
+   int i, nbBars, nbSeparating = 0, nbPairs = 0;
+   TA_RetCode rc;
+   TA_Integer begAO, nbAO, begM, nbM, begF, nbF, begS, nbS;
+   static TA_Real med[OUT_CAP];
+   static TA_Real smaF[OUT_CAP];
+   static TA_Real smaS[OUT_CAP];
+   static TA_Real outAO[OUT_CAP];
+
+   nbBars = (int)history->nbBars;
+
+   rc = TA_MEDPRICE( 0, nbBars - 1, history->high, history->low, &begM, &nbM, med );
+   if( rc != TA_SUCCESS || begM != 0 || nbM != nbBars )
+   {
+      printf( "AO anchoring Fail: TA_MEDPRICE rc=%d beg=%d nb=%d\n",
+              (int)rc, (int)begM, (int)nbM );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+
+   for( g = 0; g < NB_AO_GRID; g++ )
+   {
+      int fast = aoGrid[g].fast;
+      int slow = aoGrid[g].slow;
+      int anchoredBad = 0, unanchoredBad = 0;
+
+      rc = TA_AO( 0, nbBars - 1, history->high, history->low,
+                  fast, slow, &begAO, &nbAO, outAO );
+      if( rc != TA_SUCCESS )
+      {
+         printf( "AO anchoring Fail [fast %d slow %d]: retCode %d\n",
+                 fast, slow, (int)rc );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+      if( nbAO == 0 )
+         continue;               /* lookback exceeds the corpus; nothing to compare */
+      nbPairs++;
+
+      /* (a) ANCHORED: both legs at AO's clamped startIdx. Must be bit-exact. */
+      if( TA_SMA( begAO, nbBars - 1, med, fast, &begF, &nbF, smaF ) != TA_SUCCESS ||
+          TA_SMA( begAO, nbBars - 1, med, slow, &begS, &nbS, smaS ) != TA_SUCCESS ||
+          begF != begAO || begS != begAO || nbF != nbAO || nbS != nbAO )
+      {
+         printf( "AO anchoring Fail [fast %d slow %d]: anchored reference shape\n",
+                 fast, slow );
+         return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+      }
+      for( i = 0; i < nbAO; i++ )
+      {
+         double want = smaF[i] - smaS[i];
+         if( memcmp( &outAO[i], &want, sizeof(double) ) != 0 )
+            anchoredBad++;
+      }
+      if( anchoredBad != 0 )
+      {
+         printf( "AO anchoring Fail [fast %d slow %d]: the ANCHORED reference "
+                 "differs on %d of %d value(s) - leg (1)'s premise is broken\n",
+                 fast, slow, anchoredBad, (int)nbAO );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+
+      /* (b) UNANCHORED: both legs from startIdx 0, aligned by absolute bar.
+       * Not a contract - just counted, to prove the grid can tell them apart. */
+      if( TA_SMA( 0, nbBars - 1, med, fast, &begF, &nbF, smaF ) != TA_SUCCESS ||
+          TA_SMA( 0, nbBars - 1, med, slow, &begS, &nbS, smaS ) != TA_SUCCESS )
+      {
+         printf( "AO anchoring Fail [fast %d slow %d]: unanchored reference rc\n",
+                 fast, slow );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+      for( i = 0; i < nbAO; i++ )
+      {
+         int bar = begAO + i;
+         double want = smaF[bar - begF] - smaS[bar - begS];
+         if( memcmp( &outAO[i], &want, sizeof(double) ) != 0 )
+            unanchoredBad++;
+      }
+      if( unanchoredBad != 0 )
+         nbSeparating++;
+   }
+
+   if( nbPairs < 2 )
+   {
+      printf( "AO anchoring Fail: only %d grid pair(s) produced output\n", nbPairs );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+
+   /* THE NON-VACUITY ASSERTION. If this fires, aoGrid has been reduced to pairs
+    * where anchored and unanchored happen to agree, and leg (1) is no longer
+    * evidence that the reference is anchored correctly. Restore a wide-spread
+    * pair (2/100, 100/2, 5/100 and 99/100 all separate on this corpus). */
+   if( nbSeparating == 0 )
+   {
+      printf( "AO anchoring Fail: no pair in aoGrid separates the anchored "
+              "reference from the unanchored one (%d pair(s) compared), so the "
+              "differential leg would pass with a mis-anchored reference\n",
+              nbPairs );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+
+   return TA_TEST_PASS;
 }

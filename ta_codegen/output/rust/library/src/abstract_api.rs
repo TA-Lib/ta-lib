@@ -41,6 +41,7 @@ pub enum FuncId {
     ADOSC,
     ADX,
     ADXR,
+    AO,
     APO,
     AROON,
     AROONOSC,
@@ -210,7 +211,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 172;
+    pub const COUNT: usize = 173;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNCS[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -393,7 +394,7 @@ impl FuncInfo {
 }
 
 /// All function metadata, indexed by [`FuncId`]. Link-time const, in `.rodata`.
-pub static FUNCS: [FuncInfo; 172] = [
+pub static FUNCS: [FuncInfo; 173] = [
     FuncInfo {
         id: FuncId::ACCBANDS,
         name: "ACCBANDS",
@@ -469,6 +470,17 @@ pub static FUNCS: [FuncInfo; 172] = [
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
+        id: FuncId::AO,
+        name: "AO",
+        group: Group::MomentumIndicators,
+        hint: "Awesome Oscillator",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of the fast MA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 5, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Period of the slow MA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 34, suggested: (4, 200, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000010) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -2301,6 +2313,7 @@ pub fn get_func_handle(name: &str) -> Option<FuncId> {
         "ADOSC" => FuncId::ADOSC,
         "ADX" => FuncId::ADX,
         "ADXR" => FuncId::ADXR,
+        "AO" => FuncId::AO,
         "APO" => FuncId::APO,
         "AROON" => FuncId::AROON,
         "AROONOSC" => FuncId::AROONOSC,
@@ -2718,6 +2731,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::ADOSC => self.core.ADOSC_Lookback(self.int_opt[0], self.int_opt[1]),
             FuncId::ADX => self.core.ADX_Lookback(self.int_opt[0]),
             FuncId::ADXR => self.core.ADXR_Lookback(self.int_opt[0]),
+            FuncId::AO => self.core.AO_Lookback(self.int_opt[0], self.int_opt[1]),
             FuncId::APO => self.core.APO_Lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?),
             FuncId::AROON => self.core.AROON_Lookback(self.int_opt[0]),
             FuncId::AROONOSC => self.core.AROONOSC_Lookback(self.int_opt[0]),
@@ -2985,6 +2999,15 @@ impl<'a> ParamHolder<'a> {
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
                 let rc = self.core.ADXR(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::AO => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.AO(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }

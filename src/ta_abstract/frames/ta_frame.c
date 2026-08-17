@@ -206,6 +206,29 @@ unsigned int TA_ADXR_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_ADXR_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+TA_RetCode TA_AO_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_AO(
+               startIdx,
+               endIdx,
+               params->in[0].data.inPrice.high, /* inHigh */
+               params->in[0].data.inPrice.low, /* inLow */
+               params->optIn[0].data.optInInteger, /* optInFastPeriod*/
+               params->optIn[1].data.optInInteger, /* optInSlowPeriod*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_AO_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_AO_Lookback(params->optIn[0].data.optInInteger, /* optInFastPeriod*/
+                    params->optIn[1].data.optInInteger /* optInSlowPeriod*/ );
+}
 TA_RetCode TA_APO_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

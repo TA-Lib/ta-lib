@@ -110,6 +110,15 @@ TA_RetCode TA_ADXR_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_ADXR_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
+TA_RetCode TA_AO_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_AO_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 TA_RetCode TA_APO_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

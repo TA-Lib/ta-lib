@@ -248,6 +248,63 @@ DEF_FUNCTION( ADXR,
              );
 /* ADXR END */
 
+/* AO BEGIN */
+static const TA_OptInputParameterInfo TA_DEF_UI_D_AO_FastPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInFastPeriod",
+   0,
+
+   "Fast Period",
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
+   5,
+   "Period of the fast MA",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_AO_SlowPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInSlowPeriod",
+   0,
+
+   "Slow Period",
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
+   34,
+   "Period of the slow MA",
+
+   NULL
+};
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_AO_Default =
+                               { TA_Output_Real, "outReal", TA_OUT_HISTO };
+
+static const TA_InputParameterInfo    *TA_AO_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HL,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_AO_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real_AO_Default,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_AO_OptInputs[] =
+{ &TA_DEF_UI_D_AO_FastPeriod,
+  &TA_DEF_UI_D_AO_SlowPeriod,
+  NULL
+};
+
+DEF_FUNCTION( AO,
+              TA_GroupId_MomentumIndicators,
+              "Awesome Oscillator",
+              TA_FUNC_FLG_STREAM
+             );
+/* AO END */
+
 /* APO BEGIN */
 const TA_OptInputParameterInfo TA_DEF_UI_D_APO_MAType =
 {
@@ -478,6 +535,7 @@ const TA_FuncDef *TA_DEF_TableA[] =
    ADD_TO_TABLE(ADOSC),
    ADD_TO_TABLE(ADX),
    ADD_TO_TABLE(ADXR),
+   ADD_TO_TABLE(AO),
    ADD_TO_TABLE(APO),
    ADD_TO_TABLE(AROON),
    ADD_TO_TABLE(AROONOSC),
