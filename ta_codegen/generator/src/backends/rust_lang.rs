@@ -4458,6 +4458,30 @@ fn decompose_rust_array_ref(
 // runtime method calls (`self.ta_candlerange` / `self.ta_candleaverage`)
 // which dispatch on the actual rangeType value.
 
+/// The `match` arms of `ta_candlerange`, shared by the two sites that inline it
+/// (`ta_candlerange` itself and the `avgPeriod == 0` fallback inside
+/// `ta_candleaverage`).
+///
+/// The Shadows arm is upper + lower, NOT the algebraically equal
+/// `(high - low) - |close - open|`. It must match `TA_CANDLERANGE` in
+/// `ta_utility.h` term for term: the two forms differ by reassociation on any
+/// bar whose low sits below half its high, and C is the reference (#217).
+/// Like `java.rs` and `csharp.rs`, this spelling is hardcoded here rather than
+/// read from `input/helpers/candlestick.c`, so a fix to the helper alone does
+/// NOT reach Rust -- those two backends carry the same duplicate. The final arm
+/// is `0.0` for the same reason: `TA_CANDLERANGE`'s innermost ternary falls
+/// through to `0`, so folding it into the Shadows arm would answer an
+/// out-of-range rangeType differently than C does.
+fn candle_range_arms(open: &str, high: &str, low: &str, close: &str) -> String {
+    format!(
+        "0 => (({close}) - ({open})).abs(), \
+         1 => ({high}) - ({low}), \
+         2 => (({high}) - (if ({close}) >= ({open}) {{ ({close}) }} else {{ ({open}) }})) \
+            + ((if ({close}) >= ({open}) {{ ({open}) }} else {{ ({close}) }}) - ({low})), \
+         _ => 0.0"
+    )
+}
+
 #[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
 fn render_func_call(
     fname: &str,
@@ -4687,9 +4711,7 @@ fn render_func_call(
             .map(|a| render_expr(a, ctx, opt_real_params, registry, helpers))
             .collect();
         let (rt, open, high, low, close) = (&r[0], &r[1], &r[2], &r[3], &r[4]);
-        format!(
-            "(match {rt} {{ 0 => ({close} - {open}).abs(), 1 => {high} - {low}, _ => {high} - {low} - ({close} - {open}).abs() }})"
-        )
+        format!("(match {rt} {{ {} }})", candle_range_arms(open, high, low, close))
     } else if fname == "ta_candleaverage" && args.len() == 8 {
         // Inline as a single nested expression (no let bindings) matching C's ternary structure.
         // This enables LLVM loop unswitching on the invariant rangeType checks.
@@ -4702,8 +4724,9 @@ fn render_func_call(
         // Single expression: factor * (if ap!=0 { sum/ap } else { candlerange }) / (if rt==2 { 2.0 } else { 1.0 })
         format!(
             "(({factor}) * (if ({ap}) != 0 {{ ({sum}) / ({ap} as f64) }} else {{ \
-             match {rt} {{ 0 => ({close} - {open}).abs(), 1 => ({high}) - ({low}), _ => ({high}) - ({low}) - (({close}) - ({open})).abs() }} \
-             }}) / (if ({rt}) == 2 {{ 2.0 }} else {{ 1.0 }}))"
+             match {rt} {{ {} }} \
+             }}) / (if ({rt}) == 2 {{ 2.0 }} else {{ 1.0 }}))",
+            candle_range_arms(open, high, low, close)
         )
     } else if registry.contains(fname) || fname.ends_with("_private") {
         // Cross-indicator call: use registry to resolve the function name.
