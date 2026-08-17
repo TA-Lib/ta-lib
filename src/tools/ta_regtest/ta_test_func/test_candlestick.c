@@ -10432,6 +10432,186 @@ static void build_sticksandwich( void )
   pb_flat(8);
 }
 
+/* CDLXSIDEGAP3METHODS -- two candles of one colour with a real-body gap
+ * between them, then a third of the opposite colour reaching back across it.
+ *
+ *   c0  color(i-2) == color(i-1)
+ *   c1  color(i-1) == -color(i)
+ *   c2  open(i)  < bodyhi(i-1)
+ *   c3  open(i)  > bodylo(i-1)
+ *   c4  close(i) < bodyhi(i-2)
+ *   c5  close(i) > bodylo(i-2)
+ *   c6  ( white(i-2) && realbodygapup(i-1 over i-2) )
+ *       || ( black(i-2) && realbodygapdown(i-1 under i-2) )
+ *
+ * c1 is waived, and the argument is the reason this pattern needs one at all.
+ * c2 and c3 put open(i) inside the 2nd real body, c4 and c5 put close(i)
+ * inside the 1st, and c6 puts one body entirely clear of the other. In the
+ * white arm that chains to
+ *
+ *    open(i) > bodylo(i-1) > bodyhi(i-2) > close(i)
+ *
+ * so open(i) > close(i) and the 3rd candle is black by construction; the black
+ * arm is the mirror and forces it white. Either way color(i) == -color(i-2),
+ * so c1 reads color(i-1) == color(i-2), which is c0 written out again. Exactly
+ * one of the two carries information once the others hold, and the third
+ * candle's colour is the one the geometry already decided.
+ *
+ * A search over a coarse grid agrees: of 531441 assignments there is not one
+ * that falsifies c0 alone, and not one that falsifies c1 alone.
+ *
+ * The colour conditions here have no boundary case to sit on. A doji would be
+ * the minimal white candle, but c2 and c3 need the 2nd real body to be wide
+ * enough to hold open(i) strictly inside it, so a degenerate body breaks them
+ * instead. The c0 flip is an ordinary black body, and it is the one flip in
+ * this builder that is not pinned to an edge.
+ */
+static void cond_xsidegap3methods( int i, int *c )
+{
+   c[0] = pb_white(i-2) == pb_white(i-1);
+   c[1] = pb_white(i-1) != pb_white(i);
+   c[2] = pbO[i] < pb_bodyhi(i-1);
+   c[3] = pbO[i] > pb_bodylo(i-1);
+   c[4] = pbC[i] < pb_bodyhi(i-2);
+   c[5] = pbC[i] > pb_bodylo(i-2);
+   c[6] = (  pb_white(i-2) && pb_bodylo(i-1) > pb_bodyhi(i-2) )
+       || ( !pb_white(i-2) && pb_bodyhi(i-1) < pb_bodylo(i-2) );
+}
+
+static void arm_xsidegap3methods( int i, int cond, int arm, int *a )
+{
+   if( cond != 6 ) return;
+   if( arm == 0 ) { a[0] =  pb_white(i-2); a[1] = pb_bodylo(i-1) > pb_bodyhi(i-2); }
+   else           { a[0] = !pb_white(i-2); a[1] = pb_bodyhi(i-1) < pb_bodylo(i-2); }
+}
+
+static void build_xsidegap3methods( void )
+{
+  pb_conditions(7);
+  pb_signs(2);
+  pb_arm(6,0,2); pb_arm(6,1,2);
+  pb_arm_model(arm_xsidegap3methods);
+  /* c0 and c1 are the same predicate once the others hold, so NEITHER can be
+   * broken alone and both are waived. Deleting either conjunct from the library
+   * would preserve the function exactly; deleting BOTH would not, and that is
+   * what the zero-valued case below is for -- it is not an MC/DC case and makes
+   * no independence claim, it just refuses to let the pair vanish unnoticed. */
+  pb_waive(0, "the mirror of c1's waiver: given c2..c6 the 3rd candle's colour is fixed at "
+              "-color(i-2), so c1 reads color(i-1) == color(i-2), which is c0. The two are "
+              "one predicate written twice and neither can be falsified without the other");
+  pb_waive(1, "c2 and c3 put open(i) inside the 2nd real body, c4 and c5 put close(i) "
+              "inside the 1st, and c6 separates the two bodies. In the white arm that "
+              "gives open(i) > bodylo(i-1) > bodyhi(i-2) > close(i), so the 3rd candle "
+              "is black by construction, and the black arm forces it white. So "
+              "color(i) == -color(i-2) always, and c1 restates c0");
+  pb_waive_arm(6,0,0,"the arm's own colour selector -- it chooses the arm, and the class it chooses is fired by pb_signs(2)");
+  pb_waive_arm(6,1,0,"the arm's own colour selector -- it chooses the arm, and the class it chooses is fired by pb_signs(2)");
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(100,105.5,99.5,105);              /* 1st: white, body 100..105 */
+  pb_bar(110,115.5,109.5,115);             /* 2nd: white, body 110..115, clear above */
+  int d=pb_bar(113,113.5,101.5,102);       /* 3rd: black, opens in the 2nd, closes in the 1st */
+  pb_detect(d,100,"detect: two whites gapped apart, a black reaching back across");
+  pb_flat(8);
+
+  /* The 2nd candle black: c0 and c1 both false, c2..c6 all true. Not a flip --
+   * it breaks two conditions and the harness is right to refuse it as one --
+   * but it is the case that fails if both conjuncts are removed. */
+  pb_primer(12,100,2,4);
+  pb_bar(100,105.5,99.5,105);
+  pb_bar(115,115.5,109.5,110);             /* 2nd black: same body extent, gap intact */
+  int z0=pb_bar(113,113.5,101.5,102);
+  pb_expect(z0,0,"the colour pair is load-bearing: 2nd black, everything else intact");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,105.5,99.5,105);
+  pb_bar(110,115.5,109.5,115);
+  int f2=pb_bar(115,115.5,101.5,102);      /* open 115 == bodyhi(i-1) */
+  pb_flip(f2,2,"break c2: open 115 == the 2nd body top, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,105.5,99.5,105);
+  pb_bar(110,115.5,109.5,115);
+  int k2=pb_bar(114.5,114.5,101.5,102);
+  pb_control(k2,100,2,"restore c2: open 114.5 < 115");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,105.5,99.5,105);
+  pb_bar(110,115.5,109.5,115);
+  int f3=pb_bar(110,110.5,101.5,102);      /* open 110 == bodylo(i-1) */
+  pb_flip(f3,3,"break c3: open 110 == the 2nd body bottom, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,105.5,99.5,105);
+  pb_bar(110,115.5,109.5,115);
+  int k3=pb_bar(110.5,110.5,101.5,102);
+  pb_control(k3,100,3,"restore c3: open 110.5 > 110");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,105.5,99.5,105);
+  pb_bar(110,115.5,109.5,115);
+  int f4=pb_bar(113,113.5,104.5,105);      /* close 105 == bodyhi(i-2) */
+  pb_flip(f4,4,"break c4: close 105 == the 1st body top, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,105.5,99.5,105);
+  pb_bar(110,115.5,109.5,115);
+  int k4=pb_bar(113,113.5,104,104.5);
+  pb_control(k4,100,4,"restore c4: close 104.5 < 105");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,105.5,99.5,105);
+  pb_bar(110,115.5,109.5,115);
+  int f5=pb_bar(113,113.5,99.5,100);       /* close 100 == bodylo(i-2) */
+  pb_flip(f5,5,"break c5: close 100 == the 1st body bottom, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,105.5,99.5,105);
+  pb_bar(110,115.5,109.5,115);
+  int k5=pb_bar(113,113.5,100,100.5);
+  pb_control(k5,100,5,"restore c5: close 100.5 > 100");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,105.5,99.5,105);
+  pb_bar(105,115.5,104.5,115);             /* 2nd body bottom 105 == the 1st body top */
+  int f6=pb_bar(113,113.5,101.5,102);
+  pb_flip_in(f6,6,0,1,"break c6 alt0 term1: the 2nd body bottom 105 == the 1st body top, the gap test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,105.5,99.5,105);
+  pb_bar(105.5,115.5,105,115);
+  int k6=pb_bar(113,113.5,101.5,102);
+  pb_control(k6,100,6,"restore c6: the 2nd body bottom 105.5 > 105");
+  pb_flat(8);
+
+  /* The BLACK arm: the gap points the other way and the output flips sign. */
+  pb_primer(12,100,2,4);
+  pb_bar(105,105.5,99.5,100);              /* 1st: black, body 100..105 */
+  pb_bar(95,95.5,89.5,90);                 /* 2nd: black, body 90..95, clear below */
+  int db=pb_bar(93,102.5,92.5,102);        /* 3rd: white, opens in the 2nd, closes in the 1st */
+  pb_detect(db,-100,"detect black-first: the mirror, output -100");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(105,105.5,99.5,100);
+  pb_bar(100,100.5,89.5,90);               /* 2nd body top 100 == the 1st body bottom */
+  int f6b=pb_bar(93,102.5,92.5,102);
+  pb_flip_in(f6b,6,1,1,"break c6 alt1 term1: the 2nd body top 100 == the 1st body bottom, the gap test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(105,105.5,99.5,100);
+  pb_bar(99.5,99.5,89.5,90);
+  int k6b=pb_bar(93,102.5,92.5,102);
+  pb_control(k6b,-100,6,"restore c6 black arm: the 2nd body top 99.5 < 100");
+  pb_flat(8);
+}
+
 static ErrorNumber test_marquee_predicate_coverage( void )
 {
    ErrorNumber e;
@@ -10493,6 +10673,7 @@ static ErrorNumber test_marquee_predicate_coverage( void )
    pb_reset(); build_kickingbylength(); e = pb_check_mcdc("CDLKICKINGBYLENGTH", TA_CDLKICKINGBYLENGTH, cond_kickingbylength); if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_3inside();         e = pb_check_mcdc("CDL3INSIDE",         TA_CDL3INSIDE,         cond_3inside);         if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_sticksandwich();   e = pb_check_mcdc("CDLSTICKSANDWICH",   TA_CDLSTICKSANDWICH,   cond_sticksandwich);   if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_xsidegap3methods(); e = pb_check_mcdc("CDLXSIDEGAP3METHODS", TA_CDLXSIDEGAP3METHODS, cond_xsidegap3methods); if( e != TA_TEST_PASS ) return e;
    pb_report_totals();
    return TA_TEST_PASS;
 }
