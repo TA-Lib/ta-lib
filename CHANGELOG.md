@@ -8,24 +8,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 
 ## [0.8.1] Not Released Yet
 ### Added
-- Streaming API, in C, Rust, Java and .NET. Instead of recomputing an indicator
-  over the whole series on every new bar, open a stream once from your history
-  and advance it one closed bar at a time:
-
-      var s = core.SMA_Open(history, 30);   // C#; same shape in every language
-      double v = s.Update(bar);             // O(1) per bar
-      double p = s.Peek(formingBar);        // evaluate without committing
-
-  Every streamed value is bit-identical to what the batch call returns for the
-  same bar — verified per function, per bar, in all four languages. `OpenAndFill`
-  opens a stream and fills the whole history's output in one pass, for callers
-  who want both. Available for every indicator that has one.
-
-  One place the streaming API is deliberately stricter than the batch one: a
-  non-finite input (NaN or an infinity) is **rejected** rather than computed on,
-  at open and at every bar, and the handle is left unchanged so the stream stays
-  usable. A stream carries state forward, so one bad bar from a feed would
-  otherwise poison every value it produces afterwards.
+- New Streaming API. See https://ta-lib.org/api/stream/
 - (#81) Microsoft VCPKG support. Thanks @greenTableWork !
 - (#78) CMake can now opt out of building the static or the shared library (both built by default). Thanks @BwL1289 !
 - (#75) More docs for DEMA, TEMA, T3, MFI, ULTOSC, KAMA and TRIX. Thanks @nehemiah888 !
@@ -42,9 +25,10 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - PVO: Percentage Volume Oscillator (#119)
   - QSTICK: Qstick (#226)
   - VWMA: Volume Weighted Moving Average (#131)
-  - WAD: Williams' Accumulation/Distribution, the no-volume Achelis form (#200)
+  - WAD: Williams' Accumulation/Distribution (#200)
 - New MAType (for MA, BBANDS, STOCH etc...):
   - TA_MAType_HMA (#139)
+  - TA_MAType_DISABLED — no smoothing at any period; the output is a copy of the input (#93)
   - TA_MAType_DEFAULT — selects that parameter's documented MA type (#182)
 
 ### Faster
@@ -61,16 +45,6 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - ~10%: ATR and NATR
 
 ### Changed
-- A NaN passed as a real optional parameter (`optInNbDevUp`, `optInPenetration`,
-  `optInVFactor`, ...) is now rejected with `TA_BAD_PARAM` instead of being computed
-  on. Every such parameter already declared a valid range, but the range test could
-  not see NaN: `x < min` and `x > max` are both false for it, so it slipped through
-  and the call returned success with NaN output. The corresponding `_Lookback` now
-  rejects it too. Infinities were already rejected and still are. Only NaN behaves
-  differently than before, and only for parameters — input series are unchanged.
-- (#202) VAR no longer returns a tiny negative variance on a flat stretch, where the
-  calculation cancels to either side of zero; it returns 0. `sqrt(VAR(...))` was NaN
-  there. STDDEV is unaffected — it already reported 0 for those bars.
 - (#133) BBANDS default `optInTimePeriod` changed from 5 to 20, as intended by John Bollinger.
 - (#120) PPO and APO now default `optInMAType` to EMA (was SMA), matching Gerald Appel's original PPO/MACD definition. Pass `TA_MAType_SMA` explicitly to keep the previous behavior.
 - (#96) Fused multiply-add and other floating-point re-ordering produce minor output differences; an intentional modernization.
@@ -104,6 +78,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - (#77) CMake shared library now links libm directly, so it declares its own math-library dependency instead of relying on the consuming program to provide it. Thanks @BwL1289 !
 - (#102) Fixed ULTOSC and CDL3INSIDE performance regression (only in 0.7.1)
 - (#112) IMI returned NaN on an all-flat window (every bar `close == open`); now returns 50.0.
+- (#202) VAR no longer returns a tiny negative variance on a flat stretch, where the calculation cancels to either side of zero; it now returns 0.0 instead.
 
 ## [0.7.1] 2026-07-03
 ### Added
