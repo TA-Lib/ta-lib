@@ -311,10 +311,6 @@ static void TA_CDLSTICKSANDWICH_StepInternal( struct TA_CDLSTICKSANDWICH_Stream 
    sp->lag1_inLow = inLow;
    sp->lag2_inClose = sp->lag1_inClose;
    sp->lag1_inClose = inClose;
-   sp->ring_EqualTrailingIdx_inOpen[sp->ringPos_EqualTrailingIdx] = inOpen;
-   sp->ring_EqualTrailingIdx_inHigh[sp->ringPos_EqualTrailingIdx] = inHigh;
-   sp->ring_EqualTrailingIdx_inLow[sp->ringPos_EqualTrailingIdx] = inLow;
-   sp->ring_EqualTrailingIdx_inClose[sp->ringPos_EqualTrailingIdx] = inClose;
    sp->ringPos_EqualTrailingIdx = sp->ringPos_EqualTrailingIdx + 1;
    if( sp->ringPos_EqualTrailingIdx >= sp->ringCap_EqualTrailingIdx )
    {

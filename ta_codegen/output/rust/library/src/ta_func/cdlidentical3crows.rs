@@ -657,18 +657,10 @@ impl Core {
         sp.lag1_inLow = inLow;
         sp.lag2_inClose = sp.lag1_inClose;
         sp.lag1_inClose = inClose;
-        sp.ring_EqualTrailingIdx_inOpen[sp.ringPos_EqualTrailingIdx] = inOpen;
-        sp.ring_EqualTrailingIdx_inHigh[sp.ringPos_EqualTrailingIdx] = inHigh;
-        sp.ring_EqualTrailingIdx_inLow[sp.ringPos_EqualTrailingIdx] = inLow;
-        sp.ring_EqualTrailingIdx_inClose[sp.ringPos_EqualTrailingIdx] = inClose;
         sp.ringPos_EqualTrailingIdx = sp.ringPos_EqualTrailingIdx + 1;
         if sp.ringPos_EqualTrailingIdx >= sp.ringCap_EqualTrailingIdx {
             sp.ringPos_EqualTrailingIdx = 0;
         }
-        sp.ring_ShadowVeryShortTrailingIdx_inOpen[sp.ringPos_ShadowVeryShortTrailingIdx] = inOpen;
-        sp.ring_ShadowVeryShortTrailingIdx_inHigh[sp.ringPos_ShadowVeryShortTrailingIdx] = inHigh;
-        sp.ring_ShadowVeryShortTrailingIdx_inLow[sp.ringPos_ShadowVeryShortTrailingIdx] = inLow;
-        sp.ring_ShadowVeryShortTrailingIdx_inClose[sp.ringPos_ShadowVeryShortTrailingIdx] = inClose;
         sp.ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx + 1;
         if sp.ringPos_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx {
             sp.ringPos_ShadowVeryShortTrailingIdx = 0;

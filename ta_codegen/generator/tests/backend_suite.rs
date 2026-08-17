@@ -7498,6 +7498,117 @@ fn test_c_trima_dual_mode_rings_stream_section() {
     assert!(c.contains("ringMirror_middleIdx_inReal"), "Peek ring mirror");
 }
 
+/// The body of `TA_<NAME>_StepInternal`, brace-balanced. Ring slots are also
+/// written during Open, so the per-bar stores have to be counted here alone.
+fn step_internal_body(c: &str) -> String {
+    let i = c.find("_StepInternal( struct").expect("a StepInternal definition");
+    let j = c[i..].find('{').expect("StepInternal has a body") + i;
+    let bytes = c.as_bytes();
+    let (mut depth, mut k) = (0usize, j);
+    loop {
+        match bytes[k] {
+            b'{' => depth += 1,
+            b'}' => {
+                depth -= 1;
+                if depth == 0 {
+                    break;
+                }
+            }
+            _ => {}
+        }
+        k += 1;
+    }
+    c[j..=k].to_string()
+}
+
+/// Every `sp->ring_X[sp->ringPos_Y] = Z;` store in a step body, tagged with the
+/// id of the enclosing brace block.
+///
+/// The block tag is what keeps a dual-mode step honest: HMA emits the same
+/// store in both arms of `if (period == 2 || period == 3) ... else ...`, which
+/// is one store per path, not two per bar. Only repeats within a single
+/// straight-line block are dead.
+fn ring_slot_stores(step: &str) -> Vec<(usize, String)> {
+    let mut out = Vec::new();
+    let mut stack = vec![0usize];
+    let mut next_id = 0usize;
+    for line in step.lines() {
+        let l = line.trim();
+        if l.starts_with("sp->ring_") && l.contains("[sp->ringPos_") && l.ends_with(';') {
+            out.push((*stack.last().expect("block stack"), l.to_string()));
+        }
+        for ch in l.chars() {
+            match ch {
+                '{' => {
+                    next_id += 1;
+                    stack.push(next_id);
+                }
+                '}' => {
+                    stack.pop();
+                }
+                _ => {}
+            }
+        }
+    }
+    out
+}
+
+#[test]
+fn test_c_back_offset_ring_writes_the_current_bar_once() {
+    // CDLONNECK's Equal average runs on the SHIFTED candle, so its ring uses the
+    // absolute-mod (back > 0) layout: the transition prologue pre-writes the
+    // current bar into slot `pos` so the runtime-lag-0 case reads it through the
+    // same formula. Nothing between there and the end of the step moves
+    // `ringPos`, so repeating that store before the advance is a dead store.
+    let (mut func, enums) = load_indicator("cdlonneck");
+    func.streaming = true;
+    let c = backends::c::generate(&func, &enums, &make_registry(), &HelperRegistry::empty());
+    let step = step_internal_body(&c);
+    for arr in ["inOpen", "inHigh", "inLow", "inClose"] {
+        let store = format!("sp->ring_EqualTrailingIdx_{arr}[sp->ringPos_EqualTrailingIdx] = {arr};");
+        assert_eq!(
+            step.matches(&store).count(),
+            1,
+            "stored twice per bar, with ringPos unmoved between: {store}"
+        );
+    }
+}
+
+#[test]
+fn test_c_no_step_internal_stores_a_ring_slot_twice() {
+    // Corpus sweep for the same invariant: one write per ring slot per block.
+    let registry = make_registry();
+    let helpers =
+        HelperRegistry::from_dir(&Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input"));
+    let mut stepped = 0usize;
+    let mut with_rings = 0usize;
+    for name in discover_indicators() {
+        let (func, enums) = load_indicator(&name);
+        if !func.streaming {
+            continue;
+        }
+        let c = backends::c::generate(&func, &enums, &registry, &helpers);
+        if !c.contains("_StepInternal( struct") {
+            continue;
+        }
+        let stores = ring_slot_stores(&step_internal_body(&c));
+        let mut seen = std::collections::BTreeSet::new();
+        for (block, s) in &stores {
+            assert!(
+                seen.insert((*block, s.clone())),
+                "{name}: ring slot written twice in one straight-line block: {s}"
+            );
+        }
+        stepped += 1;
+        with_rings += usize::from(!stores.is_empty());
+    }
+    // Both floors matter: the first proves the sweep still walks the streaming
+    // corpus, the second that it is actually looking at rings — a skip that
+    // silently emptied `stores` would keep the first green on its own.
+    assert!(stepped >= 170, "expected the streaming corpus, saw {stepped}");
+    assert!(with_rings >= 80, "expected the ring-carrying corpus, saw {with_rings}");
+}
+
 /// Pin the generated MIDPRICE stream section: batch runs the block scan and the
 /// stream runs `midprice_ALT1`'s T4 extrema automaton — one StepInternal, no
 /// mode branch, and no trace of the block scan inside the Open.

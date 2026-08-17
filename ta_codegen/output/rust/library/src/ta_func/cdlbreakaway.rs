@@ -452,10 +452,6 @@ impl Core {
         sp.lag3_inClose = sp.lag2_inClose;
         sp.lag2_inClose = sp.lag1_inClose;
         sp.lag1_inClose = inClose;
-        sp.ring_BodyLongTrailingIdx_inOpen[sp.ringPos_BodyLongTrailingIdx] = inOpen;
-        sp.ring_BodyLongTrailingIdx_inHigh[sp.ringPos_BodyLongTrailingIdx] = inHigh;
-        sp.ring_BodyLongTrailingIdx_inLow[sp.ringPos_BodyLongTrailingIdx] = inLow;
-        sp.ring_BodyLongTrailingIdx_inClose[sp.ringPos_BodyLongTrailingIdx] = inClose;
         sp.ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx + 1;
         if sp.ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx {
             sp.ringPos_BodyLongTrailingIdx = 0;

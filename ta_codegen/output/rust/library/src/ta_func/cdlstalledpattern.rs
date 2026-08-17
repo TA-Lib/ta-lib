@@ -886,10 +886,6 @@ impl Core {
         sp.lag1_inLow = inLow;
         sp.lag2_inClose = sp.lag1_inClose;
         sp.lag1_inClose = inClose;
-        sp.ring_BodyLongTrailingIdx_inOpen[sp.ringPos_BodyLongTrailingIdx] = inOpen;
-        sp.ring_BodyLongTrailingIdx_inHigh[sp.ringPos_BodyLongTrailingIdx] = inHigh;
-        sp.ring_BodyLongTrailingIdx_inLow[sp.ringPos_BodyLongTrailingIdx] = inLow;
-        sp.ring_BodyLongTrailingIdx_inClose[sp.ringPos_BodyLongTrailingIdx] = inClose;
         sp.ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx + 1;
         if sp.ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx {
             sp.ringPos_BodyLongTrailingIdx = 0;
@@ -902,18 +898,10 @@ impl Core {
         if sp.ringPos_BodyShortTrailingIdx >= sp.ringCap_BodyShortTrailingIdx {
             sp.ringPos_BodyShortTrailingIdx = 0;
         }
-        sp.ring_NearTrailingIdx_inOpen[sp.ringPos_NearTrailingIdx] = inOpen;
-        sp.ring_NearTrailingIdx_inHigh[sp.ringPos_NearTrailingIdx] = inHigh;
-        sp.ring_NearTrailingIdx_inLow[sp.ringPos_NearTrailingIdx] = inLow;
-        sp.ring_NearTrailingIdx_inClose[sp.ringPos_NearTrailingIdx] = inClose;
         sp.ringPos_NearTrailingIdx = sp.ringPos_NearTrailingIdx + 1;
         if sp.ringPos_NearTrailingIdx >= sp.ringCap_NearTrailingIdx {
             sp.ringPos_NearTrailingIdx = 0;
         }
-        sp.ring_ShadowVeryShortTrailingIdx_inOpen[sp.ringPos_ShadowVeryShortTrailingIdx] = inOpen;
-        sp.ring_ShadowVeryShortTrailingIdx_inHigh[sp.ringPos_ShadowVeryShortTrailingIdx] = inHigh;
-        sp.ring_ShadowVeryShortTrailingIdx_inLow[sp.ringPos_ShadowVeryShortTrailingIdx] = inLow;
-        sp.ring_ShadowVeryShortTrailingIdx_inClose[sp.ringPos_ShadowVeryShortTrailingIdx] = inClose;
         sp.ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx + 1;
         if sp.ringPos_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx {
             sp.ringPos_ShadowVeryShortTrailingIdx = 0;

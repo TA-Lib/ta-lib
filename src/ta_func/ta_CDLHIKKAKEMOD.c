@@ -429,10 +429,6 @@ static void TA_CDLHIKKAKEMOD_StepInternal( struct TA_CDLHIKKAKEMOD_Stream *sp, d
    sp->lag1_inLow = inLow;
    sp->lag2_inClose = sp->lag1_inClose;
    sp->lag1_inClose = inClose;
-   sp->ring_NearTrailingIdx_inOpen[sp->ringPos_NearTrailingIdx] = inOpen;
-   sp->ring_NearTrailingIdx_inHigh[sp->ringPos_NearTrailingIdx] = inHigh;
-   sp->ring_NearTrailingIdx_inLow[sp->ringPos_NearTrailingIdx] = inLow;
-   sp->ring_NearTrailingIdx_inClose[sp->ringPos_NearTrailingIdx] = inClose;
    sp->ringPos_NearTrailingIdx = sp->ringPos_NearTrailingIdx + 1;
    if( sp->ringPos_NearTrailingIdx >= sp->ringCap_NearTrailingIdx )
    {

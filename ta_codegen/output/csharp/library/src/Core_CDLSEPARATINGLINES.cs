@@ -729,10 +729,6 @@ public partial class Core
       if( sp.ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
          sp.ringPos_BodyLongTrailingIdx = 0;
       }
-      sp.ring_EqualTrailingIdx_inOpen[sp.ringPos_EqualTrailingIdx] = inOpen;
-      sp.ring_EqualTrailingIdx_inHigh[sp.ringPos_EqualTrailingIdx] = inHigh;
-      sp.ring_EqualTrailingIdx_inLow[sp.ringPos_EqualTrailingIdx] = inLow;
-      sp.ring_EqualTrailingIdx_inClose[sp.ringPos_EqualTrailingIdx] = inClose;
       sp.ringPos_EqualTrailingIdx = sp.ringPos_EqualTrailingIdx + 1;
       if( sp.ringPos_EqualTrailingIdx >= sp.ringCap_EqualTrailingIdx ) {
          sp.ringPos_EqualTrailingIdx = 0;

@@ -369,19 +369,11 @@ static void TA_CDLGAPSIDESIDEWHITE_StepInternal( struct TA_CDLGAPSIDESIDEWHITE_S
    sp->lag1_inLow = inLow;
    sp->lag2_inClose = sp->lag1_inClose;
    sp->lag1_inClose = inClose;
-   sp->ring_EqualTrailingIdx_inOpen[sp->ringPos_EqualTrailingIdx] = inOpen;
-   sp->ring_EqualTrailingIdx_inHigh[sp->ringPos_EqualTrailingIdx] = inHigh;
-   sp->ring_EqualTrailingIdx_inLow[sp->ringPos_EqualTrailingIdx] = inLow;
-   sp->ring_EqualTrailingIdx_inClose[sp->ringPos_EqualTrailingIdx] = inClose;
    sp->ringPos_EqualTrailingIdx = sp->ringPos_EqualTrailingIdx + 1;
    if( sp->ringPos_EqualTrailingIdx >= sp->ringCap_EqualTrailingIdx )
    {
       sp->ringPos_EqualTrailingIdx = 0;
    }
-   sp->ring_NearTrailingIdx_inOpen[sp->ringPos_NearTrailingIdx] = inOpen;
-   sp->ring_NearTrailingIdx_inHigh[sp->ringPos_NearTrailingIdx] = inHigh;
-   sp->ring_NearTrailingIdx_inLow[sp->ringPos_NearTrailingIdx] = inLow;
-   sp->ring_NearTrailingIdx_inClose[sp->ringPos_NearTrailingIdx] = inClose;
    sp->ringPos_NearTrailingIdx = sp->ringPos_NearTrailingIdx + 1;
    if( sp->ringPos_NearTrailingIdx >= sp->ringCap_NearTrailingIdx )
    {

@@ -5591,16 +5591,29 @@ fn ring_cap0_guard(ring: &RingSpec, names: &dyn NameMap) -> Statement {
 
 /// Append the end-of-update ring maintenance: store the new bar(s) into the
 /// current slot, advance the shared position, wrap at capacity.
+///
+/// The store is skipped for a `back > 0` ring: [`insert_transition_prologue`]
+/// has already written this bar into slot `pos` (the absolute-mod layout needs
+/// it there before the body reads, so a runtime lag of 0 resolves through the
+/// same formula), and `pos` moves nowhere between that write and this one —
+/// only the advance below touches it, and each ring owns its position. Emitting
+/// it again would be a byte-identical dead store, 196 of them per bar across
+/// the 29 functions with an offset ring. (A whole-body text match reads 199
+/// across 31: HMA and TRIMA are dual mode, and their repeated stores sit in
+/// mutually-exclusive arms of the period branch — one per path, not two per
+/// bar.)
 fn push_ring_advance(out: &mut Vec<Statement>, ring: &RingSpec, names: &dyn NameMap) {
-    for arr in &ring.arrays {
-        out.push(Statement::Assign {
-            target: Expr::ArrayAccess(
-                names.ring_buf(&ring.var, arr),
-                Box::new(Expr::Var(names.ring_pos(&ring.var))),
-            ),
-            value: Expr::Var(names.bar(arr)),
-            compound: false,
-        });
+    if ring.back == 0 {
+        for arr in &ring.arrays {
+            out.push(Statement::Assign {
+                target: Expr::ArrayAccess(
+                    names.ring_buf(&ring.var, arr),
+                    Box::new(Expr::Var(names.ring_pos(&ring.var))),
+                ),
+                value: Expr::Var(names.bar(arr)),
+                compound: false,
+            });
+        }
     }
     out.push(Statement::Assign {
         target: Expr::Var(names.ring_pos(&ring.var)),

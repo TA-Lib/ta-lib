@@ -633,46 +633,26 @@ static void TA_CDLADVANCEBLOCK_StepInternal( struct TA_CDLADVANCEBLOCK_Stream *s
    sp->lag1_inLow = inLow;
    sp->lag2_inClose = sp->lag1_inClose;
    sp->lag1_inClose = inClose;
-   sp->ring_BodyLongTrailingIdx_inOpen[sp->ringPos_BodyLongTrailingIdx] = inOpen;
-   sp->ring_BodyLongTrailingIdx_inHigh[sp->ringPos_BodyLongTrailingIdx] = inHigh;
-   sp->ring_BodyLongTrailingIdx_inLow[sp->ringPos_BodyLongTrailingIdx] = inLow;
-   sp->ring_BodyLongTrailingIdx_inClose[sp->ringPos_BodyLongTrailingIdx] = inClose;
    sp->ringPos_BodyLongTrailingIdx = sp->ringPos_BodyLongTrailingIdx + 1;
    if( sp->ringPos_BodyLongTrailingIdx >= sp->ringCap_BodyLongTrailingIdx )
    {
       sp->ringPos_BodyLongTrailingIdx = 0;
    }
-   sp->ring_FarTrailingIdx_inOpen[sp->ringPos_FarTrailingIdx] = inOpen;
-   sp->ring_FarTrailingIdx_inHigh[sp->ringPos_FarTrailingIdx] = inHigh;
-   sp->ring_FarTrailingIdx_inLow[sp->ringPos_FarTrailingIdx] = inLow;
-   sp->ring_FarTrailingIdx_inClose[sp->ringPos_FarTrailingIdx] = inClose;
    sp->ringPos_FarTrailingIdx = sp->ringPos_FarTrailingIdx + 1;
    if( sp->ringPos_FarTrailingIdx >= sp->ringCap_FarTrailingIdx )
    {
       sp->ringPos_FarTrailingIdx = 0;
    }
-   sp->ring_NearTrailingIdx_inOpen[sp->ringPos_NearTrailingIdx] = inOpen;
-   sp->ring_NearTrailingIdx_inHigh[sp->ringPos_NearTrailingIdx] = inHigh;
-   sp->ring_NearTrailingIdx_inLow[sp->ringPos_NearTrailingIdx] = inLow;
-   sp->ring_NearTrailingIdx_inClose[sp->ringPos_NearTrailingIdx] = inClose;
    sp->ringPos_NearTrailingIdx = sp->ringPos_NearTrailingIdx + 1;
    if( sp->ringPos_NearTrailingIdx >= sp->ringCap_NearTrailingIdx )
    {
       sp->ringPos_NearTrailingIdx = 0;
    }
-   sp->ring_ShadowLongTrailingIdx_inOpen[sp->ringPos_ShadowLongTrailingIdx] = inOpen;
-   sp->ring_ShadowLongTrailingIdx_inHigh[sp->ringPos_ShadowLongTrailingIdx] = inHigh;
-   sp->ring_ShadowLongTrailingIdx_inLow[sp->ringPos_ShadowLongTrailingIdx] = inLow;
-   sp->ring_ShadowLongTrailingIdx_inClose[sp->ringPos_ShadowLongTrailingIdx] = inClose;
    sp->ringPos_ShadowLongTrailingIdx = sp->ringPos_ShadowLongTrailingIdx + 1;
    if( sp->ringPos_ShadowLongTrailingIdx >= sp->ringCap_ShadowLongTrailingIdx )
    {
       sp->ringPos_ShadowLongTrailingIdx = 0;
    }
-   sp->ring_ShadowShortTrailingIdx_inOpen[sp->ringPos_ShadowShortTrailingIdx] = inOpen;
-   sp->ring_ShadowShortTrailingIdx_inHigh[sp->ringPos_ShadowShortTrailingIdx] = inHigh;
-   sp->ring_ShadowShortTrailingIdx_inLow[sp->ringPos_ShadowShortTrailingIdx] = inLow;
-   sp->ring_ShadowShortTrailingIdx_inClose[sp->ringPos_ShadowShortTrailingIdx] = inClose;
    sp->ringPos_ShadowShortTrailingIdx = sp->ringPos_ShadowShortTrailingIdx + 1;
    if( sp->ringPos_ShadowShortTrailingIdx >= sp->ringCap_ShadowShortTrailingIdx )
    {
