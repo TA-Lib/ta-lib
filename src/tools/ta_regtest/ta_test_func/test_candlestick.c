@@ -8815,6 +8815,408 @@ static void build_engulfing( void )
 
 }
 
+/* ---- The three patterns whose firing decision spans nested ifs ----------- *
+ *
+ * CDLHARAMI, CDLHARAMICROSS and CDLTRISTAR were the last uncounted patterns.
+ * All three write their non-zero output from inside more than one `if`, which
+ * the conjunct counter used to decline on rather than describe. It now derives
+ * the firing decision instead: collect the guard chain of every non-zero
+ * assignment, factor the common prefix into conjuncts, and OR the remainders.
+ * That one rule covers a flat decision, CDLENGULFING's if/else over two
+ * non-zero values, the harami pair's else-if chain and CDLTRISTAR's sequential
+ * ifs alike.
+ *
+ *   CDLHARAMI / CDLHARAMICROSS
+ *     if(long 1st) { if(short 2nd) { if(strict inside) x100 else if(inside) x80 } }
+ *     firing = long && short && (strict || loose)     -- 3 conditions, arms [2,2]
+ *
+ *   CDLTRISTAR
+ *     if(3 doji) { =0; if(gap up && ...) -100; if(gap down && ...) +100 }
+ *     firing = doji && doji && doji && (up || down)   -- 4 conditions, arms [2,2]
+ *
+ * THE HARAMI PAIR'S STRICT ALTERNATIVE CAN NEVER BE SOLE-TRUE, and that is the
+ * one waiver here. Its two alternatives are the same containment test written
+ * with < > and with <= >=, so the strict form implies the loose one. Whenever
+ * strict holds, loose holds too. What the loose form alone means is exactly the
+ * +/-80 output -- one end of the body meeting the other's -- so that case is
+ * covered as alt1's sole-true and the strict alternative is waived. The four
+ * output classes and the two alternatives are again the same distinction seen
+ * from two sides, as in CDLENGULFING.
+ *
+ * CDLTRISTAR needs no such waiver: its alternatives are a gap up and a gap down
+ * off the same candle, which are mutually exclusive, so each is sole-true in
+ * its own direction.
+ */
+static void cond_harami( int i, int *c )
+{
+   c[0] = pb_body(i-1) > pb_avg(TA_BodyLong,  i-1);
+   c[1] = pb_body(i)  <= pb_avg(TA_BodyShort, i);
+   c[2] = ( pb_bodyhi(i) <  pb_bodyhi(i-1) && pb_bodylo(i) >  pb_bodylo(i-1) )
+       || ( pb_bodyhi(i) <= pb_bodyhi(i-1) && pb_bodylo(i) >= pb_bodylo(i-1) );
+}
+static void arm_harami( int i, int cond, int arm, int *a )
+{
+   if( cond != 2 ) return;
+   if( arm == 0 ) { a[0] = pb_bodyhi(i) <  pb_bodyhi(i-1);
+                    a[1] = pb_bodylo(i) >  pb_bodylo(i-1); }
+   else           { a[0] = pb_bodyhi(i) <= pb_bodyhi(i-1);
+                    a[1] = pb_bodylo(i) >= pb_bodylo(i-1); }
+}
+static void cond_haramicross( int i, int *c )
+{
+   c[0] = pb_body(i-1) > pb_avg(TA_BodyLong, i-1);
+   c[1] = pb_body(i)  <= pb_avg(TA_BodyDoji, i);
+   c[2] = ( pb_bodyhi(i) <  pb_bodyhi(i-1) && pb_bodylo(i) >  pb_bodylo(i-1) )
+       || ( pb_bodyhi(i) <= pb_bodyhi(i-1) && pb_bodylo(i) >= pb_bodylo(i-1) );
+}
+static void arm_haramicross( int i, int cond, int arm, int *a )
+{
+   arm_harami(i, cond, arm, a);
+}
+static void cond_tristar( int i, int *c )
+{
+   double d = pb_avg(TA_BodyDoji, i-2);
+   c[0] = pb_body(i-2) <= d;
+   c[1] = pb_body(i-1) <= d;
+   c[2] = pb_body(i)   <= d;
+   c[3] = ( pb_bodylo(i-1) > pb_bodyhi(i-2) && pb_bodyhi(i) < pb_bodyhi(i-1) )
+       || ( pb_bodyhi(i-1) < pb_bodylo(i-2) && pb_bodylo(i) > pb_bodylo(i-1) );
+}
+static void arm_tristar( int i, int cond, int arm, int *a )
+{
+   if( cond != 3 ) return;
+   if( arm == 0 ) { a[0] = pb_bodylo(i-1) > pb_bodyhi(i-2);
+                    a[1] = pb_bodyhi(i)   < pb_bodyhi(i-1); }
+   else           { a[0] = pb_bodyhi(i-1) < pb_bodylo(i-2);
+                    a[1] = pb_bodylo(i)   > pb_bodylo(i-1); }
+}
+
+static void build_harami( void )
+{
+  pb_conditions(3);
+  pb_signs(4);
+  pb_disjuncts(2,2);
+  pb_arm(2,0,2); pb_arm(2,1,2);
+  pb_arm_model(arm_harami);
+  pb_waive_disjunct(2,0,"the strict form implies the loose one, so it can never be the only alternative true; the loose form alone is what the +/-80 output means, and that case is covered");
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,99,100);
+  int ha1=pb_bar(104,105,101,102);
+  pb_detect(ha1,100,"detect +100: a short body strictly inside a long black one");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  int ha2=pb_bar(104,105,101,102);
+  pb_detect(ha2,-100,"detect -100: the mirror over a long white first candle");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,99,100);
+  int ha3=pb_bar(112,113,109,110);
+  pb_detect(ha3,80,"detect +80: the body ceilings meet exactly, so only the loose alternative holds");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,113,99,112);
+  int ha4=pb_bar(112,113,109,110);
+  pb_detect(ha4,-80,"detect -80: the mirror");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,99,100);
+  int ha5=pb_bar(112,113,109,110);
+  pb_sole(ha5,80,2,1,"c2 alt1 alone: ceilings equal, so the strict alternative is false and the loose one carries it");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(102,113,99,100);
+  int ha6=pb_bar(101,102,100.5,101);
+  pb_flip(ha6,0,"break c0: 1st body 2 == avg 2, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,99,100);
+  int ha7=pb_bar(104,105,101,102);
+  pb_control(ha7,100,0,"restore c0: 1st body 12 > 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,99,100);
+  int ha8=pb_bar(106,107,101,102);
+  pb_flip(ha8,1,"break c1: 2nd body 4 above the BodyShort average 3");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,99,100);
+  int ha9=pb_bar(105,106,101,102);
+  pb_control(ha9,100,1,"restore c1: 2nd body 3 == avg 3, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,99,100);
+  int ha10=pb_bar(114,115,111,112);
+  pb_flip_in(ha10,2,1,0,"break c2 alt1 term0: 2nd body ceiling 114 above the 1st's 112");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,99,100);
+  int ha11=pb_bar(99,100,96,97);
+  pb_flip_in(ha11,2,1,1,"break c2 alt1 term1: 2nd body floor 97 below the 1st's 100");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,99,100);
+  int ha12=pb_bar(114,115,111,112);
+  pb_flip_in(ha12,2,0,0,"break c2 alt0 term0: same bars, filed against the strict alternative");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,99,100);
+  int ha13=pb_bar(99,100,96,97);
+  pb_flip_in(ha13,2,0,1,"break c2 alt0 term1: same bars, filed against the strict alternative");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,99,100);
+  int ha14=pb_bar(104,105,101,102);
+  pb_control(ha14,100,2,"restore c2: the 2nd body is strictly inside the 1st");
+  pb_flat(8);
+
+
+  /* The other +/-80: the body FLOORS meet rather than the ceilings. Without
+   * it nothing sits on the loose alternative's second bound, and relaxing
+   * that bound to strict passes. */
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,99,100);
+  int ha90=pb_bar(102,103,99,100);
+  pb_sole(ha90,80,2,1,"c2 alt1 alone, the floor side: floors equal, so the strict alternative is false");
+  pb_flat(8);
+
+}
+
+static void build_haramicross( void )
+{
+  pb_conditions(3);
+  pb_signs(4);
+  pb_disjuncts(2,2);
+  pb_arm(2,0,2); pb_arm(2,1,2);
+  pb_arm_model(arm_haramicross);
+  pb_waive_disjunct(2,0,"the strict form implies the loose one, so it can never be the only alternative true; the loose form alone is what the +/-80 output means, and that case is covered");
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(108,109,99,100);
+  int ha1=pb_bar(104,105,103,104);
+  pb_detect(ha1,100,"detect +100: a doji strictly inside a long black candle");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,109,99,108);
+  int ha2=pb_bar(104,105,103,104);
+  pb_detect(ha2,-100,"detect -100: the mirror");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(108,109,99,100);
+  int ha3=pb_bar(108,109,107,108);
+  pb_detect(ha3,80,"detect +80: the ceilings meet exactly");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,109,99,108);
+  int ha4=pb_bar(108,109,107,108);
+  pb_detect(ha4,-80,"detect -80: the mirror");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(108,109,99,100);
+  int ha5=pb_bar(108,109,107,108);
+  pb_sole(ha5,80,2,1,"c2 alt1 alone: only the loose alternative holds");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(102,109,99,100);
+  int ha6=pb_bar(101,102,100.5,101);
+  pb_flip(ha6,0,"break c0: 1st body 2 == avg 2, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(108,109,99,100);
+  int ha7=pb_bar(104,105,103,104);
+  pb_control(ha7,100,0,"restore c0: 1st body 8 > 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(108,109,99,100);
+  int ha8=pb_bar(105,106,103,106.5);
+  pb_flip(ha8,1,"break c1: 2nd body 1.5 above the BodyDoji average 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(108,109,99,100);
+  int ha9=pb_bar(104,105,103,105);
+  pb_control(ha9,100,1,"restore c1: 2nd body 1 == avg 1, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(108,109,99,100);
+  int ha10=pb_bar(110,111,109,110);
+  pb_flip_in(ha10,2,1,0,"break c2 alt1 term0: 2nd body ceiling 110 above the 1st's 108");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(108,109,99,100);
+  int ha11=pb_bar(98,99,97,98);
+  pb_flip_in(ha11,2,1,1,"break c2 alt1 term1: 2nd body floor 98 below the 1st's 100");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(108,109,99,100);
+  int ha12=pb_bar(110,111,109,110);
+  pb_flip_in(ha12,2,0,0,"break c2 alt0 term0: same bars, filed against the strict alternative");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(108,109,99,100);
+  int ha13=pb_bar(98,99,97,98);
+  pb_flip_in(ha13,2,0,1,"break c2 alt0 term1: same bars, filed against the strict alternative");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(108,109,99,100);
+  int ha14=pb_bar(104,105,103,104);
+  pb_control(ha14,100,2,"restore c2: the doji is strictly inside the 1st body");
+  pb_flat(8);
+
+
+  /* The floor-side +/-80, same reason as CDLHARAMI's. */
+  pb_primer(12,100,2,4);
+  pb_bar(108,109,99,100);
+  int ha91=pb_bar(101,102,99,100);
+  pb_sole(ha91,80,2,1,"c2 alt1 alone, the floor side");
+  pb_flat(8);
+
+}
+
+static void build_tristar( void )
+{
+  pb_conditions(4);
+  pb_signs(2);
+  pb_disjuncts(3,2);
+  pb_arm(3,0,2); pb_arm(3,1,2);
+  pb_arm_model(arm_tristar);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(100,101,99,100);
+  pb_bar(106,107,105,106);
+  int tr1=pb_bar(102,103,101,102);
+  pb_detect(tr1,-100,"detect -100: three doji with the middle one gapping up");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,101,99,100);
+  pb_bar(94,95,93,94);
+  int tr2=pb_bar(98,99,97,98);
+  pb_detect(tr2,100,"detect +100: the middle one gapping down");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,101,99,100);
+  pb_bar(106,107,105,106);
+  int tr3=pb_bar(102,103,101,102);
+  pb_sole(tr3,-100,3,0,"c3 alt0 alone: the middle doji gaps UP, so the gap-down alternative cannot hold");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,101,99,100);
+  pb_bar(94,95,93,94);
+  int tr4=pb_bar(98,99,97,98);
+  pb_sole(tr4,100,3,1,"c3 alt1 alone: the middle doji gaps DOWN");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,101.5,99,101.5);
+  pb_bar(106,107,105,106);
+  int tr5=pb_bar(102,103,101,102);
+  pb_flip(tr5,0,"break c0: 1st body 1.5 above the BodyDoji average 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,101,99,101);
+  pb_bar(106,107,105,106);
+  int tr6=pb_bar(102,103,101,102);
+  pb_control(tr6,-100,0,"restore c0: 1st body 1 == avg 1, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,101,99,100);
+  pb_bar(106,107.5,105,107.5);
+  int tr7=pb_bar(102,103,101,102);
+  pb_flip(tr7,1,"break c1: 2nd body 1.5 above avg 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,101,99,100);
+  pb_bar(106,107,105,107);
+  int tr8=pb_bar(102,103,101,102);
+  pb_control(tr8,-100,1,"restore c1: 2nd body 1 == avg 1, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,101,99,100);
+  pb_bar(106,107,105,106);
+  int tr9=pb_bar(102,103.5,101,103.5);
+  pb_flip(tr9,2,"break c2: 3rd body 1.5 above avg 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,101,99,100);
+  pb_bar(106,107,105,106);
+  int tr10=pb_bar(102,103,101,103);
+  pb_control(tr10,-100,2,"restore c2: 3rd body 1 == avg 1, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,101,99,100);
+  pb_bar(100,101,99,100);
+  int tr11=pb_bar(99,100,98,99);
+  pb_flip_in(tr11,3,0,0,"break c3 alt0 term0: 2nd body floor 100 == the 1st's ceiling, the gap is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,101,99,100);
+  pb_bar(106,107,105,106);
+  int tr12=pb_bar(106,107,105,106);
+  pb_flip_in(tr12,3,0,1,"break c3 alt0 term1: 3rd body ceiling 106 == the 2nd's, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,101,99,100);
+  pb_bar(100,101,99,100);
+  int tr13=pb_bar(101,102,100,101);
+  pb_flip_in(tr13,3,1,0,"break c3 alt1 term0: 2nd body ceiling 100 == the 1st's floor, the gap is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,101,99,100);
+  pb_bar(94,95,93,94);
+  int tr14=pb_bar(94,95,93,94);
+  pb_flip_in(tr14,3,1,1,"break c3 alt1 term1: 3rd body floor 94 == the 2nd's, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,101,99,100);
+  pb_bar(106,107,105,106);
+  int tr15=pb_bar(102,103,101,102);
+  pb_control(tr15,-100,3,"restore c3 via alt0: the gap-up alternative holds");
+  pb_flat(8);
+
+}
+
 static ErrorNumber test_marquee_predicate_coverage( void )
 {
    ErrorNumber e;
@@ -8866,6 +9268,9 @@ static ErrorNumber test_marquee_predicate_coverage( void )
    pb_reset(); build_upsidegap2crows();     e = pb_check_mcdc("CDLUPSIDEGAP2CROWS",   TA_CDLUPSIDEGAP2CROWS,     cond_upsidegap2crows);     if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_tasukigap();           e = pb_check_mcdc("CDLTASUKIGAP",          TA_CDLTASUKIGAP,           cond_tasukigap);           if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_engulfing();           e = pb_check_mcdc("CDLENGULFING",          TA_CDLENGULFING,           cond_engulfing);           if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_harami();              e = pb_check_mcdc("CDLHARAMI",             TA_CDLHARAMI,              cond_harami);              if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_haramicross();         e = pb_check_mcdc("CDLHARAMICROSS",        TA_CDLHARAMICROSS,         cond_haramicross);         if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_tristar();             e = pb_check_mcdc("CDLTRISTAR",            TA_CDLTRISTAR,             cond_tristar);             if( e != TA_TEST_PASS ) return e;
    pb_report_totals();
    return TA_TEST_PASS;
 }

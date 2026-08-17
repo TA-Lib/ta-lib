@@ -228,6 +228,133 @@ def _guard_if(src, m_start):
     return outer, None
 
 
+def _match_brace(src, pos):
+    """Index just past the `{...}` block whose opening brace is at/after pos."""
+    b = src.index("{", pos)
+    d = 0
+    for j in range(b, len(src)):
+        if src[j] == "{":
+            d += 1
+        elif src[j] == "}":
+            d -= 1
+            if d == 0:
+                return b, j
+    return b, len(src) - 1
+
+
+def _cond_of_if(src, k):
+    """(expression, index just past the closing paren) for the if at k."""
+    o = src.index("(", k)
+    d = 0
+    for j in range(o, len(src)):
+        if src[j] == "(":
+            d += 1
+        elif src[j] == ")":
+            d -= 1
+            if d == 0:
+                return src[o + 1:j], j + 1
+    return None, len(src)
+
+
+def _guard_chain(src, pos):
+    """Guards enclosing `pos`, outermost first, as (expression, negated) pairs.
+
+    Walks outward. A position inside an `else` block is guarded by the negation
+    of that if's condition, which is what lets `if(A) X else Y` be recognised as
+    covering both sides of A.
+    """
+    chain, cur = [], pos
+    while True:
+        k = src.rfind("if(", 0, cur)
+        k2 = src.rfind("if (", 0, cur)
+        k = max(k, k2)
+        if k < 0:
+            break
+        expr, after = _cond_of_if(src, k)
+        if expr is None:
+            break
+        tb, te = _match_brace(src, after)
+        if tb <= pos <= te:                      # inside the then-block
+            chain.append((expr.strip(), False))
+            cur = k
+            continue
+        tail = src[te + 1:].lstrip()
+        if tail.startswith("else"):
+            eo = te + 1 + (len(src[te + 1:]) - len(tail)) + 4
+            rest = src[eo:].lstrip()
+            if rest.startswith("if"):            # else-if: handled on its own turn
+                eb, ee = eo, _cond_of_if(src, eo + (len(src[eo:]) - len(rest)))[1]
+                _, ee = _match_brace(src, ee)
+            else:
+                eb, ee = _match_brace(src, eo)
+            if eb <= pos <= ee or eo <= pos <= ee:
+                chain.append((expr.strip(), True))
+                cur = k
+                continue
+        cur = k
+    chain.reverse()
+    return chain
+
+
+def _firing_expr(src):
+    """The decision that makes this pattern FIRE, as one expression string.
+
+    Collects the guard chain of every NON-ZERO assignment, factors the common
+    prefix into conjuncts, and ORs the remainders -- simplifying `A | !A` to a
+    tautology (which drops out) and `A | (!A & B)` to `A | B`. That one rule
+    covers a flat decision, CDLENGULFING's if/else over two non-zero values,
+    CDLHARAMI's else-if chain and CDLTRISTAR's sequential ifs alike.
+    """
+    chains = []
+    for a in re.finditer(r"outInteger\s*\[\s*outIdx\+*\s*\]\s*=\s*([^;]+);", src):
+        if a.group(1).strip().rstrip("0").strip() in ("", "+", "-"):
+            continue
+        c = _guard_chain(src, a.start())
+        if not c:
+            return None, "a non-zero assignment has no enclosing if"
+        chains.append(c)
+    if not chains:
+        return None, "no non-zero outInteger assignment found"
+
+    n = 0
+    while all(len(c) > n for c in chains) and len(set(c[n] for c in chains)) == 1:
+        n += 1
+    common = [e for e, neg in chains[0][:n]]
+    if any(neg for _, neg in chains[0][:n]):
+        return None, "the firing decision negates one of its own guards"
+    rest = [c[n:] for c in chains]
+
+    if any(len(r) == 0 for r in rest):
+        alts = []                                 # one path is the bare prefix
+    else:
+        heads = set((r[0][0], r[0][1]) for r in rest)
+        pos = set(e for e, neg in heads if not neg)
+        neg = set(e for e, neg in heads if neg)
+        if pos & neg:
+            # A | (!A & ...) -- drop the negated copy, keep what follows it
+            alts = []
+            for r in rest:
+                terms = [e for e, g in r if not (g and e in pos)]
+                if terms:
+                    alts.append(" && ".join("(%s)" % t for t in terms))
+        else:
+            alts = [" && ".join("(%s)" % e for e, g in r) for r in rest]
+        if len(alts) <= 1 and len(rest) > 1:
+            alts = []                             # the remainder is a tautology
+
+    # Splice a guard in RAW unless it carries a top-level `||` of its own.
+    # Wrapping everything would hide each guard's internal structure one
+    # parenthesis deep, where the conjunct flattening and the arm detection
+    # can no longer see it -- which silently emptied the arm map for every
+    # pattern that had one.
+    parts = [("(%s)" % e if len(_split_top(e, "||")) > 1 else e) for e in common]
+    if alts:
+        parts.append("(" + " || ".join("(%s)" % a for a in alts) + ")")
+    if not parts:
+        return None, "empty firing decision"
+    return " && ".join(parts), None
+
+
 def count_conditions(path):
     """Atomic conditions of the detection expression in a candlestick source.
 
@@ -248,33 +375,11 @@ def count_conditions(path):
     """
     src = strip_comments(open(path, encoding="utf-8").read())
 
-    # The firing branch: outInteger[outIdx++] = <something other than 0>
-    m = None
-    for cand in re.finditer(r"outInteger\s*\[\s*outIdx\+\+\s*\]\s*=\s*([^;]+);", src):
-        if cand.group(1).strip().rstrip("0").strip() not in ("", "+", "-"):
-            m = cand
-            break
-    if m is None:
-        return None, "no non-zero outInteger assignment found"
 
     # Walk back to the `if(` that guards it.
-    k, err = _guard_if(src, m.start())
-    if k < 0:
-        return None, (err or "no enclosing if( found")
-    open_paren = src.index("(", k)
-    depth, i, expr = 0, open_paren, None
-    while i < len(src):
-        ch = src[i]
-        if ch == "(":
-            depth += 1
-        elif ch == ")":
-            depth -= 1
-            if depth == 0:
-                expr = src[open_paren + 1:i]
-                break
-        i += 1
+    expr, err = _firing_expr(src)
     if expr is None:
-        return None, "unterminated if( expression"
+        return None, err
 
     # A decision that is ITSELF a disjunction is one condition -- the same
     # reading a nested `(B || C)` already gets. This used to decline, on the
@@ -314,29 +419,9 @@ def count_disjuncts(path):
     pb_disjuncts() declaration of how many there are to cover.
     """
     src = strip_comments(open(path, encoding="utf-8").read())
-    m = None
-    for cand in re.finditer(r"outInteger\s*\[\s*outIdx\+\+\s*\]\s*=\s*([^;]+);", src):
-        if cand.group(1).strip().rstrip("0").strip() not in ("", "+", "-"):
-            m = cand
-            break
-    if m is None:
-        return None, "no non-zero outInteger assignment found"
-    k, err = _guard_if(src, m.start())
-    if k < 0:
-        return None, (err or "no enclosing if( found")
-    open_paren = src.index("(", k)
-    depth, i, expr = 0, open_paren, None
-    while i < len(src):
-        if src[i] == "(":
-            depth += 1
-        elif src[i] == ")":
-            depth -= 1
-            if depth == 0:
-                expr = src[open_paren + 1:i]
-                break
-        i += 1
+    expr, err = _firing_expr(src)
     if expr is None:
-        return None, "unterminated if( expression"
+        return None, err
     top = _split_top(expr, "||")
     if len(top) > 1:
         cols = [re.findall(r"ta_candlecolor\([^)]*\)\s*==\s*(-?1)", a) for a in top]
@@ -389,29 +474,9 @@ def count_arms(path):
     quietly not declaring them.
     """
     src = strip_comments(open(path, encoding="utf-8").read())
-    m = None
-    for cand in re.finditer(r"outInteger\s*\[\s*outIdx\+\+\s*\]\s*=\s*([^;]+);", src):
-        if cand.group(1).strip().rstrip("0").strip() not in ("", "+", "-"):
-            m = cand
-            break
-    if m is None:
-        return None, "no non-zero outInteger assignment found"
-    k, err = _guard_if(src, m.start())
-    if k < 0:
-        return None, (err or "no enclosing if( found")
-    open_paren = src.index("(", k)
-    depth, i, expr = 0, open_paren, None
-    while i < len(src):
-        if src[i] == "(":
-            depth += 1
-        elif src[i] == ")":
-            depth -= 1
-            if depth == 0:
-                expr = src[open_paren + 1:i]
-                break
-        i += 1
+    expr, err = _firing_expr(src)
     if expr is None:
-        return None, "unterminated if( expression"
+        return None, err
     top = _split_top(expr, "||")
     if len(top) > 1:
         return {0: [len(_split_top(_peel(a), "&&")) for a in top]}, None
