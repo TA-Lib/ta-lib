@@ -9796,18 +9796,27 @@ static void build_separatinglines( void )
  *
  * Both bars must be marubozus, so both need a range barely larger than their
  * body, and that range enters avg(ShadowVeryShort, i) through the HighLow
- * window. A first bar of body 12 inside a range of 13 puts that average on
- * 1.03, against 1.0 at i-1 where the window is all primer -- so the two bars
+ * window. A first bar of body 12 inside a range of 13.125 puts that average on
+ * 1.03125, against 1.0 at i-1 where the window is all primer -- so the two bars
  * are measured against DIFFERENT shadow thresholds and each flip is placed on
  * its own.
  *
- * 1.03 is not a dyadic value and does not need to be. A boundary flip requires
- * the literal written here and the double the library computes to be BITWISE
- * EQUAL, and 0.1*((9*10 + 13)/10) and the literal 1.03 round to the same
- * nearest double. Requiring a dyadic threshold instead is a stronger condition
- * than the job needs, and for this pattern it has no solution at all: a
- * marubozu's range is pinned near its body, so it cannot also be driven to one
- * of the ranges that make 0.1*(90+R)/10 dyadic.
+ * 13.125 rather than a round 13, because THE THRESHOLD HAS TO BE DYADIC. What
+ * the library compares is not a literal, it is a subtraction of two prices, and
+ * `high - max(open,close)` can only reproduce the threshold's bits when the
+ * threshold fits the price's exponent. With a range of 13 the average is 1.03,
+ * and 113.03 - 112 is 1.0300000000000011 -- five ULP above it, because 112 +
+ * 1.03 is not representable and the reconstruction drops six bits. Both `<` and
+ * `<=` are then false, so the flip still reports 0 and the boundary it claims to
+ * sit on is not tested: relaxing c5 and c6 to `<=` in ta_CDLKICKING.c passed the
+ * entire suite.
+ *
+ * A dyadic threshold does exist here, which the first version of this comment
+ * denied. avg(SVS,i) is 0.1*((9*10 + R)/10), dyadic when 25 divides 90 + R, and
+ * R = 13.125 gives exactly 1.03125 = 33/32. The marubozu survives it: body 12,
+ * upper shadow 0.5, lower shadow 0.625, both still under the 1.0 threshold at
+ * i-1. The body stays 12, so avg(BodyLong, i) stays 3.0 and c4's flip is
+ * untouched. 113.03125 - 112 and 108 - 106.96875 are then both bitwise 1.03125.
  */
 static void cond_kicking( int i, int *c )
 {
@@ -9826,9 +9835,13 @@ static void cond_kicking( int i, int *c )
 
 /* The scenario the two KICKINGs share. CDLKICKING reports this candle's
  * colour, CDLKICKINGBYLENGTH the colour of whichever body is longer, so a
- * builder whose longer body is always the current one cannot tell them apart.
- * Every scenario below keeps the FIRST body longer (12 against 5), which is
- * what makes the two functions disagree and gives each its own expected value.
+ * builder whose longer body is always the SAME candle cannot tell that
+ * comparison from a constant. The detects here keep the first body longer
+ * (12 against 5), which is what makes the two functions disagree and gives each
+ * its own expected value; CDLKICKINGBYLENGTH carries one more with the second
+ * body longer, so its selector is reached on both branches. The flips do not
+ * all preserve that ordering -- they are placed on their own boundaries and
+ * expect 0, where the emitted value plays no part.
  */
 /* c7's alternatives are a colour selector plus a gap test. The selector is
  * waived as in BELTHOLD; the gap test is the term the boundary flip attacks. */
@@ -9850,18 +9863,18 @@ static void build_kicking( void )
 
   pb_flat(6);
   pb_primer(12,100,2,4);
-  pb_bar(106,106.5,93.5,94);               /* 1st: black marubozu, body 12, shadows 0.5 */
+  pb_bar(106,106.5,93.375,94);               /* 1st: black marubozu, body 12, range 13.125 */
   int d=pb_bar(107,112.5,107,112);       /* 2nd: white marubozu, body 5, gaps up */
   pb_detect(d,100,"detect: opposite marubozus, 2nd gaps up over 106.5");
   pb_flat(8);
 
   pb_primer(12,100,2,4);
-  pb_bar(106,106.5,93.5,94);
+  pb_bar(106,106.5,93.375,94);
   int f0=pb_bar(112,112.5,107,107.5);      /* BLACK like the 1st, low 107 keeps the gap */
   pb_flip(f0,0,"break c0: both candles are black");
   pb_flat(8);
   pb_primer(12,100,2,4);
-  pb_bar(106,106.5,93.5,94);
+  pb_bar(106,106.5,93.375,94);
   int k0=pb_bar(107,112.5,107,112);
   pb_control(k0,100,0,"restore c0: opposite colours");
   pb_flat(8);
@@ -9872,7 +9885,7 @@ static void build_kicking( void )
   pb_flip(f1,1,"break c1: first body 2 == avg 2, the test is strict");
   pb_flat(8);
   pb_primer(12,100,2,4);
-  pb_bar(106,106.5,93.5,94);
+  pb_bar(106,106.5,93.375,94);
   int k1=pb_bar(107,112.5,107,112);
   pb_control(k1,100,1,"restore c1: first body 12 > 2");
   pb_flat(8);
@@ -9883,7 +9896,7 @@ static void build_kicking( void )
   pb_flip(f2,2,"break c2: first upper shadow 1 == avg 1, the test is strict");
   pb_flat(8);
   pb_primer(12,100,2,4);
-  pb_bar(106,106.5,93.5,94);
+  pb_bar(106,106.5,93.375,94);
   int k2=pb_bar(107,112.5,107,112);
   pb_control(k2,100,2,"restore c2: first upper shadow 0.5 < 1");
   pb_flat(8);
@@ -9894,57 +9907,57 @@ static void build_kicking( void )
   pb_flip(f3,3,"break c3: first lower shadow 1 == avg 1, the test is strict");
   pb_flat(8);
   pb_primer(12,100,2,4);
-  pb_bar(106,106.5,93.5,94);
+  pb_bar(106,106.5,93.375,94);
   int k3=pb_bar(107,112.5,107,112);
   pb_control(k3,100,3,"restore c3: first lower shadow 0.5 < 1");
   pb_flat(8);
 
   pb_primer(12,100,2,4);
-  pb_bar(106,106.5,93.5,94);
+  pb_bar(106,106.5,93.375,94);
   int f4=pb_bar(107,110.5,107,110);      /* 2nd body 3 == avg at i */
   pb_flip(f4,4,"break c4: second body 3 == avg 3, the test is strict");
   pb_flat(8);
   pb_primer(12,100,2,4);
-  pb_bar(106,106.5,93.5,94);
+  pb_bar(106,106.5,93.375,94);
   int k4=pb_bar(107,112.5,107,112);
   pb_control(k4,100,4,"restore c4: second body 5 > 3");
   pb_flat(8);
 
   pb_primer(12,100,2,4);
-  pb_bar(106,106.5,93.5,94);
-  int f5=pb_bar(107,113.03,107,112);     /* 2nd upper shadow 1.03 == avg at i */
-  pb_flip(f5,5,"break c5: second upper shadow 1.03 == avg 1.03, the test is strict");
+  pb_bar(106,106.5,93.375,94);
+  int f5=pb_bar(107,113.03125,107,112);     /* 2nd upper shadow 1.03125 == avg at i */
+  pb_flip(f5,5,"break c5: second upper shadow 1.03125 == avg 1.03125, the test is strict");
   pb_flat(8);
   pb_primer(12,100,2,4);
-  pb_bar(106,106.5,93.5,94);
+  pb_bar(106,106.5,93.375,94);
   int k5=pb_bar(107,112.5,107,112);
-  pb_control(k5,100,5,"restore c5: second upper shadow 0.5 < 1.03");
+  pb_control(k5,100,5,"restore c5: second upper shadow 0.5 < 1.03125");
   pb_flat(8);
 
   pb_primer(12,100,2,4);
-  pb_bar(106,106.5,93.5,94);
-  int f6=pb_bar(108,112,106.97,111.5);     /* 2nd lower shadow 1.03 == avg at i */
-  pb_flip(f6,6,"break c6: second lower shadow 1.03 == avg 1.03, the test is strict");
+  pb_bar(106,106.5,93.375,94);
+  int f6=pb_bar(108,112,106.96875,111.5);     /* 2nd lower shadow 1.03125 == avg at i */
+  pb_flip(f6,6,"break c6: second lower shadow 1.03125 == avg 1.03125, the test is strict");
   pb_flat(8);
   pb_primer(12,100,2,4);
-  pb_bar(106,106.5,93.5,94);
+  pb_bar(106,106.5,93.375,94);
   int k6=pb_bar(107,112.5,107,112);
-  pb_control(k6,100,6,"restore c6: second lower shadow 0.5 < 1.03");
+  pb_control(k6,100,6,"restore c6: second lower shadow 0.5 < 1.03125");
   pb_flat(8);
 
   /* c7 moves the SECOND bar, never the first. The first bar's range is what
    * sets avg(ShadowVeryShort, i) -- dropping its high from 106.5 to 106 shifts
-   * that threshold from 1.03 to 1.025, which would quietly move c5's and c6's
+   * that threshold from 1.03125 to 1.02625, which would quietly move c5's and c6's
    * flips off the boundary they are placed on a few lines above. Same coupling
    * as the prior bar entering the window at i: changing one bar's geometry
    * re-prices the other bar's conditions, and nothing goes red when it does. */
   pb_primer(12,100,2,4);
-  pb_bar(106,106.5,93.5,94);
+  pb_bar(106,106.5,93.375,94);
   int f7=pb_bar(107,112.5,106.5,112);    /* low 106.5 == prior high: no gap */
   pb_flip_in(f7,7,0,1,"break c7 alt0 term1: low(i) 106.5 == high(i-1) 106.5, the gap test is strict");
   pb_flat(8);
   pb_primer(12,100,2,4);
-  pb_bar(106,106.5,93.5,94);
+  pb_bar(106,106.5,93.375,94);
   int k7=pb_bar(107,112.5,107,112);        /* low 107 clears the prior high 106.5 */
   pb_control(k7,100,7,"restore c7: low 107 > prior high 106.5");
   pb_flat(8);
@@ -9958,16 +9971,20 @@ static void build_kicking( void )
   pb_flat(8);
 
   /* The white-first arm's gap term, on its own boundary: high(i) exactly at
-   * low(i-1) makes candlegapdown false while the colour selector stays true. */
+   * low(i-1) makes candlegapdown false while the colour selector stays true.
+   * On the SAME first bar as the detect, so the control below differs from this
+   * flip in one number -- the second bar's high -- rather than in a bespoke
+   * first bar as well. A control that is not its flip's minimal pair cannot
+   * show which of the two bars carried the difference. */
   pb_primer(12,100,2,4);
-  pb_bar(90,93.5,89.5,93);                 /* 1st: white marubozu, body 3 */
-  int f7b=pb_bar(89,89.5,85,85.5);         /* high 89.5 == prior low 89.5: no gap */
-  pb_flip_in(f7b,7,1,1,"break c7 alt1 term1: high(i) 89.5 == low(i-1) 89.5, the gap test is strict");
+  pb_bar(94,106.5,93.5,106);
+  int f7b=pb_bar(93,93.5,88,88.5);         /* high 93.5 == prior low 93.5: no gap */
+  pb_flip_in(f7b,7,1,1,"break c7 alt1 term1: high(i) 93.5 == low(i-1) 93.5, the gap test is strict");
   pb_flat(8);
   pb_primer(12,100,2,4);
   pb_bar(94,106.5,93.5,106);
-  int k7b=pb_bar(92,92.5,86,86.5);
-  pb_control(k7b,-100,7,"restore c7 alt1: high 92.5 < prior low 93.5");
+  int k7b=pb_bar(93,93.25,88,88.5);        /* only the high moves: 93.25 < 93.5 */
+  pb_control(k7b,-100,7,"restore c7 alt1: high 93.25 < prior low 93.5");
   pb_flat(8);
 }
 static void cond_kickingbylength( int i, int *c )
@@ -9987,9 +10004,13 @@ static void cond_kickingbylength( int i, int *c )
 
 /* The scenario the two KICKINGs share. CDLKICKING reports this candle's
  * colour, CDLKICKINGBYLENGTH the colour of whichever body is longer, so a
- * builder whose longer body is always the current one cannot tell them apart.
- * Every scenario below keeps the FIRST body longer (12 against 5), which is
- * what makes the two functions disagree and gives each its own expected value.
+ * builder whose longer body is always the SAME candle cannot tell that
+ * comparison from a constant. The detects here keep the first body longer
+ * (12 against 5), which is what makes the two functions disagree and gives each
+ * its own expected value; CDLKICKINGBYLENGTH carries one more with the second
+ * body longer, so its selector is reached on both branches. The flips do not
+ * all preserve that ordering -- they are placed on their own boundaries and
+ * expect 0, where the emitted value plays no part.
  */
 /* c7's alternatives are a colour selector plus a gap test. The selector is
  * waived as in BELTHOLD; the gap test is the term the boundary flip attacks. */
@@ -10011,18 +10032,31 @@ static void build_kickingbylength( void )
 
   pb_flat(6);
   pb_primer(12,100,2,4);
-  pb_bar(106,106.5,93.5,94);               /* 1st: black marubozu, body 12, shadows 0.5 */
+  pb_bar(106,106.5,93.375,94);               /* 1st: black marubozu, body 12, range 13.125 */
   int d=pb_bar(107,112.5,107,112);       /* 2nd: white marubozu, body 5, gaps up */
   pb_detect(d,-100,"detect: opposite marubozus, 2nd gaps up over 106.5");
   pb_flat(8);
 
+  /* The one scenario CDLKICKING has no use for, and the only thing separating
+   * this function from it: the SECOND body is the longer one, so the length
+   * comparison has to take its other branch. Without this every scenario keeps
+   * the first body longer, the selector always resolves to i-1, and deleting
+   * the comparison outright -- reporting i-1's colour unconditionally -- passes
+   * the whole suite. Here the longer body is white, so this reports +100 where
+   * a deleted comparison would report the first candle's black -100. */
   pb_primer(12,100,2,4);
-  pb_bar(106,106.5,93.5,94);
+  pb_bar(97,97.5,93.375,94);               /* 1st: black marubozu, body 3 */
+  int dl=pb_bar(98,110.5,98,110);          /* 2nd: white marubozu, body 12, gaps up over 97.5 */
+  pb_detect(dl,100,"detect longer-second: the 2nd body 12 beats the 1st body 3, so the sign follows the 2nd");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(106,106.5,93.375,94);
   int f0=pb_bar(112,112.5,107,107.5);      /* BLACK like the 1st, low 107 keeps the gap */
   pb_flip(f0,0,"break c0: both candles are black");
   pb_flat(8);
   pb_primer(12,100,2,4);
-  pb_bar(106,106.5,93.5,94);
+  pb_bar(106,106.5,93.375,94);
   int k0=pb_bar(107,112.5,107,112);
   pb_control(k0,-100,0,"restore c0: opposite colours");
   pb_flat(8);
@@ -10033,7 +10067,7 @@ static void build_kickingbylength( void )
   pb_flip(f1,1,"break c1: first body 2 == avg 2, the test is strict");
   pb_flat(8);
   pb_primer(12,100,2,4);
-  pb_bar(106,106.5,93.5,94);
+  pb_bar(106,106.5,93.375,94);
   int k1=pb_bar(107,112.5,107,112);
   pb_control(k1,-100,1,"restore c1: first body 12 > 2");
   pb_flat(8);
@@ -10044,7 +10078,7 @@ static void build_kickingbylength( void )
   pb_flip(f2,2,"break c2: first upper shadow 1 == avg 1, the test is strict");
   pb_flat(8);
   pb_primer(12,100,2,4);
-  pb_bar(106,106.5,93.5,94);
+  pb_bar(106,106.5,93.375,94);
   int k2=pb_bar(107,112.5,107,112);
   pb_control(k2,-100,2,"restore c2: first upper shadow 0.5 < 1");
   pb_flat(8);
@@ -10055,57 +10089,57 @@ static void build_kickingbylength( void )
   pb_flip(f3,3,"break c3: first lower shadow 1 == avg 1, the test is strict");
   pb_flat(8);
   pb_primer(12,100,2,4);
-  pb_bar(106,106.5,93.5,94);
+  pb_bar(106,106.5,93.375,94);
   int k3=pb_bar(107,112.5,107,112);
   pb_control(k3,-100,3,"restore c3: first lower shadow 0.5 < 1");
   pb_flat(8);
 
   pb_primer(12,100,2,4);
-  pb_bar(106,106.5,93.5,94);
+  pb_bar(106,106.5,93.375,94);
   int f4=pb_bar(107,110.5,107,110);      /* 2nd body 3 == avg at i */
   pb_flip(f4,4,"break c4: second body 3 == avg 3, the test is strict");
   pb_flat(8);
   pb_primer(12,100,2,4);
-  pb_bar(106,106.5,93.5,94);
+  pb_bar(106,106.5,93.375,94);
   int k4=pb_bar(107,112.5,107,112);
   pb_control(k4,-100,4,"restore c4: second body 5 > 3");
   pb_flat(8);
 
   pb_primer(12,100,2,4);
-  pb_bar(106,106.5,93.5,94);
-  int f5=pb_bar(107,113.03,107,112);     /* 2nd upper shadow 1.03 == avg at i */
-  pb_flip(f5,5,"break c5: second upper shadow 1.03 == avg 1.03, the test is strict");
+  pb_bar(106,106.5,93.375,94);
+  int f5=pb_bar(107,113.03125,107,112);     /* 2nd upper shadow 1.03125 == avg at i */
+  pb_flip(f5,5,"break c5: second upper shadow 1.03125 == avg 1.03125, the test is strict");
   pb_flat(8);
   pb_primer(12,100,2,4);
-  pb_bar(106,106.5,93.5,94);
+  pb_bar(106,106.5,93.375,94);
   int k5=pb_bar(107,112.5,107,112);
-  pb_control(k5,-100,5,"restore c5: second upper shadow 0.5 < 1.03");
+  pb_control(k5,-100,5,"restore c5: second upper shadow 0.5 < 1.03125");
   pb_flat(8);
 
   pb_primer(12,100,2,4);
-  pb_bar(106,106.5,93.5,94);
-  int f6=pb_bar(108,112,106.97,111.5);     /* 2nd lower shadow 1.03 == avg at i */
-  pb_flip(f6,6,"break c6: second lower shadow 1.03 == avg 1.03, the test is strict");
+  pb_bar(106,106.5,93.375,94);
+  int f6=pb_bar(108,112,106.96875,111.5);     /* 2nd lower shadow 1.03125 == avg at i */
+  pb_flip(f6,6,"break c6: second lower shadow 1.03125 == avg 1.03125, the test is strict");
   pb_flat(8);
   pb_primer(12,100,2,4);
-  pb_bar(106,106.5,93.5,94);
+  pb_bar(106,106.5,93.375,94);
   int k6=pb_bar(107,112.5,107,112);
-  pb_control(k6,-100,6,"restore c6: second lower shadow 0.5 < 1.03");
+  pb_control(k6,-100,6,"restore c6: second lower shadow 0.5 < 1.03125");
   pb_flat(8);
 
   /* c7 moves the SECOND bar, never the first. The first bar's range is what
    * sets avg(ShadowVeryShort, i) -- dropping its high from 106.5 to 106 shifts
-   * that threshold from 1.03 to 1.025, which would quietly move c5's and c6's
+   * that threshold from 1.03125 to 1.02625, which would quietly move c5's and c6's
    * flips off the boundary they are placed on a few lines above. Same coupling
    * as the prior bar entering the window at i: changing one bar's geometry
    * re-prices the other bar's conditions, and nothing goes red when it does. */
   pb_primer(12,100,2,4);
-  pb_bar(106,106.5,93.5,94);
+  pb_bar(106,106.5,93.375,94);
   int f7=pb_bar(107,112.5,106.5,112);    /* low 106.5 == prior high: no gap */
   pb_flip_in(f7,7,0,1,"break c7 alt0 term1: low(i) 106.5 == high(i-1) 106.5, the gap test is strict");
   pb_flat(8);
   pb_primer(12,100,2,4);
-  pb_bar(106,106.5,93.5,94);
+  pb_bar(106,106.5,93.375,94);
   int k7=pb_bar(107,112.5,107,112);        /* low 107 clears the prior high 106.5 */
   pb_control(k7,-100,7,"restore c7: low 107 > prior high 106.5");
   pb_flat(8);
@@ -10119,16 +10153,20 @@ static void build_kickingbylength( void )
   pb_flat(8);
 
   /* The white-first arm's gap term, on its own boundary: high(i) exactly at
-   * low(i-1) makes candlegapdown false while the colour selector stays true. */
+   * low(i-1) makes candlegapdown false while the colour selector stays true.
+   * On the SAME first bar as the detect, so the control below differs from this
+   * flip in one number -- the second bar's high -- rather than in a bespoke
+   * first bar as well. A control that is not its flip's minimal pair cannot
+   * show which of the two bars carried the difference. */
   pb_primer(12,100,2,4);
-  pb_bar(90,93.5,89.5,93);                 /* 1st: white marubozu, body 3 */
-  int f7b=pb_bar(89,89.5,85,85.5);         /* high 89.5 == prior low 89.5: no gap */
-  pb_flip_in(f7b,7,1,1,"break c7 alt1 term1: high(i) 89.5 == low(i-1) 89.5, the gap test is strict");
+  pb_bar(94,106.5,93.5,106);
+  int f7b=pb_bar(93,93.5,88,88.5);         /* high 93.5 == prior low 93.5: no gap */
+  pb_flip_in(f7b,7,1,1,"break c7 alt1 term1: high(i) 93.5 == low(i-1) 93.5, the gap test is strict");
   pb_flat(8);
   pb_primer(12,100,2,4);
   pb_bar(94,106.5,93.5,106);
-  int k7b=pb_bar(92,92.5,86,86.5);
-  pb_control(k7b,100,7,"restore c7 alt1: high 92.5 < prior low 93.5");
+  int k7b=pb_bar(93,93.25,88,88.5);        /* only the high moves: 93.25 < 93.5 */
+  pb_control(k7b,100,7,"restore c7 alt1: high 93.25 < prior low 93.5");
   pb_flat(8);
 }
 
@@ -10875,7 +10913,203 @@ static void build_concealbabyswall( void )
   int k12=pb_bar(70,70.5,62.25,63);
   pb_control(k12,100,12,"restore c12: 4th low 62.25 < 62.5");
   pb_flat(8);
+}
 
+/* CDL3OUTSIDE -- an engulfing that resolves: a real body swallowing the one
+ * before it, then a third candle carrying on past the second's close. The last
+ * candlestick without MC/DC coverage.
+ *
+ *   c0  ( white(i-1) && black(i-2) && close(i-1) > open(i-2)
+ *                    && open(i-1) < close(i-2) && close(i) > close(i-1) )
+ *    || ( black(i-1) && white(i-2) && open(i-1) > close(i-2)
+ *                    && close(i-1) < open(i-2) && close(i) < close(i-1) )
+ *
+ * ONE top-level condition, so there is nothing for pb_flip to break: every flip
+ * lives on the arm-term axis and the two output classes come from pb_signs(2).
+ * That is CDLENGULFING's shape, with five terms per alternative instead of
+ * three.
+ *
+ * The pattern reads NO candle setting -- there is not one TA_CANDLEAVERAGE in
+ * it. Every threshold is therefore a price against another price, and an
+ * equality between two short decimals is already exact, so each flip below sits
+ * bitwise on its boundary with nothing to derive. This is the one builder in
+ * the tier where that question does not arise.
+ *
+ * Each arm's colour selector is entailed, and waived on that ground. Term 1
+ * makes the 1st candle black, so close(i-2) < open(i-2); terms 2 and 3 put
+ * open(i-1) under close(i-2) and close(i-1) over open(i-2). Chaining them,
+ *
+ *      open(i-1) < close(i-2) < open(i-2) < close(i-1)
+ *
+ * so close(i-1) > open(i-1) and the 2nd candle is white by construction. The
+ * black arm is the mirror. That colour is also the emitted value, so the class
+ * each selector chooses is the one pb_signs(2) fires.
+ *
+ * Every control is its flip's minimal pair: one price moves, and it is the one
+ * the flip pinned.
+ */
+static void cond_3outside( int i, int *c )
+{
+   c[0] = (  pb_white(i-1) && !pb_white(i-2) &&
+             pbC[i-1] > pbO[i-2] && pbO[i-1] < pbC[i-2] && pbC[i] > pbC[i-1] )
+       || ( !pb_white(i-1) &&  pb_white(i-2) &&
+             pbO[i-1] > pbC[i-2] && pbC[i-1] < pbO[i-2] && pbC[i] < pbC[i-1] );
+}
+
+static void arm_3outside( int i, int cond, int arm, int *a )
+{
+   if( cond != 0 ) return;
+   if( arm == 0 )
+   {
+      a[0] =  pb_white(i-1);
+      a[1] = !pb_white(i-2);
+      a[2] = pbC[i-1] > pbO[i-2];
+      a[3] = pbO[i-1] < pbC[i-2];
+      a[4] = pbC[i]   > pbC[i-1];
+   }
+   else
+   {
+      a[0] = !pb_white(i-1);
+      a[1] =  pb_white(i-2);
+      a[2] = pbO[i-1] > pbC[i-2];
+      a[3] = pbC[i-1] < pbO[i-2];
+      a[4] = pbC[i]   < pbC[i-1];
+   }
+}
+
+static void build_3outside( void )
+{
+  pb_conditions(1);
+  pb_signs(2);
+  pb_arm(0,0,5); pb_arm(0,1,5);
+  pb_arm_model(arm_3outside);
+  pb_waive_arm(0,0,0,"entailed by terms 1..3: term 1 makes the 1st candle black, so close(i-2) < open(i-2), and terms 2 and 3 give open(i-1) < close(i-2) < open(i-2) < close(i-1), so the 2nd candle is white by construction. It is also the emitted colour, and that class is fired by pb_signs(2)");
+  pb_waive_arm(0,1,0,"the mirror: term 1 makes the 1st candle white, so open(i-2) <= close(i-2), and terms 2 and 3 give close(i-1) < open(i-2) <= close(i-2) < open(i-1), so the 2nd candle is black by construction");
+
+  /* The WHITE arm, output +100. The primer only supplies lookback here; no
+   * average is read, so its geometry sets no threshold. */
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(110,110.5,99.5,100);              /* 1st: black, body 110..100 */
+  pb_bar(99,111.5,98.5,111);               /* 2nd: white, engulfing it at both ends */
+  int d=pb_bar(112,115.5,111.5,115);       /* 3rd: closes 115, above the 2nd close 111 */
+  pb_detect(d,100,"detect: a white body engulfing a black one, then a higher close");
+  pb_flat(8);
+
+  /* term1, the 1st candle's colour. The minimal violation is a doji, since the
+   * library's test is close >= open -- and the doji keeps its close at 100, so
+   * terms 2 and 3 go on reading the same two prices. */
+  pb_primer(12,100,2,4);
+  pb_bar(100,110.5,99.5,100);              /* 1st is a doji, which counts as white */
+  pb_bar(99,111.5,98.5,111);
+  int f1=pb_bar(112,115.5,111.5,115);
+  pb_flip_in(f1,0,0,1,"break c0 alt0 term1: the 1st is a doji, and close >= open counts as white");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100.5,110.5,99.5,100);            /* one step black, same close */
+  pb_bar(99,111.5,98.5,111);
+  int k1=pb_bar(112,115.5,111.5,115);
+  pb_control(k1,100,0,"restore c0 alt0 term1: open 100.5 above close 100, black again");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,110.5,99.5,100);
+  pb_bar(99,111,98.5,110);                 /* 2nd close 110 == the 1st open */
+  int f2=pb_bar(112,115.5,111.5,115);
+  pb_flip_in(f2,0,0,2,"break c0 alt0 term2: the 2nd closes at 110 == open(i-2), the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(110,110.5,99.5,100);
+  pb_bar(99,111,98.5,110.5);               /* only the close moves */
+  int k2=pb_bar(112,115.5,111.5,115);
+  pb_control(k2,100,0,"restore c0 alt0 term2: the 2nd closes 110.5 above 110");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,110.5,99.5,100);
+  pb_bar(100,111.5,98.5,111);              /* 2nd open 100 == the 1st close */
+  int f3=pb_bar(112,115.5,111.5,115);
+  pb_flip_in(f3,0,0,3,"break c0 alt0 term3: the 2nd opens at 100 == close(i-2), the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(110,110.5,99.5,100);
+  pb_bar(99.5,111.5,98.5,111);             /* only the open moves */
+  int k3=pb_bar(112,115.5,111.5,115);
+  pb_control(k3,100,0,"restore c0 alt0 term3: the 2nd opens 99.5 below 100");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,110.5,99.5,100);
+  pb_bar(99,111.5,98.5,111);
+  int f4=pb_bar(112,115.5,110.5,111);      /* 3rd closes 111 == the 2nd close */
+  pb_flip_in(f4,0,0,4,"break c0 alt0 term4: the 3rd closes at 111 == close(i-1), the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(110,110.5,99.5,100);
+  pb_bar(99,111.5,98.5,111);
+  int k4=pb_bar(112,115.5,110.5,111.5);    /* only the close moves */
+  pb_control(k4,100,0,"restore c0 alt0 term4: the 3rd closes 111.5 above 111");
+  pb_flat(8);
+
+  /* The BLACK arm, output -100: the mirror, and the second output class. */
+  pb_primer(12,100,2,4);
+  pb_bar(100,110.5,99.5,110);              /* 1st: white, body 100..110 */
+  pb_bar(111,111.5,98.5,99);               /* 2nd: black, engulfing it */
+  int db=pb_bar(98,98.5,94.5,95);          /* 3rd: closes 95, below the 2nd close 99 */
+  pb_detect(db,-100,"detect black-first: the mirror, output -100");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110.5,110.5,99.5,110);            /* 1st black, same close */
+  pb_bar(111,111.5,98.5,99);
+  int fb1=pb_bar(98,98.5,94.5,95);
+  pb_flip_in(fb1,0,1,1,"break c0 alt1 term1: the 1st opens 110.5 above its close, so it is black");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(110,110.5,99.5,110);              /* one step back: a doji, which is white */
+  pb_bar(111,111.5,98.5,99);
+  int kb1=pb_bar(98,98.5,94.5,95);
+  pb_control(kb1,-100,0,"restore c0 alt1 term1: the 1st is a doji, which is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,110.5,99.5,110);
+  pb_bar(110,110.5,98.5,99);               /* 2nd open 110 == the 1st close */
+  int fb2=pb_bar(98,98.5,94.5,95);
+  pb_flip_in(fb2,0,1,2,"break c0 alt1 term2: the 2nd opens at 110 == close(i-2), the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,110.5,99.5,110);
+  pb_bar(110.5,110.5,98.5,99);             /* only the open moves */
+  int kb2=pb_bar(98,98.5,94.5,95);
+  pb_control(kb2,-100,0,"restore c0 alt1 term2: the 2nd opens 110.5 above 110");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,110.5,99.5,110);
+  pb_bar(111,111.5,99,100);                /* 2nd close 100 == the 1st open */
+  int fb3=pb_bar(98,98.5,94.5,95);
+  pb_flip_in(fb3,0,1,3,"break c0 alt1 term3: the 2nd closes at 100 == open(i-2), the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,110.5,99.5,110);
+  pb_bar(111,111.5,99,99.5);               /* only the close moves */
+  int kb3=pb_bar(98,98.5,94.5,95);
+  pb_control(kb3,-100,0,"restore c0 alt1 term3: the 2nd closes 99.5 below 100");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,110.5,99.5,110);
+  pb_bar(111,111.5,98.5,99);
+  int fb4=pb_bar(98,99.5,94.5,99);         /* 3rd closes 99 == the 2nd close */
+  pb_flip_in(fb4,0,1,4,"break c0 alt1 term4: the 3rd closes at 99 == close(i-1), the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,110.5,99.5,110);
+  pb_bar(111,111.5,98.5,99);
+  int kb4=pb_bar(98,99.5,94.5,98.5);       /* only the close moves */
+  pb_control(kb4,-100,0,"restore c0 alt1 term4: the 3rd closes 98.5 below 99");
+  pb_flat(8);
 }
 
 static ErrorNumber test_marquee_predicate_coverage( void )
@@ -10941,6 +11175,7 @@ static ErrorNumber test_marquee_predicate_coverage( void )
    pb_reset(); build_sticksandwich();   e = pb_check_mcdc("CDLSTICKSANDWICH",   TA_CDLSTICKSANDWICH,   cond_sticksandwich);   if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_xsidegap3methods(); e = pb_check_mcdc("CDLXSIDEGAP3METHODS", TA_CDLXSIDEGAP3METHODS, cond_xsidegap3methods); if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_concealbabyswall(); e = pb_check_mcdc("CDLCONCEALBABYSWALL", TA_CDLCONCEALBABYSWALL, cond_concealbabyswall); if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_3outside();        e = pb_check_mcdc("CDL3OUTSIDE",         TA_CDL3OUTSIDE,         cond_3outside);        if( e != TA_TEST_PASS ) return e;
    pb_report_totals();
    return TA_TEST_PASS;
 }
