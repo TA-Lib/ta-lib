@@ -149,6 +149,85 @@ def _directly_nested(src, if_pos):
     return src[:k + 1].rstrip().endswith("if")
 
 
+def _enclosing_if(src, if_pos):
+    """Position of the `if` whose block contains ONLY the if at `if_pos`, or -1."""
+    j = if_pos
+    while j > 0 and src[j - 1] in " \t\n\r":
+        j -= 1
+    if j == 0 or src[j - 1] != "{":
+        return -1
+    j -= 1
+    while j > 0 and src[j - 1] in " \t\n\r":
+        j -= 1
+    if j == 0 or src[j - 1] != ")":
+        return -1
+    depth, k = 1, j - 2
+    while k >= 0 and depth > 0:
+        if src[k] == ")":
+            depth += 1
+        elif src[k] == "(":
+            depth -= 1
+        k -= 1
+    if depth != 0:
+        return -1
+    head = src[:k + 1].rstrip()
+    return len(head) - 2 if head.endswith("if") else -1
+
+
+def _block_after(src, pos):
+    """The `{...}` block following the parenthesised condition starting at pos."""
+    o = src.index("(", pos)
+    d = 0
+    for j in range(o, len(src)):
+        if src[j] == "(":
+            d += 1
+        elif src[j] == ")":
+            d -= 1
+            if d == 0:
+                b = src.index("{", j)
+                break
+    d = 0
+    for j in range(b, len(src)):
+        if src[j] == "{":
+            d += 1
+        elif src[j] == "}":
+            d -= 1
+            if d == 0:
+                return src[b:j + 1]
+    return src[b:]
+
+
+def _guard_if(src, m_start):
+    """The `if` that decides whether this pattern FIRES.
+
+    Normally the innermost one guarding the assignment. Where that if is the sole
+    content of another -- CDLENGULFING, CDLHARAMI, CDLHARAMICROSS -- the inner one
+    is choosing between two NON-ZERO values, which is the output-class axis
+    pb_signs() covers, and the OUTER one is what decides firing. So walk out, but
+    only when every assignment in the outer block is non-zero. CDLTRISTAR looks
+    the same and is not: its outer block assigns 0 before the inner ifs, so the
+    outer if does not decide firing and this still declines.
+    """
+    head = src[:m_start]
+    k = head.rfind("if(")
+    if k < 0:
+        k = head.rfind("if (")
+    if k < 0:
+        return -1, "no enclosing if( found"
+    outer = _enclosing_if(src, k)
+    if outer < 0:
+        return k, None
+    for a in re.finditer(r"outInteger\s*\[\s*outIdx\+*\s*\]\s*=\s*([^;]+);",
+                         _block_after(src, outer)):
+        if a.group(1).strip().rstrip("0").strip() in ("", "+", "-"):
+            return -1, ("assignment is guarded by nested if-statements and the "
+                        "outer block also assigns zero, so the outer if does not "
+                        "decide firing; needs a hand-derived condition model")
+    if _enclosing_if(src, outer) >= 0:
+        return -1, "more than two nested if-levels; needs a hand-derived model"
+    return outer, None
+
+
 def count_conditions(path):
     """Atomic conditions of the detection expression in a candlestick source.
 
@@ -179,19 +258,9 @@ def count_conditions(path):
         return None, "no non-zero outInteger assignment found"
 
     # Walk back to the `if(` that guards it.
-    head = src[:m.start()]
-    k = head.rfind("if(")
+    k, err = _guard_if(src, m.start())
     if k < 0:
-        k = head.rfind("if (")
-    if k < 0:
-        return None, "no enclosing if( found"
-
-    if _directly_nested(src, k):
-        return None, ("assignment is guarded by nested if-statements, not one "
-                       "flat decision -- conjunct counting cannot span nesting "
-                       "levels without silently dropping the outer guard(s); "
-                       "needs a hand-derived condition model")
-
+        return None, (err or "no enclosing if( found")
     open_paren = src.index("(", k)
     depth, i, expr = 0, open_paren, None
     while i < len(src):
@@ -252,14 +321,9 @@ def count_disjuncts(path):
             break
     if m is None:
         return None, "no non-zero outInteger assignment found"
-    head = src[:m.start()]
-    k = head.rfind("if(")
+    k, err = _guard_if(src, m.start())
     if k < 0:
-        k = head.rfind("if (")
-    if k < 0:
-        return None, "no enclosing if( found"
-    if _directly_nested(src, k):
-        return None, "assignment is guarded by nested if-statements"
+        return None, (err or "no enclosing if( found")
     open_paren = src.index("(", k)
     depth, i, expr = 0, open_paren, None
     while i < len(src):
@@ -332,14 +396,9 @@ def count_arms(path):
             break
     if m is None:
         return None, "no non-zero outInteger assignment found"
-    head = src[:m.start()]
-    k = head.rfind("if(")
+    k, err = _guard_if(src, m.start())
     if k < 0:
-        k = head.rfind("if (")
-    if k < 0:
-        return None, "no enclosing if( found"
-    if _directly_nested(src, k):
-        return None, "assignment is guarded by nested if-statements"
+        return None, (err or "no enclosing if( found")
     open_paren = src.index("(", k)
     depth, i, expr = 0, open_paren, None
     while i < len(src):

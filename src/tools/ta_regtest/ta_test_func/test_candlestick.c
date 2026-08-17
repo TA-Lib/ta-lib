@@ -8662,6 +8662,159 @@ static void build_tasukigap( void )
 
 }
 
+/* ---- Hard tier: CDLENGULFING -------------------------------------------- *
+ *
+ * A candle whose body swallows the previous one. #219 listed it as needing a
+ * decision rather than a builder -- "12 conditions, 0 independently flippable".
+ * That estimate was made before the arm axis existed. Read through it the
+ * pattern is ordinary: ONE condition (white-engulfs-black || black-engulfs-
+ * white), three terms per arm, of which two flip and one is entailed.
+ *
+ * TWO DECISIONS, AND ONLY THE OUTER ONE FIRES. The inner if chooses between
+ * +/-100 and +/-80 -- both non-zero -- so it selects an output CLASS and the
+ * outer if is what decides firing. check_mcdc_conditions.py now walks out to
+ * the outer if in exactly that case, and still declines when the outer block
+ * also assigns zero (CDLTRISTAR), where the outer if does NOT decide firing.
+ * CDLHARAMI and CDLHARAMICROSS keep declining for that same reason.
+ *
+ * THE +/-80 CASES ARE WHAT REACH INSIDE THE ENGULF TERM, and this is the part
+ * worth reading. Each arm's term 2 is itself a disjunction:
+ *
+ *    ( close(i) >= open(i-1) && open(i) <  close(i-1) )
+ * || ( close(i) >  open(i-1) && open(i) <= close(i-1) )
+ *
+ * -- the same engulfing test written twice, differing only in which end is
+ * allowed to touch. Both alternatives hold whenever neither end touches, which
+ * is every +/-100 case. Exactly one holds when one end meets exactly, and that
+ * is precisely when the pattern emits +/-80. So the output class and the
+ * alternative are the same distinction seen from two sides, and the four
+ * detects below are also the four sole-true cases for the two arms' interiors.
+ *
+ * WHAT THE GATE ENFORCES HERE IS LESS THAN WHAT IS WRITTEN. pb_signs(4) asks
+ * for one case per class, which is four; covering both alternatives of both
+ * arms needs those same four, but nothing makes the two +/-80 cases differ in
+ * WHICH end touches. Two of the four detects are therefore volunteered rather
+ * than required. That is one level deeper than pb_arm reaches -- a disjunction
+ * inside an arm term rather than inside a condition -- and CDLENGULFING is the
+ * only pattern in the corpus with one. A third level of the same machinery
+ * would close it; one pattern did not seem worth the axis.
+ *
+ * The pattern reads no candle settings at all, so nothing here depends on the
+ * primer.
+ */
+static void cond_engulfing( int i, int *c )
+{
+   c[0] = (  pb_white(i) && !pb_white(i-1) &&
+             ( ( pbC[i] >= pbO[i-1] && pbO[i] <  pbC[i-1] ) ||
+               ( pbC[i] >  pbO[i-1] && pbO[i] <= pbC[i-1] ) ) )
+       || ( !pb_white(i) &&  pb_white(i-1) &&
+             ( ( pbO[i] >= pbC[i-1] && pbC[i] <  pbO[i-1] ) ||
+               ( pbO[i] >  pbC[i-1] && pbC[i] <= pbO[i-1] ) ) );
+}
+static void arm_engulfing( int i, int cond, int arm, int *a )
+{
+   if( cond != 0 ) return;
+   if( arm == 0 )
+   {
+      a[0] =  pb_white(i);
+      a[1] = !pb_white(i-1);
+      a[2] = ( pbC[i] >= pbO[i-1] && pbO[i] <  pbC[i-1] ) ||
+             ( pbC[i] >  pbO[i-1] && pbO[i] <= pbC[i-1] );
+   }
+   else
+   {
+      a[0] = !pb_white(i);
+      a[1] =  pb_white(i-1);
+      a[2] = ( pbO[i] >= pbC[i-1] && pbC[i] <  pbO[i-1] ) ||
+             ( pbO[i] >  pbC[i-1] && pbC[i] <= pbO[i-1] );
+   }
+}
+
+static void build_engulfing( void )
+{
+  pb_conditions(1);
+  pb_signs(4);
+  pb_arm(0,0,3); pb_arm(0,1,3);
+  pb_arm_model(arm_engulfing);
+
+  pb_waive_arm(0,0,0,"entailed by terms 1 and 2. Term 1 makes the prior candle black, so open(i-1) > close(i-1); term 2 puts close(i) at or above open(i-1) and open(i) at or below close(i-1), so close(i) >= open(i-1) > close(i-1) >= open(i) and this candle is white by construction");
+  pb_waive_arm(0,1,0,"entailed by terms 1 and 2, mirrored: the prior candle is white, and term 2 puts open(i) at or above close(i-1) and close(i) at or below open(i-1), so open(i) >= close(i-1) > open(i-1) >= close(i)");
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(110,111,99,100);
+  int e1=pb_bar(99,112,98,111);
+  pb_detect(e1,100,"detect +100: a white candle engulfing a black one on both ends, neither end equal");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,111,99,110);
+  int e2=pb_bar(111,112,98,99);
+  pb_detect(e2,-100,"detect -100: the mirror");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,111,99,100);
+  int e3=pb_bar(99,111,98,110);
+  pb_detect(e3,80,"detect +80: the close meets the prior open exactly -- only the first alternative of the engulf term holds");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,111,99,100);
+  int e4=pb_bar(100,112,99,111);
+  pb_detect(e4,80,"detect +80 again, the OTHER way: the open meets the prior close exactly, so only the second alternative holds");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,111,99,110);
+  int e5=pb_bar(110,111,98,99);
+  pb_detect(e5,-80,"detect -80: the open meets the prior close exactly -- only the first alternative holds");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,111,99,110);
+  int e6=pb_bar(111,112,99,100);
+  pb_detect(e6,-80,"detect -80 again, the other way: only the second alternative holds");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,111,99,110);
+  int e7=pb_bar(99,112,98,111);
+  pb_flip_in(e7,0,0,1,"break c0 alt0 term1: the prior candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,111,99,100);
+  int e8=pb_bar(100,111,99,110);
+  pb_flip_in(e8,0,0,2,"break c0 alt0 term2: both ends meet exactly -- the one engulfing shape the pattern excludes");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,111,99,100);
+  int e9=pb_bar(111,112,98,99);
+  pb_flip_in(e9,0,1,1,"break c0 alt1 term1: the prior candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,111,99,110);
+  int e10=pb_bar(110,111,99,100);
+  pb_flip_in(e10,0,1,2,"break c0 alt1 term2: both ends meet exactly");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(110,111,99,100);
+  int e11=pb_bar(99,112,98,111);
+  pb_control(e11,100,0,"restore c0 via alt0: a white candle engulfing a black one");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,111,99,110);
+  int e12=pb_bar(111,112,98,99);
+  pb_control(e12,-100,0,"restore c0 via alt1: a black candle engulfing a white one");
+  pb_flat(8);
+
+}
+
 static ErrorNumber test_marquee_predicate_coverage( void )
 {
    ErrorNumber e;
@@ -8712,6 +8865,7 @@ static ErrorNumber test_marquee_predicate_coverage( void )
    pb_reset(); build_unique3river();        e = pb_check_mcdc("CDLUNIQUE3RIVER",       TA_CDLUNIQUE3RIVER,        cond_unique3river);        if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_upsidegap2crows();     e = pb_check_mcdc("CDLUPSIDEGAP2CROWS",   TA_CDLUPSIDEGAP2CROWS,     cond_upsidegap2crows);     if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_tasukigap();           e = pb_check_mcdc("CDLTASUKIGAP",          TA_CDLTASUKIGAP,           cond_tasukigap);           if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_engulfing();           e = pb_check_mcdc("CDLENGULFING",          TA_CDLENGULFING,           cond_engulfing);           if( e != TA_TEST_PASS ) return e;
    pb_report_totals();
    return TA_TEST_PASS;
 }
