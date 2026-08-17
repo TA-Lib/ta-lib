@@ -1475,6 +1475,13 @@ static ErrorNumber pb_check_mcdc_p( const char *name, PbCdlFnP fn,
    return pb_check_mcdc_finish( name, rc, out, begIdx, nb, conds );
 }
 
+/* The CONFIRMATION half of the two Hikkakes: the +/-200 emitted up to three
+ * bars after a detection, off a countdown and a cached high/low. It is a state
+ * machine rather than a decision over one bar's window, so the MC/DC model --
+ * conditions evaluated at a single index -- cannot express it, and these
+ * scenarios are its gate: the countdown edges, both confirmation directions and
+ * the mis-cache candidates. The DETECTION half is an ordinary decision and is
+ * covered by build_hikkake / build_hikkakemod instead. */
 static ErrorNumber test_hikkake_predicate_coverage( void )
 {
    ErrorNumber e;
@@ -9217,6 +9224,379 @@ static void build_tristar( void )
 
 }
 
+/* ------------------------------------------------------------------ *
+ * CDLHIKKAKE / CDLHIKKAKEMOD -- the DETECTION decision.
+ *
+ * These two are the only patterns in the corpus whose output does not come
+ * from one per-bar decision. Each has two:
+ *
+ *   detection    -- a pure function of the pattern window, emitting +/-100.
+ *                   That is what the builders below cover, and it is an
+ *                   ordinary MC/DC decision like every other pattern's.
+ *   confirmation -- emitting +/-200 up to three bars later, from a countdown
+ *                   and a cached high/low set at the detection bar. Its truth
+ *                   at bar i depends on which bar last detected, so it is not
+ *                   a decision over bar i's window at all and the pb_* model
+ *                   (conditions evaluated at one index) cannot express it.
+ *
+ * The confirmation half stays where it already is, on
+ * test_hikkake_predicate_coverage's legacy scenarios, which walk the countdown
+ * and both confirmation directions. check-mcdc's counter reads the detection
+ * decision only, for the same reason: its firing-expression derivation drops
+ * any path guarded by loop-carried state.
+ *
+ * The bars use no candle setting except HIKKAKEMOD's Near, so the geometry is
+ * free: highs and lows are placed directly on the strict inequalities. Near's
+ * window at the 2nd candle is four primer bars plus the 1st candle, so holding
+ * the 1st at a HighLow of 10 puts the threshold on exactly 2.
+ * ------------------------------------------------------------------ */
+static void cond_hikkake( int i, int *c )
+{
+   c[0] = pbH[i-1] < pbH[i-2];
+   c[1] = pbL[i-1] > pbL[i-2];
+   c[2] = ( pbH[i] < pbH[i-1] && pbL[i] < pbL[i-1] )
+       || ( pbH[i] > pbH[i-1] && pbL[i] > pbL[i-1] );
+}
+static void arm_hikkake( int i, int cond, int arm, int *a )
+{
+   if( cond != 2 ) return;
+   if( arm == 0 )
+   {
+      a[0] = pbH[i] < pbH[i-1];
+      a[1] = pbL[i] < pbL[i-1];
+   }
+   else
+   {
+      a[0] = pbH[i] > pbH[i-1];
+      a[1] = pbL[i] > pbL[i-1];
+   }
+}
+
+static void build_hikkake( void )
+{
+  pb_conditions(3);
+  pb_signs(2);
+  pb_disjuncts(2,2);
+  pb_arm(2,0,2); pb_arm(2,1,2);
+  pb_arm_model(arm_hikkake);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(100,110,90,100);
+  pb_bar(100,108,92,100);
+  int hk1=pb_bar(100,106,91,100);
+  pb_detect(hk1,100,"detect +100: an inside bar, then a lower high AND lower low");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,110,90,100);
+  pb_bar(100,108,92,100);
+  int hk2=pb_bar(100,110,93,100);
+  pb_detect(hk2,-100,"detect -100: the mirror, a higher high AND higher low");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,110,90,100);
+  pb_bar(100,108,92,100);
+  int hk3=pb_bar(100,106,91,100);
+  pb_sole(hk3,100,2,0,"c2 alt0 alone: the 3rd breaks DOWN, so the up alternative cannot hold");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,110,90,100);
+  pb_bar(100,108,92,100);
+  int hk4=pb_bar(100,110,93,100);
+  pb_sole(hk4,-100,2,1,"c2 alt1 alone: the 3rd breaks UP");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,110,90,100);
+  pb_bar(100,110,92,100);
+  int hk5=pb_bar(100,106,91,100);
+  pb_flip(hk5,0,"break c0: 2nd high 110 == the 1st high, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,110,90,100);
+  pb_bar(100,108,92,100);
+  int hk6=pb_bar(100,106,91,100);
+  pb_control(hk6,100,0,"restore c0: 2nd high 108 < 110");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,110,90,100);
+  pb_bar(100,108,90,100);
+  int hk7=pb_bar(95,106,89,95);
+  pb_flip(hk7,1,"break c1: 2nd low 90 == the 1st low, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,110,90,100);
+  pb_bar(100,108,92,100);
+  int hk8=pb_bar(95,106,89,95);
+  pb_control(hk8,100,1,"restore c1: 2nd low 92 > 90, the 3rd left exactly as the flip had it");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,110,90,100);
+  pb_bar(100,108,92,100);
+  int hk9=pb_bar(100,108,91,100);
+  pb_flip_in(hk9,2,0,0,"break c2 alt0 term0: 3rd high 108 == the 2nd high, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,110,90,100);
+  pb_bar(100,108,92,100);
+  int hk10=pb_bar(100,106,92,100);
+  pb_flip_in(hk10,2,0,1,"break c2 alt0 term1: 3rd low 92 == the 2nd low, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,110,90,100);
+  pb_bar(100,108,92,100);
+  int hk11=pb_bar(100,108,93,100);
+  pb_flip_in(hk11,2,1,0,"break c2 alt1 term0: 3rd high 108 == the 2nd high");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,110,90,100);
+  pb_bar(100,108,92,100);
+  int hk12=pb_bar(100,110,92,100);
+  pb_flip_in(hk12,2,1,1,"break c2 alt1 term1: 3rd low 92 == the 2nd low");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,110,90,100);
+  pb_bar(100,108,92,100);
+  int hk13=pb_bar(100,106,91,100);
+  pb_control(hk13,100,2,"restore c2 on the bull geometry: the minimal pair for the alt0 flips");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,110,90,100);
+  pb_bar(100,108,92,100);
+  int hk14=pb_bar(100,110,93,100);
+  pb_control(hk14,-100,2,"restore c2 on the bear geometry: the minimal pair for the alt1 flips");
+  pb_flat(8);
+
+}
+
+
+static void cond_hikkakemod( int i, int *c )
+{
+   c[0] = pbH[i-2] < pbH[i-3];
+   c[1] = pbL[i-2] > pbL[i-3];
+   c[2] = pbH[i-1] < pbH[i-2];
+   c[3] = pbL[i-1] > pbL[i-2];
+   c[4] = ( pbH[i] < pbH[i-1] && pbL[i] < pbL[i-1] &&
+            pbC[i-2] <= pbL[i-2] + pb_avg(TA_Near, i-2) )
+       || ( pbH[i] > pbH[i-1] && pbL[i] > pbL[i-1] &&
+            pbC[i-2] >= pbH[i-2] - pb_avg(TA_Near, i-2) );
+}
+static void arm_hikkakemod( int i, int cond, int arm, int *a )
+{
+   if( cond != 4 ) return;
+   if( arm == 0 )
+   {
+      a[0] = pbH[i] < pbH[i-1];
+      a[1] = pbL[i] < pbL[i-1];
+      a[2] = pbC[i-2] <= pbL[i-2] + pb_avg(TA_Near, i-2);
+   }
+   else
+   {
+      a[0] = pbH[i] > pbH[i-1];
+      a[1] = pbL[i] > pbL[i-1];
+      a[2] = pbC[i-2] >= pbH[i-2] - pb_avg(TA_Near, i-2);
+   }
+}
+
+static void build_hikkakemod( void )
+{
+  pb_conditions(5);
+  pb_signs(2);
+  pb_disjuncts(4,2);
+  pb_arm(4,0,3); pb_arm(4,1,3);
+  pb_arm_model(arm_hikkakemod);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(100,105,95,100);
+  pb_bar(97,104,96,97);
+  pb_bar(100,103,97,100);
+  int hm1=pb_bar(96,102,96,96);
+  pb_detect(hm1,100,"detect +100: two inside bars, the 2nd closing near its low, then a break down");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,105,95,100);
+  pb_bar(103,104,96,103);
+  pb_bar(100,103,97,100);
+  int hm2=pb_bar(100,105,98,100);
+  pb_detect(hm2,-100,"detect -100: the 2nd closing near its high, then a break up");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,105,95,100);
+  pb_bar(97,104,96,97);
+  pb_bar(100,103,97,100);
+  int hm3=pb_bar(96,102,96,96);
+  pb_sole(hm3,100,4,0,"c4 alt0 alone: the 4th breaks DOWN");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,105,95,100);
+  pb_bar(103,104,96,103);
+  pb_bar(100,103,97,100);
+  int hm4=pb_bar(100,105,98,100);
+  pb_sole(hm4,-100,4,1,"c4 alt1 alone: the 4th breaks UP");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,105,95,100);
+  pb_bar(97,105,96,97);
+  pb_bar(100,103,97,100);
+  int hm5=pb_bar(96,102,96,96);
+  pb_flip(hm5,0,"break c0: 2nd high 105 == the 1st high, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,105,95,100);
+  pb_bar(97,104,96,97);
+  pb_bar(100,103,97,100);
+  int hm6=pb_bar(96,102,96,96);
+  pb_control(hm6,100,0,"restore c0: 2nd high 104 < 105");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,105,95,100);
+  pb_bar(97,104,95,97);
+  pb_bar(100,103,97,100);
+  int hm7=pb_bar(96,102,96,96);
+  pb_flip(hm7,1,"break c1: 2nd low 95 == the 1st low, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,105,95,100);
+  pb_bar(97,104,96,97);
+  pb_bar(100,103,97,100);
+  int hm8=pb_bar(96,102,96,96);
+  pb_control(hm8,100,1,"restore c1: 2nd low 96 > 95");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,105,95,100);
+  pb_bar(97,104,96,97);
+  pb_bar(100,104,97,100);
+  int hm9=pb_bar(96,102,96,96);
+  pb_flip(hm9,2,"break c2: 3rd high 104 == the 2nd high, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,105,95,100);
+  pb_bar(97,104,96,97);
+  pb_bar(100,103,97,100);
+  int hm10=pb_bar(96,102,96,96);
+  pb_control(hm10,100,2,"restore c2: 3rd high 103 < 104");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,105,95,100);
+  pb_bar(97,104,96,97);
+  pb_bar(100,103,96,100);
+  int hm11=pb_bar(95,102,95,95);
+  pb_flip(hm11,3,"break c3: 3rd low 96 == the 2nd low, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,105,95,100);
+  pb_bar(97,104,96,97);
+  pb_bar(100,103,97,100);
+  int hm12=pb_bar(95,102,95,95);
+  pb_control(hm12,100,3,"restore c3: 3rd low 97 > 96, the 4th left exactly as the flip had it");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,105,95,100);
+  pb_bar(97,104,96,97);
+  pb_bar(100,103,97,100);
+  int hm13=pb_bar(96,103,96,96);
+  pb_flip_in(hm13,4,0,0,"break c4 alt0 term0: 4th high 103 == the 3rd high, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,105,95,100);
+  pb_bar(97,104,96,97);
+  pb_bar(100,103,97,100);
+  int hm14=pb_bar(98,102,97,98);
+  pb_flip_in(hm14,4,0,1,"break c4 alt0 term1: 4th low 97 == the 3rd low, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,105,95,100);
+  pb_bar(97,104,96,99);
+  pb_bar(100,103,97,100);
+  int hm15=pb_bar(96,102,96,96);
+  pb_flip_in(hm15,4,0,2,"break c4 alt0 term2: 2nd closes 99, above its low 96 + Near 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,105,95,100);
+  pb_bar(97,104,96,98);
+  pb_bar(100,103,97,100);
+  int hm16=pb_bar(96,102,96,96);
+  pb_control(hm16,100,4,"restore c4 alt0 term2: 2nd closes 98 == 96 + Near 2, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,105,95,100);
+  pb_bar(103,104,96,103);
+  pb_bar(100,103,97,100);
+  int hm17=pb_bar(100,103,98,100);
+  pb_flip_in(hm17,4,1,0,"break c4 alt1 term0: 4th high 103 == the 3rd high");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,105,95,100);
+  pb_bar(103,104,96,103);
+  pb_bar(100,103,97,100);
+  int hm18=pb_bar(100,105,97,100);
+  pb_flip_in(hm18,4,1,1,"break c4 alt1 term1: 4th low 97 == the 3rd low");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,105,95,100);
+  pb_bar(103,104,96,101);
+  pb_bar(100,103,97,100);
+  int hm19=pb_bar(100,105,98,100);
+  pb_flip_in(hm19,4,1,2,"break c4 alt1 term2: 2nd closes 101, below its high 104 - Near 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,105,95,100);
+  pb_bar(103,104,96,102);
+  pb_bar(100,103,97,100);
+  int hm20=pb_bar(100,105,98,100);
+  pb_control(hm20,-100,4,"restore c4 alt1 term2: 2nd closes 102 == 104 - Near 2, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,105,95,100);
+  pb_bar(97,104,96,97);
+  pb_bar(100,103,97,100);
+  int hm21=pb_bar(96,102,96,96);
+  pb_control(hm21,100,4,"restore c4 on the bull geometry: the minimal pair for the alt0 term0/term1 flips");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,105,95,100);
+  pb_bar(103,104,96,103);
+  pb_bar(100,103,97,100);
+  int hm22=pb_bar(100,105,98,100);
+  pb_control(hm22,-100,4,"restore c4 on the bear geometry: the minimal pair for the alt1 term0/term1 flips");
+  pb_flat(8);
+
+}
+
 static ErrorNumber test_marquee_predicate_coverage( void )
 {
    ErrorNumber e;
@@ -9271,6 +9651,8 @@ static ErrorNumber test_marquee_predicate_coverage( void )
    pb_reset(); build_harami();              e = pb_check_mcdc("CDLHARAMI",             TA_CDLHARAMI,              cond_harami);              if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_haramicross();         e = pb_check_mcdc("CDLHARAMICROSS",        TA_CDLHARAMICROSS,         cond_haramicross);         if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_tristar();             e = pb_check_mcdc("CDLTRISTAR",            TA_CDLTRISTAR,             cond_tristar);             if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_hikkake();             e = pb_check_mcdc("CDLHIKKAKE",            TA_CDLHIKKAKE,             cond_hikkake);             if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_hikkakemod();          e = pb_check_mcdc("CDLHIKKAKEMOD",         TA_CDLHIKKAKEMOD,          cond_hikkakemod);          if( e != TA_TEST_PASS ) return e;
    pb_report_totals();
    return TA_TEST_PASS;
 }

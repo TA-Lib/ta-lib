@@ -228,17 +228,55 @@ def _guard_if(src, m_start):
     return outer, None
 
 
+def _loop_locals(src):
+    """Identifiers assigned inside the per-bar loop body.
+
+    A guard that reads one of these is not a function of the bars at `i` -- it
+    is carried from an earlier iteration. The Hikkakes are the only patterns
+    with any: they detect on a per-bar predicate, remember the result, and emit
+    a CONFIRMATION up to three bars later off that remembered state. The
+    detection decision is ordinary and countable; the confirmation is a state
+    machine and is not a per-bar decision at all.
+    """
+    body = src
+    k = body.find("outIdx = 0;")
+    if k >= 0:
+        body = body[k:]
+    out = set()
+    for m in re.finditer(r"(?m)^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=[^=]", body):
+        out.add(m.group(1))
+    out.discard("outIdx")
+    out.discard("i")
+    return out
+
+
 def _match_brace(src, pos):
-    """Index just past the `{...}` block whose opening brace is at/after pos."""
-    b = src.index("{", pos)
-    d = 0
-    for j in range(b, len(src)):
-        if src[j] == "{":
+    """Extent of the statement or block that starts at/after `pos`.
+
+    A braceless body -- `if( cd > 0 ) cd--;` -- ends at its semicolon. Treating
+    it as a block instead makes the search skip forward to some unrelated `{`
+    far below, and every position inside THAT block then looks enclosed by an if
+    it has nothing to do with. The Hikkakes are where this bites: they carry a
+    warm-up loop that repeats the whole body before the main one, so a backward
+    walk crosses a braceless `if( cd > 0 )` on its way and picks it up as a
+    guard.
+    """
+    j = pos
+    while j < len(src) and src[j] in " \t\r\n":
+        j += 1
+    if j >= len(src):
+        return pos, len(src) - 1
+    if src[j] != "{":
+        e = src.find(";", j)
+        return j, (len(src) - 1 if e < 0 else e)
+    b, d = j, 0
+    for k in range(b, len(src)):
+        if src[k] == "{":
             d += 1
-        elif src[j] == "}":
+        elif src[k] == "}":
             d -= 1
             if d == 0:
-                return b, j
+                return b, k
     return b, len(src) - 1
 
 
@@ -305,6 +343,7 @@ def _firing_expr(src):
     covers a flat decision, CDLENGULFING's if/else over two non-zero values,
     CDLHARAMI's else-if chain and CDLTRISTAR's sequential ifs alike.
     """
+    locals_ = _loop_locals(src)
     chains = []
     for a in re.finditer(r"outInteger\s*\[\s*outIdx\+*\s*\]\s*=\s*([^;]+);", src):
         if a.group(1).strip().rstrip("0").strip() in ("", "+", "-"):
@@ -312,6 +351,8 @@ def _firing_expr(src):
         c = _guard_chain(src, a.start())
         if not c:
             return None, "a non-zero assignment has no enclosing if"
+        if any(re.search(r"\b%s\b" % re.escape(v), e) for e, _ in c for v in locals_):
+            continue              # fires off remembered state, not off bar i
         chains.append(c)
     if not chains:
         return None, "no non-zero outInteger assignment found"
@@ -568,11 +609,30 @@ def count_signs(path):
     # top-level-conjunct model does not describe, and the strict regex failing
     # closed there is what forces a human to look. A class set does not depend
     # on decision structure, so this direction is safe and the other is not.
+    # The Hikkakes emit from remembered state on their confirmation path, which
+    # is not a per-bar decision and gets no MC/DC builder -- see _loop_locals.
+    # Count only what the per-bar detection can emit, and resolve the one hop
+    # through the local it stores the result in: `patternResult` is assigned
+    # 100 * (...) in the same block, so the class set is the ordinary one.
+    locals_ = _loop_locals(src)
     classes = set()
     for cand in re.finditer(r"outInteger\s*\[\s*outIdx\+*\s*\]\s*=\s*([^;]+);", src):
         arm = " ".join(cand.group(1).split())
         if arm.strip().rstrip("0").strip() in ("", "+", "-"):
             continue                      # the non-firing `= 0` branch
+        chain = _guard_chain(src, cand.start())
+        if any(re.search(r"\b%s\b" % re.escape(v), e) for e, _ in chain for v in locals_):
+            continue                      # fires off remembered state
+        if arm in locals_:
+            # The assignment that reaches here is the LAST one before this
+            # output, not the first in the file -- these locals are initialised
+            # to 0 above the loop, and matching that initialiser instead makes
+            # the pattern look like it emits nothing.
+            hits = list(re.finditer(r"(?m)^\s*%s\s*=\s*([^;]+);" % re.escape(arm),
+                                    src[:cand.start()]))
+            if not hits:
+                return None, "cannot resolve the firing arm local: %s" % arm
+            arm = " ".join(hits[-1].group(1).split())
         got = arm_classes(arm)
         if got is None:
             return None, "unrecognised firing arm: %s" % arm
@@ -668,6 +728,16 @@ def main():
               "" if not (disj or wantDisj) else
               "   disjuncts: declared %s, source has %s"
               % (wantDisj or "{}", disj if disj is not None else "declined")))
+        # Say out loud which functions the count speaks for only in part. A cap
+        # nobody prints reads as full coverage; this one is real, and the two
+        # patterns it applies to carry a whole second output class behind it.
+        state = sorted(_loop_locals(open(pat).read()))
+        if state:
+            print("  %-20s          NOTE: an emitting path guarded by "
+                  "loop-carried state (%s) is excluded -- it is not a decision "
+                  "over bar i, so neither this count nor the MC/DC builder "
+                  "covers it. Its gate is the legacy predicate scenarios."
+                  % ("", ", ".join(state)))
         if not okArms:
             print("  %-20s          arms: declared %s, source has %s"
                   % ("", wantArms or "{}",
