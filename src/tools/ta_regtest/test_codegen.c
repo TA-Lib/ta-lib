@@ -1469,6 +1469,11 @@ typedef struct {
     /* Post-cutover functions that reached the range-stability leg. Counted so
      * "post-cutover" cannot quietly come to mean "range-unverified" again. */
     int               postCutRangeChecked;
+    /* Of those, the ones whose class actually compared VALUES across ranges.
+     * TA_STABLE_SKIP reaches the leg and checks coherency only, so counting it
+     * as "verified" overstates the ratchet below -- and the inert set grows
+     * with every new path-dependent indicator (NVI, PVI, WAD today). */
+    int               postCutRangeValueCompared;
     int               langIndex;   /* index into ALL_LANGUAGES */
     const CodegenLanguage *lang;
     /* Ref differential sweep counters */
@@ -1630,9 +1635,10 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                 if( TA_GetLookback( paramHolder, &postLookback ) == TA_SUCCESS &&
                     (int)ctx->history->nbBars > postLookback )
                 {
+                    TA_RangeStability postStability = stability_class(funcInfo);
                     ErrorNumber rangeErr = doRangeTestEx(
                         codegen_range_generic,
-                        stability_class(funcInfo),
+                        postStability,
                         get_unst_id(funcInfo->name),
                         (void *)&params,
                         funcInfo->nbOutput,
@@ -1646,6 +1652,12 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                         return;
                     }
                     ctx->postCutRangeChecked++;
+                    /* Reaching the leg is what the ratchet proves; comparing
+                     * values is a strictly stronger thing that TA_STABLE_SKIP
+                     * does not do. Split the two rather than let one number
+                     * claim both. */
+                    if( postStability != TA_STABLE_SKIP )
+                        ctx->postCutRangeValueCompared++;
                 }
             }
             if( ctx->nbSkipNames < MAX_FUNCTIONS )
@@ -3690,6 +3702,7 @@ static ErrorNumber test_codegen_for_language(
     ctx.nbIntInputSkipNames = 0;
     ctx.sweepSkipped   = 0;
     ctx.postCutRangeChecked = 0;
+    ctx.postCutRangeValueCompared = 0;
     ctx.langIndex      = langIndex;
     ctx.lang           = lang;
 
@@ -3916,8 +3929,11 @@ static ErrorNumber test_codegen_for_language(
                    ctx.sweepSkipped);
             /* The reference-independent legs still run for these, and must:
              * a post-cutover function is not an unverified one. */
-            printf("    post-cutover range-stability verified: %d of %d\n",
-                   ctx.postCutRangeChecked, ctx.nbSkipNames);
+            printf("    post-cutover range-stability verified: %d of %d"
+                   " (%d value-compared, %d path-dependent: coherency only)\n",
+                   ctx.postCutRangeChecked, ctx.nbSkipNames,
+                   ctx.postCutRangeValueCompared,
+                   ctx.postCutRangeChecked - ctx.postCutRangeValueCompared);
             if( ctx.postCutRangeChecked < ctx.nbSkipNames )
             {
                 printf("CODEGEN FAILED: %d post-cutover function(s) skipped the "
