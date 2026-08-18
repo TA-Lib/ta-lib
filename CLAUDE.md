@@ -23,6 +23,17 @@ C** — the library + the C tools (`ta_regtest`, `ta_bench`). `ta_codegen` is Ru
 built/run with cargo via the developer script `scripts/build.py`; **CMake never invokes
 cargo**, so a C-only setup needs no Rust toolchain.
 
+**Toolchain per backend.** Generating any backend's *source* needs only cargo. Building
+and testing one needs that language's toolchain, and a missing tool is a failure, not a
+silent skip — narrow with `--backend=` / `build.py --language=` instead. Java needs a **JDK
+and `unzip`**: Maven owns the jar, but comes from the committed wrapper
+(`ta_codegen/output/java/library/mvnw`), which downloads the pinned, SHA-256-verified
+Apache distribution itself. `ta_codegen build --backend=java` runs `./mvnw clean package`
+and then tests *that* artifact — so there is no second builder, nothing tests a class
+directory, and every machine builds with the same Maven. No account or credentials are
+involved (signing and the Central upload sit behind the pom's `release` profile); only the
+wrapper's first run needs the network.
+
 The correctness baseline that all `ta_codegen` backends are verified against is
 the frozen pre-cutover reference (the `reference-pre-cutover` tag, served as
 `ta_ref_serve`) plus the hardcoded `ta_regtest` expected values.

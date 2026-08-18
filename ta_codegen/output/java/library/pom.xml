@@ -18,10 +18,13 @@
        of the jar, the sources jar and the javadoc: three exclusion lists that
        would otherwise have to be kept in step by hand, each failing silently.
 
-       `mvn package` is the packaging path, not the test gate: the suites are run
-       by `ta_codegen build` with the java backend, which compiles both roots, executes
-       every discovered *Test class and runs javadoc under -Xdoclint. Surefire is
-       therefore left with nothing to do (no junit dependency in the tree). -->
+       Maven is the ONLY builder of the jar. `ta_codegen build` with the java backend
+       runs `./mvnw clean package` (skipping tests) and then tests THAT artifact:
+       nothing tests a class directory, and there is no second jar to keep in step.
+       So the compile and the javadoc doclint pass below are the gate's teeth, not
+       just the release's. Surefire is left with nothing to do (the suites are
+       junit-free main() classes); the gate compiles them against the built jar and
+       runs them itself. -->
 
   <modelVersion>4.0.0</modelVersion>
 
@@ -31,9 +34,11 @@
   <packaging>jar</packaging>
 
   <name>TA-Lib</name>
-  <!-- The count is published to Central and is immutable per version: keep it in
-       step with `ls ta_codegen/input/*/` minus helpers/ and types/. -->
-  <description>Technical analysis library: 168 indicators (SMA, EMA, RSI, MACD, Bollinger Bands, ATR, Stochastic, candlestick patterns) - the official Java port of TA-Lib, verified against the C reference.</description>
+  <!-- The count is published to Central and is immutable per version. It drifted from
+       168 to 174 unnoticed, so it is no longer kept in step by hand: check_java_jars
+       (the generator) asserts this description carries the number of function
+       directories under ta_codegen/input/. -->
+  <description>Technical analysis library: 174 indicators (SMA, EMA, RSI, MACD, Bollinger Bands, ATR, Stochastic, candlestick patterns) - the official Java port of TA-Lib, verified against the C reference.</description>
   <url>https://ta-lib.org</url>
   <inceptionYear>1999</inceptionYear>
 
@@ -149,7 +154,9 @@
         <artifactId>maven-javadoc-plugin</artifactId>
         <version>3.12.0</version>
         <configuration>
-          <!-- The same doclint the generator's build gate runs. `-missing` is off:
+          <!-- The build gate's doclint, not merely the release's: `ta_codegen build`
+               with the java backend builds through this pom, so deleting this line
+               disarms the gate. `-missing` is off:
                the streaming handles and internal cores are deliberately
                undocumented. Everything else (a stray `<` in prose lifted from a
                function's canonical .md, an unresolvable @see) fails the build
@@ -175,9 +182,11 @@
   </build>
 
   <profiles>
-    <!-- Signing and publishing live behind a profile so a plain `mvn package`
+    <!-- Signing and publishing live behind a profile so a plain `./mvnw package`
          needs neither a GPG key nor Central credentials. Release with:
-           mvn -Prelease deploy
+           ./mvnw -Prelease deploy
+         Through the wrapper, never a bare `mvn`: that is what pins which Maven core
+         produced an artifact Central can never let you correct.
          `autoPublish` is false on purpose: the upload is validated and left
          pending in the Central Portal, so a bad artifact is dropped rather than
          released. Promote it by hand once verified. -->
