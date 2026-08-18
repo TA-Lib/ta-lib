@@ -4549,23 +4549,6 @@ fn derived_ring_census(
     }
 }
 
-/// Candle settings reach an expression as `<Setting>_rangeType` and friends,
-/// resolved from the mutable globals. A derived ring freezes whatever they say
-/// when the bar is buffered, which is a semantic question rather than a
-/// mechanical one (#229), so expressions naming them are held back until that
-/// is settled. Everything else -- AO's `(high+low)/2`, QSTICK's `close-open` --
-/// is a pure function of the bar and can be collapsed today.
-fn mentions_candle_settings(e: &Expr) -> bool {
-    let mut found = false;
-    walk_expr(e, &mut |x| {
-        if let Expr::Var(n) = x {
-            if n.ends_with("_rangeType") || n.ends_with("_avgPeriod") || n.ends_with("_factor") {
-                found = true;
-            }
-        }
-    });
-    found
-}
 
 /// The eligible derived rings: one shape covering every read at that index,
 /// more than one array behind it, and no settings dependency.
@@ -4602,9 +4585,6 @@ fn eligible_derived(
             continue;
         }
         let expr = shapes[0].clone();
-        if mentions_candle_settings(&expr) {
-            continue;
-        }
         let mut raw: BTreeSet<String> = BTreeSet::new();
         walk_expr(&expr, &mut |x| {
             if let Expr::ArrayAccess(n, _) = x {

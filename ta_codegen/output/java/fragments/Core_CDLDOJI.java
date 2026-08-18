@@ -286,10 +286,7 @@
       double BodyDojiPeriodTotal;
       int ringPos_BodyDojiTrailingIdx;
       int ringCap_BodyDojiTrailingIdx;
-      double[] ring_BodyDojiTrailingIdx_inOpen;
-      double[] ring_BodyDojiTrailingIdx_inHigh;
-      double[] ring_BodyDojiTrailingIdx_inLow;
-      double[] ring_BodyDojiTrailingIdx_inClose;
+      double[] ring_BodyDojiTrailingIdx_derived;
       int cs_BodyDoji_rangeType;
       int cs_BodyDoji_avgPeriod;
       double cs_BodyDoji_factor;
@@ -312,10 +309,7 @@
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
          this.ringPos_BodyDojiTrailingIdx = other.ringPos_BodyDojiTrailingIdx;
          this.ringCap_BodyDojiTrailingIdx = other.ringCap_BodyDojiTrailingIdx;
-         this.ring_BodyDojiTrailingIdx_inOpen = other.ring_BodyDojiTrailingIdx_inOpen.clone();
-         this.ring_BodyDojiTrailingIdx_inHigh = other.ring_BodyDojiTrailingIdx_inHigh.clone();
-         this.ring_BodyDojiTrailingIdx_inLow = other.ring_BodyDojiTrailingIdx_inLow.clone();
-         this.ring_BodyDojiTrailingIdx_inClose = other.ring_BodyDojiTrailingIdx_inClose.clone();
+         this.ring_BodyDojiTrailingIdx_derived = other.ring_BodyDojiTrailingIdx_derived.clone();
          this.cs_BodyDoji_rangeType = other.cs_BodyDoji_rangeType;
          this.cs_BodyDoji_avgPeriod = other.cs_BodyDoji_avgPeriod;
          this.cs_BodyDoji_factor = other.cs_BodyDoji_factor;
@@ -328,25 +322,10 @@
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
          this.ringPos_BodyDojiTrailingIdx = other.ringPos_BodyDojiTrailingIdx;
          this.ringCap_BodyDojiTrailingIdx = other.ringCap_BodyDojiTrailingIdx;
-         if( this.ring_BodyDojiTrailingIdx_inOpen != null && this.ring_BodyDojiTrailingIdx_inOpen.length == other.ring_BodyDojiTrailingIdx_inOpen.length ) {
-            System.arraycopy( other.ring_BodyDojiTrailingIdx_inOpen, 0, this.ring_BodyDojiTrailingIdx_inOpen, 0, other.ring_BodyDojiTrailingIdx_inOpen.length );
+         if( this.ring_BodyDojiTrailingIdx_derived != null && this.ring_BodyDojiTrailingIdx_derived.length == other.ring_BodyDojiTrailingIdx_derived.length ) {
+            System.arraycopy( other.ring_BodyDojiTrailingIdx_derived, 0, this.ring_BodyDojiTrailingIdx_derived, 0, other.ring_BodyDojiTrailingIdx_derived.length );
          } else {
-            this.ring_BodyDojiTrailingIdx_inOpen = other.ring_BodyDojiTrailingIdx_inOpen.clone();
-         }
-         if( this.ring_BodyDojiTrailingIdx_inHigh != null && this.ring_BodyDojiTrailingIdx_inHigh.length == other.ring_BodyDojiTrailingIdx_inHigh.length ) {
-            System.arraycopy( other.ring_BodyDojiTrailingIdx_inHigh, 0, this.ring_BodyDojiTrailingIdx_inHigh, 0, other.ring_BodyDojiTrailingIdx_inHigh.length );
-         } else {
-            this.ring_BodyDojiTrailingIdx_inHigh = other.ring_BodyDojiTrailingIdx_inHigh.clone();
-         }
-         if( this.ring_BodyDojiTrailingIdx_inLow != null && this.ring_BodyDojiTrailingIdx_inLow.length == other.ring_BodyDojiTrailingIdx_inLow.length ) {
-            System.arraycopy( other.ring_BodyDojiTrailingIdx_inLow, 0, this.ring_BodyDojiTrailingIdx_inLow, 0, other.ring_BodyDojiTrailingIdx_inLow.length );
-         } else {
-            this.ring_BodyDojiTrailingIdx_inLow = other.ring_BodyDojiTrailingIdx_inLow.clone();
-         }
-         if( this.ring_BodyDojiTrailingIdx_inClose != null && this.ring_BodyDojiTrailingIdx_inClose.length == other.ring_BodyDojiTrailingIdx_inClose.length ) {
-            System.arraycopy( other.ring_BodyDojiTrailingIdx_inClose, 0, this.ring_BodyDojiTrailingIdx_inClose, 0, other.ring_BodyDojiTrailingIdx_inClose.length );
-         } else {
-            this.ring_BodyDojiTrailingIdx_inClose = other.ring_BodyDojiTrailingIdx_inClose.clone();
+            this.ring_BodyDojiTrailingIdx_derived = other.ring_BodyDojiTrailingIdx_derived.clone();
          }
          this.cs_BodyDoji_rangeType = other.cs_BodyDoji_rangeType;
          this.cs_BodyDoji_avgPeriod = other.cs_BodyDoji_avgPeriod;
@@ -354,9 +333,6 @@
          this.cur_outInteger = other.cur_outInteger;
          this.fillRange = other.fillRange;
       }
-
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDLDOJI_Stream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -381,21 +357,13 @@
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * run concurrently with each other. It runs on a throwaway copy, which for this
+       * handle's shape is cheaper than reusing one.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new IllegalArgumentException("CDLDOJI peek: BadParam");
-         CDLDOJI_Stream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CDLDOJI_Stream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
-         }
+         CDLDOJI_Stream scratch = new CDLDOJI_Stream(this);
          core.CDLDOJI_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
@@ -423,10 +391,7 @@
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
       double BodyDoji_factor = sp.cs_BodyDoji_factor;
       if( sp.ringCap_BodyDojiTrailingIdx == 0 ) {
-         sp.ring_BodyDojiTrailingIdx_inOpen[0] = inOpen;
-         sp.ring_BodyDojiTrailingIdx_inHigh[0] = inHigh;
-         sp.ring_BodyDojiTrailingIdx_inLow[0] = inLow;
-         sp.ring_BodyDojiTrailingIdx_inClose[0] = inClose;
+         sp.ring_BodyDojiTrailingIdx_derived[0] = ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
       }
       if( Math.abs(inClose - inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (sp.BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) ) {
          sp.cur_outInteger = 100;
@@ -436,11 +401,8 @@
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      sp.BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((BodyDoji_rangeType == 0) ? (Math.abs(sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx] - sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx])) : ((BodyDoji_rangeType == 1) ? (sp.ring_BodyDojiTrailingIdx_inHigh[sp.ringPos_BodyDojiTrailingIdx] - sp.ring_BodyDojiTrailingIdx_inLow[sp.ringPos_BodyDojiTrailingIdx]) : ((BodyDoji_rangeType == 2) ? ((sp.ring_BodyDojiTrailingIdx_inHigh[sp.ringPos_BodyDojiTrailingIdx] - (((sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx]) >= (sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx])) ? (sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx]) : (sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx]))) + ((((sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx]) >= (sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx])) ? (sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx]) : (sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx])) - sp.ring_BodyDojiTrailingIdx_inLow[sp.ringPos_BodyDojiTrailingIdx])) : 0.0)));
-      sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx] = inOpen;
-      sp.ring_BodyDojiTrailingIdx_inHigh[sp.ringPos_BodyDojiTrailingIdx] = inHigh;
-      sp.ring_BodyDojiTrailingIdx_inLow[sp.ringPos_BodyDojiTrailingIdx] = inLow;
-      sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx] = inClose;
+      sp.BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - sp.ring_BodyDojiTrailingIdx_derived[sp.ringPos_BodyDojiTrailingIdx];
+      sp.ring_BodyDojiTrailingIdx_derived[sp.ringPos_BodyDojiTrailingIdx] = ((BodyDoji_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
       sp.ringPos_BodyDojiTrailingIdx = sp.ringPos_BodyDojiTrailingIdx + 1;
       if( sp.ringPos_BodyDojiTrailingIdx >= sp.ringCap_BodyDojiTrailingIdx ) {
          sp.ringPos_BodyDojiTrailingIdx = 0;
@@ -520,21 +482,14 @@
          return RetCode.InternalError;
       }
       int allocN_BodyDojiTrailingIdx = (cap_BodyDojiTrailingIdx > 0)? cap_BodyDojiTrailingIdx : 1;
-      double[] capRing_BodyDojiTrailingIdx_inOpen = new double[allocN_BodyDojiTrailingIdx];
-      System.arraycopy(inOpen, historyLen - cap_BodyDojiTrailingIdx, capRing_BodyDojiTrailingIdx_inOpen, 0, cap_BodyDojiTrailingIdx);
-      double[] capRing_BodyDojiTrailingIdx_inHigh = new double[allocN_BodyDojiTrailingIdx];
-      System.arraycopy(inHigh, historyLen - cap_BodyDojiTrailingIdx, capRing_BodyDojiTrailingIdx_inHigh, 0, cap_BodyDojiTrailingIdx);
-      double[] capRing_BodyDojiTrailingIdx_inLow = new double[allocN_BodyDojiTrailingIdx];
-      System.arraycopy(inLow, historyLen - cap_BodyDojiTrailingIdx, capRing_BodyDojiTrailingIdx_inLow, 0, cap_BodyDojiTrailingIdx);
-      double[] capRing_BodyDojiTrailingIdx_inClose = new double[allocN_BodyDojiTrailingIdx];
-      System.arraycopy(inClose, historyLen - cap_BodyDojiTrailingIdx, capRing_BodyDojiTrailingIdx_inClose, 0, cap_BodyDojiTrailingIdx);
+      double[] capRing_BodyDojiTrailingIdx_derived = new double[allocN_BodyDojiTrailingIdx];
+      for( int fillJ = historyLen - cap_BodyDojiTrailingIdx; fillJ < historyLen; fillJ++ ) {
+         capRing_BodyDojiTrailingIdx_derived[fillJ - (historyLen - cap_BodyDojiTrailingIdx)] = ((BodyDoji_rangeType == 0) ? (Math.abs(inClose[fillJ] - inOpen[fillJ])) : ((BodyDoji_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((BodyDoji_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+      }
       sp.BodyDojiPeriodTotal = BodyDojiPeriodTotal;
       sp.ringPos_BodyDojiTrailingIdx = 0;
       sp.ringCap_BodyDojiTrailingIdx = cap_BodyDojiTrailingIdx;
-      sp.ring_BodyDojiTrailingIdx_inOpen = capRing_BodyDojiTrailingIdx_inOpen;
-      sp.ring_BodyDojiTrailingIdx_inHigh = capRing_BodyDojiTrailingIdx_inHigh;
-      sp.ring_BodyDojiTrailingIdx_inLow = capRing_BodyDojiTrailingIdx_inLow;
-      sp.ring_BodyDojiTrailingIdx_inClose = capRing_BodyDojiTrailingIdx_inClose;
+      sp.ring_BodyDojiTrailingIdx_derived = capRing_BodyDojiTrailingIdx_derived;
       sp.cs_BodyDoji_rangeType = BodyDoji_rangeType;
       sp.cs_BodyDoji_avgPeriod = BodyDoji_avgPeriod;
       sp.cs_BodyDoji_factor = BodyDoji_factor;

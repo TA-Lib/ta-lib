@@ -346,10 +346,7 @@ public partial class Core
       internal double BodyDojiPeriodTotal;
       internal int ringPos_BodyDojiTrailingIdx;
       internal int ringCap_BodyDojiTrailingIdx;
-      internal double[] ring_BodyDojiTrailingIdx_inOpen = [];
-      internal double[] ring_BodyDojiTrailingIdx_inHigh = [];
-      internal double[] ring_BodyDojiTrailingIdx_inLow = [];
-      internal double[] ring_BodyDojiTrailingIdx_inClose = [];
+      internal double[] ring_BodyDojiTrailingIdx_derived = [];
       internal int cs_BodyDoji_rangeType;
       internal int cs_BodyDoji_avgPeriod;
       internal double cs_BodyDoji_factor;
@@ -373,14 +370,8 @@ public partial class Core
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
          this.ringPos_BodyDojiTrailingIdx = other.ringPos_BodyDojiTrailingIdx;
          this.ringCap_BodyDojiTrailingIdx = other.ringCap_BodyDojiTrailingIdx;
-         this.ring_BodyDojiTrailingIdx_inOpen = new double[other.ring_BodyDojiTrailingIdx_inOpen.Length];
-         Array.Copy( other.ring_BodyDojiTrailingIdx_inOpen, this.ring_BodyDojiTrailingIdx_inOpen, other.ring_BodyDojiTrailingIdx_inOpen.Length );
-         this.ring_BodyDojiTrailingIdx_inHigh = new double[other.ring_BodyDojiTrailingIdx_inHigh.Length];
-         Array.Copy( other.ring_BodyDojiTrailingIdx_inHigh, this.ring_BodyDojiTrailingIdx_inHigh, other.ring_BodyDojiTrailingIdx_inHigh.Length );
-         this.ring_BodyDojiTrailingIdx_inLow = new double[other.ring_BodyDojiTrailingIdx_inLow.Length];
-         Array.Copy( other.ring_BodyDojiTrailingIdx_inLow, this.ring_BodyDojiTrailingIdx_inLow, other.ring_BodyDojiTrailingIdx_inLow.Length );
-         this.ring_BodyDojiTrailingIdx_inClose = new double[other.ring_BodyDojiTrailingIdx_inClose.Length];
-         Array.Copy( other.ring_BodyDojiTrailingIdx_inClose, this.ring_BodyDojiTrailingIdx_inClose, other.ring_BodyDojiTrailingIdx_inClose.Length );
+         this.ring_BodyDojiTrailingIdx_derived = new double[other.ring_BodyDojiTrailingIdx_derived.Length];
+         Array.Copy( other.ring_BodyDojiTrailingIdx_derived, this.ring_BodyDojiTrailingIdx_derived, other.ring_BodyDojiTrailingIdx_derived.Length );
          this.cs_BodyDoji_rangeType = other.cs_BodyDoji_rangeType;
          this.cs_BodyDoji_avgPeriod = other.cs_BodyDoji_avgPeriod;
          this.cs_BodyDoji_factor = other.cs_BodyDoji_factor;
@@ -394,31 +385,16 @@ public partial class Core
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
          this.ringPos_BodyDojiTrailingIdx = other.ringPos_BodyDojiTrailingIdx;
          this.ringCap_BodyDojiTrailingIdx = other.ringCap_BodyDojiTrailingIdx;
-         if( this.ring_BodyDojiTrailingIdx_inOpen.Length != other.ring_BodyDojiTrailingIdx_inOpen.Length ) {
-            this.ring_BodyDojiTrailingIdx_inOpen = new double[other.ring_BodyDojiTrailingIdx_inOpen.Length];
+         if( this.ring_BodyDojiTrailingIdx_derived.Length != other.ring_BodyDojiTrailingIdx_derived.Length ) {
+            this.ring_BodyDojiTrailingIdx_derived = new double[other.ring_BodyDojiTrailingIdx_derived.Length];
          }
-         Array.Copy( other.ring_BodyDojiTrailingIdx_inOpen, this.ring_BodyDojiTrailingIdx_inOpen, other.ring_BodyDojiTrailingIdx_inOpen.Length );
-         if( this.ring_BodyDojiTrailingIdx_inHigh.Length != other.ring_BodyDojiTrailingIdx_inHigh.Length ) {
-            this.ring_BodyDojiTrailingIdx_inHigh = new double[other.ring_BodyDojiTrailingIdx_inHigh.Length];
-         }
-         Array.Copy( other.ring_BodyDojiTrailingIdx_inHigh, this.ring_BodyDojiTrailingIdx_inHigh, other.ring_BodyDojiTrailingIdx_inHigh.Length );
-         if( this.ring_BodyDojiTrailingIdx_inLow.Length != other.ring_BodyDojiTrailingIdx_inLow.Length ) {
-            this.ring_BodyDojiTrailingIdx_inLow = new double[other.ring_BodyDojiTrailingIdx_inLow.Length];
-         }
-         Array.Copy( other.ring_BodyDojiTrailingIdx_inLow, this.ring_BodyDojiTrailingIdx_inLow, other.ring_BodyDojiTrailingIdx_inLow.Length );
-         if( this.ring_BodyDojiTrailingIdx_inClose.Length != other.ring_BodyDojiTrailingIdx_inClose.Length ) {
-            this.ring_BodyDojiTrailingIdx_inClose = new double[other.ring_BodyDojiTrailingIdx_inClose.Length];
-         }
-         Array.Copy( other.ring_BodyDojiTrailingIdx_inClose, this.ring_BodyDojiTrailingIdx_inClose, other.ring_BodyDojiTrailingIdx_inClose.Length );
+         Array.Copy( other.ring_BodyDojiTrailingIdx_derived, this.ring_BodyDojiTrailingIdx_derived, other.ring_BodyDojiTrailingIdx_derived.Length );
          this.cs_BodyDoji_rangeType = other.cs_BodyDoji_rangeType;
          this.cs_BodyDoji_avgPeriod = other.cs_BodyDoji_avgPeriod;
          this.cs_BodyDoji_factor = other.cs_BodyDoji_factor;
          this.cur_outInteger = other.cur_outInteger;
          this.fillRange = other.fillRange;
       }
-
-      /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static CDLDOJI_Stream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -448,9 +424,9 @@ public partial class Core
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
       /// would return — it is the same generated code, run on a copy. Never writes
       /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a scratch handle held per thread and reused, so it allocates
-      /// nothing after this thread's first peek of this indicator. That scratch is
-      /// retained for the life of the thread.</para>
+      /// <para>It runs on a fresh copy of this handle, so it allocates one — proportional
+      /// to the state this indicator carries. If you peek on every tick and that
+      /// matters, hold the value <see cref="Update"/> returns instead.</para>
       /// </remarks>
       /// <param name="inOpen">This bar's open price.</param>
       /// <param name="inHigh">This bar's high price.</param>
@@ -460,13 +436,7 @@ public partial class Core
       public int Peek( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLDOJI", "peek", RetCode.BadParam);
-         CDLDOJI_Stream? scratch = peekScratch;
-         if( scratch is null ) {
-            scratch = new CDLDOJI_Stream(this);
-            peekScratch = scratch;
-         } else {
-            scratch.CopyFrom(this);
-         }
+         CDLDOJI_Stream scratch = new CDLDOJI_Stream(this);
          core.CDLDOJI_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
@@ -493,10 +463,7 @@ public partial class Core
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
       double BodyDoji_factor = sp.cs_BodyDoji_factor;
       if( sp.ringCap_BodyDojiTrailingIdx == 0 ) {
-         sp.ring_BodyDojiTrailingIdx_inOpen[0] = inOpen;
-         sp.ring_BodyDojiTrailingIdx_inHigh[0] = inHigh;
-         sp.ring_BodyDojiTrailingIdx_inLow[0] = inLow;
-         sp.ring_BodyDojiTrailingIdx_inClose[0] = inClose;
+         sp.ring_BodyDojiTrailingIdx_derived[0] = ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
       }
       if( Math.Abs(inClose - inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (sp.BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) ) {
          sp.cur_outInteger = 100;
@@ -506,11 +473,8 @@ public partial class Core
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      sp.BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((BodyDoji_rangeType == 0) ? (Math.Abs(sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx] - sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx])) : ((BodyDoji_rangeType == 1) ? (sp.ring_BodyDojiTrailingIdx_inHigh[sp.ringPos_BodyDojiTrailingIdx] - sp.ring_BodyDojiTrailingIdx_inLow[sp.ringPos_BodyDojiTrailingIdx]) : ((BodyDoji_rangeType == 2) ? ((sp.ring_BodyDojiTrailingIdx_inHigh[sp.ringPos_BodyDojiTrailingIdx] - (((sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx]) >= (sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx])) ? (sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx]) : (sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx]))) + ((((sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx]) >= (sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx])) ? (sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx]) : (sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx])) - sp.ring_BodyDojiTrailingIdx_inLow[sp.ringPos_BodyDojiTrailingIdx])) : 0.0)));
-      sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx] = inOpen;
-      sp.ring_BodyDojiTrailingIdx_inHigh[sp.ringPos_BodyDojiTrailingIdx] = inHigh;
-      sp.ring_BodyDojiTrailingIdx_inLow[sp.ringPos_BodyDojiTrailingIdx] = inLow;
-      sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx] = inClose;
+      sp.BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - sp.ring_BodyDojiTrailingIdx_derived[sp.ringPos_BodyDojiTrailingIdx];
+      sp.ring_BodyDojiTrailingIdx_derived[sp.ringPos_BodyDojiTrailingIdx] = ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
       sp.ringPos_BodyDojiTrailingIdx = sp.ringPos_BodyDojiTrailingIdx + 1;
       if( sp.ringPos_BodyDojiTrailingIdx >= sp.ringCap_BodyDojiTrailingIdx ) {
          sp.ringPos_BodyDojiTrailingIdx = 0;
@@ -593,21 +557,14 @@ public partial class Core
          return RetCode.InternalError;
       }
       int allocN_BodyDojiTrailingIdx = (cap_BodyDojiTrailingIdx > 0)? cap_BodyDojiTrailingIdx : 1;
-      double[] capRing_BodyDojiTrailingIdx_inOpen = new double[allocN_BodyDojiTrailingIdx];
-      inOpen.Slice(historyLen - cap_BodyDojiTrailingIdx, cap_BodyDojiTrailingIdx).CopyTo(capRing_BodyDojiTrailingIdx_inOpen);
-      double[] capRing_BodyDojiTrailingIdx_inHigh = new double[allocN_BodyDojiTrailingIdx];
-      inHigh.Slice(historyLen - cap_BodyDojiTrailingIdx, cap_BodyDojiTrailingIdx).CopyTo(capRing_BodyDojiTrailingIdx_inHigh);
-      double[] capRing_BodyDojiTrailingIdx_inLow = new double[allocN_BodyDojiTrailingIdx];
-      inLow.Slice(historyLen - cap_BodyDojiTrailingIdx, cap_BodyDojiTrailingIdx).CopyTo(capRing_BodyDojiTrailingIdx_inLow);
-      double[] capRing_BodyDojiTrailingIdx_inClose = new double[allocN_BodyDojiTrailingIdx];
-      inClose.Slice(historyLen - cap_BodyDojiTrailingIdx, cap_BodyDojiTrailingIdx).CopyTo(capRing_BodyDojiTrailingIdx_inClose);
+      double[] capRing_BodyDojiTrailingIdx_derived = new double[allocN_BodyDojiTrailingIdx];
+      for( int fillJ = historyLen - cap_BodyDojiTrailingIdx; fillJ < historyLen; fillJ++ ) {
+         capRing_BodyDojiTrailingIdx_derived[fillJ - (historyLen - cap_BodyDojiTrailingIdx)] = ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((BodyDoji_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((BodyDoji_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+      }
       sp.BodyDojiPeriodTotal = BodyDojiPeriodTotal;
       sp.ringPos_BodyDojiTrailingIdx = 0;
       sp.ringCap_BodyDojiTrailingIdx = cap_BodyDojiTrailingIdx;
-      sp.ring_BodyDojiTrailingIdx_inOpen = capRing_BodyDojiTrailingIdx_inOpen;
-      sp.ring_BodyDojiTrailingIdx_inHigh = capRing_BodyDojiTrailingIdx_inHigh;
-      sp.ring_BodyDojiTrailingIdx_inLow = capRing_BodyDojiTrailingIdx_inLow;
-      sp.ring_BodyDojiTrailingIdx_inClose = capRing_BodyDojiTrailingIdx_inClose;
+      sp.ring_BodyDojiTrailingIdx_derived = capRing_BodyDojiTrailingIdx_derived;
       sp.cs_BodyDoji_rangeType = BodyDoji_rangeType;
       sp.cs_BodyDoji_avgPeriod = BodyDoji_avgPeriod;
       sp.cs_BodyDoji_factor = BodyDoji_factor;

@@ -320,10 +320,7 @@
       int ringPos_ShadowVeryShortTrailingIdx;
       int ringCap_ShadowVeryShortTrailingIdx;
       int ringLag_ShadowVeryShortTrailingIdx;
-      double[] ring_ShadowVeryShortTrailingIdx_inOpen;
-      double[] ring_ShadowVeryShortTrailingIdx_inHigh;
-      double[] ring_ShadowVeryShortTrailingIdx_inLow;
-      double[] ring_ShadowVeryShortTrailingIdx_inClose;
+      double[] ring_ShadowVeryShortTrailingIdx_derived;
       int cs_ShadowVeryShort_rangeType;
       int cs_ShadowVeryShort_avgPeriod;
       double cs_ShadowVeryShort_factor;
@@ -357,10 +354,7 @@
          this.ringPos_ShadowVeryShortTrailingIdx = other.ringPos_ShadowVeryShortTrailingIdx;
          this.ringCap_ShadowVeryShortTrailingIdx = other.ringCap_ShadowVeryShortTrailingIdx;
          this.ringLag_ShadowVeryShortTrailingIdx = other.ringLag_ShadowVeryShortTrailingIdx;
-         this.ring_ShadowVeryShortTrailingIdx_inOpen = other.ring_ShadowVeryShortTrailingIdx_inOpen.clone();
-         this.ring_ShadowVeryShortTrailingIdx_inHigh = other.ring_ShadowVeryShortTrailingIdx_inHigh.clone();
-         this.ring_ShadowVeryShortTrailingIdx_inLow = other.ring_ShadowVeryShortTrailingIdx_inLow.clone();
-         this.ring_ShadowVeryShortTrailingIdx_inClose = other.ring_ShadowVeryShortTrailingIdx_inClose.clone();
+         this.ring_ShadowVeryShortTrailingIdx_derived = other.ring_ShadowVeryShortTrailingIdx_derived.clone();
          this.cs_ShadowVeryShort_rangeType = other.cs_ShadowVeryShort_rangeType;
          this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
          this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
@@ -384,25 +378,10 @@
          this.ringPos_ShadowVeryShortTrailingIdx = other.ringPos_ShadowVeryShortTrailingIdx;
          this.ringCap_ShadowVeryShortTrailingIdx = other.ringCap_ShadowVeryShortTrailingIdx;
          this.ringLag_ShadowVeryShortTrailingIdx = other.ringLag_ShadowVeryShortTrailingIdx;
-         if( this.ring_ShadowVeryShortTrailingIdx_inOpen != null && this.ring_ShadowVeryShortTrailingIdx_inOpen.length == other.ring_ShadowVeryShortTrailingIdx_inOpen.length ) {
-            System.arraycopy( other.ring_ShadowVeryShortTrailingIdx_inOpen, 0, this.ring_ShadowVeryShortTrailingIdx_inOpen, 0, other.ring_ShadowVeryShortTrailingIdx_inOpen.length );
+         if( this.ring_ShadowVeryShortTrailingIdx_derived != null && this.ring_ShadowVeryShortTrailingIdx_derived.length == other.ring_ShadowVeryShortTrailingIdx_derived.length ) {
+            System.arraycopy( other.ring_ShadowVeryShortTrailingIdx_derived, 0, this.ring_ShadowVeryShortTrailingIdx_derived, 0, other.ring_ShadowVeryShortTrailingIdx_derived.length );
          } else {
-            this.ring_ShadowVeryShortTrailingIdx_inOpen = other.ring_ShadowVeryShortTrailingIdx_inOpen.clone();
-         }
-         if( this.ring_ShadowVeryShortTrailingIdx_inHigh != null && this.ring_ShadowVeryShortTrailingIdx_inHigh.length == other.ring_ShadowVeryShortTrailingIdx_inHigh.length ) {
-            System.arraycopy( other.ring_ShadowVeryShortTrailingIdx_inHigh, 0, this.ring_ShadowVeryShortTrailingIdx_inHigh, 0, other.ring_ShadowVeryShortTrailingIdx_inHigh.length );
-         } else {
-            this.ring_ShadowVeryShortTrailingIdx_inHigh = other.ring_ShadowVeryShortTrailingIdx_inHigh.clone();
-         }
-         if( this.ring_ShadowVeryShortTrailingIdx_inLow != null && this.ring_ShadowVeryShortTrailingIdx_inLow.length == other.ring_ShadowVeryShortTrailingIdx_inLow.length ) {
-            System.arraycopy( other.ring_ShadowVeryShortTrailingIdx_inLow, 0, this.ring_ShadowVeryShortTrailingIdx_inLow, 0, other.ring_ShadowVeryShortTrailingIdx_inLow.length );
-         } else {
-            this.ring_ShadowVeryShortTrailingIdx_inLow = other.ring_ShadowVeryShortTrailingIdx_inLow.clone();
-         }
-         if( this.ring_ShadowVeryShortTrailingIdx_inClose != null && this.ring_ShadowVeryShortTrailingIdx_inClose.length == other.ring_ShadowVeryShortTrailingIdx_inClose.length ) {
-            System.arraycopy( other.ring_ShadowVeryShortTrailingIdx_inClose, 0, this.ring_ShadowVeryShortTrailingIdx_inClose, 0, other.ring_ShadowVeryShortTrailingIdx_inClose.length );
-         } else {
-            this.ring_ShadowVeryShortTrailingIdx_inClose = other.ring_ShadowVeryShortTrailingIdx_inClose.clone();
+            this.ring_ShadowVeryShortTrailingIdx_derived = other.ring_ShadowVeryShortTrailingIdx_derived.clone();
          }
          this.cs_ShadowVeryShort_rangeType = other.cs_ShadowVeryShort_rangeType;
          this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
@@ -410,9 +389,6 @@
          this.cur_outInteger = other.cur_outInteger;
          this.fillRange = other.fillRange;
       }
-
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDLLADDERBOTTOM_Stream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -437,21 +413,13 @@
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * run concurrently with each other. It runs on a throwaway copy, which for this
+       * handle's shape is cheaper than reusing one.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new IllegalArgumentException("CDLLADDERBOTTOM peek: BadParam");
-         CDLLADDERBOTTOM_Stream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CDLLADDERBOTTOM_Stream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
-         }
+         CDLLADDERBOTTOM_Stream scratch = new CDLLADDERBOTTOM_Stream(this);
          core.CDLLADDERBOTTOM_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
@@ -478,10 +446,7 @@
       int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
       int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
       double ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;
-      sp.ring_ShadowVeryShortTrailingIdx_inOpen[sp.ringPos_ShadowVeryShortTrailingIdx] = inOpen;
-      sp.ring_ShadowVeryShortTrailingIdx_inHigh[sp.ringPos_ShadowVeryShortTrailingIdx] = inHigh;
-      sp.ring_ShadowVeryShortTrailingIdx_inLow[sp.ringPos_ShadowVeryShortTrailingIdx] = inLow;
-      sp.ring_ShadowVeryShortTrailingIdx_inClose[sp.ringPos_ShadowVeryShortTrailingIdx] = inClose;
+      sp.ring_ShadowVeryShortTrailingIdx_derived[sp.ringPos_ShadowVeryShortTrailingIdx] = ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (inHigh - inLow) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
       if( ((sp.lag4_inClose >= sp.lag4_inOpen) ? 1 : 0 - 1) == 0 - 1 &&
           ((sp.lag3_inClose >= sp.lag3_inOpen) ? 1 : 0 - 1) == 0 - 1 &&
           ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 3 black candlesticks */
@@ -502,7 +467,7 @@
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      sp.ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType == 0) ? (Math.abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((ShadowVeryShort_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0))) - ((ShadowVeryShort_rangeType == 0) ? (Math.abs(sp.ring_ShadowVeryShortTrailingIdx_inClose[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx] - sp.ring_ShadowVeryShortTrailingIdx_inOpen[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx])) : ((ShadowVeryShort_rangeType == 1) ? (sp.ring_ShadowVeryShortTrailingIdx_inHigh[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx] - sp.ring_ShadowVeryShortTrailingIdx_inLow[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx]) : ((ShadowVeryShort_rangeType == 2) ? ((sp.ring_ShadowVeryShortTrailingIdx_inHigh[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx] - (((sp.ring_ShadowVeryShortTrailingIdx_inClose[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx]) >= (sp.ring_ShadowVeryShortTrailingIdx_inOpen[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx])) ? (sp.ring_ShadowVeryShortTrailingIdx_inClose[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx]) : (sp.ring_ShadowVeryShortTrailingIdx_inOpen[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx]))) + ((((sp.ring_ShadowVeryShortTrailingIdx_inClose[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx]) >= (sp.ring_ShadowVeryShortTrailingIdx_inOpen[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx])) ? (sp.ring_ShadowVeryShortTrailingIdx_inOpen[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx]) : (sp.ring_ShadowVeryShortTrailingIdx_inClose[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx])) - sp.ring_ShadowVeryShortTrailingIdx_inLow[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx])) : 0.0)));
+      sp.ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType == 0) ? (Math.abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((ShadowVeryShort_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((ShadowVeryShort_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0))) - sp.ring_ShadowVeryShortTrailingIdx_derived[(sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx];
       sp.lag4_inOpen = sp.lag3_inOpen;
       sp.lag3_inOpen = sp.lag2_inOpen;
       sp.lag2_inOpen = sp.lag1_inOpen;
@@ -608,21 +573,9 @@
          return RetCode.InternalError;
       }
       int allocN_ShadowVeryShortTrailingIdx = (cap_ShadowVeryShortTrailingIdx > 0)? cap_ShadowVeryShortTrailingIdx : 1;
-      double[] capRing_ShadowVeryShortTrailingIdx_inOpen = new double[allocN_ShadowVeryShortTrailingIdx];
+      double[] capRing_ShadowVeryShortTrailingIdx_derived = new double[allocN_ShadowVeryShortTrailingIdx];
       for( int fillJ = historyLen - cap_ShadowVeryShortTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_ShadowVeryShortTrailingIdx_inOpen[fillJ % cap_ShadowVeryShortTrailingIdx] = inOpen[fillJ];
-      }
-      double[] capRing_ShadowVeryShortTrailingIdx_inHigh = new double[allocN_ShadowVeryShortTrailingIdx];
-      for( int fillJ = historyLen - cap_ShadowVeryShortTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_ShadowVeryShortTrailingIdx_inHigh[fillJ % cap_ShadowVeryShortTrailingIdx] = inHigh[fillJ];
-      }
-      double[] capRing_ShadowVeryShortTrailingIdx_inLow = new double[allocN_ShadowVeryShortTrailingIdx];
-      for( int fillJ = historyLen - cap_ShadowVeryShortTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_ShadowVeryShortTrailingIdx_inLow[fillJ % cap_ShadowVeryShortTrailingIdx] = inLow[fillJ];
-      }
-      double[] capRing_ShadowVeryShortTrailingIdx_inClose = new double[allocN_ShadowVeryShortTrailingIdx];
-      for( int fillJ = historyLen - cap_ShadowVeryShortTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_ShadowVeryShortTrailingIdx_inClose[fillJ % cap_ShadowVeryShortTrailingIdx] = inClose[fillJ];
+         capRing_ShadowVeryShortTrailingIdx_derived[fillJ % cap_ShadowVeryShortTrailingIdx] = ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose[fillJ] - inOpen[fillJ])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
       }
       sp.ShadowVeryShortPeriodTotal = ShadowVeryShortPeriodTotal;
       sp.lag1_inOpen = inOpen[historyLen - 1];
@@ -638,10 +591,7 @@
       sp.ringPos_ShadowVeryShortTrailingIdx = historyLen % cap_ShadowVeryShortTrailingIdx;
       sp.ringCap_ShadowVeryShortTrailingIdx = cap_ShadowVeryShortTrailingIdx;
       sp.ringLag_ShadowVeryShortTrailingIdx = capLag_ShadowVeryShortTrailingIdx;
-      sp.ring_ShadowVeryShortTrailingIdx_inOpen = capRing_ShadowVeryShortTrailingIdx_inOpen;
-      sp.ring_ShadowVeryShortTrailingIdx_inHigh = capRing_ShadowVeryShortTrailingIdx_inHigh;
-      sp.ring_ShadowVeryShortTrailingIdx_inLow = capRing_ShadowVeryShortTrailingIdx_inLow;
-      sp.ring_ShadowVeryShortTrailingIdx_inClose = capRing_ShadowVeryShortTrailingIdx_inClose;
+      sp.ring_ShadowVeryShortTrailingIdx_derived = capRing_ShadowVeryShortTrailingIdx_derived;
       sp.cs_ShadowVeryShort_rangeType = ShadowVeryShort_rangeType;
       sp.cs_ShadowVeryShort_avgPeriod = ShadowVeryShort_avgPeriod;
       sp.cs_ShadowVeryShort_factor = ShadowVeryShort_factor;

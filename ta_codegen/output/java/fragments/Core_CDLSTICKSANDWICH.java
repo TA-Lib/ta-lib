@@ -307,10 +307,7 @@
       int ringPos_EqualTrailingIdx;
       int ringCap_EqualTrailingIdx;
       int ringLag_EqualTrailingIdx;
-      double[] ring_EqualTrailingIdx_inOpen;
-      double[] ring_EqualTrailingIdx_inHigh;
-      double[] ring_EqualTrailingIdx_inLow;
-      double[] ring_EqualTrailingIdx_inClose;
+      double[] ring_EqualTrailingIdx_derived;
       int cs_Equal_rangeType;
       int cs_Equal_avgPeriod;
       double cs_Equal_factor;
@@ -342,10 +339,7 @@
          this.ringPos_EqualTrailingIdx = other.ringPos_EqualTrailingIdx;
          this.ringCap_EqualTrailingIdx = other.ringCap_EqualTrailingIdx;
          this.ringLag_EqualTrailingIdx = other.ringLag_EqualTrailingIdx;
-         this.ring_EqualTrailingIdx_inOpen = other.ring_EqualTrailingIdx_inOpen.clone();
-         this.ring_EqualTrailingIdx_inHigh = other.ring_EqualTrailingIdx_inHigh.clone();
-         this.ring_EqualTrailingIdx_inLow = other.ring_EqualTrailingIdx_inLow.clone();
-         this.ring_EqualTrailingIdx_inClose = other.ring_EqualTrailingIdx_inClose.clone();
+         this.ring_EqualTrailingIdx_derived = other.ring_EqualTrailingIdx_derived.clone();
          this.cs_Equal_rangeType = other.cs_Equal_rangeType;
          this.cs_Equal_avgPeriod = other.cs_Equal_avgPeriod;
          this.cs_Equal_factor = other.cs_Equal_factor;
@@ -367,25 +361,10 @@
          this.ringPos_EqualTrailingIdx = other.ringPos_EqualTrailingIdx;
          this.ringCap_EqualTrailingIdx = other.ringCap_EqualTrailingIdx;
          this.ringLag_EqualTrailingIdx = other.ringLag_EqualTrailingIdx;
-         if( this.ring_EqualTrailingIdx_inOpen != null && this.ring_EqualTrailingIdx_inOpen.length == other.ring_EqualTrailingIdx_inOpen.length ) {
-            System.arraycopy( other.ring_EqualTrailingIdx_inOpen, 0, this.ring_EqualTrailingIdx_inOpen, 0, other.ring_EqualTrailingIdx_inOpen.length );
+         if( this.ring_EqualTrailingIdx_derived != null && this.ring_EqualTrailingIdx_derived.length == other.ring_EqualTrailingIdx_derived.length ) {
+            System.arraycopy( other.ring_EqualTrailingIdx_derived, 0, this.ring_EqualTrailingIdx_derived, 0, other.ring_EqualTrailingIdx_derived.length );
          } else {
-            this.ring_EqualTrailingIdx_inOpen = other.ring_EqualTrailingIdx_inOpen.clone();
-         }
-         if( this.ring_EqualTrailingIdx_inHigh != null && this.ring_EqualTrailingIdx_inHigh.length == other.ring_EqualTrailingIdx_inHigh.length ) {
-            System.arraycopy( other.ring_EqualTrailingIdx_inHigh, 0, this.ring_EqualTrailingIdx_inHigh, 0, other.ring_EqualTrailingIdx_inHigh.length );
-         } else {
-            this.ring_EqualTrailingIdx_inHigh = other.ring_EqualTrailingIdx_inHigh.clone();
-         }
-         if( this.ring_EqualTrailingIdx_inLow != null && this.ring_EqualTrailingIdx_inLow.length == other.ring_EqualTrailingIdx_inLow.length ) {
-            System.arraycopy( other.ring_EqualTrailingIdx_inLow, 0, this.ring_EqualTrailingIdx_inLow, 0, other.ring_EqualTrailingIdx_inLow.length );
-         } else {
-            this.ring_EqualTrailingIdx_inLow = other.ring_EqualTrailingIdx_inLow.clone();
-         }
-         if( this.ring_EqualTrailingIdx_inClose != null && this.ring_EqualTrailingIdx_inClose.length == other.ring_EqualTrailingIdx_inClose.length ) {
-            System.arraycopy( other.ring_EqualTrailingIdx_inClose, 0, this.ring_EqualTrailingIdx_inClose, 0, other.ring_EqualTrailingIdx_inClose.length );
-         } else {
-            this.ring_EqualTrailingIdx_inClose = other.ring_EqualTrailingIdx_inClose.clone();
+            this.ring_EqualTrailingIdx_derived = other.ring_EqualTrailingIdx_derived.clone();
          }
          this.cs_Equal_rangeType = other.cs_Equal_rangeType;
          this.cs_Equal_avgPeriod = other.cs_Equal_avgPeriod;
@@ -393,9 +372,6 @@
          this.cur_outInteger = other.cur_outInteger;
          this.fillRange = other.fillRange;
       }
-
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDLSTICKSANDWICH_Stream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -420,21 +396,13 @@
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * run concurrently with each other. It runs on a throwaway copy, which for this
+       * handle's shape is cheaper than reusing one.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new IllegalArgumentException("CDLSTICKSANDWICH peek: BadParam");
-         CDLSTICKSANDWICH_Stream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CDLSTICKSANDWICH_Stream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
-         }
+         CDLSTICKSANDWICH_Stream scratch = new CDLSTICKSANDWICH_Stream(this);
          core.CDLSTICKSANDWICH_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
@@ -461,10 +429,7 @@
       int Equal_rangeType = sp.cs_Equal_rangeType;
       int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
       double Equal_factor = sp.cs_Equal_factor;
-      sp.ring_EqualTrailingIdx_inOpen[sp.ringPos_EqualTrailingIdx] = inOpen;
-      sp.ring_EqualTrailingIdx_inHigh[sp.ringPos_EqualTrailingIdx] = inHigh;
-      sp.ring_EqualTrailingIdx_inLow[sp.ringPos_EqualTrailingIdx] = inLow;
-      sp.ring_EqualTrailingIdx_inClose[sp.ringPos_EqualTrailingIdx] = inClose;
+      sp.ring_EqualTrailingIdx_derived[sp.ringPos_EqualTrailingIdx] = ((Equal_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((Equal_rangeType == 1) ? (inHigh - inLow) : ((Equal_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
       if( ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* first black */
           ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 1 &&     /* second white */
           ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 &&                 /* third black */
@@ -479,7 +444,7 @@
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      sp.EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.abs(sp.lag2_inClose - sp.lag2_inOpen)) : ((Equal_rangeType == 1) ? (sp.lag2_inHigh - sp.lag2_inLow) : ((Equal_rangeType == 2) ? ((sp.lag2_inHigh - (((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inClose) : (sp.lag2_inOpen))) + ((((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inOpen) : (sp.lag2_inClose)) - sp.lag2_inLow)) : 0.0))) - ((Equal_rangeType == 0) ? (Math.abs(sp.ring_EqualTrailingIdx_inClose[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 2) % sp.ringCap_EqualTrailingIdx] - sp.ring_EqualTrailingIdx_inOpen[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 2) % sp.ringCap_EqualTrailingIdx])) : ((Equal_rangeType == 1) ? (sp.ring_EqualTrailingIdx_inHigh[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 2) % sp.ringCap_EqualTrailingIdx] - sp.ring_EqualTrailingIdx_inLow[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 2) % sp.ringCap_EqualTrailingIdx]) : ((Equal_rangeType == 2) ? ((sp.ring_EqualTrailingIdx_inHigh[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 2) % sp.ringCap_EqualTrailingIdx] - (((sp.ring_EqualTrailingIdx_inClose[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 2) % sp.ringCap_EqualTrailingIdx]) >= (sp.ring_EqualTrailingIdx_inOpen[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 2) % sp.ringCap_EqualTrailingIdx])) ? (sp.ring_EqualTrailingIdx_inClose[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 2) % sp.ringCap_EqualTrailingIdx]) : (sp.ring_EqualTrailingIdx_inOpen[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 2) % sp.ringCap_EqualTrailingIdx]))) + ((((sp.ring_EqualTrailingIdx_inClose[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 2) % sp.ringCap_EqualTrailingIdx]) >= (sp.ring_EqualTrailingIdx_inOpen[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 2) % sp.ringCap_EqualTrailingIdx])) ? (sp.ring_EqualTrailingIdx_inOpen[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 2) % sp.ringCap_EqualTrailingIdx]) : (sp.ring_EqualTrailingIdx_inClose[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 2) % sp.ringCap_EqualTrailingIdx])) - sp.ring_EqualTrailingIdx_inLow[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 2) % sp.ringCap_EqualTrailingIdx])) : 0.0)));
+      sp.EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.abs(sp.lag2_inClose - sp.lag2_inOpen)) : ((Equal_rangeType == 1) ? (sp.lag2_inHigh - sp.lag2_inLow) : ((Equal_rangeType == 2) ? ((sp.lag2_inHigh - (((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inClose) : (sp.lag2_inOpen))) + ((((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inOpen) : (sp.lag2_inClose)) - sp.lag2_inLow)) : 0.0))) - sp.ring_EqualTrailingIdx_derived[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 2) % sp.ringCap_EqualTrailingIdx];
       sp.lag2_inOpen = sp.lag1_inOpen;
       sp.lag1_inOpen = inOpen;
       sp.lag2_inHigh = sp.lag1_inHigh;
@@ -577,21 +542,9 @@
          return RetCode.InternalError;
       }
       int allocN_EqualTrailingIdx = (cap_EqualTrailingIdx > 0)? cap_EqualTrailingIdx : 1;
-      double[] capRing_EqualTrailingIdx_inOpen = new double[allocN_EqualTrailingIdx];
+      double[] capRing_EqualTrailingIdx_derived = new double[allocN_EqualTrailingIdx];
       for( int fillJ = historyLen - cap_EqualTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_EqualTrailingIdx_inOpen[fillJ % cap_EqualTrailingIdx] = inOpen[fillJ];
-      }
-      double[] capRing_EqualTrailingIdx_inHigh = new double[allocN_EqualTrailingIdx];
-      for( int fillJ = historyLen - cap_EqualTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_EqualTrailingIdx_inHigh[fillJ % cap_EqualTrailingIdx] = inHigh[fillJ];
-      }
-      double[] capRing_EqualTrailingIdx_inLow = new double[allocN_EqualTrailingIdx];
-      for( int fillJ = historyLen - cap_EqualTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_EqualTrailingIdx_inLow[fillJ % cap_EqualTrailingIdx] = inLow[fillJ];
-      }
-      double[] capRing_EqualTrailingIdx_inClose = new double[allocN_EqualTrailingIdx];
-      for( int fillJ = historyLen - cap_EqualTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_EqualTrailingIdx_inClose[fillJ % cap_EqualTrailingIdx] = inClose[fillJ];
+         capRing_EqualTrailingIdx_derived[fillJ % cap_EqualTrailingIdx] = ((Equal_rangeType == 0) ? (Math.abs(inClose[fillJ] - inOpen[fillJ])) : ((Equal_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((Equal_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
       }
       sp.EqualPeriodTotal = EqualPeriodTotal;
       sp.lag1_inOpen = inOpen[historyLen - 1];
@@ -605,10 +558,7 @@
       sp.ringPos_EqualTrailingIdx = historyLen % cap_EqualTrailingIdx;
       sp.ringCap_EqualTrailingIdx = cap_EqualTrailingIdx;
       sp.ringLag_EqualTrailingIdx = capLag_EqualTrailingIdx;
-      sp.ring_EqualTrailingIdx_inOpen = capRing_EqualTrailingIdx_inOpen;
-      sp.ring_EqualTrailingIdx_inHigh = capRing_EqualTrailingIdx_inHigh;
-      sp.ring_EqualTrailingIdx_inLow = capRing_EqualTrailingIdx_inLow;
-      sp.ring_EqualTrailingIdx_inClose = capRing_EqualTrailingIdx_inClose;
+      sp.ring_EqualTrailingIdx_derived = capRing_EqualTrailingIdx_derived;
       sp.cs_Equal_rangeType = Equal_rangeType;
       sp.cs_Equal_avgPeriod = Equal_avgPeriod;
       sp.cs_Equal_factor = Equal_factor;

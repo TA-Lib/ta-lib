@@ -363,10 +363,7 @@ struct CDL3LINESTRIKE_StreamState {
     ringPos_NearTrailingIdx: usize,
     ringCap_NearTrailingIdx: usize,
     ringLag_NearTrailingIdx: usize,
-    ring_NearTrailingIdx_inOpen: Vec<f64>,
-    ring_NearTrailingIdx_inHigh: Vec<f64>,
-    ring_NearTrailingIdx_inLow: Vec<f64>,
-    ring_NearTrailingIdx_inClose: Vec<f64>,
+    ring_NearTrailingIdx_derived: Vec<f64>,
     winPos_totIdx: usize,
     winCap_totIdx: usize,
     win_totIdx_inOpen: Vec<f64>,
@@ -397,10 +394,7 @@ impl CDL3LINESTRIKE_StreamState {
         self.ringPos_NearTrailingIdx = src.ringPos_NearTrailingIdx;
         self.ringCap_NearTrailingIdx = src.ringCap_NearTrailingIdx;
         self.ringLag_NearTrailingIdx = src.ringLag_NearTrailingIdx;
-        self.ring_NearTrailingIdx_inOpen.clone_from(&src.ring_NearTrailingIdx_inOpen);
-        self.ring_NearTrailingIdx_inHigh.clone_from(&src.ring_NearTrailingIdx_inHigh);
-        self.ring_NearTrailingIdx_inLow.clone_from(&src.ring_NearTrailingIdx_inLow);
-        self.ring_NearTrailingIdx_inClose.clone_from(&src.ring_NearTrailingIdx_inClose);
+        self.ring_NearTrailingIdx_derived.clone_from(&src.ring_NearTrailingIdx_derived);
         self.winPos_totIdx = src.winPos_totIdx;
         self.winCap_totIdx = src.winCap_totIdx;
         self.win_totIdx_inOpen.clone_from(&src.win_totIdx_inOpen);
@@ -424,10 +418,22 @@ impl Core {
         let Near_avgPeriod: i32 = self.candle_settings.near.avg_period;
         #[allow(non_snake_case)]
         let Near_factor: f64 = self.candle_settings.near.factor;
-        sp.ring_NearTrailingIdx_inOpen[sp.ringPos_NearTrailingIdx] = inOpen;
-        sp.ring_NearTrailingIdx_inHigh[sp.ringPos_NearTrailingIdx] = inHigh;
-        sp.ring_NearTrailingIdx_inLow[sp.ringPos_NearTrailingIdx] = inLow;
-        sp.ring_NearTrailingIdx_inClose[sp.ringPos_NearTrailingIdx] = inClose;
+        let mut _candlerange_0: f64;
+        match Near_rangeType {
+            0 => {
+                _candlerange_0 = (inClose - inOpen).abs();
+            }
+            1 => {
+                _candlerange_0 = inHigh - inLow;
+            }
+            2 => {
+                _candlerange_0 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
+            }
+            _ => {
+                _candlerange_0 = 0.0;
+            }
+        }
+        sp.ring_NearTrailingIdx_derived[sp.ringPos_NearTrailingIdx] = _candlerange_0;
         sp.win_totIdx_inOpen[sp.winPos_totIdx] = inOpen;
         sp.win_totIdx_inHigh[sp.winPos_totIdx] = inHigh;
         sp.win_totIdx_inLow[sp.winPos_totIdx] = inLow;
@@ -450,37 +456,22 @@ impl Core {
         // for( sp.totIdx = 3; sp.totIdx >= 2; sp.totIdx -= 1 )
         sp.totIdx = 3;
         loop {
-            let mut _candlerange_0: f64;
-            match Near_rangeType {
-                0 => {
-                    _candlerange_0 = (sp.win_totIdx_inClose[((if sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx >= sp.winCap_totIdx { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx - sp.winCap_totIdx } else { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx })) as usize] - sp.win_totIdx_inOpen[((if sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx >= sp.winCap_totIdx { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx - sp.winCap_totIdx } else { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx })) as usize]).abs();
-                }
-                1 => {
-                    _candlerange_0 = sp.win_totIdx_inHigh[((if sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx >= sp.winCap_totIdx { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx - sp.winCap_totIdx } else { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx })) as usize] - sp.win_totIdx_inLow[((if sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx >= sp.winCap_totIdx { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx - sp.winCap_totIdx } else { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx })) as usize];
-                }
-                2 => {
-                    _candlerange_0 = (sp.win_totIdx_inHigh[((if sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx >= sp.winCap_totIdx { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx - sp.winCap_totIdx } else { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx })) as usize] - (if sp.win_totIdx_inClose[((if sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx >= sp.winCap_totIdx { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx - sp.winCap_totIdx } else { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx })) as usize] >= sp.win_totIdx_inOpen[((if sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx >= sp.winCap_totIdx { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx - sp.winCap_totIdx } else { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx })) as usize] { sp.win_totIdx_inClose[((if sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx >= sp.winCap_totIdx { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx - sp.winCap_totIdx } else { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx })) as usize] } else { sp.win_totIdx_inOpen[((if sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx >= sp.winCap_totIdx { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx - sp.winCap_totIdx } else { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx })) as usize] })) + ((if sp.win_totIdx_inClose[((if sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx >= sp.winCap_totIdx { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx - sp.winCap_totIdx } else { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx })) as usize] >= sp.win_totIdx_inOpen[((if sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx >= sp.winCap_totIdx { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx - sp.winCap_totIdx } else { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx })) as usize] { sp.win_totIdx_inOpen[((if sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx >= sp.winCap_totIdx { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx - sp.winCap_totIdx } else { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx })) as usize] } else { sp.win_totIdx_inClose[((if sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx >= sp.winCap_totIdx { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx - sp.winCap_totIdx } else { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx })) as usize] }) - sp.win_totIdx_inLow[((if sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx >= sp.winCap_totIdx { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx - sp.winCap_totIdx } else { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx })) as usize]);
-                }
-                _ => {
-                    _candlerange_0 = 0.0;
-                }
-            }
             let mut _candlerange_1: f64;
             match Near_rangeType {
                 0 => {
-                    _candlerange_1 = (sp.ring_NearTrailingIdx_inClose[((sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - sp.totIdx) % sp.ringCap_NearTrailingIdx) as usize] - sp.ring_NearTrailingIdx_inOpen[((sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - sp.totIdx) % sp.ringCap_NearTrailingIdx) as usize]).abs();
+                    _candlerange_1 = (sp.win_totIdx_inClose[((if sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx >= sp.winCap_totIdx { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx - sp.winCap_totIdx } else { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx })) as usize] - sp.win_totIdx_inOpen[((if sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx >= sp.winCap_totIdx { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx - sp.winCap_totIdx } else { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx })) as usize]).abs();
                 }
                 1 => {
-                    _candlerange_1 = sp.ring_NearTrailingIdx_inHigh[((sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - sp.totIdx) % sp.ringCap_NearTrailingIdx) as usize] - sp.ring_NearTrailingIdx_inLow[((sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - sp.totIdx) % sp.ringCap_NearTrailingIdx) as usize];
+                    _candlerange_1 = sp.win_totIdx_inHigh[((if sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx >= sp.winCap_totIdx { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx - sp.winCap_totIdx } else { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx })) as usize] - sp.win_totIdx_inLow[((if sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx >= sp.winCap_totIdx { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx - sp.winCap_totIdx } else { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx })) as usize];
                 }
                 2 => {
-                    _candlerange_1 = (sp.ring_NearTrailingIdx_inHigh[((sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - sp.totIdx) % sp.ringCap_NearTrailingIdx) as usize] - (if sp.ring_NearTrailingIdx_inClose[((sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - sp.totIdx) % sp.ringCap_NearTrailingIdx) as usize] >= sp.ring_NearTrailingIdx_inOpen[((sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - sp.totIdx) % sp.ringCap_NearTrailingIdx) as usize] { sp.ring_NearTrailingIdx_inClose[((sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - sp.totIdx) % sp.ringCap_NearTrailingIdx) as usize] } else { sp.ring_NearTrailingIdx_inOpen[((sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - sp.totIdx) % sp.ringCap_NearTrailingIdx) as usize] })) + ((if sp.ring_NearTrailingIdx_inClose[((sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - sp.totIdx) % sp.ringCap_NearTrailingIdx) as usize] >= sp.ring_NearTrailingIdx_inOpen[((sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - sp.totIdx) % sp.ringCap_NearTrailingIdx) as usize] { sp.ring_NearTrailingIdx_inOpen[((sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - sp.totIdx) % sp.ringCap_NearTrailingIdx) as usize] } else { sp.ring_NearTrailingIdx_inClose[((sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - sp.totIdx) % sp.ringCap_NearTrailingIdx) as usize] }) - sp.ring_NearTrailingIdx_inLow[((sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - sp.totIdx) % sp.ringCap_NearTrailingIdx) as usize]);
+                    _candlerange_1 = (sp.win_totIdx_inHigh[((if sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx >= sp.winCap_totIdx { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx - sp.winCap_totIdx } else { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx })) as usize] - (if sp.win_totIdx_inClose[((if sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx >= sp.winCap_totIdx { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx - sp.winCap_totIdx } else { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx })) as usize] >= sp.win_totIdx_inOpen[((if sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx >= sp.winCap_totIdx { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx - sp.winCap_totIdx } else { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx })) as usize] { sp.win_totIdx_inClose[((if sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx >= sp.winCap_totIdx { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx - sp.winCap_totIdx } else { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx })) as usize] } else { sp.win_totIdx_inOpen[((if sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx >= sp.winCap_totIdx { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx - sp.winCap_totIdx } else { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx })) as usize] })) + ((if sp.win_totIdx_inClose[((if sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx >= sp.winCap_totIdx { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx - sp.winCap_totIdx } else { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx })) as usize] >= sp.win_totIdx_inOpen[((if sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx >= sp.winCap_totIdx { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx - sp.winCap_totIdx } else { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx })) as usize] { sp.win_totIdx_inOpen[((if sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx >= sp.winCap_totIdx { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx - sp.winCap_totIdx } else { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx })) as usize] } else { sp.win_totIdx_inClose[((if sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx >= sp.winCap_totIdx { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx - sp.winCap_totIdx } else { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx })) as usize] }) - sp.win_totIdx_inLow[((if sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx >= sp.winCap_totIdx { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx - sp.winCap_totIdx } else { sp.winPos_totIdx + sp.winCap_totIdx - sp.totIdx })) as usize]);
                 }
                 _ => {
                     _candlerange_1 = 0.0;
                 }
             }
-            sp.NearPeriodTotal[sp.totIdx] = sp.NearPeriodTotal[sp.totIdx] + (_candlerange_0 - _candlerange_1);
+            sp.NearPeriodTotal[sp.totIdx] = sp.NearPeriodTotal[sp.totIdx] + (_candlerange_1 - sp.ring_NearTrailingIdx_derived[((sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - sp.totIdx) % sp.ringCap_NearTrailingIdx) as usize]);
             if sp.totIdx == 2 { break; }
             sp.totIdx -= 1;
         }
@@ -669,35 +660,11 @@ impl Core {
             return Err(RetCode::InternalError);
         }
         let allocN_NearTrailingIdx: usize = if cap_NearTrailingIdx > 0 { cap_NearTrailingIdx as usize } else { 1 };
-        let mut ring_NearTrailingIdx_inOpen: Vec<f64> = vec![0.0_f64; allocN_NearTrailingIdx];
+        let mut ring_NearTrailingIdx_derived: Vec<f64> = vec![0.0_f64; allocN_NearTrailingIdx];
         {
             let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
             while fillJ < historyLen {
-                ring_NearTrailingIdx_inOpen[fillJ % cap_NearTrailingIdx as usize] = inOpen[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_NearTrailingIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_NearTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_NearTrailingIdx_inHigh[fillJ % cap_NearTrailingIdx as usize] = inHigh[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_NearTrailingIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_NearTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_NearTrailingIdx_inLow[fillJ % cap_NearTrailingIdx as usize] = inLow[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_NearTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_NearTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_NearTrailingIdx_inClose[fillJ % cap_NearTrailingIdx as usize] = inClose[fillJ];
+                ring_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx as usize] = (match Near_rangeType { 0 => ((inClose[(fillJ) as usize]) - (inOpen[(fillJ) as usize])).abs(), 1 => (inHigh[(fillJ) as usize]) - (inLow[(fillJ) as usize]), 2 => ((inHigh[(fillJ) as usize]) - (if (inClose[(fillJ) as usize]) >= (inOpen[(fillJ) as usize]) { (inClose[(fillJ) as usize]) } else { (inOpen[(fillJ) as usize]) })) + ((if (inClose[(fillJ) as usize]) >= (inOpen[(fillJ) as usize]) { (inOpen[(fillJ) as usize]) } else { (inClose[(fillJ) as usize]) }) - (inLow[(fillJ) as usize])), _ => 0.0 });
                 fillJ += 1;
             }
         }
@@ -731,10 +698,7 @@ impl Core {
             ringPos_NearTrailingIdx: historyLen % cap_NearTrailingIdx as usize,
             ringCap_NearTrailingIdx: cap_NearTrailingIdx as usize,
             ringLag_NearTrailingIdx: capLag_NearTrailingIdx as usize,
-            ring_NearTrailingIdx_inOpen,
-            ring_NearTrailingIdx_inHigh,
-            ring_NearTrailingIdx_inLow,
-            ring_NearTrailingIdx_inClose,
+            ring_NearTrailingIdx_derived,
             winPos_totIdx: 0_usize,
             winCap_totIdx: cap_totIdx as usize,
             win_totIdx_inOpen,

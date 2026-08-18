@@ -403,10 +403,7 @@
       int ringPos_NearTrailingIdx;
       int ringCap_NearTrailingIdx;
       int ringLag_NearTrailingIdx;
-      double[] ring_NearTrailingIdx_inOpen;
-      double[] ring_NearTrailingIdx_inHigh;
-      double[] ring_NearTrailingIdx_inLow;
-      double[] ring_NearTrailingIdx_inClose;
+      double[] ring_NearTrailingIdx_derived;
       int cs_Near_rangeType;
       int cs_Near_avgPeriod;
       double cs_Near_factor;
@@ -444,10 +441,7 @@
          this.ringPos_NearTrailingIdx = other.ringPos_NearTrailingIdx;
          this.ringCap_NearTrailingIdx = other.ringCap_NearTrailingIdx;
          this.ringLag_NearTrailingIdx = other.ringLag_NearTrailingIdx;
-         this.ring_NearTrailingIdx_inOpen = other.ring_NearTrailingIdx_inOpen.clone();
-         this.ring_NearTrailingIdx_inHigh = other.ring_NearTrailingIdx_inHigh.clone();
-         this.ring_NearTrailingIdx_inLow = other.ring_NearTrailingIdx_inLow.clone();
-         this.ring_NearTrailingIdx_inClose = other.ring_NearTrailingIdx_inClose.clone();
+         this.ring_NearTrailingIdx_derived = other.ring_NearTrailingIdx_derived.clone();
          this.cs_Near_rangeType = other.cs_Near_rangeType;
          this.cs_Near_avgPeriod = other.cs_Near_avgPeriod;
          this.cs_Near_factor = other.cs_Near_factor;
@@ -475,25 +469,10 @@
          this.ringPos_NearTrailingIdx = other.ringPos_NearTrailingIdx;
          this.ringCap_NearTrailingIdx = other.ringCap_NearTrailingIdx;
          this.ringLag_NearTrailingIdx = other.ringLag_NearTrailingIdx;
-         if( this.ring_NearTrailingIdx_inOpen != null && this.ring_NearTrailingIdx_inOpen.length == other.ring_NearTrailingIdx_inOpen.length ) {
-            System.arraycopy( other.ring_NearTrailingIdx_inOpen, 0, this.ring_NearTrailingIdx_inOpen, 0, other.ring_NearTrailingIdx_inOpen.length );
+         if( this.ring_NearTrailingIdx_derived != null && this.ring_NearTrailingIdx_derived.length == other.ring_NearTrailingIdx_derived.length ) {
+            System.arraycopy( other.ring_NearTrailingIdx_derived, 0, this.ring_NearTrailingIdx_derived, 0, other.ring_NearTrailingIdx_derived.length );
          } else {
-            this.ring_NearTrailingIdx_inOpen = other.ring_NearTrailingIdx_inOpen.clone();
-         }
-         if( this.ring_NearTrailingIdx_inHigh != null && this.ring_NearTrailingIdx_inHigh.length == other.ring_NearTrailingIdx_inHigh.length ) {
-            System.arraycopy( other.ring_NearTrailingIdx_inHigh, 0, this.ring_NearTrailingIdx_inHigh, 0, other.ring_NearTrailingIdx_inHigh.length );
-         } else {
-            this.ring_NearTrailingIdx_inHigh = other.ring_NearTrailingIdx_inHigh.clone();
-         }
-         if( this.ring_NearTrailingIdx_inLow != null && this.ring_NearTrailingIdx_inLow.length == other.ring_NearTrailingIdx_inLow.length ) {
-            System.arraycopy( other.ring_NearTrailingIdx_inLow, 0, this.ring_NearTrailingIdx_inLow, 0, other.ring_NearTrailingIdx_inLow.length );
-         } else {
-            this.ring_NearTrailingIdx_inLow = other.ring_NearTrailingIdx_inLow.clone();
-         }
-         if( this.ring_NearTrailingIdx_inClose != null && this.ring_NearTrailingIdx_inClose.length == other.ring_NearTrailingIdx_inClose.length ) {
-            System.arraycopy( other.ring_NearTrailingIdx_inClose, 0, this.ring_NearTrailingIdx_inClose, 0, other.ring_NearTrailingIdx_inClose.length );
-         } else {
-            this.ring_NearTrailingIdx_inClose = other.ring_NearTrailingIdx_inClose.clone();
+            this.ring_NearTrailingIdx_derived = other.ring_NearTrailingIdx_derived.clone();
          }
          this.cs_Near_rangeType = other.cs_Near_rangeType;
          this.cs_Near_avgPeriod = other.cs_Near_avgPeriod;
@@ -501,9 +480,6 @@
          this.cur_outInteger = other.cur_outInteger;
          this.fillRange = other.fillRange;
       }
-
-      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-      private static final ThreadLocal<CDLHIKKAKEMOD_Stream> PEEK_SCRATCH = new ThreadLocal<>();
 
       /**
        * Commit one closed bar, returning the new current value.
@@ -528,21 +504,13 @@
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
        * generated code, run on a copy). Never writes this handle, so peeks may
-       * run concurrently with each other. It runs on a scratch handle held per thread and
-       * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread. That scratch is retained for the life of
-       * the thread.
+       * run concurrently with each other. It runs on a throwaway copy, which for this
+       * handle's shape is cheaper than reusing one.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new IllegalArgumentException("CDLHIKKAKEMOD peek: BadParam");
-         CDLHIKKAKEMOD_Stream scratch = PEEK_SCRATCH.get();
-         if( scratch == null ) {
-            scratch = new CDLHIKKAKEMOD_Stream(this);
-            PEEK_SCRATCH.set(scratch);
-         } else {
-            scratch.copyFrom(this);
-         }
+         CDLHIKKAKEMOD_Stream scratch = new CDLHIKKAKEMOD_Stream(this);
          core.CDLHIKKAKEMOD_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
@@ -569,10 +537,7 @@
       int Near_rangeType = sp.cs_Near_rangeType;
       int Near_avgPeriod = sp.cs_Near_avgPeriod;
       double Near_factor = sp.cs_Near_factor;
-      sp.ring_NearTrailingIdx_inOpen[sp.ringPos_NearTrailingIdx] = inOpen;
-      sp.ring_NearTrailingIdx_inHigh[sp.ringPos_NearTrailingIdx] = inHigh;
-      sp.ring_NearTrailingIdx_inLow[sp.ringPos_NearTrailingIdx] = inLow;
-      sp.ring_NearTrailingIdx_inClose[sp.ringPos_NearTrailingIdx] = inClose;
+      sp.ring_NearTrailingIdx_derived[sp.ringPos_NearTrailingIdx] = ((Near_rangeType == 0) ? (Math.abs(inClose - inOpen)) : ((Near_rangeType == 1) ? (inHigh - inLow) : ((Near_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
       if( sp.lag2_inHigh < sp.lag3_inHigh &&
           sp.lag2_inLow > sp.lag3_inLow &&   /* 2nd: lower high and higher low than 1st */
           sp.lag1_inHigh < sp.lag2_inHigh &&
@@ -592,7 +557,7 @@
       } else {
          sp.cur_outInteger = 0;
       }
-      sp.NearPeriodTotal += ((Near_rangeType == 0) ? (Math.abs(sp.lag2_inClose - sp.lag2_inOpen)) : ((Near_rangeType == 1) ? (sp.lag2_inHigh - sp.lag2_inLow) : ((Near_rangeType == 2) ? ((sp.lag2_inHigh - (((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inClose) : (sp.lag2_inOpen))) + ((((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inOpen) : (sp.lag2_inClose)) - sp.lag2_inLow)) : 0.0))) - ((Near_rangeType == 0) ? (Math.abs(sp.ring_NearTrailingIdx_inClose[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 2) % sp.ringCap_NearTrailingIdx] - sp.ring_NearTrailingIdx_inOpen[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 2) % sp.ringCap_NearTrailingIdx])) : ((Near_rangeType == 1) ? (sp.ring_NearTrailingIdx_inHigh[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 2) % sp.ringCap_NearTrailingIdx] - sp.ring_NearTrailingIdx_inLow[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 2) % sp.ringCap_NearTrailingIdx]) : ((Near_rangeType == 2) ? ((sp.ring_NearTrailingIdx_inHigh[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 2) % sp.ringCap_NearTrailingIdx] - (((sp.ring_NearTrailingIdx_inClose[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 2) % sp.ringCap_NearTrailingIdx]) >= (sp.ring_NearTrailingIdx_inOpen[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 2) % sp.ringCap_NearTrailingIdx])) ? (sp.ring_NearTrailingIdx_inClose[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 2) % sp.ringCap_NearTrailingIdx]) : (sp.ring_NearTrailingIdx_inOpen[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 2) % sp.ringCap_NearTrailingIdx]))) + ((((sp.ring_NearTrailingIdx_inClose[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 2) % sp.ringCap_NearTrailingIdx]) >= (sp.ring_NearTrailingIdx_inOpen[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 2) % sp.ringCap_NearTrailingIdx])) ? (sp.ring_NearTrailingIdx_inOpen[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 2) % sp.ringCap_NearTrailingIdx]) : (sp.ring_NearTrailingIdx_inClose[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 2) % sp.ringCap_NearTrailingIdx])) - sp.ring_NearTrailingIdx_inLow[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 2) % sp.ringCap_NearTrailingIdx])) : 0.0)));
+      sp.NearPeriodTotal += ((Near_rangeType == 0) ? (Math.abs(sp.lag2_inClose - sp.lag2_inOpen)) : ((Near_rangeType == 1) ? (sp.lag2_inHigh - sp.lag2_inLow) : ((Near_rangeType == 2) ? ((sp.lag2_inHigh - (((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inClose) : (sp.lag2_inOpen))) + ((((sp.lag2_inClose) >= (sp.lag2_inOpen)) ? (sp.lag2_inOpen) : (sp.lag2_inClose)) - sp.lag2_inLow)) : 0.0))) - sp.ring_NearTrailingIdx_derived[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 2) % sp.ringCap_NearTrailingIdx];
       if( sp.patternCount > 0 ) {
          sp.patternCount -= 1;
       }
@@ -746,21 +711,9 @@
          return RetCode.InternalError;
       }
       int allocN_NearTrailingIdx = (cap_NearTrailingIdx > 0)? cap_NearTrailingIdx : 1;
-      double[] capRing_NearTrailingIdx_inOpen = new double[allocN_NearTrailingIdx];
+      double[] capRing_NearTrailingIdx_derived = new double[allocN_NearTrailingIdx];
       for( int fillJ = historyLen - cap_NearTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_NearTrailingIdx_inOpen[fillJ % cap_NearTrailingIdx] = inOpen[fillJ];
-      }
-      double[] capRing_NearTrailingIdx_inHigh = new double[allocN_NearTrailingIdx];
-      for( int fillJ = historyLen - cap_NearTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_NearTrailingIdx_inHigh[fillJ % cap_NearTrailingIdx] = inHigh[fillJ];
-      }
-      double[] capRing_NearTrailingIdx_inLow = new double[allocN_NearTrailingIdx];
-      for( int fillJ = historyLen - cap_NearTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_NearTrailingIdx_inLow[fillJ % cap_NearTrailingIdx] = inLow[fillJ];
-      }
-      double[] capRing_NearTrailingIdx_inClose = new double[allocN_NearTrailingIdx];
-      for( int fillJ = historyLen - cap_NearTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_NearTrailingIdx_inClose[fillJ % cap_NearTrailingIdx] = inClose[fillJ];
+         capRing_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx] = ((Near_rangeType == 0) ? (Math.abs(inClose[fillJ] - inOpen[fillJ])) : ((Near_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((Near_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
       }
       sp.NearPeriodTotal = NearPeriodTotal;
       sp.patternResult = patternResult;
@@ -780,10 +733,7 @@
       sp.ringPos_NearTrailingIdx = historyLen % cap_NearTrailingIdx;
       sp.ringCap_NearTrailingIdx = cap_NearTrailingIdx;
       sp.ringLag_NearTrailingIdx = capLag_NearTrailingIdx;
-      sp.ring_NearTrailingIdx_inOpen = capRing_NearTrailingIdx_inOpen;
-      sp.ring_NearTrailingIdx_inHigh = capRing_NearTrailingIdx_inHigh;
-      sp.ring_NearTrailingIdx_inLow = capRing_NearTrailingIdx_inLow;
-      sp.ring_NearTrailingIdx_inClose = capRing_NearTrailingIdx_inClose;
+      sp.ring_NearTrailingIdx_derived = capRing_NearTrailingIdx_derived;
       sp.cs_Near_rangeType = Near_rangeType;
       sp.cs_Near_avgPeriod = Near_avgPeriod;
       sp.cs_Near_factor = Near_factor;

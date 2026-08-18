@@ -455,22 +455,13 @@ struct CDLSHOOTINGSTAR_StreamState {
     lag1_inClose: f64,
     ringPos_BodyTrailingIdx: usize,
     ringCap_BodyTrailingIdx: usize,
-    ring_BodyTrailingIdx_inOpen: Vec<f64>,
-    ring_BodyTrailingIdx_inHigh: Vec<f64>,
-    ring_BodyTrailingIdx_inLow: Vec<f64>,
-    ring_BodyTrailingIdx_inClose: Vec<f64>,
+    ring_BodyTrailingIdx_derived: Vec<f64>,
     ringPos_ShadowLongTrailingIdx: usize,
     ringCap_ShadowLongTrailingIdx: usize,
-    ring_ShadowLongTrailingIdx_inOpen: Vec<f64>,
-    ring_ShadowLongTrailingIdx_inHigh: Vec<f64>,
-    ring_ShadowLongTrailingIdx_inLow: Vec<f64>,
-    ring_ShadowLongTrailingIdx_inClose: Vec<f64>,
+    ring_ShadowLongTrailingIdx_derived: Vec<f64>,
     ringPos_ShadowVeryShortTrailingIdx: usize,
     ringCap_ShadowVeryShortTrailingIdx: usize,
-    ring_ShadowVeryShortTrailingIdx_inOpen: Vec<f64>,
-    ring_ShadowVeryShortTrailingIdx_inHigh: Vec<f64>,
-    ring_ShadowVeryShortTrailingIdx_inLow: Vec<f64>,
-    ring_ShadowVeryShortTrailingIdx_inClose: Vec<f64>,
+    ring_ShadowVeryShortTrailingIdx_derived: Vec<f64>,
 }
 
 #[allow(non_snake_case, dead_code)]
@@ -485,22 +476,13 @@ impl CDLSHOOTINGSTAR_StreamState {
         self.lag1_inClose = src.lag1_inClose;
         self.ringPos_BodyTrailingIdx = src.ringPos_BodyTrailingIdx;
         self.ringCap_BodyTrailingIdx = src.ringCap_BodyTrailingIdx;
-        self.ring_BodyTrailingIdx_inOpen.clone_from(&src.ring_BodyTrailingIdx_inOpen);
-        self.ring_BodyTrailingIdx_inHigh.clone_from(&src.ring_BodyTrailingIdx_inHigh);
-        self.ring_BodyTrailingIdx_inLow.clone_from(&src.ring_BodyTrailingIdx_inLow);
-        self.ring_BodyTrailingIdx_inClose.clone_from(&src.ring_BodyTrailingIdx_inClose);
+        self.ring_BodyTrailingIdx_derived.clone_from(&src.ring_BodyTrailingIdx_derived);
         self.ringPos_ShadowLongTrailingIdx = src.ringPos_ShadowLongTrailingIdx;
         self.ringCap_ShadowLongTrailingIdx = src.ringCap_ShadowLongTrailingIdx;
-        self.ring_ShadowLongTrailingIdx_inOpen.clone_from(&src.ring_ShadowLongTrailingIdx_inOpen);
-        self.ring_ShadowLongTrailingIdx_inHigh.clone_from(&src.ring_ShadowLongTrailingIdx_inHigh);
-        self.ring_ShadowLongTrailingIdx_inLow.clone_from(&src.ring_ShadowLongTrailingIdx_inLow);
-        self.ring_ShadowLongTrailingIdx_inClose.clone_from(&src.ring_ShadowLongTrailingIdx_inClose);
+        self.ring_ShadowLongTrailingIdx_derived.clone_from(&src.ring_ShadowLongTrailingIdx_derived);
         self.ringPos_ShadowVeryShortTrailingIdx = src.ringPos_ShadowVeryShortTrailingIdx;
         self.ringCap_ShadowVeryShortTrailingIdx = src.ringCap_ShadowVeryShortTrailingIdx;
-        self.ring_ShadowVeryShortTrailingIdx_inOpen.clone_from(&src.ring_ShadowVeryShortTrailingIdx_inOpen);
-        self.ring_ShadowVeryShortTrailingIdx_inHigh.clone_from(&src.ring_ShadowVeryShortTrailingIdx_inHigh);
-        self.ring_ShadowVeryShortTrailingIdx_inLow.clone_from(&src.ring_ShadowVeryShortTrailingIdx_inLow);
-        self.ring_ShadowVeryShortTrailingIdx_inClose.clone_from(&src.ring_ShadowVeryShortTrailingIdx_inClose);
+        self.ring_ShadowVeryShortTrailingIdx_derived.clone_from(&src.ring_ShadowVeryShortTrailingIdx_derived);
     }
 }
 
@@ -531,22 +513,58 @@ impl Core {
         #[allow(non_snake_case)]
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         if sp.ringCap_BodyTrailingIdx == 0 {
-            sp.ring_BodyTrailingIdx_inOpen[0] = inOpen;
-            sp.ring_BodyTrailingIdx_inHigh[0] = inHigh;
-            sp.ring_BodyTrailingIdx_inLow[0] = inLow;
-            sp.ring_BodyTrailingIdx_inClose[0] = inClose;
+            let mut _candlerange_0: f64;
+            match BodyShort_rangeType {
+                0 => {
+                    _candlerange_0 = (inClose - inOpen).abs();
+                }
+                1 => {
+                    _candlerange_0 = inHigh - inLow;
+                }
+                2 => {
+                    _candlerange_0 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
+                }
+                _ => {
+                    _candlerange_0 = 0.0;
+                }
+            }
+            sp.ring_BodyTrailingIdx_derived[0] = _candlerange_0;
         }
         if sp.ringCap_ShadowLongTrailingIdx == 0 {
-            sp.ring_ShadowLongTrailingIdx_inOpen[0] = inOpen;
-            sp.ring_ShadowLongTrailingIdx_inHigh[0] = inHigh;
-            sp.ring_ShadowLongTrailingIdx_inLow[0] = inLow;
-            sp.ring_ShadowLongTrailingIdx_inClose[0] = inClose;
+            let mut _candlerange_1: f64;
+            match ShadowLong_rangeType {
+                0 => {
+                    _candlerange_1 = (inClose - inOpen).abs();
+                }
+                1 => {
+                    _candlerange_1 = inHigh - inLow;
+                }
+                2 => {
+                    _candlerange_1 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
+                }
+                _ => {
+                    _candlerange_1 = 0.0;
+                }
+            }
+            sp.ring_ShadowLongTrailingIdx_derived[0] = _candlerange_1;
         }
         if sp.ringCap_ShadowVeryShortTrailingIdx == 0 {
-            sp.ring_ShadowVeryShortTrailingIdx_inOpen[0] = inOpen;
-            sp.ring_ShadowVeryShortTrailingIdx_inHigh[0] = inHigh;
-            sp.ring_ShadowVeryShortTrailingIdx_inLow[0] = inLow;
-            sp.ring_ShadowVeryShortTrailingIdx_inClose[0] = inClose;
+            let mut _candlerange_2: f64;
+            match ShadowVeryShort_rangeType {
+                0 => {
+                    _candlerange_2 = (inClose - inOpen).abs();
+                }
+                1 => {
+                    _candlerange_2 = inHigh - inLow;
+                }
+                2 => {
+                    _candlerange_2 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
+                }
+                _ => {
+                    _candlerange_2 = 0.0;
+                }
+            }
+            sp.ring_ShadowVeryShortTrailingIdx_derived[0] = _candlerange_2;
         }
         if ((if (inOpen).min(inClose) > (sp.lag1_inOpen).max(sp.lag1_inClose) { 1 } else { 0 }) != 0) && // gap up
            (inClose - inOpen).abs() < ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyPeriodTotal) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose) - (inOpen)).abs(), 1 => (inHigh) - (inLow), 2 => ((inHigh) - (if (inClose) >= (inOpen) { (inClose) } else { (inOpen) })) + ((if (inClose) >= (inOpen) { (inOpen) } else { (inClose) }) - (inLow)), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 })) && // small rb
@@ -560,70 +578,24 @@ impl Core {
         }
         // add the current range and subtract the first range: this is done after the pattern recognition
         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-        let mut _candlerange_0: f64;
-        match BodyShort_rangeType {
-            0 => {
-                _candlerange_0 = (inClose - inOpen).abs();
-            }
-            1 => {
-                _candlerange_0 = inHigh - inLow;
-            }
-            2 => {
-                _candlerange_0 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
-            }
-            _ => {
-                _candlerange_0 = 0.0;
-            }
-        }
-        let mut _candlerange_1: f64;
-        match BodyShort_rangeType {
-            0 => {
-                _candlerange_1 = (sp.ring_BodyTrailingIdx_inClose[sp.ringPos_BodyTrailingIdx] - sp.ring_BodyTrailingIdx_inOpen[sp.ringPos_BodyTrailingIdx]).abs();
-            }
-            1 => {
-                _candlerange_1 = sp.ring_BodyTrailingIdx_inHigh[sp.ringPos_BodyTrailingIdx] - sp.ring_BodyTrailingIdx_inLow[sp.ringPos_BodyTrailingIdx];
-            }
-            2 => {
-                _candlerange_1 = (sp.ring_BodyTrailingIdx_inHigh[sp.ringPos_BodyTrailingIdx] - (if sp.ring_BodyTrailingIdx_inClose[sp.ringPos_BodyTrailingIdx] >= sp.ring_BodyTrailingIdx_inOpen[sp.ringPos_BodyTrailingIdx] { sp.ring_BodyTrailingIdx_inClose[sp.ringPos_BodyTrailingIdx] } else { sp.ring_BodyTrailingIdx_inOpen[sp.ringPos_BodyTrailingIdx] })) + ((if sp.ring_BodyTrailingIdx_inClose[sp.ringPos_BodyTrailingIdx] >= sp.ring_BodyTrailingIdx_inOpen[sp.ringPos_BodyTrailingIdx] { sp.ring_BodyTrailingIdx_inOpen[sp.ringPos_BodyTrailingIdx] } else { sp.ring_BodyTrailingIdx_inClose[sp.ringPos_BodyTrailingIdx] }) - sp.ring_BodyTrailingIdx_inLow[sp.ringPos_BodyTrailingIdx]);
-            }
-            _ => {
-                _candlerange_1 = 0.0;
-            }
-        }
-        sp.BodyPeriodTotal += _candlerange_0 - _candlerange_1;
-        let mut _candlerange_2: f64;
-        match ShadowLong_rangeType {
-            0 => {
-                _candlerange_2 = (inClose - inOpen).abs();
-            }
-            1 => {
-                _candlerange_2 = inHigh - inLow;
-            }
-            2 => {
-                _candlerange_2 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
-            }
-            _ => {
-                _candlerange_2 = 0.0;
-            }
-        }
         let mut _candlerange_3: f64;
-        match ShadowLong_rangeType {
+        match BodyShort_rangeType {
             0 => {
-                _candlerange_3 = (sp.ring_ShadowLongTrailingIdx_inClose[sp.ringPos_ShadowLongTrailingIdx] - sp.ring_ShadowLongTrailingIdx_inOpen[sp.ringPos_ShadowLongTrailingIdx]).abs();
+                _candlerange_3 = (inClose - inOpen).abs();
             }
             1 => {
-                _candlerange_3 = sp.ring_ShadowLongTrailingIdx_inHigh[sp.ringPos_ShadowLongTrailingIdx] - sp.ring_ShadowLongTrailingIdx_inLow[sp.ringPos_ShadowLongTrailingIdx];
+                _candlerange_3 = inHigh - inLow;
             }
             2 => {
-                _candlerange_3 = (sp.ring_ShadowLongTrailingIdx_inHigh[sp.ringPos_ShadowLongTrailingIdx] - (if sp.ring_ShadowLongTrailingIdx_inClose[sp.ringPos_ShadowLongTrailingIdx] >= sp.ring_ShadowLongTrailingIdx_inOpen[sp.ringPos_ShadowLongTrailingIdx] { sp.ring_ShadowLongTrailingIdx_inClose[sp.ringPos_ShadowLongTrailingIdx] } else { sp.ring_ShadowLongTrailingIdx_inOpen[sp.ringPos_ShadowLongTrailingIdx] })) + ((if sp.ring_ShadowLongTrailingIdx_inClose[sp.ringPos_ShadowLongTrailingIdx] >= sp.ring_ShadowLongTrailingIdx_inOpen[sp.ringPos_ShadowLongTrailingIdx] { sp.ring_ShadowLongTrailingIdx_inOpen[sp.ringPos_ShadowLongTrailingIdx] } else { sp.ring_ShadowLongTrailingIdx_inClose[sp.ringPos_ShadowLongTrailingIdx] }) - sp.ring_ShadowLongTrailingIdx_inLow[sp.ringPos_ShadowLongTrailingIdx]);
+                _candlerange_3 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
             }
             _ => {
                 _candlerange_3 = 0.0;
             }
         }
-        sp.ShadowLongPeriodTotal += _candlerange_2 - _candlerange_3;
+        sp.BodyPeriodTotal += _candlerange_3 - sp.ring_BodyTrailingIdx_derived[sp.ringPos_BodyTrailingIdx];
         let mut _candlerange_4: f64;
-        match ShadowVeryShort_rangeType {
+        match ShadowLong_rangeType {
             0 => {
                 _candlerange_4 = (inClose - inOpen).abs();
             }
@@ -637,44 +609,81 @@ impl Core {
                 _candlerange_4 = 0.0;
             }
         }
+        sp.ShadowLongPeriodTotal += _candlerange_4 - sp.ring_ShadowLongTrailingIdx_derived[sp.ringPos_ShadowLongTrailingIdx];
         let mut _candlerange_5: f64;
         match ShadowVeryShort_rangeType {
             0 => {
-                _candlerange_5 = (sp.ring_ShadowVeryShortTrailingIdx_inClose[sp.ringPos_ShadowVeryShortTrailingIdx] - sp.ring_ShadowVeryShortTrailingIdx_inOpen[sp.ringPos_ShadowVeryShortTrailingIdx]).abs();
+                _candlerange_5 = (inClose - inOpen).abs();
             }
             1 => {
-                _candlerange_5 = sp.ring_ShadowVeryShortTrailingIdx_inHigh[sp.ringPos_ShadowVeryShortTrailingIdx] - sp.ring_ShadowVeryShortTrailingIdx_inLow[sp.ringPos_ShadowVeryShortTrailingIdx];
+                _candlerange_5 = inHigh - inLow;
             }
             2 => {
-                _candlerange_5 = (sp.ring_ShadowVeryShortTrailingIdx_inHigh[sp.ringPos_ShadowVeryShortTrailingIdx] - (if sp.ring_ShadowVeryShortTrailingIdx_inClose[sp.ringPos_ShadowVeryShortTrailingIdx] >= sp.ring_ShadowVeryShortTrailingIdx_inOpen[sp.ringPos_ShadowVeryShortTrailingIdx] { sp.ring_ShadowVeryShortTrailingIdx_inClose[sp.ringPos_ShadowVeryShortTrailingIdx] } else { sp.ring_ShadowVeryShortTrailingIdx_inOpen[sp.ringPos_ShadowVeryShortTrailingIdx] })) + ((if sp.ring_ShadowVeryShortTrailingIdx_inClose[sp.ringPos_ShadowVeryShortTrailingIdx] >= sp.ring_ShadowVeryShortTrailingIdx_inOpen[sp.ringPos_ShadowVeryShortTrailingIdx] { sp.ring_ShadowVeryShortTrailingIdx_inOpen[sp.ringPos_ShadowVeryShortTrailingIdx] } else { sp.ring_ShadowVeryShortTrailingIdx_inClose[sp.ringPos_ShadowVeryShortTrailingIdx] }) - sp.ring_ShadowVeryShortTrailingIdx_inLow[sp.ringPos_ShadowVeryShortTrailingIdx]);
+                _candlerange_5 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
             }
             _ => {
                 _candlerange_5 = 0.0;
             }
         }
-        sp.ShadowVeryShortPeriodTotal += _candlerange_4 - _candlerange_5;
+        sp.ShadowVeryShortPeriodTotal += _candlerange_5 - sp.ring_ShadowVeryShortTrailingIdx_derived[sp.ringPos_ShadowVeryShortTrailingIdx];
         sp.lag1_inOpen = inOpen;
         sp.lag1_inClose = inClose;
-        sp.ring_BodyTrailingIdx_inOpen[sp.ringPos_BodyTrailingIdx] = inOpen;
-        sp.ring_BodyTrailingIdx_inHigh[sp.ringPos_BodyTrailingIdx] = inHigh;
-        sp.ring_BodyTrailingIdx_inLow[sp.ringPos_BodyTrailingIdx] = inLow;
-        sp.ring_BodyTrailingIdx_inClose[sp.ringPos_BodyTrailingIdx] = inClose;
+        let mut _candlerange_6: f64;
+        match BodyShort_rangeType {
+            0 => {
+                _candlerange_6 = (inClose - inOpen).abs();
+            }
+            1 => {
+                _candlerange_6 = inHigh - inLow;
+            }
+            2 => {
+                _candlerange_6 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
+            }
+            _ => {
+                _candlerange_6 = 0.0;
+            }
+        }
+        sp.ring_BodyTrailingIdx_derived[sp.ringPos_BodyTrailingIdx] = _candlerange_6;
         sp.ringPos_BodyTrailingIdx = sp.ringPos_BodyTrailingIdx + 1;
         if sp.ringPos_BodyTrailingIdx >= sp.ringCap_BodyTrailingIdx {
             sp.ringPos_BodyTrailingIdx = 0;
         }
-        sp.ring_ShadowLongTrailingIdx_inOpen[sp.ringPos_ShadowLongTrailingIdx] = inOpen;
-        sp.ring_ShadowLongTrailingIdx_inHigh[sp.ringPos_ShadowLongTrailingIdx] = inHigh;
-        sp.ring_ShadowLongTrailingIdx_inLow[sp.ringPos_ShadowLongTrailingIdx] = inLow;
-        sp.ring_ShadowLongTrailingIdx_inClose[sp.ringPos_ShadowLongTrailingIdx] = inClose;
+        let mut _candlerange_7: f64;
+        match ShadowLong_rangeType {
+            0 => {
+                _candlerange_7 = (inClose - inOpen).abs();
+            }
+            1 => {
+                _candlerange_7 = inHigh - inLow;
+            }
+            2 => {
+                _candlerange_7 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
+            }
+            _ => {
+                _candlerange_7 = 0.0;
+            }
+        }
+        sp.ring_ShadowLongTrailingIdx_derived[sp.ringPos_ShadowLongTrailingIdx] = _candlerange_7;
         sp.ringPos_ShadowLongTrailingIdx = sp.ringPos_ShadowLongTrailingIdx + 1;
         if sp.ringPos_ShadowLongTrailingIdx >= sp.ringCap_ShadowLongTrailingIdx {
             sp.ringPos_ShadowLongTrailingIdx = 0;
         }
-        sp.ring_ShadowVeryShortTrailingIdx_inOpen[sp.ringPos_ShadowVeryShortTrailingIdx] = inOpen;
-        sp.ring_ShadowVeryShortTrailingIdx_inHigh[sp.ringPos_ShadowVeryShortTrailingIdx] = inHigh;
-        sp.ring_ShadowVeryShortTrailingIdx_inLow[sp.ringPos_ShadowVeryShortTrailingIdx] = inLow;
-        sp.ring_ShadowVeryShortTrailingIdx_inClose[sp.ringPos_ShadowVeryShortTrailingIdx] = inClose;
+        let mut _candlerange_8: f64;
+        match ShadowVeryShort_rangeType {
+            0 => {
+                _candlerange_8 = (inClose - inOpen).abs();
+            }
+            1 => {
+                _candlerange_8 = inHigh - inLow;
+            }
+            2 => {
+                _candlerange_8 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
+            }
+            _ => {
+                _candlerange_8 = 0.0;
+            }
+        }
+        sp.ring_ShadowVeryShortTrailingIdx_derived[sp.ringPos_ShadowVeryShortTrailingIdx] = _candlerange_8;
         sp.ringPos_ShadowVeryShortTrailingIdx = sp.ringPos_ShadowVeryShortTrailingIdx + 1;
         if sp.ringPos_ShadowVeryShortTrailingIdx >= sp.ringCap_ShadowVeryShortTrailingIdx {
             sp.ringPos_ShadowVeryShortTrailingIdx = 0;
@@ -748,62 +757,62 @@ impl Core {
         ShadowVeryShortTrailingIdx = startIdx - ((ShadowVeryShort_avgPeriod) as usize);
         i = BodyTrailingIdx;
         while i < startIdx {
-            let mut _candlerange_6: f64;
+            let mut _candlerange_9: f64;
             match BodyShort_rangeType {
                 0 => {
-                    _candlerange_6 = (inClose[i] - inOpen[i]).abs();
+                    _candlerange_9 = (inClose[i] - inOpen[i]).abs();
                 }
                 1 => {
-                    _candlerange_6 = inHigh[i] - inLow[i];
+                    _candlerange_9 = inHigh[i] - inLow[i];
                 }
                 2 => {
-                    _candlerange_6 = (inHigh[i] - (if inClose[i] >= inOpen[i] { inClose[i] } else { inOpen[i] })) + ((if inClose[i] >= inOpen[i] { inOpen[i] } else { inClose[i] }) - inLow[i]);
+                    _candlerange_9 = (inHigh[i] - (if inClose[i] >= inOpen[i] { inClose[i] } else { inOpen[i] })) + ((if inClose[i] >= inOpen[i] { inOpen[i] } else { inClose[i] }) - inLow[i]);
                 }
                 _ => {
-                    _candlerange_6 = 0.0;
+                    _candlerange_9 = 0.0;
                 }
             }
-            BodyPeriodTotal += _candlerange_6;
+            BodyPeriodTotal += _candlerange_9;
             i += 1;
         }
         i = ShadowLongTrailingIdx;
         while i < startIdx {
-            let mut _candlerange_7: f64;
+            let mut _candlerange_10: f64;
             match ShadowLong_rangeType {
                 0 => {
-                    _candlerange_7 = (inClose[i] - inOpen[i]).abs();
+                    _candlerange_10 = (inClose[i] - inOpen[i]).abs();
                 }
                 1 => {
-                    _candlerange_7 = inHigh[i] - inLow[i];
+                    _candlerange_10 = inHigh[i] - inLow[i];
                 }
                 2 => {
-                    _candlerange_7 = (inHigh[i] - (if inClose[i] >= inOpen[i] { inClose[i] } else { inOpen[i] })) + ((if inClose[i] >= inOpen[i] { inOpen[i] } else { inClose[i] }) - inLow[i]);
+                    _candlerange_10 = (inHigh[i] - (if inClose[i] >= inOpen[i] { inClose[i] } else { inOpen[i] })) + ((if inClose[i] >= inOpen[i] { inOpen[i] } else { inClose[i] }) - inLow[i]);
                 }
                 _ => {
-                    _candlerange_7 = 0.0;
+                    _candlerange_10 = 0.0;
                 }
             }
-            ShadowLongPeriodTotal += _candlerange_7;
+            ShadowLongPeriodTotal += _candlerange_10;
             i += 1;
         }
         i = ShadowVeryShortTrailingIdx;
         while i < startIdx {
-            let mut _candlerange_8: f64;
+            let mut _candlerange_11: f64;
             match ShadowVeryShort_rangeType {
                 0 => {
-                    _candlerange_8 = (inClose[i] - inOpen[i]).abs();
+                    _candlerange_11 = (inClose[i] - inOpen[i]).abs();
                 }
                 1 => {
-                    _candlerange_8 = inHigh[i] - inLow[i];
+                    _candlerange_11 = inHigh[i] - inLow[i];
                 }
                 2 => {
-                    _candlerange_8 = (inHigh[i] - (if inClose[i] >= inOpen[i] { inClose[i] } else { inOpen[i] })) + ((if inClose[i] >= inOpen[i] { inOpen[i] } else { inClose[i] }) - inLow[i]);
+                    _candlerange_11 = (inHigh[i] - (if inClose[i] >= inOpen[i] { inClose[i] } else { inOpen[i] })) + ((if inClose[i] >= inOpen[i] { inOpen[i] } else { inClose[i] }) - inLow[i]);
                 }
                 _ => {
-                    _candlerange_8 = 0.0;
+                    _candlerange_11 = 0.0;
                 }
             }
-            ShadowVeryShortPeriodTotal += _candlerange_8;
+            ShadowVeryShortPeriodTotal += _candlerange_11;
             i += 1;
         }
         // Proceed with the calculation for the requested range.
@@ -829,99 +838,99 @@ impl Core {
             }
             // add the current range and subtract the first range: this is done after the pattern recognition
             // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-            let mut _candlerange_9: f64;
-            match BodyShort_rangeType {
-                0 => {
-                    _candlerange_9 = (inClose[i] - inOpen[i]).abs();
-                }
-                1 => {
-                    _candlerange_9 = inHigh[i] - inLow[i];
-                }
-                2 => {
-                    _candlerange_9 = (inHigh[i] - (if inClose[i] >= inOpen[i] { inClose[i] } else { inOpen[i] })) + ((if inClose[i] >= inOpen[i] { inOpen[i] } else { inClose[i] }) - inLow[i]);
-                }
-                _ => {
-                    _candlerange_9 = 0.0;
-                }
-            }
-            let mut _candlerange_10: f64;
-            match BodyShort_rangeType {
-                0 => {
-                    _candlerange_10 = (inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx]).abs();
-                }
-                1 => {
-                    _candlerange_10 = inHigh[BodyTrailingIdx] - inLow[BodyTrailingIdx];
-                }
-                2 => {
-                    _candlerange_10 = (inHigh[BodyTrailingIdx] - (if inClose[BodyTrailingIdx] >= inOpen[BodyTrailingIdx] { inClose[BodyTrailingIdx] } else { inOpen[BodyTrailingIdx] })) + ((if inClose[BodyTrailingIdx] >= inOpen[BodyTrailingIdx] { inOpen[BodyTrailingIdx] } else { inClose[BodyTrailingIdx] }) - inLow[BodyTrailingIdx]);
-                }
-                _ => {
-                    _candlerange_10 = 0.0;
-                }
-            }
-            BodyPeriodTotal += _candlerange_9 - _candlerange_10;
-            let mut _candlerange_11: f64;
-            match ShadowLong_rangeType {
-                0 => {
-                    _candlerange_11 = (inClose[i] - inOpen[i]).abs();
-                }
-                1 => {
-                    _candlerange_11 = inHigh[i] - inLow[i];
-                }
-                2 => {
-                    _candlerange_11 = (inHigh[i] - (if inClose[i] >= inOpen[i] { inClose[i] } else { inOpen[i] })) + ((if inClose[i] >= inOpen[i] { inOpen[i] } else { inClose[i] }) - inLow[i]);
-                }
-                _ => {
-                    _candlerange_11 = 0.0;
-                }
-            }
             let mut _candlerange_12: f64;
-            match ShadowLong_rangeType {
+            match BodyShort_rangeType {
                 0 => {
-                    _candlerange_12 = (inClose[ShadowLongTrailingIdx] - inOpen[ShadowLongTrailingIdx]).abs();
+                    _candlerange_12 = (inClose[i] - inOpen[i]).abs();
                 }
                 1 => {
-                    _candlerange_12 = inHigh[ShadowLongTrailingIdx] - inLow[ShadowLongTrailingIdx];
+                    _candlerange_12 = inHigh[i] - inLow[i];
                 }
                 2 => {
-                    _candlerange_12 = (inHigh[ShadowLongTrailingIdx] - (if inClose[ShadowLongTrailingIdx] >= inOpen[ShadowLongTrailingIdx] { inClose[ShadowLongTrailingIdx] } else { inOpen[ShadowLongTrailingIdx] })) + ((if inClose[ShadowLongTrailingIdx] >= inOpen[ShadowLongTrailingIdx] { inOpen[ShadowLongTrailingIdx] } else { inClose[ShadowLongTrailingIdx] }) - inLow[ShadowLongTrailingIdx]);
+                    _candlerange_12 = (inHigh[i] - (if inClose[i] >= inOpen[i] { inClose[i] } else { inOpen[i] })) + ((if inClose[i] >= inOpen[i] { inOpen[i] } else { inClose[i] }) - inLow[i]);
                 }
                 _ => {
                     _candlerange_12 = 0.0;
                 }
             }
-            ShadowLongPeriodTotal += _candlerange_11 - _candlerange_12;
             let mut _candlerange_13: f64;
-            match ShadowVeryShort_rangeType {
+            match BodyShort_rangeType {
                 0 => {
-                    _candlerange_13 = (inClose[i] - inOpen[i]).abs();
+                    _candlerange_13 = (inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx]).abs();
                 }
                 1 => {
-                    _candlerange_13 = inHigh[i] - inLow[i];
+                    _candlerange_13 = inHigh[BodyTrailingIdx] - inLow[BodyTrailingIdx];
                 }
                 2 => {
-                    _candlerange_13 = (inHigh[i] - (if inClose[i] >= inOpen[i] { inClose[i] } else { inOpen[i] })) + ((if inClose[i] >= inOpen[i] { inOpen[i] } else { inClose[i] }) - inLow[i]);
+                    _candlerange_13 = (inHigh[BodyTrailingIdx] - (if inClose[BodyTrailingIdx] >= inOpen[BodyTrailingIdx] { inClose[BodyTrailingIdx] } else { inOpen[BodyTrailingIdx] })) + ((if inClose[BodyTrailingIdx] >= inOpen[BodyTrailingIdx] { inOpen[BodyTrailingIdx] } else { inClose[BodyTrailingIdx] }) - inLow[BodyTrailingIdx]);
                 }
                 _ => {
                     _candlerange_13 = 0.0;
                 }
             }
+            BodyPeriodTotal += _candlerange_12 - _candlerange_13;
             let mut _candlerange_14: f64;
-            match ShadowVeryShort_rangeType {
+            match ShadowLong_rangeType {
                 0 => {
-                    _candlerange_14 = (inClose[ShadowVeryShortTrailingIdx] - inOpen[ShadowVeryShortTrailingIdx]).abs();
+                    _candlerange_14 = (inClose[i] - inOpen[i]).abs();
                 }
                 1 => {
-                    _candlerange_14 = inHigh[ShadowVeryShortTrailingIdx] - inLow[ShadowVeryShortTrailingIdx];
+                    _candlerange_14 = inHigh[i] - inLow[i];
                 }
                 2 => {
-                    _candlerange_14 = (inHigh[ShadowVeryShortTrailingIdx] - (if inClose[ShadowVeryShortTrailingIdx] >= inOpen[ShadowVeryShortTrailingIdx] { inClose[ShadowVeryShortTrailingIdx] } else { inOpen[ShadowVeryShortTrailingIdx] })) + ((if inClose[ShadowVeryShortTrailingIdx] >= inOpen[ShadowVeryShortTrailingIdx] { inOpen[ShadowVeryShortTrailingIdx] } else { inClose[ShadowVeryShortTrailingIdx] }) - inLow[ShadowVeryShortTrailingIdx]);
+                    _candlerange_14 = (inHigh[i] - (if inClose[i] >= inOpen[i] { inClose[i] } else { inOpen[i] })) + ((if inClose[i] >= inOpen[i] { inOpen[i] } else { inClose[i] }) - inLow[i]);
                 }
                 _ => {
                     _candlerange_14 = 0.0;
                 }
             }
-            ShadowVeryShortPeriodTotal += _candlerange_13 - _candlerange_14;
+            let mut _candlerange_15: f64;
+            match ShadowLong_rangeType {
+                0 => {
+                    _candlerange_15 = (inClose[ShadowLongTrailingIdx] - inOpen[ShadowLongTrailingIdx]).abs();
+                }
+                1 => {
+                    _candlerange_15 = inHigh[ShadowLongTrailingIdx] - inLow[ShadowLongTrailingIdx];
+                }
+                2 => {
+                    _candlerange_15 = (inHigh[ShadowLongTrailingIdx] - (if inClose[ShadowLongTrailingIdx] >= inOpen[ShadowLongTrailingIdx] { inClose[ShadowLongTrailingIdx] } else { inOpen[ShadowLongTrailingIdx] })) + ((if inClose[ShadowLongTrailingIdx] >= inOpen[ShadowLongTrailingIdx] { inOpen[ShadowLongTrailingIdx] } else { inClose[ShadowLongTrailingIdx] }) - inLow[ShadowLongTrailingIdx]);
+                }
+                _ => {
+                    _candlerange_15 = 0.0;
+                }
+            }
+            ShadowLongPeriodTotal += _candlerange_14 - _candlerange_15;
+            let mut _candlerange_16: f64;
+            match ShadowVeryShort_rangeType {
+                0 => {
+                    _candlerange_16 = (inClose[i] - inOpen[i]).abs();
+                }
+                1 => {
+                    _candlerange_16 = inHigh[i] - inLow[i];
+                }
+                2 => {
+                    _candlerange_16 = (inHigh[i] - (if inClose[i] >= inOpen[i] { inClose[i] } else { inOpen[i] })) + ((if inClose[i] >= inOpen[i] { inOpen[i] } else { inClose[i] }) - inLow[i]);
+                }
+                _ => {
+                    _candlerange_16 = 0.0;
+                }
+            }
+            let mut _candlerange_17: f64;
+            match ShadowVeryShort_rangeType {
+                0 => {
+                    _candlerange_17 = (inClose[ShadowVeryShortTrailingIdx] - inOpen[ShadowVeryShortTrailingIdx]).abs();
+                }
+                1 => {
+                    _candlerange_17 = inHigh[ShadowVeryShortTrailingIdx] - inLow[ShadowVeryShortTrailingIdx];
+                }
+                2 => {
+                    _candlerange_17 = (inHigh[ShadowVeryShortTrailingIdx] - (if inClose[ShadowVeryShortTrailingIdx] >= inOpen[ShadowVeryShortTrailingIdx] { inClose[ShadowVeryShortTrailingIdx] } else { inOpen[ShadowVeryShortTrailingIdx] })) + ((if inClose[ShadowVeryShortTrailingIdx] >= inOpen[ShadowVeryShortTrailingIdx] { inOpen[ShadowVeryShortTrailingIdx] } else { inClose[ShadowVeryShortTrailingIdx] }) - inLow[ShadowVeryShortTrailingIdx]);
+                }
+                _ => {
+                    _candlerange_17 = 0.0;
+                }
+            }
+            ShadowVeryShortPeriodTotal += _candlerange_16 - _candlerange_17;
             i += 1;
             BodyTrailingIdx += 1;
             ShadowLongTrailingIdx += 1;
@@ -938,52 +947,40 @@ impl Core {
             return Err(RetCode::InternalError);
         }
         let allocN_BodyTrailingIdx: usize = if cap_BodyTrailingIdx > 0 { cap_BodyTrailingIdx as usize } else { 1 };
-        let mut ring_BodyTrailingIdx_inOpen: Vec<f64> = vec![0.0_f64; allocN_BodyTrailingIdx];
-        ring_BodyTrailingIdx_inOpen[..cap_BodyTrailingIdx as usize]
-            .copy_from_slice(&inOpen[historyLen - cap_BodyTrailingIdx as usize..]);
-        let mut ring_BodyTrailingIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_BodyTrailingIdx];
-        ring_BodyTrailingIdx_inHigh[..cap_BodyTrailingIdx as usize]
-            .copy_from_slice(&inHigh[historyLen - cap_BodyTrailingIdx as usize..]);
-        let mut ring_BodyTrailingIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_BodyTrailingIdx];
-        ring_BodyTrailingIdx_inLow[..cap_BodyTrailingIdx as usize]
-            .copy_from_slice(&inLow[historyLen - cap_BodyTrailingIdx as usize..]);
-        let mut ring_BodyTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyTrailingIdx];
-        ring_BodyTrailingIdx_inClose[..cap_BodyTrailingIdx as usize]
-            .copy_from_slice(&inClose[historyLen - cap_BodyTrailingIdx as usize..]);
+        let mut ring_BodyTrailingIdx_derived: Vec<f64> = vec![0.0_f64; allocN_BodyTrailingIdx];
+        {
+            let mut fillJ: usize = historyLen - cap_BodyTrailingIdx as usize;
+            while fillJ < historyLen {
+                ring_BodyTrailingIdx_derived[fillJ - (historyLen - cap_BodyTrailingIdx as usize)] = (match BodyShort_rangeType { 0 => ((inClose[(fillJ) as usize]) - (inOpen[(fillJ) as usize])).abs(), 1 => (inHigh[(fillJ) as usize]) - (inLow[(fillJ) as usize]), 2 => ((inHigh[(fillJ) as usize]) - (if (inClose[(fillJ) as usize]) >= (inOpen[(fillJ) as usize]) { (inClose[(fillJ) as usize]) } else { (inOpen[(fillJ) as usize]) })) + ((if (inClose[(fillJ) as usize]) >= (inOpen[(fillJ) as usize]) { (inOpen[(fillJ) as usize]) } else { (inClose[(fillJ) as usize]) }) - (inLow[(fillJ) as usize])), _ => 0.0 });
+                fillJ += 1;
+            }
+        }
         let cap_ShadowLongTrailingIdx: i64 = (i as i64) - (ShadowLongTrailingIdx as i64);
         if cap_ShadowLongTrailingIdx < 0 || cap_ShadowLongTrailingIdx > historyLen as i64 {
             return Err(RetCode::InternalError);
         }
         let allocN_ShadowLongTrailingIdx: usize = if cap_ShadowLongTrailingIdx > 0 { cap_ShadowLongTrailingIdx as usize } else { 1 };
-        let mut ring_ShadowLongTrailingIdx_inOpen: Vec<f64> = vec![0.0_f64; allocN_ShadowLongTrailingIdx];
-        ring_ShadowLongTrailingIdx_inOpen[..cap_ShadowLongTrailingIdx as usize]
-            .copy_from_slice(&inOpen[historyLen - cap_ShadowLongTrailingIdx as usize..]);
-        let mut ring_ShadowLongTrailingIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_ShadowLongTrailingIdx];
-        ring_ShadowLongTrailingIdx_inHigh[..cap_ShadowLongTrailingIdx as usize]
-            .copy_from_slice(&inHigh[historyLen - cap_ShadowLongTrailingIdx as usize..]);
-        let mut ring_ShadowLongTrailingIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_ShadowLongTrailingIdx];
-        ring_ShadowLongTrailingIdx_inLow[..cap_ShadowLongTrailingIdx as usize]
-            .copy_from_slice(&inLow[historyLen - cap_ShadowLongTrailingIdx as usize..]);
-        let mut ring_ShadowLongTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_ShadowLongTrailingIdx];
-        ring_ShadowLongTrailingIdx_inClose[..cap_ShadowLongTrailingIdx as usize]
-            .copy_from_slice(&inClose[historyLen - cap_ShadowLongTrailingIdx as usize..]);
+        let mut ring_ShadowLongTrailingIdx_derived: Vec<f64> = vec![0.0_f64; allocN_ShadowLongTrailingIdx];
+        {
+            let mut fillJ: usize = historyLen - cap_ShadowLongTrailingIdx as usize;
+            while fillJ < historyLen {
+                ring_ShadowLongTrailingIdx_derived[fillJ - (historyLen - cap_ShadowLongTrailingIdx as usize)] = (match ShadowLong_rangeType { 0 => ((inClose[(fillJ) as usize]) - (inOpen[(fillJ) as usize])).abs(), 1 => (inHigh[(fillJ) as usize]) - (inLow[(fillJ) as usize]), 2 => ((inHigh[(fillJ) as usize]) - (if (inClose[(fillJ) as usize]) >= (inOpen[(fillJ) as usize]) { (inClose[(fillJ) as usize]) } else { (inOpen[(fillJ) as usize]) })) + ((if (inClose[(fillJ) as usize]) >= (inOpen[(fillJ) as usize]) { (inOpen[(fillJ) as usize]) } else { (inClose[(fillJ) as usize]) }) - (inLow[(fillJ) as usize])), _ => 0.0 });
+                fillJ += 1;
+            }
+        }
         let cap_ShadowVeryShortTrailingIdx: i64 = (i as i64) - (ShadowVeryShortTrailingIdx as i64);
         if cap_ShadowVeryShortTrailingIdx < 0 || cap_ShadowVeryShortTrailingIdx > historyLen as i64 {
             return Err(RetCode::InternalError);
         }
         let allocN_ShadowVeryShortTrailingIdx: usize = if cap_ShadowVeryShortTrailingIdx > 0 { cap_ShadowVeryShortTrailingIdx as usize } else { 1 };
-        let mut ring_ShadowVeryShortTrailingIdx_inOpen: Vec<f64> = vec![0.0_f64; allocN_ShadowVeryShortTrailingIdx];
-        ring_ShadowVeryShortTrailingIdx_inOpen[..cap_ShadowVeryShortTrailingIdx as usize]
-            .copy_from_slice(&inOpen[historyLen - cap_ShadowVeryShortTrailingIdx as usize..]);
-        let mut ring_ShadowVeryShortTrailingIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_ShadowVeryShortTrailingIdx];
-        ring_ShadowVeryShortTrailingIdx_inHigh[..cap_ShadowVeryShortTrailingIdx as usize]
-            .copy_from_slice(&inHigh[historyLen - cap_ShadowVeryShortTrailingIdx as usize..]);
-        let mut ring_ShadowVeryShortTrailingIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_ShadowVeryShortTrailingIdx];
-        ring_ShadowVeryShortTrailingIdx_inLow[..cap_ShadowVeryShortTrailingIdx as usize]
-            .copy_from_slice(&inLow[historyLen - cap_ShadowVeryShortTrailingIdx as usize..]);
-        let mut ring_ShadowVeryShortTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_ShadowVeryShortTrailingIdx];
-        ring_ShadowVeryShortTrailingIdx_inClose[..cap_ShadowVeryShortTrailingIdx as usize]
-            .copy_from_slice(&inClose[historyLen - cap_ShadowVeryShortTrailingIdx as usize..]);
+        let mut ring_ShadowVeryShortTrailingIdx_derived: Vec<f64> = vec![0.0_f64; allocN_ShadowVeryShortTrailingIdx];
+        {
+            let mut fillJ: usize = historyLen - cap_ShadowVeryShortTrailingIdx as usize;
+            while fillJ < historyLen {
+                ring_ShadowVeryShortTrailingIdx_derived[fillJ - (historyLen - cap_ShadowVeryShortTrailingIdx as usize)] = (match ShadowVeryShort_rangeType { 0 => ((inClose[(fillJ) as usize]) - (inOpen[(fillJ) as usize])).abs(), 1 => (inHigh[(fillJ) as usize]) - (inLow[(fillJ) as usize]), 2 => ((inHigh[(fillJ) as usize]) - (if (inClose[(fillJ) as usize]) >= (inOpen[(fillJ) as usize]) { (inClose[(fillJ) as usize]) } else { (inOpen[(fillJ) as usize]) })) + ((if (inClose[(fillJ) as usize]) >= (inOpen[(fillJ) as usize]) { (inOpen[(fillJ) as usize]) } else { (inClose[(fillJ) as usize]) }) - (inLow[(fillJ) as usize])), _ => 0.0 });
+                fillJ += 1;
+            }
+        }
         let state = CDLSHOOTINGSTAR_StreamState {
             BodyPeriodTotal,
             ShadowLongPeriodTotal,
@@ -992,22 +989,13 @@ impl Core {
             lag1_inClose: inClose[historyLen - 1],
             ringPos_BodyTrailingIdx: 0_usize,
             ringCap_BodyTrailingIdx: cap_BodyTrailingIdx as usize,
-            ring_BodyTrailingIdx_inOpen,
-            ring_BodyTrailingIdx_inHigh,
-            ring_BodyTrailingIdx_inLow,
-            ring_BodyTrailingIdx_inClose,
+            ring_BodyTrailingIdx_derived,
             ringPos_ShadowLongTrailingIdx: 0_usize,
             ringCap_ShadowLongTrailingIdx: cap_ShadowLongTrailingIdx as usize,
-            ring_ShadowLongTrailingIdx_inOpen,
-            ring_ShadowLongTrailingIdx_inHigh,
-            ring_ShadowLongTrailingIdx_inLow,
-            ring_ShadowLongTrailingIdx_inClose,
+            ring_ShadowLongTrailingIdx_derived,
             ringPos_ShadowVeryShortTrailingIdx: 0_usize,
             ringCap_ShadowVeryShortTrailingIdx: cap_ShadowVeryShortTrailingIdx as usize,
-            ring_ShadowVeryShortTrailingIdx_inOpen,
-            ring_ShadowVeryShortTrailingIdx_inHigh,
-            ring_ShadowVeryShortTrailingIdx_inLow,
-            ring_ShadowVeryShortTrailingIdx_inClose,
+            ring_ShadowVeryShortTrailingIdx_derived,
         };
         Ok(CDLSHOOTINGSTAR_Stream { core: self.clone(), state })
     }

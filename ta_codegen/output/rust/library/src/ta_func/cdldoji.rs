@@ -304,10 +304,7 @@ struct CDLDOJI_StreamState {
     BodyDojiPeriodTotal: f64,
     ringPos_BodyDojiTrailingIdx: usize,
     ringCap_BodyDojiTrailingIdx: usize,
-    ring_BodyDojiTrailingIdx_inOpen: Vec<f64>,
-    ring_BodyDojiTrailingIdx_inHigh: Vec<f64>,
-    ring_BodyDojiTrailingIdx_inLow: Vec<f64>,
-    ring_BodyDojiTrailingIdx_inClose: Vec<f64>,
+    ring_BodyDojiTrailingIdx_derived: Vec<f64>,
 }
 
 #[allow(non_snake_case, dead_code)]
@@ -318,10 +315,7 @@ impl CDLDOJI_StreamState {
         self.BodyDojiPeriodTotal = src.BodyDojiPeriodTotal;
         self.ringPos_BodyDojiTrailingIdx = src.ringPos_BodyDojiTrailingIdx;
         self.ringCap_BodyDojiTrailingIdx = src.ringCap_BodyDojiTrailingIdx;
-        self.ring_BodyDojiTrailingIdx_inOpen.clone_from(&src.ring_BodyDojiTrailingIdx_inOpen);
-        self.ring_BodyDojiTrailingIdx_inHigh.clone_from(&src.ring_BodyDojiTrailingIdx_inHigh);
-        self.ring_BodyDojiTrailingIdx_inLow.clone_from(&src.ring_BodyDojiTrailingIdx_inLow);
-        self.ring_BodyDojiTrailingIdx_inClose.clone_from(&src.ring_BodyDojiTrailingIdx_inClose);
+        self.ring_BodyDojiTrailingIdx_derived.clone_from(&src.ring_BodyDojiTrailingIdx_derived);
     }
 }
 
@@ -340,10 +334,22 @@ impl Core {
         #[allow(non_snake_case)]
         let BodyDoji_factor: f64 = self.candle_settings.body_doji.factor;
         if sp.ringCap_BodyDojiTrailingIdx == 0 {
-            sp.ring_BodyDojiTrailingIdx_inOpen[0] = inOpen;
-            sp.ring_BodyDojiTrailingIdx_inHigh[0] = inHigh;
-            sp.ring_BodyDojiTrailingIdx_inLow[0] = inLow;
-            sp.ring_BodyDojiTrailingIdx_inClose[0] = inClose;
+            let mut _candlerange_0: f64;
+            match BodyDoji_rangeType {
+                0 => {
+                    _candlerange_0 = (inClose - inOpen).abs();
+                }
+                1 => {
+                    _candlerange_0 = inHigh - inLow;
+                }
+                2 => {
+                    _candlerange_0 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
+                }
+                _ => {
+                    _candlerange_0 = 0.0;
+                }
+            }
+            sp.ring_BodyDojiTrailingIdx_derived[0] = _candlerange_0;
         }
         if (inClose - inOpen).abs() <= ((BodyDoji_factor) * (if (BodyDoji_avgPeriod) != 0 { (sp.BodyDojiPeriodTotal) / (BodyDoji_avgPeriod as f64) } else { match BodyDoji_rangeType { 0 => ((inClose) - (inOpen)).abs(), 1 => (inHigh) - (inLow), 2 => ((inHigh) - (if (inClose) >= (inOpen) { (inClose) } else { (inOpen) })) + ((if (inClose) >= (inOpen) { (inOpen) } else { (inClose) }) - (inLow)), _ => 0.0 } }) / (if (BodyDoji_rangeType) == 2 { 2.0 } else { 1.0 })) {
             (*outInteger) = 100;
@@ -352,41 +358,38 @@ impl Core {
         }
         // add the current range and subtract the first range: this is done after the pattern recognition
         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-        let mut _candlerange_0: f64;
-        match BodyDoji_rangeType {
-            0 => {
-                _candlerange_0 = (inClose - inOpen).abs();
-            }
-            1 => {
-                _candlerange_0 = inHigh - inLow;
-            }
-            2 => {
-                _candlerange_0 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
-            }
-            _ => {
-                _candlerange_0 = 0.0;
-            }
-        }
         let mut _candlerange_1: f64;
         match BodyDoji_rangeType {
             0 => {
-                _candlerange_1 = (sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx] - sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx]).abs();
+                _candlerange_1 = (inClose - inOpen).abs();
             }
             1 => {
-                _candlerange_1 = sp.ring_BodyDojiTrailingIdx_inHigh[sp.ringPos_BodyDojiTrailingIdx] - sp.ring_BodyDojiTrailingIdx_inLow[sp.ringPos_BodyDojiTrailingIdx];
+                _candlerange_1 = inHigh - inLow;
             }
             2 => {
-                _candlerange_1 = (sp.ring_BodyDojiTrailingIdx_inHigh[sp.ringPos_BodyDojiTrailingIdx] - (if sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx] >= sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx] { sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx] } else { sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx] })) + ((if sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx] >= sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx] { sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx] } else { sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx] }) - sp.ring_BodyDojiTrailingIdx_inLow[sp.ringPos_BodyDojiTrailingIdx]);
+                _candlerange_1 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
             }
             _ => {
                 _candlerange_1 = 0.0;
             }
         }
-        sp.BodyDojiPeriodTotal += _candlerange_0 - _candlerange_1;
-        sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx] = inOpen;
-        sp.ring_BodyDojiTrailingIdx_inHigh[sp.ringPos_BodyDojiTrailingIdx] = inHigh;
-        sp.ring_BodyDojiTrailingIdx_inLow[sp.ringPos_BodyDojiTrailingIdx] = inLow;
-        sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx] = inClose;
+        sp.BodyDojiPeriodTotal += _candlerange_1 - sp.ring_BodyDojiTrailingIdx_derived[sp.ringPos_BodyDojiTrailingIdx];
+        let mut _candlerange_2: f64;
+        match BodyDoji_rangeType {
+            0 => {
+                _candlerange_2 = (inClose - inOpen).abs();
+            }
+            1 => {
+                _candlerange_2 = inHigh - inLow;
+            }
+            2 => {
+                _candlerange_2 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
+            }
+            _ => {
+                _candlerange_2 = 0.0;
+            }
+        }
+        sp.ring_BodyDojiTrailingIdx_derived[sp.ringPos_BodyDojiTrailingIdx] = _candlerange_2;
         sp.ringPos_BodyDojiTrailingIdx = sp.ringPos_BodyDojiTrailingIdx + 1;
         if sp.ringPos_BodyDojiTrailingIdx >= sp.ringCap_BodyDojiTrailingIdx {
             sp.ringPos_BodyDojiTrailingIdx = 0;
@@ -440,22 +443,22 @@ impl Core {
         BodyDojiTrailingIdx = startIdx - ((BodyDoji_avgPeriod) as usize);
         i = BodyDojiTrailingIdx;
         while i < startIdx {
-            let mut _candlerange_2: f64;
+            let mut _candlerange_3: f64;
             match BodyDoji_rangeType {
                 0 => {
-                    _candlerange_2 = (inClose[i] - inOpen[i]).abs();
+                    _candlerange_3 = (inClose[i] - inOpen[i]).abs();
                 }
                 1 => {
-                    _candlerange_2 = inHigh[i] - inLow[i];
+                    _candlerange_3 = inHigh[i] - inLow[i];
                 }
                 2 => {
-                    _candlerange_2 = (inHigh[i] - (if inClose[i] >= inOpen[i] { inClose[i] } else { inOpen[i] })) + ((if inClose[i] >= inOpen[i] { inOpen[i] } else { inClose[i] }) - inLow[i]);
+                    _candlerange_3 = (inHigh[i] - (if inClose[i] >= inOpen[i] { inClose[i] } else { inOpen[i] })) + ((if inClose[i] >= inOpen[i] { inOpen[i] } else { inClose[i] }) - inLow[i]);
                 }
                 _ => {
-                    _candlerange_2 = 0.0;
+                    _candlerange_3 = 0.0;
                 }
             }
-            BodyDojiPeriodTotal += _candlerange_2;
+            BodyDojiPeriodTotal += _candlerange_3;
             i += 1;
         }
         // Proceed with the calculation for the requested range.
@@ -474,37 +477,37 @@ impl Core {
             }
             // add the current range and subtract the first range: this is done after the pattern recognition
             // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-            let mut _candlerange_3: f64;
-            match BodyDoji_rangeType {
-                0 => {
-                    _candlerange_3 = (inClose[i] - inOpen[i]).abs();
-                }
-                1 => {
-                    _candlerange_3 = inHigh[i] - inLow[i];
-                }
-                2 => {
-                    _candlerange_3 = (inHigh[i] - (if inClose[i] >= inOpen[i] { inClose[i] } else { inOpen[i] })) + ((if inClose[i] >= inOpen[i] { inOpen[i] } else { inClose[i] }) - inLow[i]);
-                }
-                _ => {
-                    _candlerange_3 = 0.0;
-                }
-            }
             let mut _candlerange_4: f64;
             match BodyDoji_rangeType {
                 0 => {
-                    _candlerange_4 = (inClose[BodyDojiTrailingIdx] - inOpen[BodyDojiTrailingIdx]).abs();
+                    _candlerange_4 = (inClose[i] - inOpen[i]).abs();
                 }
                 1 => {
-                    _candlerange_4 = inHigh[BodyDojiTrailingIdx] - inLow[BodyDojiTrailingIdx];
+                    _candlerange_4 = inHigh[i] - inLow[i];
                 }
                 2 => {
-                    _candlerange_4 = (inHigh[BodyDojiTrailingIdx] - (if inClose[BodyDojiTrailingIdx] >= inOpen[BodyDojiTrailingIdx] { inClose[BodyDojiTrailingIdx] } else { inOpen[BodyDojiTrailingIdx] })) + ((if inClose[BodyDojiTrailingIdx] >= inOpen[BodyDojiTrailingIdx] { inOpen[BodyDojiTrailingIdx] } else { inClose[BodyDojiTrailingIdx] }) - inLow[BodyDojiTrailingIdx]);
+                    _candlerange_4 = (inHigh[i] - (if inClose[i] >= inOpen[i] { inClose[i] } else { inOpen[i] })) + ((if inClose[i] >= inOpen[i] { inOpen[i] } else { inClose[i] }) - inLow[i]);
                 }
                 _ => {
                     _candlerange_4 = 0.0;
                 }
             }
-            BodyDojiPeriodTotal += _candlerange_3 - _candlerange_4;
+            let mut _candlerange_5: f64;
+            match BodyDoji_rangeType {
+                0 => {
+                    _candlerange_5 = (inClose[BodyDojiTrailingIdx] - inOpen[BodyDojiTrailingIdx]).abs();
+                }
+                1 => {
+                    _candlerange_5 = inHigh[BodyDojiTrailingIdx] - inLow[BodyDojiTrailingIdx];
+                }
+                2 => {
+                    _candlerange_5 = (inHigh[BodyDojiTrailingIdx] - (if inClose[BodyDojiTrailingIdx] >= inOpen[BodyDojiTrailingIdx] { inClose[BodyDojiTrailingIdx] } else { inOpen[BodyDojiTrailingIdx] })) + ((if inClose[BodyDojiTrailingIdx] >= inOpen[BodyDojiTrailingIdx] { inOpen[BodyDojiTrailingIdx] } else { inClose[BodyDojiTrailingIdx] }) - inLow[BodyDojiTrailingIdx]);
+                }
+                _ => {
+                    _candlerange_5 = 0.0;
+                }
+            }
+            BodyDojiPeriodTotal += _candlerange_4 - _candlerange_5;
             i += 1;
             BodyDojiTrailingIdx += 1;
             if !(i <= endIdx) { break; }
@@ -519,26 +522,19 @@ impl Core {
             return Err(RetCode::InternalError);
         }
         let allocN_BodyDojiTrailingIdx: usize = if cap_BodyDojiTrailingIdx > 0 { cap_BodyDojiTrailingIdx as usize } else { 1 };
-        let mut ring_BodyDojiTrailingIdx_inOpen: Vec<f64> = vec![0.0_f64; allocN_BodyDojiTrailingIdx];
-        ring_BodyDojiTrailingIdx_inOpen[..cap_BodyDojiTrailingIdx as usize]
-            .copy_from_slice(&inOpen[historyLen - cap_BodyDojiTrailingIdx as usize..]);
-        let mut ring_BodyDojiTrailingIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_BodyDojiTrailingIdx];
-        ring_BodyDojiTrailingIdx_inHigh[..cap_BodyDojiTrailingIdx as usize]
-            .copy_from_slice(&inHigh[historyLen - cap_BodyDojiTrailingIdx as usize..]);
-        let mut ring_BodyDojiTrailingIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_BodyDojiTrailingIdx];
-        ring_BodyDojiTrailingIdx_inLow[..cap_BodyDojiTrailingIdx as usize]
-            .copy_from_slice(&inLow[historyLen - cap_BodyDojiTrailingIdx as usize..]);
-        let mut ring_BodyDojiTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyDojiTrailingIdx];
-        ring_BodyDojiTrailingIdx_inClose[..cap_BodyDojiTrailingIdx as usize]
-            .copy_from_slice(&inClose[historyLen - cap_BodyDojiTrailingIdx as usize..]);
+        let mut ring_BodyDojiTrailingIdx_derived: Vec<f64> = vec![0.0_f64; allocN_BodyDojiTrailingIdx];
+        {
+            let mut fillJ: usize = historyLen - cap_BodyDojiTrailingIdx as usize;
+            while fillJ < historyLen {
+                ring_BodyDojiTrailingIdx_derived[fillJ - (historyLen - cap_BodyDojiTrailingIdx as usize)] = (match BodyDoji_rangeType { 0 => ((inClose[(fillJ) as usize]) - (inOpen[(fillJ) as usize])).abs(), 1 => (inHigh[(fillJ) as usize]) - (inLow[(fillJ) as usize]), 2 => ((inHigh[(fillJ) as usize]) - (if (inClose[(fillJ) as usize]) >= (inOpen[(fillJ) as usize]) { (inClose[(fillJ) as usize]) } else { (inOpen[(fillJ) as usize]) })) + ((if (inClose[(fillJ) as usize]) >= (inOpen[(fillJ) as usize]) { (inOpen[(fillJ) as usize]) } else { (inClose[(fillJ) as usize]) }) - (inLow[(fillJ) as usize])), _ => 0.0 });
+                fillJ += 1;
+            }
+        }
         let state = CDLDOJI_StreamState {
             BodyDojiPeriodTotal,
             ringPos_BodyDojiTrailingIdx: 0_usize,
             ringCap_BodyDojiTrailingIdx: cap_BodyDojiTrailingIdx as usize,
-            ring_BodyDojiTrailingIdx_inOpen,
-            ring_BodyDojiTrailingIdx_inHigh,
-            ring_BodyDojiTrailingIdx_inLow,
-            ring_BodyDojiTrailingIdx_inClose,
+            ring_BodyDojiTrailingIdx_derived,
         };
         Ok(CDLDOJI_Stream { core: self.clone(), state })
     }
@@ -616,14 +612,6 @@ impl Core {
 
 }
 
-thread_local! {
-    /// `peek`'s reusable scratch handle (see `CDLDOJI_StreamState::restore_from`).
-    /// Taken for the duration of the step and put back after, so a
-    /// panicking step costs the scratch, never leaves it borrowed.
-    static CDLDOJI_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLDOJI_Stream>>> =
-        const { std::cell::Cell::new(None) };
-}
-
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl CDLDOJI_Stream {
@@ -651,8 +639,10 @@ impl CDLDOJI_Stream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return (it is the same code, run
     /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy it runs on is held per thread and reused,
-    /// so only the first peek of this function on a thread allocates.
+    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
+    /// often removed outright by the optimizer, which is why nothing is
+    /// reused here, but that is not a guarantee: budget for a clone of the
+    /// window and prefer `update` on a `clone()` in a hot loop.
     ///
     /// # Errors
     ///
@@ -663,13 +653,8 @@ impl CDLDOJI_Stream {
         if !inOpen.is_finite() || !inHigh.is_finite() || !inLow.is_finite() || !inClose.is_finite() {
             return Err(RetCode::BadParam);
         }
-        CDLDOJI_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inOpen, inHigh, inLow, inClose);
-            cell.set(Some(scratch));
-            value
-        })
+        let mut scratch = self.clone();
+        scratch.update(inOpen, inHigh, inLow, inClose)
     }
 }
 
