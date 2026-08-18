@@ -91,6 +91,15 @@ TA_LIB_API TA_RetCode TA_NVI( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_NVI_Lookback();
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (void *)(outReal) != (void *)(inClose) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inClose, TA_IN_BYTES(inClose)) ||
+          (void *)(outReal) != (void *)(inVolume) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inVolume, TA_IN_BYTES(inVolume)) )
+         return TA_BAD_PARAM;
+   }
 
    /* The index is a running cumulative value seeded at 1000, updated only on
     * bars whose volume decreased versus the prior bar (Negative Volume).
@@ -164,6 +173,13 @@ TA_RetCode TA_S_NVI( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_NVI_Lookback();
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      (void)taProduced;
+   }
 
    prevNVI = 1000.0;
    prevClose = (double)inClose[startIdx];

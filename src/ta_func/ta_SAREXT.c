@@ -176,6 +176,15 @@ TA_LIB_API TA_RetCode TA_SAREXT( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_SAREXT_Lookback(optInStartValue,optInOffsetOnReverse,optInAccelerationInitLong,optInAccelerationLong,optInAccelerationMaxLong,optInAccelerationInitShort,optInAccelerationShort,optInAccelerationMaxShort);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (void *)(outReal) != (void *)(inHigh) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inHigh, TA_IN_BYTES(inHigh)) ||
+          (void *)(outReal) != (void *)(inLow) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inLow, TA_IN_BYTES(inLow)) )
+         return TA_BAD_PARAM;
+   }
 
    /* > 0 indicates long. == 0 indicates short */
    /* This function is the same as TA_SAR, except that the caller has
@@ -567,6 +576,13 @@ TA_RetCode TA_S_SAREXT( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_SAREXT_Lookback(optInStartValue,optInOffsetOnReverse,optInAccelerationInitLong,optInAccelerationLong,optInAccelerationMaxLong,optInAccelerationInitShort,optInAccelerationShort,optInAccelerationMaxShort);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      (void)taProduced;
+   }
 
    if( startIdx < 1 )
    {

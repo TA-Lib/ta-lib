@@ -131,8 +131,16 @@ TA_LIB_API TA_RetCode TA_STOCHRSI( int    startIdx,
       return TA_BAD_PARAM;
    if( !outFastD )
       return TA_BAD_PARAM;
-   if( outFastK == outFastD )
-      return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_STOCHRSI_Lookback(optInTimePeriod,optInFastK_Period,optInFastD_Period,optInFastD_MAType);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (outFastK == outFastD || TA_RANGES_OVERLAP(outFastK, TA_OUT_BYTES(outFastK,taProduced), outFastD, TA_OUT_BYTES(outFastD,taProduced))) ||
+          (void *)(outFastK) != (void *)(inReal) && TA_RANGES_OVERLAP(outFastK, TA_OUT_BYTES(outFastK,taProduced), inReal, TA_IN_BYTES(inReal)) ||
+          (void *)(outFastD) != (void *)(inReal) && TA_RANGES_OVERLAP(outFastD, TA_OUT_BYTES(outFastD,taProduced), inReal, TA_IN_BYTES(inReal)) )
+         return TA_BAD_PARAM;
+   }
 
    /* Stochastic RSI
     *
@@ -250,8 +258,14 @@ TA_RetCode TA_S_STOCHRSI( int    startIdx,
       return TA_BAD_PARAM;
    if( !outFastD )
       return TA_BAD_PARAM;
-   if( outFastK == outFastD )
-      return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_STOCHRSI_Lookback(optInTimePeriod,optInFastK_Period,optInFastD_Period,optInFastD_MAType);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (outFastK == outFastD || TA_RANGES_OVERLAP(outFastK, TA_OUT_BYTES(outFastK,taProduced), outFastD, TA_OUT_BYTES(outFastD,taProduced))) )
+         return TA_BAD_PARAM;
+   }
 
    *outBegIdx= 0;
    *outNBElement= 0;

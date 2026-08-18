@@ -98,6 +98,17 @@ TA_LIB_API TA_RetCode TA_AD( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_AD_Lookback();
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (void *)(outReal) != (void *)(inHigh) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inHigh, TA_IN_BYTES(inHigh)) ||
+          (void *)(outReal) != (void *)(inLow) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inLow, TA_IN_BYTES(inLow)) ||
+          (void *)(outReal) != (void *)(inClose) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inClose, TA_IN_BYTES(inClose)) ||
+          (void *)(outReal) != (void *)(inVolume) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inVolume, TA_IN_BYTES(inVolume)) )
+         return TA_BAD_PARAM;
+   }
 
    /* Note: Results from this function might vary slightly
     *       from Metastock outputs. The reason being that
@@ -171,6 +182,13 @@ TA_RetCode TA_S_AD( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_AD_Lookback();
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      (void)taProduced;
+   }
 
    nbBar = endIdx - startIdx + 1;
    *outNBElement= nbBar;

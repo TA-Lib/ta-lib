@@ -170,13 +170,15 @@ it is TA_SMA_Lookback.</p>
 ### 3.4 Return Codes {#retcode}
 
 <p>Every TA function returns a <b>TA_RetCode</b>. <b>TA_SUCCESS</b> (zero) means the call completed and wrote its outputs; on anything else, treat outBegIdx and outNBElement as undefined and the output buffers as untouched.</p>
+
+<p>Computing <b>wholly in place</b> is allowed and stays supported — passing the same buffer as both an input and an output is how several indicators are meant to be used. What is rejected is <i>partial</i> overlap: two views of the same memory at different offsets make a function write through what it is still reading, and the result would be silently wrong rather than merely surprising. The extents compared are the elements actually written for an output (<a href="#output_size">Exact Allocation</a>, method 3 above) and <code>endIdx + 1</code> from the base for an input, which is where the highest index read reaches.</p>
 <p>The codes a caller normally encounters:</p>
 
 | Code | Meaning |
 |------|---------|
 | `TA_SUCCESS` | No error. |
 | `TA_LIB_NOT_INITIALIZE` | [TA_Initialize](#init) was not called, or did not succeed. |
-| `TA_BAD_PARAM` | A parameter is out of range, or a required pointer is NULL. |
+| `TA_BAD_PARAM` | A parameter is out of range, a required pointer is NULL, or two output buffers overlap / an output *partially* overlaps an input. |
 | `TA_ALLOC_ERR` | Allocation failed, most likely out of memory. |
 | `TA_OUT_OF_RANGE_START_INDEX` | startIdx is negative or above [TA_MAX_INDEX](#index_range). |
 | `TA_OUT_OF_RANGE_END_INDEX` | endIdx is negative, above [TA_MAX_INDEX](#index_range), or below startIdx. |

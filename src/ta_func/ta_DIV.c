@@ -82,6 +82,15 @@ TA_LIB_API TA_RetCode TA_DIV( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_DIV_Lookback();
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (void *)(outReal) != (void *)(inReal0) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inReal0, TA_IN_BYTES(inReal0)) ||
+          (void *)(outReal) != (void *)(inReal1) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inReal1, TA_IN_BYTES(inReal1)) )
+         return TA_BAD_PARAM;
+   }
 
    for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
    {
@@ -114,6 +123,13 @@ TA_RetCode TA_S_DIV( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_DIV_Lookback();
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      (void)taProduced;
+   }
 
    for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
    {

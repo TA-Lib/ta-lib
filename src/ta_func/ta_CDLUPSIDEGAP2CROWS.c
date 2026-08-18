@@ -106,6 +106,13 @@ TA_LIB_API TA_RetCode TA_CDLUPSIDEGAP2CROWS( int    startIdx,
       return TA_BAD_PARAM;
    if( !outInteger )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_CDLUPSIDEGAP2CROWS_Lookback();
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      (void)taProduced;
+   }
 
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
@@ -228,6 +235,13 @@ TA_RetCode TA_S_CDLUPSIDEGAP2CROWS( int    startIdx,
       return TA_BAD_PARAM;
    if( !outInteger )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_CDLUPSIDEGAP2CROWS_Lookback();
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      (void)taProduced;
+   }
 
    lookbackTotal = TA_CDLUPSIDEGAP2CROWS_Lookback();
    if( startIdx < lookbackTotal )

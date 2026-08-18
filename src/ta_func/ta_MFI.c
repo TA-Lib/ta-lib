@@ -124,6 +124,17 @@ TA_LIB_API TA_RetCode TA_MFI( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_MFI_Lookback(optInTimePeriod);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (void *)(outReal) != (void *)(inHigh) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inHigh, TA_IN_BYTES(inHigh)) ||
+          (void *)(outReal) != (void *)(inLow) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inLow, TA_IN_BYTES(inLow)) ||
+          (void *)(outReal) != (void *)(inClose) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inClose, TA_IN_BYTES(inClose)) ||
+          (void *)(outReal) != (void *)(inVolume) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inVolume, TA_IN_BYTES(inVolume)) )
+         return TA_BAD_PARAM;
+   }
 
    /* Id, Type, Static Size */
    if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
@@ -310,6 +321,13 @@ TA_RetCode TA_S_MFI( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_MFI_Lookback(optInTimePeriod);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      (void)taProduced;
+   }
 
    if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
    if( (int)optInTimePeriod > (int)(sizeof(local_mflow_positive)/sizeof(double)) )

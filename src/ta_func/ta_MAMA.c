@@ -180,8 +180,16 @@ TA_LIB_API TA_RetCode TA_MAMA( int    startIdx,
       return TA_BAD_PARAM;
    if( !outMAMA )
       return TA_BAD_PARAM;
-   if( outFAMA != NULL && outMAMA == outFAMA )
-      return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_MAMA_Lookback(optInFastLimit,optInSlowLimit);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( outFAMA != NULL && (outMAMA == outFAMA || TA_RANGES_OVERLAP(outMAMA, TA_OUT_BYTES(outMAMA,taProduced), outFAMA, TA_OUT_BYTES(outFAMA,taProduced))) ||
+          (void *)(outMAMA) != (void *)(inReal) && TA_RANGES_OVERLAP(outMAMA, TA_OUT_BYTES(outMAMA,taProduced), inReal, TA_IN_BYTES(inReal)) ||
+          outFAMA != NULL && (void *)(outFAMA) != (void *)(inReal) && TA_RANGES_OVERLAP(outFAMA, TA_OUT_BYTES(outFAMA,taProduced), inReal, TA_IN_BYTES(inReal)) )
+         return TA_BAD_PARAM;
+   }
 
    a = 0.0962;
    b = 0.5769;
@@ -601,8 +609,14 @@ TA_RetCode TA_S_MAMA( int    startIdx,
       return TA_BAD_PARAM;
    if( !outMAMA )
       return TA_BAD_PARAM;
-   if( outFAMA != NULL && outMAMA == outFAMA )
-      return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_MAMA_Lookback(optInFastLimit,optInSlowLimit);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( outFAMA != NULL && (outMAMA == outFAMA || TA_RANGES_OVERLAP(outMAMA, TA_OUT_BYTES(outMAMA,taProduced), outFAMA, TA_OUT_BYTES(outFAMA,taProduced))) )
+         return TA_BAD_PARAM;
+   }
 
    a = 0.0962;
    b = 0.5769;

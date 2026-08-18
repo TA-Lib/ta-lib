@@ -90,6 +90,16 @@ TA_LIB_API TA_RetCode TA_WCLPRICE( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_WCLPRICE_Lookback();
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (void *)(outReal) != (void *)(inHigh) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inHigh, TA_IN_BYTES(inHigh)) ||
+          (void *)(outReal) != (void *)(inLow) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inLow, TA_IN_BYTES(inLow)) ||
+          (void *)(outReal) != (void *)(inClose) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inClose, TA_IN_BYTES(inClose)) )
+         return TA_BAD_PARAM;
+   }
 
    /* Weighted Close Price = (High + Low + (Close*2) ) / 4 */
    outIdx = 0;
@@ -128,6 +138,13 @@ TA_RetCode TA_S_WCLPRICE( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_WCLPRICE_Lookback();
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      (void)taProduced;
+   }
 
    outIdx = 0;
    for( i = startIdx; i <= endIdx; i += 1 )

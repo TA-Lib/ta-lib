@@ -120,6 +120,14 @@ TA_LIB_API TA_RetCode TA_PPO( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_PPO_Lookback(optInFastPeriod,optInSlowPeriod,optInMAType);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (void *)(outReal) != (void *)(inReal) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inReal, TA_IN_BYTES(inReal)) )
+         return TA_BAD_PARAM;
+   }
 
    /* Allocate an intermediate buffer. */
    tempBuffer = malloc((endIdx - startIdx + 1) * sizeof(double));
@@ -212,6 +220,13 @@ TA_RetCode TA_S_PPO( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_PPO_Lookback(optInFastPeriod,optInSlowPeriod,optInMAType);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      (void)taProduced;
+   }
 
    tempBuffer = malloc((endIdx - startIdx + 1) * sizeof(double));
    if( !tempBuffer )

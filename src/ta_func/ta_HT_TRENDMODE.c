@@ -178,6 +178,13 @@ TA_LIB_API TA_RetCode TA_HT_TRENDMODE( int    startIdx,
       return TA_BAD_PARAM;
    if( !outInteger )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_HT_TRENDMODE_Lookback();
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      (void)taProduced;
+   }
 
    a = 0.0962;
    b = 0.5769;
@@ -705,6 +712,13 @@ TA_RetCode TA_S_HT_TRENDMODE( int    startIdx,
       return TA_BAD_PARAM;
    if( !outInteger )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_HT_TRENDMODE_Lookback();
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      (void)taProduced;
+   }
 
    a = 0.0962;
    b = 0.5769;

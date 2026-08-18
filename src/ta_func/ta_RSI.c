@@ -106,6 +106,14 @@ TA_LIB_API TA_RetCode TA_RSI( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_RSI_Lookback(optInTimePeriod);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (void *)(outReal) != (void *)(inReal) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inReal, TA_IN_BYTES(inReal)) )
+         return TA_BAD_PARAM;
+   }
 
    /* The following algorithm is base on the original
     * work from Wilder's and shall represent the
@@ -363,6 +371,13 @@ TA_RetCode TA_S_RSI( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_RSI_Lookback(optInTimePeriod);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      (void)taProduced;
+   }
 
    *outBegIdx= 0;
    *outNBElement= 0;

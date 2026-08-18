@@ -92,6 +92,14 @@ TA_LIB_API TA_RetCode TA_ROCP( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_ROCP_Lookback(optInTimePeriod);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (void *)(outReal) != (void *)(inReal) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inReal, TA_IN_BYTES(inReal)) )
+         return TA_BAD_PARAM;
+   }
 
    /* The interpretation of the rate of change varies widely depending
     * which software and/or books you are refering to.
@@ -186,6 +194,13 @@ TA_RetCode TA_S_ROCP( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_ROCP_Lookback(optInTimePeriod);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      (void)taProduced;
+   }
 
    if( startIdx < optInTimePeriod )
    {

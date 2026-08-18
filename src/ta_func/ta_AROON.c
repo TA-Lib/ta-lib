@@ -105,8 +105,18 @@ TA_LIB_API TA_RetCode TA_AROON( int    startIdx,
       return TA_BAD_PARAM;
    if( !outAroonUp )
       return TA_BAD_PARAM;
-   if( outAroonDown == outAroonUp )
-      return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_AROON_Lookback(optInTimePeriod);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (outAroonDown == outAroonUp || TA_RANGES_OVERLAP(outAroonDown, TA_OUT_BYTES(outAroonDown,taProduced), outAroonUp, TA_OUT_BYTES(outAroonUp,taProduced))) ||
+          (void *)(outAroonDown) != (void *)(inHigh) && TA_RANGES_OVERLAP(outAroonDown, TA_OUT_BYTES(outAroonDown,taProduced), inHigh, TA_IN_BYTES(inHigh)) ||
+          (void *)(outAroonDown) != (void *)(inLow) && TA_RANGES_OVERLAP(outAroonDown, TA_OUT_BYTES(outAroonDown,taProduced), inLow, TA_IN_BYTES(inLow)) ||
+          (void *)(outAroonUp) != (void *)(inHigh) && TA_RANGES_OVERLAP(outAroonUp, TA_OUT_BYTES(outAroonUp,taProduced), inHigh, TA_IN_BYTES(inHigh)) ||
+          (void *)(outAroonUp) != (void *)(inLow) && TA_RANGES_OVERLAP(outAroonUp, TA_OUT_BYTES(outAroonUp,taProduced), inLow, TA_IN_BYTES(inLow)) )
+         return TA_BAD_PARAM;
+   }
 
    /* This function is using a speed optimized algorithm
     * for the min/max logic.
@@ -241,8 +251,14 @@ TA_RetCode TA_S_AROON( int    startIdx,
       return TA_BAD_PARAM;
    if( !outAroonUp )
       return TA_BAD_PARAM;
-   if( outAroonDown == outAroonUp )
-      return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_AROON_Lookback(optInTimePeriod);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (outAroonDown == outAroonUp || TA_RANGES_OVERLAP(outAroonDown, TA_OUT_BYTES(outAroonDown,taProduced), outAroonUp, TA_OUT_BYTES(outAroonUp,taProduced))) )
+         return TA_BAD_PARAM;
+   }
 
    if( startIdx < optInTimePeriod )
    {

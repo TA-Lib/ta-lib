@@ -95,6 +95,15 @@ TA_LIB_API TA_RetCode TA_QSTICK( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_QSTICK_Lookback(optInTimePeriod);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (void *)(outReal) != (void *)(inOpen) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inOpen, TA_IN_BYTES(inOpen)) ||
+          (void *)(outReal) != (void *)(inClose) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inClose, TA_IN_BYTES(inClose)) )
+         return TA_BAD_PARAM;
+   }
 
    /* Qstick (Chande & Kroll, The New Technical Trader, 1994): a simple moving
     * average of the candle body, close minus open. Above zero means bodies
@@ -197,6 +206,13 @@ TA_RetCode TA_S_QSTICK( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_QSTICK_Lookback(optInTimePeriod);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      (void)taProduced;
+   }
 
    lookbackTotal = (int)(optInTimePeriod - 1);
    if( startIdx < lookbackTotal )

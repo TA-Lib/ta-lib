@@ -114,6 +114,14 @@ TA_LIB_API TA_RetCode TA_KAMA( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_KAMA_Lookback(optInTimePeriod);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (void *)(outReal) != (void *)(inReal) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inReal, TA_IN_BYTES(inReal)) )
+         return TA_BAD_PARAM;
+   }
 
    constMax = 2.0 / (30.0 + 1.0);
    constDiff = 2.0 / (2.0 + 1.0) - constMax;
@@ -319,6 +327,13 @@ TA_RetCode TA_S_KAMA( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_KAMA_Lookback(optInTimePeriod);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      (void)taProduced;
+   }
 
    constMax = 2.0 / (30.0 + 1.0);
    constDiff = 2.0 / (2.0 + 1.0) - constMax;

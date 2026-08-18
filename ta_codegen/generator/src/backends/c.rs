@@ -900,12 +900,49 @@ fn gen_func_inner(
             out.push_str(&format!("   if( !{} )\n", output.name));
             out.push_str("      return TA_BAD_PARAM;\n");
         }
-        // Output-distinctness check: aliasing two different output buffers has no
-        // correct result (each would clobber the other), so reject it. Input ==
-        // output in-place aliasing is deliberately left allowed. See issue #108.
-        // A nullable operand is guarded non-NULL first (a dropped output aliases
-        // nothing; two NULLs would otherwise compare equal and spuriously reject).
-        if func.outputs.len() >= 2 {
+        // Buffer-overlap rejects (issue #225, and #108 for the identity case
+        // the first of them subsumes). BOTH rules ship together and are NOT
+        // independent: out x out alone at the produced extent is fail-open,
+        // because `outA = in, outB = in + produced` passes it and then overruns
+        // outB. Deleting either as redundant reopens that.
+        //
+        // The extent is the number of elements actually WRITTEN --
+        // `endIdx - max(startIdx, lookback) + 1`, clamped at zero -- not the
+        // requested range. That is the size the documented Exact Allocation
+        // recipe yields (website/src/api/README.md 3.3), so the range extent
+        // would reject callers following our own documentation, and does:
+        // three same-size mallocs land inside it. Inputs are read at absolute
+        // indices, so they keep `endIdx + 1` from the base.
+        //
+        // This is also what the Rust backend has always asserted
+        // (rust_lang.rs, `endIdx - max(startIdx, lookback) + 1`); C is adopting
+        // its sibling's contract rather than inventing one.
+        //
+        // Self-consistent under composition, which is why internal composed
+        // calls need no exemption: a composed call extends the inner range by
+        // exactly the lookback the callee then consumes, so the callee's
+        // produced count equals the caller's and the inner check sees the
+        // extent the outer check already accepted.
+        if func.outputs.len() >= 2 || !func.outputs.is_empty() && !func.inputs.is_empty() {
+            let lb_args: Vec<String> = func
+                .optional_inputs
+                .iter()
+                .map(|p| p.name.clone())
+                .collect();
+            let uname = name_override.map_or_else(
+                || func.name.to_uppercase(),
+                |n| n.trim_start_matches("TA_").to_string(),
+            );
+            out.push_str("   {\n");
+            out.push_str(&format!(
+                "      int taFirst = (int)TA_{uname}_Lookback({});\n",
+                lb_args.join(",")
+            ));
+            out.push_str("      int taProduced;\n");
+            out.push_str("      if( taFirst < startIdx ) taFirst = startIdx;\n");
+            out.push_str(
+                "      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;\n",
+            );
             let mut pairs: Vec<String> = Vec::new();
             for i in 0..func.outputs.len() {
                 for j in (i + 1)..func.outputs.len() {
@@ -918,11 +955,42 @@ fn gen_func_inner(
                     if b.is_nullable() {
                         guard.push_str(&format!("{} != NULL && ", b.name));
                     }
-                    pairs.push(format!("{guard}{} == {}", a.name, b.name));
+                    pairs.push(format!(
+                        "{guard}({0} == {1} || TA_RANGES_OVERLAP({0}, TA_OUT_BYTES({0},taProduced), {1}, TA_OUT_BYTES({1},taProduced)))",
+                        a.name, b.name
+                    ));
                 }
             }
-            out.push_str(&format!("   if( {} )\n", pairs.join(" || ")));
-            out.push_str("      return TA_BAD_PARAM;\n");
+            for o in &func.outputs {
+                let o_int = o.param_type == ParamType::Integer;
+                for i in &func.inputs {
+                    let i_int = i.param_type == ParamType::Integer;
+                    // The float variant widens on read, so its inputs are a
+                    // different element type from the double outputs and cannot
+                    // share memory.
+                    if single_precision && !i_int {
+                        continue;
+                    }
+                    if o_int != i_int {
+                        continue;
+                    }
+                    let mut guard = String::new();
+                    if o.is_nullable() {
+                        guard.push_str(&format!("{} != NULL && ", o.name));
+                    }
+                    pairs.push(format!(
+                        "{guard}(void *)({0}) != (void *)({1}) && TA_RANGES_OVERLAP({0}, TA_OUT_BYTES({0},taProduced), {1}, TA_IN_BYTES({1}))",
+                        o.name, i.name
+                    ));
+                }
+            }
+            if pairs.is_empty() {
+                out.push_str("      (void)taProduced;\n");
+            } else {
+                out.push_str(&format!("      if( {} )\n", pairs.join(" ||\n          ")));
+                out.push_str("         return TA_BAD_PARAM;\n");
+            }
+            out.push_str("   }\n");
         }
         out.push('\n');
     }

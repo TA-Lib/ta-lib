@@ -100,8 +100,14 @@ TA_LIB_API TA_RetCode TA_MINMAXINDEX( int    startIdx,
       return TA_BAD_PARAM;
    if( !outMaxIdx )
       return TA_BAD_PARAM;
-   if( outMinIdx == outMaxIdx )
-      return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_MINMAXINDEX_Lookback(optInTimePeriod);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (outMinIdx == outMaxIdx || TA_RANGES_OVERLAP(outMinIdx, TA_OUT_BYTES(outMinIdx,taProduced), outMaxIdx, TA_OUT_BYTES(outMaxIdx,taProduced))) )
+         return TA_BAD_PARAM;
+   }
 
    /* Identify the minimum number of price bar needed
     * to identify at least one output over the specified
@@ -227,8 +233,14 @@ TA_RetCode TA_S_MINMAXINDEX( int    startIdx,
       return TA_BAD_PARAM;
    if( !outMaxIdx )
       return TA_BAD_PARAM;
-   if( outMinIdx == outMaxIdx )
-      return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_MINMAXINDEX_Lookback(optInTimePeriod);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (outMinIdx == outMaxIdx || TA_RANGES_OVERLAP(outMinIdx, TA_OUT_BYTES(outMinIdx,taProduced), outMaxIdx, TA_OUT_BYTES(outMaxIdx,taProduced))) )
+         return TA_BAD_PARAM;
+   }
 
    nbInitialElementNeeded = optInTimePeriod - 1;
    if( startIdx < nbInitialElementNeeded )

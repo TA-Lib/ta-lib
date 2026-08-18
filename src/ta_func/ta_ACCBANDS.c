@@ -118,8 +118,25 @@ TA_LIB_API TA_RetCode TA_ACCBANDS( int    startIdx,
       return TA_BAD_PARAM;
    if( !outRealLowerBand )
       return TA_BAD_PARAM;
-   if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand )
-      return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_ACCBANDS_Lookback(optInTimePeriod);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (outRealUpperBand == outRealMiddleBand || TA_RANGES_OVERLAP(outRealUpperBand, TA_OUT_BYTES(outRealUpperBand,taProduced), outRealMiddleBand, TA_OUT_BYTES(outRealMiddleBand,taProduced))) ||
+          (outRealUpperBand == outRealLowerBand || TA_RANGES_OVERLAP(outRealUpperBand, TA_OUT_BYTES(outRealUpperBand,taProduced), outRealLowerBand, TA_OUT_BYTES(outRealLowerBand,taProduced))) ||
+          (outRealMiddleBand == outRealLowerBand || TA_RANGES_OVERLAP(outRealMiddleBand, TA_OUT_BYTES(outRealMiddleBand,taProduced), outRealLowerBand, TA_OUT_BYTES(outRealLowerBand,taProduced))) ||
+          (void *)(outRealUpperBand) != (void *)(inHigh) && TA_RANGES_OVERLAP(outRealUpperBand, TA_OUT_BYTES(outRealUpperBand,taProduced), inHigh, TA_IN_BYTES(inHigh)) ||
+          (void *)(outRealUpperBand) != (void *)(inLow) && TA_RANGES_OVERLAP(outRealUpperBand, TA_OUT_BYTES(outRealUpperBand,taProduced), inLow, TA_IN_BYTES(inLow)) ||
+          (void *)(outRealUpperBand) != (void *)(inClose) && TA_RANGES_OVERLAP(outRealUpperBand, TA_OUT_BYTES(outRealUpperBand,taProduced), inClose, TA_IN_BYTES(inClose)) ||
+          (void *)(outRealMiddleBand) != (void *)(inHigh) && TA_RANGES_OVERLAP(outRealMiddleBand, TA_OUT_BYTES(outRealMiddleBand,taProduced), inHigh, TA_IN_BYTES(inHigh)) ||
+          (void *)(outRealMiddleBand) != (void *)(inLow) && TA_RANGES_OVERLAP(outRealMiddleBand, TA_OUT_BYTES(outRealMiddleBand,taProduced), inLow, TA_IN_BYTES(inLow)) ||
+          (void *)(outRealMiddleBand) != (void *)(inClose) && TA_RANGES_OVERLAP(outRealMiddleBand, TA_OUT_BYTES(outRealMiddleBand,taProduced), inClose, TA_IN_BYTES(inClose)) ||
+          (void *)(outRealLowerBand) != (void *)(inHigh) && TA_RANGES_OVERLAP(outRealLowerBand, TA_OUT_BYTES(outRealLowerBand,taProduced), inHigh, TA_IN_BYTES(inHigh)) ||
+          (void *)(outRealLowerBand) != (void *)(inLow) && TA_RANGES_OVERLAP(outRealLowerBand, TA_OUT_BYTES(outRealLowerBand,taProduced), inLow, TA_IN_BYTES(inLow)) ||
+          (void *)(outRealLowerBand) != (void *)(inClose) && TA_RANGES_OVERLAP(outRealLowerBand, TA_OUT_BYTES(outRealLowerBand,taProduced), inClose, TA_IN_BYTES(inClose)) )
+         return TA_BAD_PARAM;
+   }
 
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
@@ -270,8 +287,16 @@ TA_RetCode TA_S_ACCBANDS( int    startIdx,
       return TA_BAD_PARAM;
    if( !outRealLowerBand )
       return TA_BAD_PARAM;
-   if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand )
-      return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_ACCBANDS_Lookback(optInTimePeriod);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (outRealUpperBand == outRealMiddleBand || TA_RANGES_OVERLAP(outRealUpperBand, TA_OUT_BYTES(outRealUpperBand,taProduced), outRealMiddleBand, TA_OUT_BYTES(outRealMiddleBand,taProduced))) ||
+          (outRealUpperBand == outRealLowerBand || TA_RANGES_OVERLAP(outRealUpperBand, TA_OUT_BYTES(outRealUpperBand,taProduced), outRealLowerBand, TA_OUT_BYTES(outRealLowerBand,taProduced))) ||
+          (outRealMiddleBand == outRealLowerBand || TA_RANGES_OVERLAP(outRealMiddleBand, TA_OUT_BYTES(outRealMiddleBand,taProduced), outRealLowerBand, TA_OUT_BYTES(outRealLowerBand,taProduced))) )
+         return TA_BAD_PARAM;
+   }
 
    lookbackTotal = TA_SMA_Lookback(optInTimePeriod);
    if( startIdx < lookbackTotal )

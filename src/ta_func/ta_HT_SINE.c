@@ -161,8 +161,16 @@ TA_LIB_API TA_RetCode TA_HT_SINE( int    startIdx,
       return TA_BAD_PARAM;
    if( !outLeadSine )
       return TA_BAD_PARAM;
-   if( outSine == outLeadSine )
-      return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_HT_SINE_Lookback();
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (outSine == outLeadSine || TA_RANGES_OVERLAP(outSine, TA_OUT_BYTES(outSine,taProduced), outLeadSine, TA_OUT_BYTES(outLeadSine,taProduced))) ||
+          (void *)(outSine) != (void *)(inReal) && TA_RANGES_OVERLAP(outSine, TA_OUT_BYTES(outSine,taProduced), inReal, TA_IN_BYTES(inReal)) ||
+          (void *)(outLeadSine) != (void *)(inReal) && TA_RANGES_OVERLAP(outLeadSine, TA_OUT_BYTES(outLeadSine,taProduced), inReal, TA_IN_BYTES(inReal)) )
+         return TA_BAD_PARAM;
+   }
 
    a = 0.0962;
    b = 0.5769;
@@ -610,8 +618,14 @@ TA_RetCode TA_S_HT_SINE( int    startIdx,
       return TA_BAD_PARAM;
    if( !outLeadSine )
       return TA_BAD_PARAM;
-   if( outSine == outLeadSine )
-      return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_HT_SINE_Lookback();
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (outSine == outLeadSine || TA_RANGES_OVERLAP(outSine, TA_OUT_BYTES(outSine,taProduced), outLeadSine, TA_OUT_BYTES(outLeadSine,taProduced))) )
+         return TA_BAD_PARAM;
+   }
 
    a = 0.0962;
    b = 0.5769;

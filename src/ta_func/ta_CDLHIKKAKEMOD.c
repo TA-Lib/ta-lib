@@ -108,6 +108,13 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD( int    startIdx,
       return TA_BAD_PARAM;
    if( !outInteger )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_CDLHIKKAKEMOD_Lookback();
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      (void)taProduced;
+   }
 
    /* Confirmation window countdown (replaces the absolute patternIdx guard)
     * and a cache of the 3rd candle's high/low (replaces inHigh/inLow
@@ -264,6 +271,13 @@ TA_RetCode TA_S_CDLHIKKAKEMOD( int    startIdx,
       return TA_BAD_PARAM;
    if( !outInteger )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_CDLHIKKAKEMOD_Lookback();
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      (void)taProduced;
+   }
 
    lookbackTotal = TA_CDLHIKKAKEMOD_Lookback();
    if( startIdx < lookbackTotal )

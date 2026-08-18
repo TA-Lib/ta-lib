@@ -143,6 +143,15 @@ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_MAVP_Lookback(optInMinPeriod,optInMaxPeriod,optInMAType);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (void *)(outReal) != (void *)(inReal) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inReal, TA_IN_BYTES(inReal)) ||
+          (void *)(outReal) != (void *)(inPeriods) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inPeriods, TA_IN_BYTES(inPeriods)) )
+         return TA_BAD_PARAM;
+   }
 
    /* An inverted period window (min above max) is an invalid parameter
     * combination: the per-bar clamp below would push a period above
@@ -500,6 +509,13 @@ TA_RetCode TA_S_MAVP( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_MAVP_Lookback(optInMinPeriod,optInMaxPeriod,optInMAType);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      (void)taProduced;
+   }
 
    if( optInMinPeriod > optInMaxPeriod )
    {

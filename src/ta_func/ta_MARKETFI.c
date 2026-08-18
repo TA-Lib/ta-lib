@@ -88,6 +88,16 @@ TA_LIB_API TA_RetCode TA_MARKETFI( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_MARKETFI_Lookback();
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (void *)(outReal) != (void *)(inHigh) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inHigh, TA_IN_BYTES(inHigh)) ||
+          (void *)(outReal) != (void *)(inLow) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inLow, TA_IN_BYTES(inLow)) ||
+          (void *)(outReal) != (void *)(inVolume) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inVolume, TA_IN_BYTES(inVolume)) )
+         return TA_BAD_PARAM;
+   }
 
    /* Bill Williams' Market Facilitation Index: the price range a bar
     * travelled per unit of volume traded, i.e. how much movement the
@@ -154,6 +164,13 @@ TA_RetCode TA_S_MARKETFI( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_MARKETFI_Lookback();
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      (void)taProduced;
+   }
 
    outIdx = 0;
    for( i = startIdx; i <= endIdx; i += 1 )

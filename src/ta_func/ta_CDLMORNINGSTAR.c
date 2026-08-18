@@ -117,6 +117,13 @@ TA_LIB_API TA_RetCode TA_CDLMORNINGSTAR( int    startIdx,
       return TA_BAD_PARAM;
    if( !outInteger )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_CDLMORNINGSTAR_Lookback(optInPenetration);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      (void)taProduced;
+   }
 
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
@@ -248,6 +255,13 @@ TA_RetCode TA_S_CDLMORNINGSTAR( int    startIdx,
       return TA_BAD_PARAM;
    if( !outInteger )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_CDLMORNINGSTAR_Lookback(optInPenetration);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      (void)taProduced;
+   }
 
    lookbackTotal = TA_CDLMORNINGSTAR_Lookback(optInPenetration);
    if( startIdx < lookbackTotal )

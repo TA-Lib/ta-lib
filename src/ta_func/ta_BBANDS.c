@@ -163,8 +163,19 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
       return TA_BAD_PARAM;
    if( !outRealLowerBand )
       return TA_BAD_PARAM;
-   if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand )
-      return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_BBANDS_Lookback(optInTimePeriod,optInNbDevUp,optInNbDevDn,optInMAType);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (outRealUpperBand == outRealMiddleBand || TA_RANGES_OVERLAP(outRealUpperBand, TA_OUT_BYTES(outRealUpperBand,taProduced), outRealMiddleBand, TA_OUT_BYTES(outRealMiddleBand,taProduced))) ||
+          (outRealUpperBand == outRealLowerBand || TA_RANGES_OVERLAP(outRealUpperBand, TA_OUT_BYTES(outRealUpperBand,taProduced), outRealLowerBand, TA_OUT_BYTES(outRealLowerBand,taProduced))) ||
+          (outRealMiddleBand == outRealLowerBand || TA_RANGES_OVERLAP(outRealMiddleBand, TA_OUT_BYTES(outRealMiddleBand,taProduced), outRealLowerBand, TA_OUT_BYTES(outRealLowerBand,taProduced))) ||
+          (void *)(outRealUpperBand) != (void *)(inReal) && TA_RANGES_OVERLAP(outRealUpperBand, TA_OUT_BYTES(outRealUpperBand,taProduced), inReal, TA_IN_BYTES(inReal)) ||
+          (void *)(outRealMiddleBand) != (void *)(inReal) && TA_RANGES_OVERLAP(outRealMiddleBand, TA_OUT_BYTES(outRealMiddleBand,taProduced), inReal, TA_IN_BYTES(inReal)) ||
+          (void *)(outRealLowerBand) != (void *)(inReal) && TA_RANGES_OVERLAP(outRealLowerBand, TA_OUT_BYTES(outRealLowerBand,taProduced), inReal, TA_IN_BYTES(inReal)) )
+         return TA_BAD_PARAM;
+   }
 
    if( optInMAType == TA_MAType_SMA )
    {
@@ -462,8 +473,16 @@ TA_RetCode TA_S_BBANDS( int    startIdx,
       return TA_BAD_PARAM;
    if( !outRealLowerBand )
       return TA_BAD_PARAM;
-   if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand )
-      return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_BBANDS_Lookback(optInTimePeriod,optInNbDevUp,optInNbDevDn,optInMAType);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (outRealUpperBand == outRealMiddleBand || TA_RANGES_OVERLAP(outRealUpperBand, TA_OUT_BYTES(outRealUpperBand,taProduced), outRealMiddleBand, TA_OUT_BYTES(outRealMiddleBand,taProduced))) ||
+          (outRealUpperBand == outRealLowerBand || TA_RANGES_OVERLAP(outRealUpperBand, TA_OUT_BYTES(outRealUpperBand,taProduced), outRealLowerBand, TA_OUT_BYTES(outRealLowerBand,taProduced))) ||
+          (outRealMiddleBand == outRealLowerBand || TA_RANGES_OVERLAP(outRealMiddleBand, TA_OUT_BYTES(outRealMiddleBand,taProduced), outRealLowerBand, TA_OUT_BYTES(outRealLowerBand,taProduced))) )
+         return TA_BAD_PARAM;
+   }
 
    if( optInMAType == TA_MAType_SMA )
    {

@@ -162,8 +162,20 @@ TA_LIB_API TA_RetCode TA_STOCH( int    startIdx,
       return TA_BAD_PARAM;
    if( !outSlowD )
       return TA_BAD_PARAM;
-   if( outSlowK == outSlowD )
-      return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_STOCH_Lookback(optInFastK_Period,optInSlowK_Period,optInSlowK_MAType,optInSlowD_Period,optInSlowD_MAType);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (outSlowK == outSlowD || TA_RANGES_OVERLAP(outSlowK, TA_OUT_BYTES(outSlowK,taProduced), outSlowD, TA_OUT_BYTES(outSlowD,taProduced))) ||
+          (void *)(outSlowK) != (void *)(inHigh) && TA_RANGES_OVERLAP(outSlowK, TA_OUT_BYTES(outSlowK,taProduced), inHigh, TA_IN_BYTES(inHigh)) ||
+          (void *)(outSlowK) != (void *)(inLow) && TA_RANGES_OVERLAP(outSlowK, TA_OUT_BYTES(outSlowK,taProduced), inLow, TA_IN_BYTES(inLow)) ||
+          (void *)(outSlowK) != (void *)(inClose) && TA_RANGES_OVERLAP(outSlowK, TA_OUT_BYTES(outSlowK,taProduced), inClose, TA_IN_BYTES(inClose)) ||
+          (void *)(outSlowD) != (void *)(inHigh) && TA_RANGES_OVERLAP(outSlowD, TA_OUT_BYTES(outSlowD,taProduced), inHigh, TA_IN_BYTES(inHigh)) ||
+          (void *)(outSlowD) != (void *)(inLow) && TA_RANGES_OVERLAP(outSlowD, TA_OUT_BYTES(outSlowD,taProduced), inLow, TA_IN_BYTES(inLow)) ||
+          (void *)(outSlowD) != (void *)(inClose) && TA_RANGES_OVERLAP(outSlowD, TA_OUT_BYTES(outSlowD,taProduced), inClose, TA_IN_BYTES(inClose)) )
+         return TA_BAD_PARAM;
+   }
 
    /* With stochastic, there is a total of 4 different lines that
     * are defined: FASTK, FASTD, SLOWK and SLOWD.
@@ -442,8 +454,14 @@ TA_RetCode TA_S_STOCH( int    startIdx,
       return TA_BAD_PARAM;
    if( !outSlowD )
       return TA_BAD_PARAM;
-   if( outSlowK == outSlowD )
-      return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_STOCH_Lookback(optInFastK_Period,optInSlowK_Period,optInSlowK_MAType,optInSlowD_Period,optInSlowD_MAType);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (outSlowK == outSlowD || TA_RANGES_OVERLAP(outSlowK, TA_OUT_BYTES(outSlowK,taProduced), outSlowD, TA_OUT_BYTES(outSlowD,taProduced))) )
+         return TA_BAD_PARAM;
+   }
 
    lookbackK = optInFastK_Period - 1;
    lookbackKSlow = TA_MA_Lookback(optInSlowK_Period,optInSlowK_MAType);

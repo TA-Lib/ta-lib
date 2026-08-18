@@ -148,6 +148,14 @@ TA_LIB_API TA_RetCode TA_MA( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_MA_Lookback(optInTimePeriod,optInMAType);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (void *)(outReal) != (void *)(inReal) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inReal, TA_IN_BYTES(inReal)) )
+         return TA_BAD_PARAM;
+   }
 
    /* No-smoothing identity: period 1 (every MA type) or the explicit
     * TA_MAType_DISABLED (any period, issue #93). One copy path, lookback 0.
@@ -237,6 +245,13 @@ TA_RetCode TA_S_MA( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_MA_Lookback(optInTimePeriod,optInMAType);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      (void)taProduced;
+   }
 
    if( optInTimePeriod == 1 || optInMAType == TA_MAType_DISABLED )
    {

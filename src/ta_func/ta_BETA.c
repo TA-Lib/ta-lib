@@ -110,6 +110,15 @@ TA_LIB_API TA_RetCode TA_BETA( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_BETA_Lookback(optInTimePeriod);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (void *)(outReal) != (void *)(inReal0) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inReal0, TA_IN_BYTES(inReal0)) ||
+          (void *)(outReal) != (void *)(inReal1) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inReal1, TA_IN_BYTES(inReal1)) )
+         return TA_BAD_PARAM;
+   }
 
    S_xx = 0.0;
    S_xy = 0.0;
@@ -305,6 +314,13 @@ TA_RetCode TA_S_BETA( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_BETA_Lookback(optInTimePeriod);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      (void)taProduced;
+   }
 
    S_xx = 0.0;
    S_xy = 0.0;

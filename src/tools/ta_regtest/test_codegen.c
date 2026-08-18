@@ -6900,6 +6900,94 @@ static ErrorNumber verify_fuzz_zerosum_nonvacuous(void)
  * directly — each of the 3 outputs aliased onto each of the 3 inputs must
  * reproduce the separate-buffer result BIT-FOR-BIT (all 3 bands, to catch an
  * aliased write corrupting a still-needed read of another band's input). */
+/* #225: buffer-overlap rejects, batch tier.
+ *
+ * Four shapes. Three must be REJECTED once the guard lands; the fourth must
+ * stay ACCEPTED and bit-identical, because a false reject is this change's
+ * only real failure mode.
+ *
+ * The startIdx > 0 shape is the one no fill-tier probe can reach:
+ * TA_*_OpenAndFill passes startIdx = 0 internally, where the write-extent and
+ * read-extent rules coincide exactly. Only a batch call with startIdx > 0
+ * separates `endIdx - startIdx + 1` (wrong for an input, short by startIdx)
+ * from `endIdx + 1`.
+ */
+static ErrorNumber verify_buffer_overlap_rejects(void)
+{
+    enum { ON = 300, OPER = 30 };
+    static double src[ON], buf[ON + 8], sep1[ON + 8], sep2[ON + 8];
+    static double ref[ON], got[ON];
+    int bi, nb, i, bad = 0, accepted = 0;
+    TA_RetCode rc;
+
+    for( i = 0; i < ON; i++ )
+        src[i] = 100.0 + (i % 17) * 1.5 + (i % 7) * 0.25;
+
+    /* ---- must stay ACCEPTED: whole-buffer in place, value-identical ------ */
+    if( TA_SMA(0, ON - 1, src, OPER, &bi, &nb, ref) != TA_SUCCESS )
+    {
+        printf("overlap probe: reference SMA failed\n");
+        return TA_TSTCDL_PREDICATE_VACUOUS;
+    }
+    memcpy(buf, src, sizeof(double) * ON);
+    rc = TA_SMA(0, ON - 1, buf, OPER, &bi, &nb, buf);
+    if( rc != TA_SUCCESS )
+    {
+        printf("OVERLAP PROBE: whole-buffer in-place SMA was REJECTED (rc=%d) -- "
+               "false reject\n", (int)rc);
+        bad++;
+    }
+    else
+    {
+        for( i = 0; i < nb; i++ )
+            if( memcmp(&buf[i], &ref[i], sizeof(double)) != 0 ) { bad++; break; }
+        if( i < nb )
+            printf("OVERLAP PROBE: in-place SMA differs from the disjoint result "
+                   "at %d\n", i);
+    }
+
+    /* ---- must stay ACCEPTED: a range that produces nothing --------------
+     * The two-term half-open test is only equivalent to the max/min form when
+     * both extents are positive, so a zero produced count has to short-circuit
+     * to "no overlap". Without that this flips from TA_SUCCESS/nb=0 to
+     * TA_BAD_PARAM. */
+    memcpy(buf, src, sizeof(double) * ON);
+    rc = TA_SMA(0, 5, buf, 30, &bi, &nb, buf + 2);
+    if( rc != TA_SUCCESS || nb != 0 )
+    {
+        printf("OVERLAP PROBE: empty-range SMA (lookback past endIdx) rc=%d nb=%d, "
+               "expected TA_SUCCESS/0\n", (int)rc, nb);
+        bad++;
+    }
+
+    /* ---- must be REJECTED: two outputs one element apart ---------------- */
+    rc = TA_BBANDS(0, ON - 1, src, 5, 2.0, 2.0, TA_MAType_SMA, &bi, &nb,
+                   buf, buf + 1, sep1);
+    if( rc != TA_BAD_PARAM ) { printf("OVERLAP PROBE: out/out overlap accepted (rc=%d)\n", (int)rc); accepted++; }
+
+    /* ---- must be REJECTED: input and output one element apart ----------- */
+    memcpy(buf, src, sizeof(double) * ON);
+    rc = TA_BBANDS(0, ON - 1, buf, 5, 2.0, 2.0, TA_MAType_SMA, &bi, &nb,
+                   buf + 1, sep1, sep2);
+    if( rc != TA_BAD_PARAM ) { printf("OVERLAP PROBE: in/out overlap accepted (rc=%d)\n", (int)rc); accepted++; }
+
+    /* ---- must be REJECTED: out = in + startIdx, the extent-rule case ---- */
+    memcpy(buf, src, sizeof(double) * ON);
+    rc = TA_SMA(100, ON - 1, buf, OPER, &bi, &nb, buf + 100);
+    if( rc != TA_BAD_PARAM ) { printf("OVERLAP PROBE: out = in + startIdx accepted (rc=%d) -- "
+                                      "reads [71..%d], writes [100..%d]\n", (int)rc, ON - 1, ON - 1); accepted++; }
+
+    if( bad || accepted )
+    {
+        printf("  Buffer-overlap rejects: %d false reject(s)/value change(s), "
+               "%d colliding call(s) still accepted\n", bad, accepted);
+        return TA_CODEGEN_STREAM_MISMATCH;
+    }
+    printf("  Buffer-overlap rejects: 3 colliding shapes refused, whole-buffer "
+           "in place accepted and bit-identical\n");
+    return TA_TEST_PASS;
+}
+
 static ErrorNumber verify_accbands_inplace_aliasing(void)
 {
     enum { AN = 300, AP = 14 };
@@ -6997,6 +7085,9 @@ ErrorNumber test_codegen(const TA_History *history,
     if( errNb != TA_TEST_PASS )
         return errNb;
     errNb = verify_accbands_inplace_aliasing();
+    if( errNb != TA_TEST_PASS )
+        return errNb;
+    errNb = verify_buffer_overlap_rejects();
     if( errNb != TA_TEST_PASS )
         return errNb;
 

@@ -15,6 +15,53 @@
    #include "ta_global.h"
 #endif
 
+/* uintptr_t for TA_RANGES_OVERLAP below. No conditional fallback: a platform
+ * without the type should fail to compile rather than silently fall back to a
+ * pointer-equality guard, which would restore the weaker check that #225 is
+ * about while still reporting success. */
+#include <stdint.h>
+
+/* Do the byte ranges [a, a+an) and [b, b+bn) intersect?  (issue #225)
+ *
+ * Comparing pointers into DIFFERENT objects with < is undefined in C11 6.5.8p5,
+ * so this casts to uintptr_t. The standards gap costs an answer only where
+ * either answer is correct:
+ *   - two pointers into the SAME object -- the case the guard must catch --
+ *     order consistently under the cast, so a real overlap is never missed;
+ *   - pointers into distinct live objects occupy disjoint address ranges, so
+ *     for correctly sized buffers the test cannot report a false overlap.
+ *
+ * A ZERO extent short-circuits to "no overlap". The two-term half-open test is
+ * only equivalent to max(a,b) < min(a+eA,b+eB) when both extents are positive,
+ * and a zero produced count is both reachable and common -- without this,
+ * TA_SMA(0, 5, buf, 30, ..., out = buf + 2) flips from TA_SUCCESS/nb=0 to
+ * TA_BAD_PARAM.
+ *
+ * Byte extents rather than element counts keep it type-agnostic: MINMAXINDEX's
+ * int outputs against a double input need no special case. Strictly `<` on both
+ * sides: a closed interval would reject touching-but-disjoint buffers, which is
+ * the layout the documented Exact Allocation recipe produces. */
+#define TA_RANGES_OVERLAP(a,an,b,bn) \
+   ( (an) != 0 && (bn) != 0 && \
+     (uintptr_t)(a) < (uintptr_t)(b) + (bn) && (uintptr_t)(b) < (uintptr_t)(a) + (an) )
+
+/* Byte extents of an output and an input buffer.
+ *
+ * An output holds the elements actually WRITTEN, not the requested range:
+ * `endIdx - max(startIdx, lookback) + 1`, clamped at zero. That is method 3
+ * ("Exact Allocation") in website/src/api/README.md 3.3, so it is the size a
+ * caller following our own documentation provides -- using the range instead
+ * over-states by max(0, lookback - startIdx) and rejects that caller. The
+ * clamp must happen before the byte multiply: a negative count would wrap the
+ * extent to ~2^64 and make the predicate answer "no overlap", the one
+ * fail-open path in the scheme.
+ *
+ * An input is read at ABSOLUTE indices up to endIdx, so its extent from the
+ * base is endIdx+1 elements -- measuring from `in + startIdx`, or at the
+ * narrower range extent, silently reopens the hole. */
+#define TA_OUT_BYTES(p,produced)  ( (size_t)(produced) * sizeof((p)[0]) )
+#define TA_IN_BYTES(p)            ( (size_t)(endIdx + 1) * sizeof((p)[0]) )
+
 /* FMA runtime CPU dispatch (PR #96): mark fused indicators with target_clones so
  * a portable baseline build (e.g. a manylinux wheel) dispatches to a hardware-fma
  * clone at load — no -mfma, no SIGILL on pre-2013 CPUs. glibc-only: target_clones

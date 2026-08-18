@@ -90,6 +90,15 @@ TA_LIB_API TA_RetCode TA_OBV( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_OBV_Lookback();
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (void *)(outReal) != (void *)(inReal) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inReal, TA_IN_BYTES(inReal)) ||
+          (void *)(outReal) != (void *)(inVolume) && TA_RANGES_OVERLAP(outReal, TA_OUT_BYTES(outReal,taProduced), inVolume, TA_IN_BYTES(inVolume)) )
+         return TA_BAD_PARAM;
+   }
 
    prevOBV = inVolume[startIdx];
    prevReal = inReal[startIdx];
@@ -137,6 +146,13 @@ TA_RetCode TA_S_OBV( int    startIdx,
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_OBV_Lookback();
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      (void)taProduced;
+   }
 
    prevOBV = (double)inVolume[startIdx];
    prevReal = (double)inReal[startIdx];

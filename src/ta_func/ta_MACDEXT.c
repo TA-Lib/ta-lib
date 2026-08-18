@@ -164,8 +164,19 @@ TA_LIB_API TA_RetCode TA_MACDEXT( int    startIdx,
       return TA_BAD_PARAM;
    if( !outMACDHist )
       return TA_BAD_PARAM;
-   if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist )
-      return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_MACDEXT_Lookback(optInFastPeriod,optInFastMAType,optInSlowPeriod,optInSlowMAType,optInSignalPeriod,optInSignalMAType);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (outMACD == outMACDSignal || TA_RANGES_OVERLAP(outMACD, TA_OUT_BYTES(outMACD,taProduced), outMACDSignal, TA_OUT_BYTES(outMACDSignal,taProduced))) ||
+          (outMACD == outMACDHist || TA_RANGES_OVERLAP(outMACD, TA_OUT_BYTES(outMACD,taProduced), outMACDHist, TA_OUT_BYTES(outMACDHist,taProduced))) ||
+          (outMACDSignal == outMACDHist || TA_RANGES_OVERLAP(outMACDSignal, TA_OUT_BYTES(outMACDSignal,taProduced), outMACDHist, TA_OUT_BYTES(outMACDHist,taProduced))) ||
+          (void *)(outMACD) != (void *)(inReal) && TA_RANGES_OVERLAP(outMACD, TA_OUT_BYTES(outMACD,taProduced), inReal, TA_IN_BYTES(inReal)) ||
+          (void *)(outMACDSignal) != (void *)(inReal) && TA_RANGES_OVERLAP(outMACDSignal, TA_OUT_BYTES(outMACDSignal,taProduced), inReal, TA_IN_BYTES(inReal)) ||
+          (void *)(outMACDHist) != (void *)(inReal) && TA_RANGES_OVERLAP(outMACDHist, TA_OUT_BYTES(outMACDHist,taProduced), inReal, TA_IN_BYTES(inReal)) )
+         return TA_BAD_PARAM;
+   }
 
    if( optInFastMAType == TA_MAType_EMA && optInSlowMAType == TA_MAType_EMA && optInSignalMAType == TA_MAType_EMA && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 )
    {
@@ -371,8 +382,16 @@ TA_RetCode TA_S_MACDEXT( int    startIdx,
       return TA_BAD_PARAM;
    if( !outMACDHist )
       return TA_BAD_PARAM;
-   if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist )
-      return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_MACDEXT_Lookback(optInFastPeriod,optInFastMAType,optInSlowPeriod,optInSlowMAType,optInSignalPeriod,optInSignalMAType);
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (outMACD == outMACDSignal || TA_RANGES_OVERLAP(outMACD, TA_OUT_BYTES(outMACD,taProduced), outMACDSignal, TA_OUT_BYTES(outMACDSignal,taProduced))) ||
+          (outMACD == outMACDHist || TA_RANGES_OVERLAP(outMACD, TA_OUT_BYTES(outMACD,taProduced), outMACDHist, TA_OUT_BYTES(outMACDHist,taProduced))) ||
+          (outMACDSignal == outMACDHist || TA_RANGES_OVERLAP(outMACDSignal, TA_OUT_BYTES(outMACDSignal,taProduced), outMACDHist, TA_OUT_BYTES(outMACDHist,taProduced))) )
+         return TA_BAD_PARAM;
+   }
 
    if( optInFastMAType == TA_MAType_EMA && optInSlowMAType == TA_MAType_EMA && optInSignalMAType == TA_MAType_EMA && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 )
    {

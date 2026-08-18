@@ -89,6 +89,8 @@ TA_MACD_Update( s, close, &macd, &signal, &hist );
 | `TA_<NAME>_Update` / `TA_<NAME>_Peek` | `TA_BAD_PARAM` on NULL arguments, and on a non-finite bar value — in which case the handle is left exactly as it was |
 | `TA_<NAME>_Close`  | `TA_SUCCESS`; `TA_<NAME>_Close(NULL)` is a no-op |
 
+**Buffer overlap is the caller's responsibility outside `OpenAndFill`.** `OpenAndFill` carries the same reject as the batch entries, and is stricter: it refuses an output that aliases an input at all, not only partially. `Open`, `Update` and `Peek` do not check. `Update` and `Peek` take scalar `double *` outputs, where two of them either coincide or are disjoint — a partial overlap needs a misaligned cast, which is undefined before the call is made — so the only reachable mistake is passing the same pointer for two outputs, e.g. `TA_MACD_Update(s, x, &a, &a, &b)`, which returns `TA_SUCCESS` with one output clobbered. `Open` writes one element per output and is the same story. These are the hottest paths in the library and are deliberately left unchecked; pass distinct outputs.
+
 **Non-finite input is rejected.** NaN and ±Inf are not supported as inputs anywhere in TA-Lib, but the streaming tier is the one that *enforces* it: every public streaming entry point checks, and rejects without touching the handle. The batch API does not filter — it computes on whatever it is given.
 
 The difference is the retained state. Batch computes and forgets, so a NaN reaches the outputs depending on that bar and no others; a stream handle carries state forward, so a single non-finite bar would poison every value it produces afterwards, long after the feed recovers. Rejecting the bar and leaving the handle usable is more useful than accepting it and going permanently NaN.

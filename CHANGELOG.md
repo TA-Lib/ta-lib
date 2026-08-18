@@ -45,6 +45,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - ~10%: ATR and NATR
 
 ### Changed
+- (#225) C functions now return `TA_BAD_PARAM` when two output buffers overlap, or when an output *partially* overlaps an input. Computing wholly in place is unchanged and still supported; only partial overlap is refused, which previously corrupted the result silently. Calls that succeeded before and now fail were reading and writing the same memory at different offsets.
 - (#133) BBANDS default `optInTimePeriod` changed from 5 to 20, as intended by John Bollinger.
 - (#120) PPO and APO now default `optInMAType` to EMA (was SMA), matching Gerald Appel's original PPO/MACD definition. Pass `TA_MAType_SMA` explicitly to keep the previous behavior.
 - (#96) Fused multiply-add and other floating-point re-ordering produce minor output differences; an intentional modernization.

@@ -141,8 +141,16 @@ TA_LIB_API TA_RetCode TA_HT_PHASOR( int    startIdx,
       return TA_BAD_PARAM;
    if( !outQuadrature )
       return TA_BAD_PARAM;
-   if( outInPhase == outQuadrature )
-      return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_HT_PHASOR_Lookback();
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (outInPhase == outQuadrature || TA_RANGES_OVERLAP(outInPhase, TA_OUT_BYTES(outInPhase,taProduced), outQuadrature, TA_OUT_BYTES(outQuadrature,taProduced))) ||
+          (void *)(outInPhase) != (void *)(inReal) && TA_RANGES_OVERLAP(outInPhase, TA_OUT_BYTES(outInPhase,taProduced), inReal, TA_IN_BYTES(inReal)) ||
+          (void *)(outQuadrature) != (void *)(inReal) && TA_RANGES_OVERLAP(outQuadrature, TA_OUT_BYTES(outQuadrature,taProduced), inReal, TA_IN_BYTES(inReal)) )
+         return TA_BAD_PARAM;
+   }
 
    a = 0.0962;
    b = 0.5769;
@@ -510,8 +518,14 @@ TA_RetCode TA_S_HT_PHASOR( int    startIdx,
       return TA_BAD_PARAM;
    if( !outQuadrature )
       return TA_BAD_PARAM;
-   if( outInPhase == outQuadrature )
-      return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_HT_PHASOR_Lookback();
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      if( (outInPhase == outQuadrature || TA_RANGES_OVERLAP(outInPhase, TA_OUT_BYTES(outInPhase,taProduced), outQuadrature, TA_OUT_BYTES(outQuadrature,taProduced))) )
+         return TA_BAD_PARAM;
+   }
 
    a = 0.0962;
    b = 0.5769;

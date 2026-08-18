@@ -100,6 +100,13 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKE( int    startIdx,
       return TA_BAD_PARAM;
    if( !outInteger )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_CDLHIKKAKE_Lookback();
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      (void)taProduced;
+   }
 
    /* Confirmation-window countdown + cached 2nd-candle high/low: the pattern
     * state carried without an absolute bar index.
@@ -227,6 +234,13 @@ TA_RetCode TA_S_CDLHIKKAKE( int    startIdx,
       return TA_BAD_PARAM;
    if( !outInteger )
       return TA_BAD_PARAM;
+   {
+      int taFirst = (int)TA_CDLHIKKAKE_Lookback();
+      int taProduced;
+      if( taFirst < startIdx ) taFirst = startIdx;
+      taProduced = ( taFirst > endIdx ) ? 0 : endIdx - taFirst + 1;
+      (void)taProduced;
+   }
 
    lookbackTotal = TA_CDLHIKKAKE_Lookback();
    if( startIdx < lookbackTotal )
