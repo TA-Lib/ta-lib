@@ -4406,9 +4406,40 @@ fn walk_stmt_targets(s: &Statement, out: &mut BTreeSet<String>) {
             _ => {}
         });
     });
+    // Every nested body, not just the loops: a scalar assigned inside an `if`
+    // arm or an inner `for` is loop-carried, and missing it here would let
+    // `classify_v` read it as invariant and fold a subtree naming it into a
+    // ring -- storing its push-time value instead of its read-time one. The
+    // omission fails OPEN, so the traversal has to be total.
     match s {
-        Statement::While { body, .. } | Statement::DoWhile { body, .. } => {
+        Statement::While { body, .. }
+        | Statement::DoWhile { body, .. }
+        | Statement::For { body, .. }
+        | Statement::Block { body } => {
             for b in body {
+                walk_stmt_targets(b, out);
+            }
+        }
+        Statement::If {
+            then_body,
+            else_body,
+            ..
+        } => {
+            for b in then_body.iter().chain(else_body) {
+                walk_stmt_targets(b, out);
+            }
+        }
+        Statement::ForC {
+            init, update, body, ..
+        } => {
+            walk_stmt_targets(init, out);
+            walk_stmt_targets(update, out);
+            for b in body {
+                walk_stmt_targets(b, out);
+            }
+        }
+        Statement::Switch { cases, default, .. } => {
+            for b in cases.iter().flat_map(|(_, sts)| sts).chain(default) {
                 walk_stmt_targets(b, out);
             }
         }
