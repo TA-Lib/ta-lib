@@ -3384,17 +3384,6 @@ fn pre_fail_stmt(pre_fail: &str) -> String {
     }
 }
 
-/// `sp = TA_Malloc(...); memset; param/extra capture[; state capture]` at the
-/// given indent. memset keeps unused fields (identity path) deterministic
-/// and NULLs the ring pointers so `ReleaseInternal` is safe mid-allocation.
-///
-/// Rings: `with_state == true` is the normal path — capacity is captured
-/// NUMERICALLY from the still-live batch locals (`cursor - var`,
-/// loop-invariant), buffers are filled from the history tail (phase-free
-/// trailing reads only; CIRCBUF-order functions are a later tranche), and
-/// Peek's scratch mirrors are pre-allocated. On the identity path
-/// (`with_state == false`) capacities are zero and 1-slot buffers keep the
-/// transition's cap-0 guard and Peek's mirror copy well-defined.
 /// A derived ring stores one scalar per bar, so `open` cannot memcpy a raw
 /// column into it -- it has to evaluate the expression over the history. The
 /// expression is rendered with every array read re-indexed to `idx_var`, the
@@ -3482,6 +3471,17 @@ fn emit_ring_slots(
     }
 }
 
+/// `sp = TA_Malloc(...); memset; param/extra capture[; state capture]` at the
+/// given indent. memset keeps unused fields (identity path) deterministic
+/// and NULLs the ring pointers so `ReleaseInternal` is safe mid-allocation.
+///
+/// Rings: `with_state == true` is the normal path — capacity is captured
+/// NUMERICALLY from the still-live batch locals (`cursor - var`,
+/// loop-invariant), buffers are filled from the history tail (phase-free
+/// trailing reads only; CIRCBUF-order functions are a later tranche), and
+/// Peek's scratch mirrors are pre-allocated. On the identity path
+/// (`with_state == false`) capacities are zero and 1-slot buffers keep the
+/// transition's cap-0 guard and Peek's mirror copy well-defined.
 #[allow(clippy::too_many_lines)]
 fn alloc_and_capture(
     func: &FuncDef,

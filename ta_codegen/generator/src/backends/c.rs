@@ -2073,8 +2073,6 @@ pub(crate) fn c_predicate_expr(which: SpecialBuiltin, args: &[String]) -> String
     }
 }
 
-/// Crate-visible expression rendering (used by the stream emitter for
-/// private-param init expressions and identity-guard conditions).
 /// Render an expression the way a stream transition renders one: candle
 /// helpers map onto the scalar `TA_STREAM_CANDLE*` mirrors rather than the
 /// array-indexed batch macros. The open-time derived fill uses this so ONE
@@ -2101,6 +2099,8 @@ pub(crate) fn render_expression_stream_candles(
     })
 }
 
+/// Crate-visible expression rendering (used by the stream emitter for
+/// private-param init expressions and identity-guard conditions).
 pub(crate) fn render_expression(
     expr: &Expr,
     registry: &Registry,

@@ -1573,9 +1573,10 @@ pub fn analyze_region_scoped<'a>(
     } = scanned;
     // #229: a trailing index whose arrays are read ONLY through one derived
     // scalar keeps a single ring of that scalar instead of one ring per array.
-    // `eligible_derived` holds back anything reading candle settings, so this
-    // is AO, AC and QSTICK today -- the candlestick tranche waits on whether a
-    // stream may freeze the range type at Open.
+    // This runs BEFORE the fold below, so it sees raw `in<Array>[v]` reads; a
+    // later pass reading these statements sees `derived[v]` instead, which is a
+    // different shape key. Window analysis, when it lands, has to compute its
+    // eligibility here too rather than downstream of the fold.
     let derived_slots: BTreeMap<String, DerivedRing> =
         eligible_derived(&steady_stmts, &trailing, &bar_inputs);
     let steady_stmts = fold_derived_reads(&steady_stmts, &derived_slots);
@@ -1589,7 +1590,6 @@ pub fn analyze_region_scoped<'a>(
             ring.derived = Some(dr.clone());
         }
     }
-    derived_ring_census(&steady_stmts, &trailing, &func.name);
     let windows = assemble_windows(scanned_windows, &bar_inputs);
 
     let out_feedback = collect_out_feedback(&steady_stmts, &outputs);
@@ -4449,6 +4449,14 @@ fn walk_stmt_targets(s: &Statement, out: &mut BTreeSet<String>) {
 
 /// Helpers are pure functions of their arguments -- all fourteen in
 /// `input/helpers/` are single-expression or local-only bodies with no state.
+///
+/// `ta_candleaverage` is deliberately absent and must stay absent: it is the
+/// only helper carrying `avgPeriod` and `factor`, and an unlisted callee makes
+/// `classify_v` return Mixed for the whole call, so those two can never end up
+/// inside a derived shape. A ring freezes its shape's value at push time, and
+/// freezing the range type is contract-legal (a mid-stream `TA_SetCandleSettings`
+/// is undefined, `docs/streaming-api-design.md`); freezing a divisor that also
+/// sizes the ring is a different question that has not been asked.
 /// Listed rather than inferred for now; the analysis refuses any callee not
 /// named here, so an unlisted helper costs an optimization, never a wrong
 /// answer.
@@ -4505,53 +4513,13 @@ fn shape_key(e: &Expr) -> String {
     format!("{:?}", blank(e))
 }
 
-/// #229: for each trailing index carrying more than one array, the distinct
-/// maximal derived subtrees its reads sit in. One shape covering every read
-/// means one ring of that scalar replaces the per-array rings.
-fn derived_ring_census(
-    stmts: &[Statement],
-    trailing: &BTreeMap<String, BTreeSet<String>>,
-    fname: &str,
-) {
-    if std::env::var("TA_RING_REPORT").is_err() {
-        return;
-    }
-    let assigned = assigned_in(stmts);
-    let pure = pure_helper_names();
-    for (v, arrs) in trailing {
-        if arrs.len() < 2 {
-            continue;
-        }
-        let mut shapes: Vec<Expr> = Vec::new();
-        for st in stmts {
-            walk_stmt_exprs(st, &mut |e| {
-                let mut found = Vec::new();
-                let sh = classify_v(e, v, &assigned, &pure, &mut found);
-                if matches!(sh, VShape::Derived) {
-                    found.push(e.clone());
-                }
-                shapes.extend(found);
-            });
-        }
-        let mut uniq: Vec<String> = shapes.iter().map(shape_key).collect();
-        uniq.sort();
-        uniq.dedup();
-        let saving = if uniq.len() == 1 && arrs.len() > 1 {
-            arrs.len() - 1
-        } else {
-            0
-        };
-        eprintln!(
-            "DERIVED\t{fname}\t{v}\tarrays={}\tshapes={}\tsaving={saving}",
-            arrs.len(),
-            uniq.len()
-        );
-    }
-}
-
-
 /// The eligible derived rings: one shape covering every read at that index,
-/// more than one array behind it, and no settings dependency.
+/// with more than one array behind it.
+///
+/// A shape may read candle settings -- `ta_candlerange`'s range type is the
+/// only one reachable, because `pure_helper_names` deliberately omits
+/// `ta_candleaverage`, so `avgPeriod` and `factor` can never enter a shape.
+/// See the note there before adding a helper to that list.
 fn eligible_derived(
     stmts: &[Statement],
     trailing: &BTreeMap<String, BTreeSet<String>>,
@@ -6039,10 +6007,6 @@ fn derived_slot_read(
     }
 }
 
-/// The value a derived ring stores for the CURRENT bar: the expression with
-/// every `in<Array>[idx]` swapped for the scalar `update` parameter carrying
-/// that array's bar. Same operations on the same doubles as the batch performs
-/// at subtraction time, which is what keeps the collapse bit-exact.
 /// Rewrite every input-array read in a derived-ring expression, leaving the
 /// rest of the tree alone. The only thing that varies between the places this
 /// is needed is what an `in<Array>[...]` becomes, so it is a parameter:
@@ -6050,31 +6014,13 @@ fn derived_slot_read(
 ///   - the per-bar store wants the scalar `update` parameter for that array;
 ///   - the open-time fill wants the same array re-indexed to the fill counter.
 ///
-/// One walk rather than one per backend. The two defects fixed in 8352b3a6d
-/// and 34523b517 both lived in copies of this that had drifted apart, so the
-/// duplication was the bug rather than an untidiness next to it.
-pub fn map_array_reads(e: &Expr, f: &dyn Fn(&str) -> Expr) -> Expr {
-    match e {
-        Expr::ArrayAccess(arr, _) => f(arr),
-        Expr::BinOp(lhs, op, rhs) => Expr::BinOp(
-            Box::new(map_array_reads(lhs, f)),
-            op.clone(),
-            Box::new(map_array_reads(rhs, f)),
-        ),
-        Expr::FuncCall(name, args) => Expr::FuncCall(
-            name.clone(),
-            args.iter().map(|a| map_array_reads(a, f)).collect(),
-        ),
-        Expr::Cast(t, inner) => Expr::Cast(t.clone(), Box::new(map_array_reads(inner, f))),
-        Expr::Not(inner) => Expr::Not(Box::new(map_array_reads(inner, f))),
-        Expr::BitwiseNot(inner) => Expr::BitwiseNot(Box::new(map_array_reads(inner, f))),
-        Expr::Ternary(cond, then_e, else_e) => Expr::Ternary(
-            Box::new(map_array_reads(cond, f)),
-            Box::new(map_array_reads(then_e, f)),
-            Box::new(map_array_reads(else_e, f)),
-        ),
-        other => other.clone(),
-    }
+/// The walk itself is [`rewrite_expr`] -- bottom-up, and total over the Expr
+/// variants, which a hand-written copy here was not.
+fn map_array_reads(e: &Expr, f: &dyn Fn(&str) -> Expr) -> Expr {
+    rewrite_expr(e, &|node| match node {
+        Expr::ArrayAccess(ref arr, _) => f(arr),
+        other => other,
+    })
 }
 
 /// The expression a derived ring stores for the CURRENT bar: the same

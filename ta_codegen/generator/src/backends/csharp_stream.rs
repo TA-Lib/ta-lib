@@ -1961,10 +1961,6 @@ fn emit_identity_fast_path(
 // State capture
 // ---------------------------------------------------------------------------
 
-/// The capture epilogue: compute ring/window/extrema capacities NUMERICALLY from
-/// the still-live batch locals, build the buffers, then store every handle
-/// field. CIRCBUF capture MOVES the batch-materialized storage reference
-/// (contents AND rotation phase — the CCI-class summation-order requirement).
 /// Derived ring (#229): `open` evaluates f(bar) over the history instead of
 /// slicing a raw column that no longer exists under that name.
 fn derived_fill_expr_cs(
@@ -1977,6 +1973,10 @@ fn derived_fill_expr_cs(
     render_expr(&streaming::derived_fill_value(dr, idx_var), ctx, registry, helpers)
 }
 
+/// The capture epilogue: compute ring/window/extrema capacities NUMERICALLY from
+/// the still-live batch locals, build the buffers, then store every handle
+/// field. CIRCBUF capture MOVES the batch-materialized storage reference
+/// (contents AND rotation phase — the CCI-class summation-order requirement).
 #[allow(clippy::too_many_arguments, clippy::too_many_lines)]
 fn emit_capture(
     o: &mut String,
