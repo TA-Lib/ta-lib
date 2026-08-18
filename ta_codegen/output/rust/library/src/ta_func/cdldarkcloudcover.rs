@@ -348,10 +348,7 @@ struct CDLDARKCLOUDCOVER_StreamState {
     ringPos_BodyLongTrailingIdx: usize,
     ringCap_BodyLongTrailingIdx: usize,
     ringLag_BodyLongTrailingIdx: usize,
-    ring_BodyLongTrailingIdx_inOpen: Vec<f64>,
-    ring_BodyLongTrailingIdx_inHigh: Vec<f64>,
-    ring_BodyLongTrailingIdx_inLow: Vec<f64>,
-    ring_BodyLongTrailingIdx_inClose: Vec<f64>,
+    ring_BodyLongTrailingIdx_derived: Vec<f64>,
 }
 
 #[allow(non_snake_case, dead_code)]
@@ -368,10 +365,7 @@ impl CDLDARKCLOUDCOVER_StreamState {
         self.ringPos_BodyLongTrailingIdx = src.ringPos_BodyLongTrailingIdx;
         self.ringCap_BodyLongTrailingIdx = src.ringCap_BodyLongTrailingIdx;
         self.ringLag_BodyLongTrailingIdx = src.ringLag_BodyLongTrailingIdx;
-        self.ring_BodyLongTrailingIdx_inOpen.clone_from(&src.ring_BodyLongTrailingIdx_inOpen);
-        self.ring_BodyLongTrailingIdx_inHigh.clone_from(&src.ring_BodyLongTrailingIdx_inHigh);
-        self.ring_BodyLongTrailingIdx_inLow.clone_from(&src.ring_BodyLongTrailingIdx_inLow);
-        self.ring_BodyLongTrailingIdx_inClose.clone_from(&src.ring_BodyLongTrailingIdx_inClose);
+        self.ring_BodyLongTrailingIdx_derived.clone_from(&src.ring_BodyLongTrailingIdx_derived);
     }
 }
 
@@ -389,10 +383,22 @@ impl Core {
         let BodyLong_avgPeriod: i32 = self.candle_settings.body_long.avg_period;
         #[allow(non_snake_case)]
         let BodyLong_factor: f64 = self.candle_settings.body_long.factor;
-        sp.ring_BodyLongTrailingIdx_inOpen[sp.ringPos_BodyLongTrailingIdx] = inOpen;
-        sp.ring_BodyLongTrailingIdx_inHigh[sp.ringPos_BodyLongTrailingIdx] = inHigh;
-        sp.ring_BodyLongTrailingIdx_inLow[sp.ringPos_BodyLongTrailingIdx] = inLow;
-        sp.ring_BodyLongTrailingIdx_inClose[sp.ringPos_BodyLongTrailingIdx] = inClose;
+        let mut _candlerange_0: f64;
+        match BodyLong_rangeType {
+            0 => {
+                _candlerange_0 = (inClose - inOpen).abs();
+            }
+            1 => {
+                _candlerange_0 = inHigh - inLow;
+            }
+            2 => {
+                _candlerange_0 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
+            }
+            _ => {
+                _candlerange_0 = 0.0;
+            }
+        }
+        sp.ring_BodyLongTrailingIdx_derived[sp.ringPos_BodyLongTrailingIdx] = _candlerange_0;
         if (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 1 && // 1st: white
            (sp.lag1_inClose - sp.lag1_inOpen).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (sp.BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // long
            (((if inClose >= inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&  // 2nd: black
@@ -406,37 +412,22 @@ impl Core {
         }
         // add the current range and subtract the first range: this is done after the pattern recognition
         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-        let mut _candlerange_0: f64;
-        match BodyLong_rangeType {
-            0 => {
-                _candlerange_0 = (sp.lag1_inClose - sp.lag1_inOpen).abs();
-            }
-            1 => {
-                _candlerange_0 = sp.lag1_inHigh - sp.lag1_inLow;
-            }
-            2 => {
-                _candlerange_0 = (sp.lag1_inHigh - (if sp.lag1_inClose >= sp.lag1_inOpen { sp.lag1_inClose } else { sp.lag1_inOpen })) + ((if sp.lag1_inClose >= sp.lag1_inOpen { sp.lag1_inOpen } else { sp.lag1_inClose }) - sp.lag1_inLow);
-            }
-            _ => {
-                _candlerange_0 = 0.0;
-            }
-        }
         let mut _candlerange_1: f64;
         match BodyLong_rangeType {
             0 => {
-                _candlerange_1 = (sp.ring_BodyLongTrailingIdx_inClose[((sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx) as usize] - sp.ring_BodyLongTrailingIdx_inOpen[((sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx) as usize]).abs();
+                _candlerange_1 = (sp.lag1_inClose - sp.lag1_inOpen).abs();
             }
             1 => {
-                _candlerange_1 = sp.ring_BodyLongTrailingIdx_inHigh[((sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx) as usize] - sp.ring_BodyLongTrailingIdx_inLow[((sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx) as usize];
+                _candlerange_1 = sp.lag1_inHigh - sp.lag1_inLow;
             }
             2 => {
-                _candlerange_1 = (sp.ring_BodyLongTrailingIdx_inHigh[((sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx) as usize] - (if sp.ring_BodyLongTrailingIdx_inClose[((sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx) as usize] >= sp.ring_BodyLongTrailingIdx_inOpen[((sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx) as usize] { sp.ring_BodyLongTrailingIdx_inClose[((sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx) as usize] } else { sp.ring_BodyLongTrailingIdx_inOpen[((sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx) as usize] })) + ((if sp.ring_BodyLongTrailingIdx_inClose[((sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx) as usize] >= sp.ring_BodyLongTrailingIdx_inOpen[((sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx) as usize] { sp.ring_BodyLongTrailingIdx_inOpen[((sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx) as usize] } else { sp.ring_BodyLongTrailingIdx_inClose[((sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx) as usize] }) - sp.ring_BodyLongTrailingIdx_inLow[((sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx) as usize]);
+                _candlerange_1 = (sp.lag1_inHigh - (if sp.lag1_inClose >= sp.lag1_inOpen { sp.lag1_inClose } else { sp.lag1_inOpen })) + ((if sp.lag1_inClose >= sp.lag1_inOpen { sp.lag1_inOpen } else { sp.lag1_inClose }) - sp.lag1_inLow);
             }
             _ => {
                 _candlerange_1 = 0.0;
             }
         }
-        sp.BodyLongPeriodTotal += _candlerange_0 - _candlerange_1;
+        sp.BodyLongPeriodTotal += _candlerange_1 - sp.ring_BodyLongTrailingIdx_derived[((sp.ringPos_BodyLongTrailingIdx + sp.ringCap_BodyLongTrailingIdx - sp.ringLag_BodyLongTrailingIdx - 1) % sp.ringCap_BodyLongTrailingIdx) as usize];
         sp.lag1_inOpen = inOpen;
         sp.lag1_inHigh = inHigh;
         sp.lag1_inLow = inLow;
@@ -589,35 +580,11 @@ impl Core {
             return Err(RetCode::InternalError);
         }
         let allocN_BodyLongTrailingIdx: usize = if cap_BodyLongTrailingIdx > 0 { cap_BodyLongTrailingIdx as usize } else { 1 };
-        let mut ring_BodyLongTrailingIdx_inOpen: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
+        let mut ring_BodyLongTrailingIdx_derived: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
         {
             let mut fillJ: usize = historyLen - cap_BodyLongTrailingIdx as usize;
             while fillJ < historyLen {
-                ring_BodyLongTrailingIdx_inOpen[fillJ % cap_BodyLongTrailingIdx as usize] = inOpen[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_BodyLongTrailingIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_BodyLongTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_BodyLongTrailingIdx_inHigh[fillJ % cap_BodyLongTrailingIdx as usize] = inHigh[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_BodyLongTrailingIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_BodyLongTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_BodyLongTrailingIdx_inLow[fillJ % cap_BodyLongTrailingIdx as usize] = inLow[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_BodyLongTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_BodyLongTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_BodyLongTrailingIdx_inClose[fillJ % cap_BodyLongTrailingIdx as usize] = inClose[fillJ];
+                ring_BodyLongTrailingIdx_derived[fillJ % cap_BodyLongTrailingIdx as usize] = (match BodyLong_rangeType { 0 => ((inClose[(fillJ) as usize]) - (inOpen[(fillJ) as usize])).abs(), 1 => (inHigh[(fillJ) as usize]) - (inLow[(fillJ) as usize]), 2 => ((inHigh[(fillJ) as usize]) - (if (inClose[(fillJ) as usize]) >= (inOpen[(fillJ) as usize]) { (inClose[(fillJ) as usize]) } else { (inOpen[(fillJ) as usize]) })) + ((if (inClose[(fillJ) as usize]) >= (inOpen[(fillJ) as usize]) { (inOpen[(fillJ) as usize]) } else { (inClose[(fillJ) as usize]) }) - (inLow[(fillJ) as usize])), _ => 0.0 });
                 fillJ += 1;
             }
         }
@@ -631,10 +598,7 @@ impl Core {
             ringPos_BodyLongTrailingIdx: historyLen % cap_BodyLongTrailingIdx as usize,
             ringCap_BodyLongTrailingIdx: cap_BodyLongTrailingIdx as usize,
             ringLag_BodyLongTrailingIdx: capLag_BodyLongTrailingIdx as usize,
-            ring_BodyLongTrailingIdx_inOpen,
-            ring_BodyLongTrailingIdx_inHigh,
-            ring_BodyLongTrailingIdx_inLow,
-            ring_BodyLongTrailingIdx_inClose,
+            ring_BodyLongTrailingIdx_derived,
         };
         Ok(CDLDARKCLOUDCOVER_Stream { core: self.clone(), state })
     }
@@ -712,14 +676,6 @@ impl Core {
 
 }
 
-thread_local! {
-    /// `peek`'s reusable scratch handle (see `CDLDARKCLOUDCOVER_StreamState::restore_from`).
-    /// Taken for the duration of the step and put back after, so a
-    /// panicking step costs the scratch, never leaves it borrowed.
-    static CDLDARKCLOUDCOVER_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLDARKCLOUDCOVER_Stream>>> =
-        const { std::cell::Cell::new(None) };
-}
-
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl CDLDARKCLOUDCOVER_Stream {
@@ -747,8 +703,10 @@ impl CDLDARKCLOUDCOVER_Stream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return (it is the same code, run
     /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy it runs on is held per thread and reused,
-    /// so only the first peek of this function on a thread allocates.
+    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
+    /// often removed outright by the optimizer, which is why nothing is
+    /// reused here, but that is not a guarantee: budget for a clone of the
+    /// window and prefer `update` on a `clone()` in a hot loop.
     ///
     /// # Errors
     ///
@@ -759,13 +717,8 @@ impl CDLDARKCLOUDCOVER_Stream {
         if !inOpen.is_finite() || !inHigh.is_finite() || !inLow.is_finite() || !inClose.is_finite() {
             return Err(RetCode::BadParam);
         }
-        CDLDARKCLOUDCOVER_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inOpen, inHigh, inLow, inClose);
-            cell.set(Some(scratch));
-            value
-        })
+        let mut scratch = self.clone();
+        scratch.update(inOpen, inHigh, inLow, inClose)
     }
 }
 

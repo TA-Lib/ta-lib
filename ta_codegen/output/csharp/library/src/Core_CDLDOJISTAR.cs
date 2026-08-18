@@ -406,16 +406,10 @@ public partial class Core
       internal double lag1_inClose;
       internal int ringPos_BodyDojiTrailingIdx;
       internal int ringCap_BodyDojiTrailingIdx;
-      internal double[] ring_BodyDojiTrailingIdx_inOpen = [];
-      internal double[] ring_BodyDojiTrailingIdx_inHigh = [];
-      internal double[] ring_BodyDojiTrailingIdx_inLow = [];
-      internal double[] ring_BodyDojiTrailingIdx_inClose = [];
+      internal double[] ring_BodyDojiTrailingIdx_derived = [];
       internal int ringPos_BodyLongTrailingIdx;
       internal int ringCap_BodyLongTrailingIdx;
-      internal double[] ring_BodyLongTrailingIdx_inOpen = [];
-      internal double[] ring_BodyLongTrailingIdx_inHigh = [];
-      internal double[] ring_BodyLongTrailingIdx_inLow = [];
-      internal double[] ring_BodyLongTrailingIdx_inClose = [];
+      internal double[] ring_BodyLongTrailingIdx_derived = [];
       internal int cs_BodyDoji_rangeType;
       internal int cs_BodyDoji_avgPeriod;
       internal double cs_BodyDoji_factor;
@@ -447,24 +441,12 @@ public partial class Core
          this.lag1_inClose = other.lag1_inClose;
          this.ringPos_BodyDojiTrailingIdx = other.ringPos_BodyDojiTrailingIdx;
          this.ringCap_BodyDojiTrailingIdx = other.ringCap_BodyDojiTrailingIdx;
-         this.ring_BodyDojiTrailingIdx_inOpen = new double[other.ring_BodyDojiTrailingIdx_inOpen.Length];
-         Array.Copy( other.ring_BodyDojiTrailingIdx_inOpen, this.ring_BodyDojiTrailingIdx_inOpen, other.ring_BodyDojiTrailingIdx_inOpen.Length );
-         this.ring_BodyDojiTrailingIdx_inHigh = new double[other.ring_BodyDojiTrailingIdx_inHigh.Length];
-         Array.Copy( other.ring_BodyDojiTrailingIdx_inHigh, this.ring_BodyDojiTrailingIdx_inHigh, other.ring_BodyDojiTrailingIdx_inHigh.Length );
-         this.ring_BodyDojiTrailingIdx_inLow = new double[other.ring_BodyDojiTrailingIdx_inLow.Length];
-         Array.Copy( other.ring_BodyDojiTrailingIdx_inLow, this.ring_BodyDojiTrailingIdx_inLow, other.ring_BodyDojiTrailingIdx_inLow.Length );
-         this.ring_BodyDojiTrailingIdx_inClose = new double[other.ring_BodyDojiTrailingIdx_inClose.Length];
-         Array.Copy( other.ring_BodyDojiTrailingIdx_inClose, this.ring_BodyDojiTrailingIdx_inClose, other.ring_BodyDojiTrailingIdx_inClose.Length );
+         this.ring_BodyDojiTrailingIdx_derived = new double[other.ring_BodyDojiTrailingIdx_derived.Length];
+         Array.Copy( other.ring_BodyDojiTrailingIdx_derived, this.ring_BodyDojiTrailingIdx_derived, other.ring_BodyDojiTrailingIdx_derived.Length );
          this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
          this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         this.ring_BodyLongTrailingIdx_inOpen = new double[other.ring_BodyLongTrailingIdx_inOpen.Length];
-         Array.Copy( other.ring_BodyLongTrailingIdx_inOpen, this.ring_BodyLongTrailingIdx_inOpen, other.ring_BodyLongTrailingIdx_inOpen.Length );
-         this.ring_BodyLongTrailingIdx_inHigh = new double[other.ring_BodyLongTrailingIdx_inHigh.Length];
-         Array.Copy( other.ring_BodyLongTrailingIdx_inHigh, this.ring_BodyLongTrailingIdx_inHigh, other.ring_BodyLongTrailingIdx_inHigh.Length );
-         this.ring_BodyLongTrailingIdx_inLow = new double[other.ring_BodyLongTrailingIdx_inLow.Length];
-         Array.Copy( other.ring_BodyLongTrailingIdx_inLow, this.ring_BodyLongTrailingIdx_inLow, other.ring_BodyLongTrailingIdx_inLow.Length );
-         this.ring_BodyLongTrailingIdx_inClose = new double[other.ring_BodyLongTrailingIdx_inClose.Length];
-         Array.Copy( other.ring_BodyLongTrailingIdx_inClose, this.ring_BodyLongTrailingIdx_inClose, other.ring_BodyLongTrailingIdx_inClose.Length );
+         this.ring_BodyLongTrailingIdx_derived = new double[other.ring_BodyLongTrailingIdx_derived.Length];
+         Array.Copy( other.ring_BodyLongTrailingIdx_derived, this.ring_BodyLongTrailingIdx_derived, other.ring_BodyLongTrailingIdx_derived.Length );
          this.cs_BodyDoji_rangeType = other.cs_BodyDoji_rangeType;
          this.cs_BodyDoji_avgPeriod = other.cs_BodyDoji_avgPeriod;
          this.cs_BodyDoji_factor = other.cs_BodyDoji_factor;
@@ -486,40 +468,16 @@ public partial class Core
          this.lag1_inClose = other.lag1_inClose;
          this.ringPos_BodyDojiTrailingIdx = other.ringPos_BodyDojiTrailingIdx;
          this.ringCap_BodyDojiTrailingIdx = other.ringCap_BodyDojiTrailingIdx;
-         if( this.ring_BodyDojiTrailingIdx_inOpen.Length != other.ring_BodyDojiTrailingIdx_inOpen.Length ) {
-            this.ring_BodyDojiTrailingIdx_inOpen = new double[other.ring_BodyDojiTrailingIdx_inOpen.Length];
+         if( this.ring_BodyDojiTrailingIdx_derived.Length != other.ring_BodyDojiTrailingIdx_derived.Length ) {
+            this.ring_BodyDojiTrailingIdx_derived = new double[other.ring_BodyDojiTrailingIdx_derived.Length];
          }
-         Array.Copy( other.ring_BodyDojiTrailingIdx_inOpen, this.ring_BodyDojiTrailingIdx_inOpen, other.ring_BodyDojiTrailingIdx_inOpen.Length );
-         if( this.ring_BodyDojiTrailingIdx_inHigh.Length != other.ring_BodyDojiTrailingIdx_inHigh.Length ) {
-            this.ring_BodyDojiTrailingIdx_inHigh = new double[other.ring_BodyDojiTrailingIdx_inHigh.Length];
-         }
-         Array.Copy( other.ring_BodyDojiTrailingIdx_inHigh, this.ring_BodyDojiTrailingIdx_inHigh, other.ring_BodyDojiTrailingIdx_inHigh.Length );
-         if( this.ring_BodyDojiTrailingIdx_inLow.Length != other.ring_BodyDojiTrailingIdx_inLow.Length ) {
-            this.ring_BodyDojiTrailingIdx_inLow = new double[other.ring_BodyDojiTrailingIdx_inLow.Length];
-         }
-         Array.Copy( other.ring_BodyDojiTrailingIdx_inLow, this.ring_BodyDojiTrailingIdx_inLow, other.ring_BodyDojiTrailingIdx_inLow.Length );
-         if( this.ring_BodyDojiTrailingIdx_inClose.Length != other.ring_BodyDojiTrailingIdx_inClose.Length ) {
-            this.ring_BodyDojiTrailingIdx_inClose = new double[other.ring_BodyDojiTrailingIdx_inClose.Length];
-         }
-         Array.Copy( other.ring_BodyDojiTrailingIdx_inClose, this.ring_BodyDojiTrailingIdx_inClose, other.ring_BodyDojiTrailingIdx_inClose.Length );
+         Array.Copy( other.ring_BodyDojiTrailingIdx_derived, this.ring_BodyDojiTrailingIdx_derived, other.ring_BodyDojiTrailingIdx_derived.Length );
          this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
          this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
-         if( this.ring_BodyLongTrailingIdx_inOpen.Length != other.ring_BodyLongTrailingIdx_inOpen.Length ) {
-            this.ring_BodyLongTrailingIdx_inOpen = new double[other.ring_BodyLongTrailingIdx_inOpen.Length];
+         if( this.ring_BodyLongTrailingIdx_derived.Length != other.ring_BodyLongTrailingIdx_derived.Length ) {
+            this.ring_BodyLongTrailingIdx_derived = new double[other.ring_BodyLongTrailingIdx_derived.Length];
          }
-         Array.Copy( other.ring_BodyLongTrailingIdx_inOpen, this.ring_BodyLongTrailingIdx_inOpen, other.ring_BodyLongTrailingIdx_inOpen.Length );
-         if( this.ring_BodyLongTrailingIdx_inHigh.Length != other.ring_BodyLongTrailingIdx_inHigh.Length ) {
-            this.ring_BodyLongTrailingIdx_inHigh = new double[other.ring_BodyLongTrailingIdx_inHigh.Length];
-         }
-         Array.Copy( other.ring_BodyLongTrailingIdx_inHigh, this.ring_BodyLongTrailingIdx_inHigh, other.ring_BodyLongTrailingIdx_inHigh.Length );
-         if( this.ring_BodyLongTrailingIdx_inLow.Length != other.ring_BodyLongTrailingIdx_inLow.Length ) {
-            this.ring_BodyLongTrailingIdx_inLow = new double[other.ring_BodyLongTrailingIdx_inLow.Length];
-         }
-         Array.Copy( other.ring_BodyLongTrailingIdx_inLow, this.ring_BodyLongTrailingIdx_inLow, other.ring_BodyLongTrailingIdx_inLow.Length );
-         if( this.ring_BodyLongTrailingIdx_inClose.Length != other.ring_BodyLongTrailingIdx_inClose.Length ) {
-            this.ring_BodyLongTrailingIdx_inClose = new double[other.ring_BodyLongTrailingIdx_inClose.Length];
-         }
-         Array.Copy( other.ring_BodyLongTrailingIdx_inClose, this.ring_BodyLongTrailingIdx_inClose, other.ring_BodyLongTrailingIdx_inClose.Length );
+         Array.Copy( other.ring_BodyLongTrailingIdx_derived, this.ring_BodyLongTrailingIdx_derived, other.ring_BodyLongTrailingIdx_derived.Length );
          this.cs_BodyDoji_rangeType = other.cs_BodyDoji_rangeType;
          this.cs_BodyDoji_avgPeriod = other.cs_BodyDoji_avgPeriod;
          this.cs_BodyDoji_factor = other.cs_BodyDoji_factor;
@@ -609,16 +567,10 @@ public partial class Core
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
       double BodyLong_factor = sp.cs_BodyLong_factor;
       if( sp.ringCap_BodyDojiTrailingIdx == 0 ) {
-         sp.ring_BodyDojiTrailingIdx_inOpen[0] = inOpen;
-         sp.ring_BodyDojiTrailingIdx_inHigh[0] = inHigh;
-         sp.ring_BodyDojiTrailingIdx_inLow[0] = inLow;
-         sp.ring_BodyDojiTrailingIdx_inClose[0] = inClose;
+         sp.ring_BodyDojiTrailingIdx_derived[0] = ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
       }
       if( sp.ringCap_BodyLongTrailingIdx == 0 ) {
-         sp.ring_BodyLongTrailingIdx_inOpen[0] = inOpen;
-         sp.ring_BodyLongTrailingIdx_inHigh[0] = inHigh;
-         sp.ring_BodyLongTrailingIdx_inLow[0] = inLow;
-         sp.ring_BodyLongTrailingIdx_inClose[0] = inClose;
+         sp.ring_BodyLongTrailingIdx_derived[0] = ((BodyLong_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
       }
       if( Math.Abs(sp.lag1_inClose - sp.lag1_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (sp.BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.Abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((BodyLong_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((BodyLong_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: long real body */
           Math.Abs(inClose - inOpen) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (sp.BodyDojiPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: doji */
@@ -631,24 +583,18 @@ public partial class Core
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      sp.BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.Abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((BodyLong_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((BodyLong_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0))) - ((BodyLong_rangeType == 0) ? (Math.Abs(sp.ring_BodyLongTrailingIdx_inClose[sp.ringPos_BodyLongTrailingIdx] - sp.ring_BodyLongTrailingIdx_inOpen[sp.ringPos_BodyLongTrailingIdx])) : ((BodyLong_rangeType == 1) ? (sp.ring_BodyLongTrailingIdx_inHigh[sp.ringPos_BodyLongTrailingIdx] - sp.ring_BodyLongTrailingIdx_inLow[sp.ringPos_BodyLongTrailingIdx]) : ((BodyLong_rangeType == 2) ? ((sp.ring_BodyLongTrailingIdx_inHigh[sp.ringPos_BodyLongTrailingIdx] - (((sp.ring_BodyLongTrailingIdx_inClose[sp.ringPos_BodyLongTrailingIdx]) >= (sp.ring_BodyLongTrailingIdx_inOpen[sp.ringPos_BodyLongTrailingIdx])) ? (sp.ring_BodyLongTrailingIdx_inClose[sp.ringPos_BodyLongTrailingIdx]) : (sp.ring_BodyLongTrailingIdx_inOpen[sp.ringPos_BodyLongTrailingIdx]))) + ((((sp.ring_BodyLongTrailingIdx_inClose[sp.ringPos_BodyLongTrailingIdx]) >= (sp.ring_BodyLongTrailingIdx_inOpen[sp.ringPos_BodyLongTrailingIdx])) ? (sp.ring_BodyLongTrailingIdx_inOpen[sp.ringPos_BodyLongTrailingIdx]) : (sp.ring_BodyLongTrailingIdx_inClose[sp.ringPos_BodyLongTrailingIdx])) - sp.ring_BodyLongTrailingIdx_inLow[sp.ringPos_BodyLongTrailingIdx])) : 0.0)));
-      sp.BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - ((BodyDoji_rangeType == 0) ? (Math.Abs(sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx] - sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx])) : ((BodyDoji_rangeType == 1) ? (sp.ring_BodyDojiTrailingIdx_inHigh[sp.ringPos_BodyDojiTrailingIdx] - sp.ring_BodyDojiTrailingIdx_inLow[sp.ringPos_BodyDojiTrailingIdx]) : ((BodyDoji_rangeType == 2) ? ((sp.ring_BodyDojiTrailingIdx_inHigh[sp.ringPos_BodyDojiTrailingIdx] - (((sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx]) >= (sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx])) ? (sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx]) : (sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx]))) + ((((sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx]) >= (sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx])) ? (sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx]) : (sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx])) - sp.ring_BodyDojiTrailingIdx_inLow[sp.ringPos_BodyDojiTrailingIdx])) : 0.0)));
+      sp.BodyLongPeriodTotal += ((BodyLong_rangeType == 0) ? (Math.Abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((BodyLong_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((BodyLong_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0))) - sp.ring_BodyLongTrailingIdx_derived[sp.ringPos_BodyLongTrailingIdx];
+      sp.BodyDojiPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0))) - sp.ring_BodyDojiTrailingIdx_derived[sp.ringPos_BodyDojiTrailingIdx];
       sp.lag1_inOpen = inOpen;
       sp.lag1_inHigh = inHigh;
       sp.lag1_inLow = inLow;
       sp.lag1_inClose = inClose;
-      sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx] = inOpen;
-      sp.ring_BodyDojiTrailingIdx_inHigh[sp.ringPos_BodyDojiTrailingIdx] = inHigh;
-      sp.ring_BodyDojiTrailingIdx_inLow[sp.ringPos_BodyDojiTrailingIdx] = inLow;
-      sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx] = inClose;
+      sp.ring_BodyDojiTrailingIdx_derived[sp.ringPos_BodyDojiTrailingIdx] = ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyDoji_rangeType == 1) ? (inHigh - inLow) : ((BodyDoji_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
       sp.ringPos_BodyDojiTrailingIdx = sp.ringPos_BodyDojiTrailingIdx + 1;
       if( sp.ringPos_BodyDojiTrailingIdx >= sp.ringCap_BodyDojiTrailingIdx ) {
          sp.ringPos_BodyDojiTrailingIdx = 0;
       }
-      sp.ring_BodyLongTrailingIdx_inOpen[sp.ringPos_BodyLongTrailingIdx] = inOpen;
-      sp.ring_BodyLongTrailingIdx_inHigh[sp.ringPos_BodyLongTrailingIdx] = inHigh;
-      sp.ring_BodyLongTrailingIdx_inLow[sp.ringPos_BodyLongTrailingIdx] = inLow;
-      sp.ring_BodyLongTrailingIdx_inClose[sp.ringPos_BodyLongTrailingIdx] = inClose;
+      sp.ring_BodyLongTrailingIdx_derived[sp.ringPos_BodyLongTrailingIdx] = ((BodyLong_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((BodyLong_rangeType == 1) ? (inHigh - inLow) : ((BodyLong_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
       sp.ringPos_BodyLongTrailingIdx = sp.ringPos_BodyLongTrailingIdx + 1;
       if( sp.ringPos_BodyLongTrailingIdx >= sp.ringCap_BodyLongTrailingIdx ) {
          sp.ringPos_BodyLongTrailingIdx = 0;
@@ -751,27 +697,19 @@ public partial class Core
          return RetCode.InternalError;
       }
       int allocN_BodyDojiTrailingIdx = (cap_BodyDojiTrailingIdx > 0)? cap_BodyDojiTrailingIdx : 1;
-      double[] capRing_BodyDojiTrailingIdx_inOpen = new double[allocN_BodyDojiTrailingIdx];
-      inOpen.Slice(historyLen - cap_BodyDojiTrailingIdx, cap_BodyDojiTrailingIdx).CopyTo(capRing_BodyDojiTrailingIdx_inOpen);
-      double[] capRing_BodyDojiTrailingIdx_inHigh = new double[allocN_BodyDojiTrailingIdx];
-      inHigh.Slice(historyLen - cap_BodyDojiTrailingIdx, cap_BodyDojiTrailingIdx).CopyTo(capRing_BodyDojiTrailingIdx_inHigh);
-      double[] capRing_BodyDojiTrailingIdx_inLow = new double[allocN_BodyDojiTrailingIdx];
-      inLow.Slice(historyLen - cap_BodyDojiTrailingIdx, cap_BodyDojiTrailingIdx).CopyTo(capRing_BodyDojiTrailingIdx_inLow);
-      double[] capRing_BodyDojiTrailingIdx_inClose = new double[allocN_BodyDojiTrailingIdx];
-      inClose.Slice(historyLen - cap_BodyDojiTrailingIdx, cap_BodyDojiTrailingIdx).CopyTo(capRing_BodyDojiTrailingIdx_inClose);
+      double[] capRing_BodyDojiTrailingIdx_derived = new double[allocN_BodyDojiTrailingIdx];
+      for( int fillJ = historyLen - cap_BodyDojiTrailingIdx; fillJ < historyLen; fillJ++ ) {
+         capRing_BodyDojiTrailingIdx_derived[fillJ - (historyLen - cap_BodyDojiTrailingIdx)] = ((BodyDoji_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((BodyDoji_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((BodyDoji_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+      }
       int cap_BodyLongTrailingIdx = i - BodyLongTrailingIdx;
       if( cap_BodyLongTrailingIdx < 0 || cap_BodyLongTrailingIdx > historyLen ) {
          return RetCode.InternalError;
       }
       int allocN_BodyLongTrailingIdx = (cap_BodyLongTrailingIdx > 0)? cap_BodyLongTrailingIdx : 1;
-      double[] capRing_BodyLongTrailingIdx_inOpen = new double[allocN_BodyLongTrailingIdx];
-      inOpen.Slice(historyLen - cap_BodyLongTrailingIdx, cap_BodyLongTrailingIdx).CopyTo(capRing_BodyLongTrailingIdx_inOpen);
-      double[] capRing_BodyLongTrailingIdx_inHigh = new double[allocN_BodyLongTrailingIdx];
-      inHigh.Slice(historyLen - cap_BodyLongTrailingIdx, cap_BodyLongTrailingIdx).CopyTo(capRing_BodyLongTrailingIdx_inHigh);
-      double[] capRing_BodyLongTrailingIdx_inLow = new double[allocN_BodyLongTrailingIdx];
-      inLow.Slice(historyLen - cap_BodyLongTrailingIdx, cap_BodyLongTrailingIdx).CopyTo(capRing_BodyLongTrailingIdx_inLow);
-      double[] capRing_BodyLongTrailingIdx_inClose = new double[allocN_BodyLongTrailingIdx];
-      inClose.Slice(historyLen - cap_BodyLongTrailingIdx, cap_BodyLongTrailingIdx).CopyTo(capRing_BodyLongTrailingIdx_inClose);
+      double[] capRing_BodyLongTrailingIdx_derived = new double[allocN_BodyLongTrailingIdx];
+      for( int fillJ = historyLen - cap_BodyLongTrailingIdx; fillJ < historyLen; fillJ++ ) {
+         capRing_BodyLongTrailingIdx_derived[fillJ - (historyLen - cap_BodyLongTrailingIdx)] = ((BodyLong_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((BodyLong_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((BodyLong_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
+      }
       sp.BodyDojiPeriodTotal = BodyDojiPeriodTotal;
       sp.BodyLongPeriodTotal = BodyLongPeriodTotal;
       sp.lag1_inOpen = inOpen[historyLen - 1];
@@ -780,16 +718,10 @@ public partial class Core
       sp.lag1_inClose = inClose[historyLen - 1];
       sp.ringPos_BodyDojiTrailingIdx = 0;
       sp.ringCap_BodyDojiTrailingIdx = cap_BodyDojiTrailingIdx;
-      sp.ring_BodyDojiTrailingIdx_inOpen = capRing_BodyDojiTrailingIdx_inOpen;
-      sp.ring_BodyDojiTrailingIdx_inHigh = capRing_BodyDojiTrailingIdx_inHigh;
-      sp.ring_BodyDojiTrailingIdx_inLow = capRing_BodyDojiTrailingIdx_inLow;
-      sp.ring_BodyDojiTrailingIdx_inClose = capRing_BodyDojiTrailingIdx_inClose;
+      sp.ring_BodyDojiTrailingIdx_derived = capRing_BodyDojiTrailingIdx_derived;
       sp.ringPos_BodyLongTrailingIdx = 0;
       sp.ringCap_BodyLongTrailingIdx = cap_BodyLongTrailingIdx;
-      sp.ring_BodyLongTrailingIdx_inOpen = capRing_BodyLongTrailingIdx_inOpen;
-      sp.ring_BodyLongTrailingIdx_inHigh = capRing_BodyLongTrailingIdx_inHigh;
-      sp.ring_BodyLongTrailingIdx_inLow = capRing_BodyLongTrailingIdx_inLow;
-      sp.ring_BodyLongTrailingIdx_inClose = capRing_BodyLongTrailingIdx_inClose;
+      sp.ring_BodyLongTrailingIdx_derived = capRing_BodyLongTrailingIdx_derived;
       sp.cs_BodyDoji_rangeType = BodyDoji_rangeType;
       sp.cs_BodyDoji_avgPeriod = BodyDoji_avgPeriod;
       sp.cs_BodyDoji_factor = BodyDoji_factor;

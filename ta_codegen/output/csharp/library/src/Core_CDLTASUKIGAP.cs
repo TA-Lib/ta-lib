@@ -379,10 +379,7 @@ public partial class Core
       internal int ringPos_NearTrailingIdx;
       internal int ringCap_NearTrailingIdx;
       internal int ringLag_NearTrailingIdx;
-      internal double[] ring_NearTrailingIdx_inOpen = [];
-      internal double[] ring_NearTrailingIdx_inHigh = [];
-      internal double[] ring_NearTrailingIdx_inLow = [];
-      internal double[] ring_NearTrailingIdx_inClose = [];
+      internal double[] ring_NearTrailingIdx_derived = [];
       internal int cs_Near_rangeType;
       internal int cs_Near_avgPeriod;
       internal double cs_Near_factor;
@@ -413,14 +410,8 @@ public partial class Core
          this.ringPos_NearTrailingIdx = other.ringPos_NearTrailingIdx;
          this.ringCap_NearTrailingIdx = other.ringCap_NearTrailingIdx;
          this.ringLag_NearTrailingIdx = other.ringLag_NearTrailingIdx;
-         this.ring_NearTrailingIdx_inOpen = new double[other.ring_NearTrailingIdx_inOpen.Length];
-         Array.Copy( other.ring_NearTrailingIdx_inOpen, this.ring_NearTrailingIdx_inOpen, other.ring_NearTrailingIdx_inOpen.Length );
-         this.ring_NearTrailingIdx_inHigh = new double[other.ring_NearTrailingIdx_inHigh.Length];
-         Array.Copy( other.ring_NearTrailingIdx_inHigh, this.ring_NearTrailingIdx_inHigh, other.ring_NearTrailingIdx_inHigh.Length );
-         this.ring_NearTrailingIdx_inLow = new double[other.ring_NearTrailingIdx_inLow.Length];
-         Array.Copy( other.ring_NearTrailingIdx_inLow, this.ring_NearTrailingIdx_inLow, other.ring_NearTrailingIdx_inLow.Length );
-         this.ring_NearTrailingIdx_inClose = new double[other.ring_NearTrailingIdx_inClose.Length];
-         Array.Copy( other.ring_NearTrailingIdx_inClose, this.ring_NearTrailingIdx_inClose, other.ring_NearTrailingIdx_inClose.Length );
+         this.ring_NearTrailingIdx_derived = new double[other.ring_NearTrailingIdx_derived.Length];
+         Array.Copy( other.ring_NearTrailingIdx_derived, this.ring_NearTrailingIdx_derived, other.ring_NearTrailingIdx_derived.Length );
          this.cs_Near_rangeType = other.cs_Near_rangeType;
          this.cs_Near_avgPeriod = other.cs_Near_avgPeriod;
          this.cs_Near_factor = other.cs_Near_factor;
@@ -441,31 +432,16 @@ public partial class Core
          this.ringPos_NearTrailingIdx = other.ringPos_NearTrailingIdx;
          this.ringCap_NearTrailingIdx = other.ringCap_NearTrailingIdx;
          this.ringLag_NearTrailingIdx = other.ringLag_NearTrailingIdx;
-         if( this.ring_NearTrailingIdx_inOpen.Length != other.ring_NearTrailingIdx_inOpen.Length ) {
-            this.ring_NearTrailingIdx_inOpen = new double[other.ring_NearTrailingIdx_inOpen.Length];
+         if( this.ring_NearTrailingIdx_derived.Length != other.ring_NearTrailingIdx_derived.Length ) {
+            this.ring_NearTrailingIdx_derived = new double[other.ring_NearTrailingIdx_derived.Length];
          }
-         Array.Copy( other.ring_NearTrailingIdx_inOpen, this.ring_NearTrailingIdx_inOpen, other.ring_NearTrailingIdx_inOpen.Length );
-         if( this.ring_NearTrailingIdx_inHigh.Length != other.ring_NearTrailingIdx_inHigh.Length ) {
-            this.ring_NearTrailingIdx_inHigh = new double[other.ring_NearTrailingIdx_inHigh.Length];
-         }
-         Array.Copy( other.ring_NearTrailingIdx_inHigh, this.ring_NearTrailingIdx_inHigh, other.ring_NearTrailingIdx_inHigh.Length );
-         if( this.ring_NearTrailingIdx_inLow.Length != other.ring_NearTrailingIdx_inLow.Length ) {
-            this.ring_NearTrailingIdx_inLow = new double[other.ring_NearTrailingIdx_inLow.Length];
-         }
-         Array.Copy( other.ring_NearTrailingIdx_inLow, this.ring_NearTrailingIdx_inLow, other.ring_NearTrailingIdx_inLow.Length );
-         if( this.ring_NearTrailingIdx_inClose.Length != other.ring_NearTrailingIdx_inClose.Length ) {
-            this.ring_NearTrailingIdx_inClose = new double[other.ring_NearTrailingIdx_inClose.Length];
-         }
-         Array.Copy( other.ring_NearTrailingIdx_inClose, this.ring_NearTrailingIdx_inClose, other.ring_NearTrailingIdx_inClose.Length );
+         Array.Copy( other.ring_NearTrailingIdx_derived, this.ring_NearTrailingIdx_derived, other.ring_NearTrailingIdx_derived.Length );
          this.cs_Near_rangeType = other.cs_Near_rangeType;
          this.cs_Near_avgPeriod = other.cs_Near_avgPeriod;
          this.cs_Near_factor = other.cs_Near_factor;
          this.cur_outInteger = other.cur_outInteger;
          this.fillRange = other.fillRange;
       }
-
-      /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static CDLTASUKIGAP_Stream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -495,9 +471,9 @@ public partial class Core
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
       /// would return — it is the same generated code, run on a copy. Never writes
       /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a scratch handle held per thread and reused, so it allocates
-      /// nothing after this thread's first peek of this indicator. That scratch is
-      /// retained for the life of the thread.</para>
+      /// <para>It runs on a fresh copy of this handle, so it allocates one — proportional
+      /// to the state this indicator carries. If you peek on every tick and that
+      /// matters, hold the value <see cref="Update"/> returns instead.</para>
       /// </remarks>
       /// <param name="inOpen">This bar's open price.</param>
       /// <param name="inHigh">This bar's high price.</param>
@@ -507,13 +483,7 @@ public partial class Core
       public int Peek( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLTASUKIGAP", "peek", RetCode.BadParam);
-         CDLTASUKIGAP_Stream? scratch = peekScratch;
-         if( scratch is null ) {
-            scratch = new CDLTASUKIGAP_Stream(this);
-            peekScratch = scratch;
-         } else {
-            scratch.CopyFrom(this);
-         }
+         CDLTASUKIGAP_Stream scratch = new CDLTASUKIGAP_Stream(this);
          core.CDLTASUKIGAP_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
@@ -539,10 +509,7 @@ public partial class Core
       int Near_rangeType = sp.cs_Near_rangeType;
       int Near_avgPeriod = sp.cs_Near_avgPeriod;
       double Near_factor = sp.cs_Near_factor;
-      sp.ring_NearTrailingIdx_inOpen[sp.ringPos_NearTrailingIdx] = inOpen;
-      sp.ring_NearTrailingIdx_inHigh[sp.ringPos_NearTrailingIdx] = inHigh;
-      sp.ring_NearTrailingIdx_inLow[sp.ringPos_NearTrailingIdx] = inLow;
-      sp.ring_NearTrailingIdx_inClose[sp.ringPos_NearTrailingIdx] = inClose;
+      sp.ring_NearTrailingIdx_derived[sp.ringPos_NearTrailingIdx] = ((Near_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((Near_rangeType == 1) ? (inHigh - inLow) : ((Near_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
       if( (Math.Min(sp.lag1_inOpen, sp.lag1_inClose) > Math.Max(sp.lag2_inOpen, sp.lag2_inClose)) && ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 1 && ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && inOpen < sp.lag1_inClose && inOpen > sp.lag1_inOpen && inClose < sp.lag1_inOpen && inClose > Math.Max(sp.lag2_inClose, sp.lag2_inOpen) && Math.Abs(Math.Abs(sp.lag1_inClose - sp.lag1_inOpen) - Math.Abs(inClose - inOpen)) < ((Near_factor * (((Near_avgPeriod != 0) ? (sp.NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((Near_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((Near_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) || (Math.Max(sp.lag1_inOpen, sp.lag1_inClose) < Math.Min(sp.lag2_inOpen, sp.lag2_inClose)) && ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && ((inClose >= inOpen) ? 1 : 0 - 1) == 1 && inOpen < sp.lag1_inOpen && inOpen > sp.lag1_inClose && inClose > sp.lag1_inOpen && inClose < Math.Min(sp.lag2_inClose, sp.lag2_inOpen) && Math.Abs(Math.Abs(sp.lag1_inClose - sp.lag1_inOpen) - Math.Abs(inClose - inOpen)) < ((Near_factor * (((Near_avgPeriod != 0) ? (sp.NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.Abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((Near_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((Near_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) ) {
          /* upside gap */
          /* 1st: white */
@@ -565,7 +532,7 @@ public partial class Core
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      sp.NearPeriodTotal += ((Near_rangeType == 0) ? (Math.Abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((Near_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((Near_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0))) - ((Near_rangeType == 0) ? (Math.Abs(sp.ring_NearTrailingIdx_inClose[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 1) % sp.ringCap_NearTrailingIdx] - sp.ring_NearTrailingIdx_inOpen[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 1) % sp.ringCap_NearTrailingIdx])) : ((Near_rangeType == 1) ? (sp.ring_NearTrailingIdx_inHigh[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 1) % sp.ringCap_NearTrailingIdx] - sp.ring_NearTrailingIdx_inLow[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 1) % sp.ringCap_NearTrailingIdx]) : ((Near_rangeType == 2) ? ((sp.ring_NearTrailingIdx_inHigh[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 1) % sp.ringCap_NearTrailingIdx] - (((sp.ring_NearTrailingIdx_inClose[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 1) % sp.ringCap_NearTrailingIdx]) >= (sp.ring_NearTrailingIdx_inOpen[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 1) % sp.ringCap_NearTrailingIdx])) ? (sp.ring_NearTrailingIdx_inClose[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 1) % sp.ringCap_NearTrailingIdx]) : (sp.ring_NearTrailingIdx_inOpen[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 1) % sp.ringCap_NearTrailingIdx]))) + ((((sp.ring_NearTrailingIdx_inClose[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 1) % sp.ringCap_NearTrailingIdx]) >= (sp.ring_NearTrailingIdx_inOpen[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 1) % sp.ringCap_NearTrailingIdx])) ? (sp.ring_NearTrailingIdx_inOpen[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 1) % sp.ringCap_NearTrailingIdx]) : (sp.ring_NearTrailingIdx_inClose[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 1) % sp.ringCap_NearTrailingIdx])) - sp.ring_NearTrailingIdx_inLow[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 1) % sp.ringCap_NearTrailingIdx])) : 0.0)));
+      sp.NearPeriodTotal += ((Near_rangeType == 0) ? (Math.Abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((Near_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((Near_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0))) - sp.ring_NearTrailingIdx_derived[(sp.ringPos_NearTrailingIdx + sp.ringCap_NearTrailingIdx - sp.ringLag_NearTrailingIdx - 1) % sp.ringCap_NearTrailingIdx];
       sp.lag2_inOpen = sp.lag1_inOpen;
       sp.lag1_inOpen = inOpen;
       sp.lag1_inHigh = inHigh;
@@ -674,21 +641,9 @@ public partial class Core
          return RetCode.InternalError;
       }
       int allocN_NearTrailingIdx = (cap_NearTrailingIdx > 0)? cap_NearTrailingIdx : 1;
-      double[] capRing_NearTrailingIdx_inOpen = new double[allocN_NearTrailingIdx];
+      double[] capRing_NearTrailingIdx_derived = new double[allocN_NearTrailingIdx];
       for( int fillJ = historyLen - cap_NearTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_NearTrailingIdx_inOpen[fillJ % cap_NearTrailingIdx] = inOpen[fillJ];
-      }
-      double[] capRing_NearTrailingIdx_inHigh = new double[allocN_NearTrailingIdx];
-      for( int fillJ = historyLen - cap_NearTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_NearTrailingIdx_inHigh[fillJ % cap_NearTrailingIdx] = inHigh[fillJ];
-      }
-      double[] capRing_NearTrailingIdx_inLow = new double[allocN_NearTrailingIdx];
-      for( int fillJ = historyLen - cap_NearTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_NearTrailingIdx_inLow[fillJ % cap_NearTrailingIdx] = inLow[fillJ];
-      }
-      double[] capRing_NearTrailingIdx_inClose = new double[allocN_NearTrailingIdx];
-      for( int fillJ = historyLen - cap_NearTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_NearTrailingIdx_inClose[fillJ % cap_NearTrailingIdx] = inClose[fillJ];
+         capRing_NearTrailingIdx_derived[fillJ % cap_NearTrailingIdx] = ((Near_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((Near_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((Near_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
       }
       sp.NearPeriodTotal = NearPeriodTotal;
       sp.lag1_inOpen = inOpen[historyLen - 1];
@@ -700,10 +655,7 @@ public partial class Core
       sp.ringPos_NearTrailingIdx = historyLen % cap_NearTrailingIdx;
       sp.ringCap_NearTrailingIdx = cap_NearTrailingIdx;
       sp.ringLag_NearTrailingIdx = capLag_NearTrailingIdx;
-      sp.ring_NearTrailingIdx_inOpen = capRing_NearTrailingIdx_inOpen;
-      sp.ring_NearTrailingIdx_inHigh = capRing_NearTrailingIdx_inHigh;
-      sp.ring_NearTrailingIdx_inLow = capRing_NearTrailingIdx_inLow;
-      sp.ring_NearTrailingIdx_inClose = capRing_NearTrailingIdx_inClose;
+      sp.ring_NearTrailingIdx_derived = capRing_NearTrailingIdx_derived;
       sp.cs_Near_rangeType = Near_rangeType;
       sp.cs_Near_avgPeriod = Near_avgPeriod;
       sp.cs_Near_factor = Near_factor;

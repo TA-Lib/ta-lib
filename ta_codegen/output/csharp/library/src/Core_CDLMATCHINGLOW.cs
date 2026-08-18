@@ -368,10 +368,7 @@ public partial class Core
       internal int ringPos_EqualTrailingIdx;
       internal int ringCap_EqualTrailingIdx;
       internal int ringLag_EqualTrailingIdx;
-      internal double[] ring_EqualTrailingIdx_inOpen = [];
-      internal double[] ring_EqualTrailingIdx_inHigh = [];
-      internal double[] ring_EqualTrailingIdx_inLow = [];
-      internal double[] ring_EqualTrailingIdx_inClose = [];
+      internal double[] ring_EqualTrailingIdx_derived = [];
       internal int cs_Equal_rangeType;
       internal int cs_Equal_avgPeriod;
       internal double cs_Equal_factor;
@@ -400,14 +397,8 @@ public partial class Core
          this.ringPos_EqualTrailingIdx = other.ringPos_EqualTrailingIdx;
          this.ringCap_EqualTrailingIdx = other.ringCap_EqualTrailingIdx;
          this.ringLag_EqualTrailingIdx = other.ringLag_EqualTrailingIdx;
-         this.ring_EqualTrailingIdx_inOpen = new double[other.ring_EqualTrailingIdx_inOpen.Length];
-         Array.Copy( other.ring_EqualTrailingIdx_inOpen, this.ring_EqualTrailingIdx_inOpen, other.ring_EqualTrailingIdx_inOpen.Length );
-         this.ring_EqualTrailingIdx_inHigh = new double[other.ring_EqualTrailingIdx_inHigh.Length];
-         Array.Copy( other.ring_EqualTrailingIdx_inHigh, this.ring_EqualTrailingIdx_inHigh, other.ring_EqualTrailingIdx_inHigh.Length );
-         this.ring_EqualTrailingIdx_inLow = new double[other.ring_EqualTrailingIdx_inLow.Length];
-         Array.Copy( other.ring_EqualTrailingIdx_inLow, this.ring_EqualTrailingIdx_inLow, other.ring_EqualTrailingIdx_inLow.Length );
-         this.ring_EqualTrailingIdx_inClose = new double[other.ring_EqualTrailingIdx_inClose.Length];
-         Array.Copy( other.ring_EqualTrailingIdx_inClose, this.ring_EqualTrailingIdx_inClose, other.ring_EqualTrailingIdx_inClose.Length );
+         this.ring_EqualTrailingIdx_derived = new double[other.ring_EqualTrailingIdx_derived.Length];
+         Array.Copy( other.ring_EqualTrailingIdx_derived, this.ring_EqualTrailingIdx_derived, other.ring_EqualTrailingIdx_derived.Length );
          this.cs_Equal_rangeType = other.cs_Equal_rangeType;
          this.cs_Equal_avgPeriod = other.cs_Equal_avgPeriod;
          this.cs_Equal_factor = other.cs_Equal_factor;
@@ -426,31 +417,16 @@ public partial class Core
          this.ringPos_EqualTrailingIdx = other.ringPos_EqualTrailingIdx;
          this.ringCap_EqualTrailingIdx = other.ringCap_EqualTrailingIdx;
          this.ringLag_EqualTrailingIdx = other.ringLag_EqualTrailingIdx;
-         if( this.ring_EqualTrailingIdx_inOpen.Length != other.ring_EqualTrailingIdx_inOpen.Length ) {
-            this.ring_EqualTrailingIdx_inOpen = new double[other.ring_EqualTrailingIdx_inOpen.Length];
+         if( this.ring_EqualTrailingIdx_derived.Length != other.ring_EqualTrailingIdx_derived.Length ) {
+            this.ring_EqualTrailingIdx_derived = new double[other.ring_EqualTrailingIdx_derived.Length];
          }
-         Array.Copy( other.ring_EqualTrailingIdx_inOpen, this.ring_EqualTrailingIdx_inOpen, other.ring_EqualTrailingIdx_inOpen.Length );
-         if( this.ring_EqualTrailingIdx_inHigh.Length != other.ring_EqualTrailingIdx_inHigh.Length ) {
-            this.ring_EqualTrailingIdx_inHigh = new double[other.ring_EqualTrailingIdx_inHigh.Length];
-         }
-         Array.Copy( other.ring_EqualTrailingIdx_inHigh, this.ring_EqualTrailingIdx_inHigh, other.ring_EqualTrailingIdx_inHigh.Length );
-         if( this.ring_EqualTrailingIdx_inLow.Length != other.ring_EqualTrailingIdx_inLow.Length ) {
-            this.ring_EqualTrailingIdx_inLow = new double[other.ring_EqualTrailingIdx_inLow.Length];
-         }
-         Array.Copy( other.ring_EqualTrailingIdx_inLow, this.ring_EqualTrailingIdx_inLow, other.ring_EqualTrailingIdx_inLow.Length );
-         if( this.ring_EqualTrailingIdx_inClose.Length != other.ring_EqualTrailingIdx_inClose.Length ) {
-            this.ring_EqualTrailingIdx_inClose = new double[other.ring_EqualTrailingIdx_inClose.Length];
-         }
-         Array.Copy( other.ring_EqualTrailingIdx_inClose, this.ring_EqualTrailingIdx_inClose, other.ring_EqualTrailingIdx_inClose.Length );
+         Array.Copy( other.ring_EqualTrailingIdx_derived, this.ring_EqualTrailingIdx_derived, other.ring_EqualTrailingIdx_derived.Length );
          this.cs_Equal_rangeType = other.cs_Equal_rangeType;
          this.cs_Equal_avgPeriod = other.cs_Equal_avgPeriod;
          this.cs_Equal_factor = other.cs_Equal_factor;
          this.cur_outInteger = other.cur_outInteger;
          this.fillRange = other.fillRange;
       }
-
-      /* Peek's reusable scratch — one per thread, see CopyFrom. */
-      [ThreadStatic] private static CDLMATCHINGLOW_Stream? peekScratch;
 
       /// <summary>Commit one closed bar, returning the new current value.</summary>
       /// <remarks>
@@ -480,9 +456,9 @@ public partial class Core
       /// <para>Bit-identical to what the next <see cref="Update"/> with the same bar
       /// would return — it is the same generated code, run on a copy. Never writes
       /// this handle, so peeks may run concurrently with each other.</para>
-      /// <para>It runs on a scratch handle held per thread and reused, so it allocates
-      /// nothing after this thread's first peek of this indicator. That scratch is
-      /// retained for the life of the thread.</para>
+      /// <para>It runs on a fresh copy of this handle, so it allocates one — proportional
+      /// to the state this indicator carries. If you peek on every tick and that
+      /// matters, hold the value <see cref="Update"/> returns instead.</para>
       /// </remarks>
       /// <param name="inOpen">This bar's open price.</param>
       /// <param name="inHigh">This bar's high price.</param>
@@ -492,13 +468,7 @@ public partial class Core
       public int Peek( double inOpen, double inHigh, double inLow, double inClose )
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLMATCHINGLOW", "peek", RetCode.BadParam);
-         CDLMATCHINGLOW_Stream? scratch = peekScratch;
-         if( scratch is null ) {
-            scratch = new CDLMATCHINGLOW_Stream(this);
-            peekScratch = scratch;
-         } else {
-            scratch.CopyFrom(this);
-         }
+         CDLMATCHINGLOW_Stream scratch = new CDLMATCHINGLOW_Stream(this);
          core.CDLMATCHINGLOW_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
@@ -524,10 +494,7 @@ public partial class Core
       int Equal_rangeType = sp.cs_Equal_rangeType;
       int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
       double Equal_factor = sp.cs_Equal_factor;
-      sp.ring_EqualTrailingIdx_inOpen[sp.ringPos_EqualTrailingIdx] = inOpen;
-      sp.ring_EqualTrailingIdx_inHigh[sp.ringPos_EqualTrailingIdx] = inHigh;
-      sp.ring_EqualTrailingIdx_inLow[sp.ringPos_EqualTrailingIdx] = inLow;
-      sp.ring_EqualTrailingIdx_inClose[sp.ringPos_EqualTrailingIdx] = inClose;
+      sp.ring_EqualTrailingIdx_derived[sp.ringPos_EqualTrailingIdx] = ((Equal_rangeType == 0) ? (Math.Abs(inClose - inOpen)) : ((Equal_rangeType == 1) ? (inHigh - inLow) : ((Equal_rangeType == 2) ? ((inHigh - (((inClose) >= (inOpen)) ? (inClose) : (inOpen))) + ((((inClose) >= (inOpen)) ? (inOpen) : (inClose)) - inLow)) : 0.0)));
       if( ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* first black */
           ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 &&                 /* second black */
           inClose <= sp.lag1_inClose + ((Equal_factor * (((Equal_avgPeriod != 0) ? (sp.EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.Abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((Equal_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((Equal_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st and 2nd same close */
@@ -540,7 +507,7 @@ public partial class Core
       /* add the current range and subtract the first range: this is done after the pattern recognition
        * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
        */
-      sp.EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.Abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((Equal_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((Equal_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0))) - ((Equal_rangeType == 0) ? (Math.Abs(sp.ring_EqualTrailingIdx_inClose[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx] - sp.ring_EqualTrailingIdx_inOpen[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx])) : ((Equal_rangeType == 1) ? (sp.ring_EqualTrailingIdx_inHigh[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx] - sp.ring_EqualTrailingIdx_inLow[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx]) : ((Equal_rangeType == 2) ? ((sp.ring_EqualTrailingIdx_inHigh[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx] - (((sp.ring_EqualTrailingIdx_inClose[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx]) >= (sp.ring_EqualTrailingIdx_inOpen[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx])) ? (sp.ring_EqualTrailingIdx_inClose[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx]) : (sp.ring_EqualTrailingIdx_inOpen[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx]))) + ((((sp.ring_EqualTrailingIdx_inClose[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx]) >= (sp.ring_EqualTrailingIdx_inOpen[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx])) ? (sp.ring_EqualTrailingIdx_inOpen[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx]) : (sp.ring_EqualTrailingIdx_inClose[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx])) - sp.ring_EqualTrailingIdx_inLow[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx])) : 0.0)));
+      sp.EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.Abs(sp.lag1_inClose - sp.lag1_inOpen)) : ((Equal_rangeType == 1) ? (sp.lag1_inHigh - sp.lag1_inLow) : ((Equal_rangeType == 2) ? ((sp.lag1_inHigh - (((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inClose) : (sp.lag1_inOpen))) + ((((sp.lag1_inClose) >= (sp.lag1_inOpen)) ? (sp.lag1_inOpen) : (sp.lag1_inClose)) - sp.lag1_inLow)) : 0.0))) - sp.ring_EqualTrailingIdx_derived[(sp.ringPos_EqualTrailingIdx + sp.ringCap_EqualTrailingIdx - sp.ringLag_EqualTrailingIdx - 1) % sp.ringCap_EqualTrailingIdx];
       sp.lag1_inOpen = inOpen;
       sp.lag1_inHigh = inHigh;
       sp.lag1_inLow = inLow;
@@ -632,21 +599,9 @@ public partial class Core
          return RetCode.InternalError;
       }
       int allocN_EqualTrailingIdx = (cap_EqualTrailingIdx > 0)? cap_EqualTrailingIdx : 1;
-      double[] capRing_EqualTrailingIdx_inOpen = new double[allocN_EqualTrailingIdx];
+      double[] capRing_EqualTrailingIdx_derived = new double[allocN_EqualTrailingIdx];
       for( int fillJ = historyLen - cap_EqualTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_EqualTrailingIdx_inOpen[fillJ % cap_EqualTrailingIdx] = inOpen[fillJ];
-      }
-      double[] capRing_EqualTrailingIdx_inHigh = new double[allocN_EqualTrailingIdx];
-      for( int fillJ = historyLen - cap_EqualTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_EqualTrailingIdx_inHigh[fillJ % cap_EqualTrailingIdx] = inHigh[fillJ];
-      }
-      double[] capRing_EqualTrailingIdx_inLow = new double[allocN_EqualTrailingIdx];
-      for( int fillJ = historyLen - cap_EqualTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_EqualTrailingIdx_inLow[fillJ % cap_EqualTrailingIdx] = inLow[fillJ];
-      }
-      double[] capRing_EqualTrailingIdx_inClose = new double[allocN_EqualTrailingIdx];
-      for( int fillJ = historyLen - cap_EqualTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_EqualTrailingIdx_inClose[fillJ % cap_EqualTrailingIdx] = inClose[fillJ];
+         capRing_EqualTrailingIdx_derived[fillJ % cap_EqualTrailingIdx] = ((Equal_rangeType == 0) ? (Math.Abs(inClose[fillJ] - inOpen[fillJ])) : ((Equal_rangeType == 1) ? (inHigh[fillJ] - inLow[fillJ]) : ((Equal_rangeType == 2) ? ((inHigh[fillJ] - (((inClose[fillJ]) >= (inOpen[fillJ])) ? (inClose[fillJ]) : (inOpen[fillJ]))) + ((((inClose[fillJ]) >= (inOpen[fillJ])) ? (inOpen[fillJ]) : (inClose[fillJ])) - inLow[fillJ])) : 0.0)));
       }
       sp.EqualPeriodTotal = EqualPeriodTotal;
       sp.lag1_inOpen = inOpen[historyLen - 1];
@@ -656,10 +611,7 @@ public partial class Core
       sp.ringPos_EqualTrailingIdx = historyLen % cap_EqualTrailingIdx;
       sp.ringCap_EqualTrailingIdx = cap_EqualTrailingIdx;
       sp.ringLag_EqualTrailingIdx = capLag_EqualTrailingIdx;
-      sp.ring_EqualTrailingIdx_inOpen = capRing_EqualTrailingIdx_inOpen;
-      sp.ring_EqualTrailingIdx_inHigh = capRing_EqualTrailingIdx_inHigh;
-      sp.ring_EqualTrailingIdx_inLow = capRing_EqualTrailingIdx_inLow;
-      sp.ring_EqualTrailingIdx_inClose = capRing_EqualTrailingIdx_inClose;
+      sp.ring_EqualTrailingIdx_derived = capRing_EqualTrailingIdx_derived;
       sp.cs_Equal_rangeType = Equal_rangeType;
       sp.cs_Equal_avgPeriod = Equal_avgPeriod;
       sp.cs_Equal_factor = Equal_factor;

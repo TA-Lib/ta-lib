@@ -336,10 +336,7 @@ struct CDLLADDERBOTTOM_StreamState {
     ringPos_ShadowVeryShortTrailingIdx: usize,
     ringCap_ShadowVeryShortTrailingIdx: usize,
     ringLag_ShadowVeryShortTrailingIdx: usize,
-    ring_ShadowVeryShortTrailingIdx_inOpen: Vec<f64>,
-    ring_ShadowVeryShortTrailingIdx_inHigh: Vec<f64>,
-    ring_ShadowVeryShortTrailingIdx_inLow: Vec<f64>,
-    ring_ShadowVeryShortTrailingIdx_inClose: Vec<f64>,
+    ring_ShadowVeryShortTrailingIdx_derived: Vec<f64>,
 }
 
 #[allow(non_snake_case, dead_code)]
@@ -361,10 +358,7 @@ impl CDLLADDERBOTTOM_StreamState {
         self.ringPos_ShadowVeryShortTrailingIdx = src.ringPos_ShadowVeryShortTrailingIdx;
         self.ringCap_ShadowVeryShortTrailingIdx = src.ringCap_ShadowVeryShortTrailingIdx;
         self.ringLag_ShadowVeryShortTrailingIdx = src.ringLag_ShadowVeryShortTrailingIdx;
-        self.ring_ShadowVeryShortTrailingIdx_inOpen.clone_from(&src.ring_ShadowVeryShortTrailingIdx_inOpen);
-        self.ring_ShadowVeryShortTrailingIdx_inHigh.clone_from(&src.ring_ShadowVeryShortTrailingIdx_inHigh);
-        self.ring_ShadowVeryShortTrailingIdx_inLow.clone_from(&src.ring_ShadowVeryShortTrailingIdx_inLow);
-        self.ring_ShadowVeryShortTrailingIdx_inClose.clone_from(&src.ring_ShadowVeryShortTrailingIdx_inClose);
+        self.ring_ShadowVeryShortTrailingIdx_derived.clone_from(&src.ring_ShadowVeryShortTrailingIdx_derived);
     }
 }
 
@@ -382,10 +376,22 @@ impl Core {
         let ShadowVeryShort_avgPeriod: i32 = self.candle_settings.shadow_very_short.avg_period;
         #[allow(non_snake_case)]
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
-        sp.ring_ShadowVeryShortTrailingIdx_inOpen[sp.ringPos_ShadowVeryShortTrailingIdx] = inOpen;
-        sp.ring_ShadowVeryShortTrailingIdx_inHigh[sp.ringPos_ShadowVeryShortTrailingIdx] = inHigh;
-        sp.ring_ShadowVeryShortTrailingIdx_inLow[sp.ringPos_ShadowVeryShortTrailingIdx] = inLow;
-        sp.ring_ShadowVeryShortTrailingIdx_inClose[sp.ringPos_ShadowVeryShortTrailingIdx] = inClose;
+        let mut _candlerange_0: f64;
+        match ShadowVeryShort_rangeType {
+            0 => {
+                _candlerange_0 = (inClose - inOpen).abs();
+            }
+            1 => {
+                _candlerange_0 = inHigh - inLow;
+            }
+            2 => {
+                _candlerange_0 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
+            }
+            _ => {
+                _candlerange_0 = 0.0;
+            }
+        }
+        sp.ring_ShadowVeryShortTrailingIdx_derived[sp.ringPos_ShadowVeryShortTrailingIdx] = _candlerange_0;
         if (((if sp.lag4_inClose >= sp.lag4_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
            (((if sp.lag3_inClose >= sp.lag3_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&
            (((if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 3 black candlesticks
@@ -405,37 +411,22 @@ impl Core {
         }
         // add the current range and subtract the first range: this is done after the pattern recognition
         // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-        let mut _candlerange_0: f64;
-        match ShadowVeryShort_rangeType {
-            0 => {
-                _candlerange_0 = (sp.lag1_inClose - sp.lag1_inOpen).abs();
-            }
-            1 => {
-                _candlerange_0 = sp.lag1_inHigh - sp.lag1_inLow;
-            }
-            2 => {
-                _candlerange_0 = (sp.lag1_inHigh - (if sp.lag1_inClose >= sp.lag1_inOpen { sp.lag1_inClose } else { sp.lag1_inOpen })) + ((if sp.lag1_inClose >= sp.lag1_inOpen { sp.lag1_inOpen } else { sp.lag1_inClose }) - sp.lag1_inLow);
-            }
-            _ => {
-                _candlerange_0 = 0.0;
-            }
-        }
         let mut _candlerange_1: f64;
         match ShadowVeryShort_rangeType {
             0 => {
-                _candlerange_1 = (sp.ring_ShadowVeryShortTrailingIdx_inClose[((sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx) as usize] - sp.ring_ShadowVeryShortTrailingIdx_inOpen[((sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx) as usize]).abs();
+                _candlerange_1 = (sp.lag1_inClose - sp.lag1_inOpen).abs();
             }
             1 => {
-                _candlerange_1 = sp.ring_ShadowVeryShortTrailingIdx_inHigh[((sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx) as usize] - sp.ring_ShadowVeryShortTrailingIdx_inLow[((sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx) as usize];
+                _candlerange_1 = sp.lag1_inHigh - sp.lag1_inLow;
             }
             2 => {
-                _candlerange_1 = (sp.ring_ShadowVeryShortTrailingIdx_inHigh[((sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx) as usize] - (if sp.ring_ShadowVeryShortTrailingIdx_inClose[((sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx) as usize] >= sp.ring_ShadowVeryShortTrailingIdx_inOpen[((sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx) as usize] { sp.ring_ShadowVeryShortTrailingIdx_inClose[((sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx) as usize] } else { sp.ring_ShadowVeryShortTrailingIdx_inOpen[((sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx) as usize] })) + ((if sp.ring_ShadowVeryShortTrailingIdx_inClose[((sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx) as usize] >= sp.ring_ShadowVeryShortTrailingIdx_inOpen[((sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx) as usize] { sp.ring_ShadowVeryShortTrailingIdx_inOpen[((sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx) as usize] } else { sp.ring_ShadowVeryShortTrailingIdx_inClose[((sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx) as usize] }) - sp.ring_ShadowVeryShortTrailingIdx_inLow[((sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx) as usize]);
+                _candlerange_1 = (sp.lag1_inHigh - (if sp.lag1_inClose >= sp.lag1_inOpen { sp.lag1_inClose } else { sp.lag1_inOpen })) + ((if sp.lag1_inClose >= sp.lag1_inOpen { sp.lag1_inOpen } else { sp.lag1_inClose }) - sp.lag1_inLow);
             }
             _ => {
                 _candlerange_1 = 0.0;
             }
         }
-        sp.ShadowVeryShortPeriodTotal += _candlerange_0 - _candlerange_1;
+        sp.ShadowVeryShortPeriodTotal += _candlerange_1 - sp.ring_ShadowVeryShortTrailingIdx_derived[((sp.ringPos_ShadowVeryShortTrailingIdx + sp.ringCap_ShadowVeryShortTrailingIdx - sp.ringLag_ShadowVeryShortTrailingIdx - 1) % sp.ringCap_ShadowVeryShortTrailingIdx) as usize];
         sp.lag4_inOpen = sp.lag3_inOpen;
         sp.lag3_inOpen = sp.lag2_inOpen;
         sp.lag2_inOpen = sp.lag1_inOpen;
@@ -594,35 +585,11 @@ impl Core {
             return Err(RetCode::InternalError);
         }
         let allocN_ShadowVeryShortTrailingIdx: usize = if cap_ShadowVeryShortTrailingIdx > 0 { cap_ShadowVeryShortTrailingIdx as usize } else { 1 };
-        let mut ring_ShadowVeryShortTrailingIdx_inOpen: Vec<f64> = vec![0.0_f64; allocN_ShadowVeryShortTrailingIdx];
+        let mut ring_ShadowVeryShortTrailingIdx_derived: Vec<f64> = vec![0.0_f64; allocN_ShadowVeryShortTrailingIdx];
         {
             let mut fillJ: usize = historyLen - cap_ShadowVeryShortTrailingIdx as usize;
             while fillJ < historyLen {
-                ring_ShadowVeryShortTrailingIdx_inOpen[fillJ % cap_ShadowVeryShortTrailingIdx as usize] = inOpen[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_ShadowVeryShortTrailingIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_ShadowVeryShortTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_ShadowVeryShortTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_ShadowVeryShortTrailingIdx_inHigh[fillJ % cap_ShadowVeryShortTrailingIdx as usize] = inHigh[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_ShadowVeryShortTrailingIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_ShadowVeryShortTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_ShadowVeryShortTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_ShadowVeryShortTrailingIdx_inLow[fillJ % cap_ShadowVeryShortTrailingIdx as usize] = inLow[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_ShadowVeryShortTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_ShadowVeryShortTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_ShadowVeryShortTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_ShadowVeryShortTrailingIdx_inClose[fillJ % cap_ShadowVeryShortTrailingIdx as usize] = inClose[fillJ];
+                ring_ShadowVeryShortTrailingIdx_derived[fillJ % cap_ShadowVeryShortTrailingIdx as usize] = (match ShadowVeryShort_rangeType { 0 => ((inClose[(fillJ) as usize]) - (inOpen[(fillJ) as usize])).abs(), 1 => (inHigh[(fillJ) as usize]) - (inLow[(fillJ) as usize]), 2 => ((inHigh[(fillJ) as usize]) - (if (inClose[(fillJ) as usize]) >= (inOpen[(fillJ) as usize]) { (inClose[(fillJ) as usize]) } else { (inOpen[(fillJ) as usize]) })) + ((if (inClose[(fillJ) as usize]) >= (inOpen[(fillJ) as usize]) { (inOpen[(fillJ) as usize]) } else { (inClose[(fillJ) as usize]) }) - (inLow[(fillJ) as usize])), _ => 0.0 });
                 fillJ += 1;
             }
         }
@@ -641,10 +608,7 @@ impl Core {
             ringPos_ShadowVeryShortTrailingIdx: historyLen % cap_ShadowVeryShortTrailingIdx as usize,
             ringCap_ShadowVeryShortTrailingIdx: cap_ShadowVeryShortTrailingIdx as usize,
             ringLag_ShadowVeryShortTrailingIdx: capLag_ShadowVeryShortTrailingIdx as usize,
-            ring_ShadowVeryShortTrailingIdx_inOpen,
-            ring_ShadowVeryShortTrailingIdx_inHigh,
-            ring_ShadowVeryShortTrailingIdx_inLow,
-            ring_ShadowVeryShortTrailingIdx_inClose,
+            ring_ShadowVeryShortTrailingIdx_derived,
         };
         Ok(CDLLADDERBOTTOM_Stream { core: self.clone(), state })
     }
@@ -722,14 +686,6 @@ impl Core {
 
 }
 
-thread_local! {
-    /// `peek`'s reusable scratch handle (see `CDLLADDERBOTTOM_StreamState::restore_from`).
-    /// Taken for the duration of the step and put back after, so a
-    /// panicking step costs the scratch, never leaves it borrowed.
-    static CDLLADDERBOTTOM_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLLADDERBOTTOM_Stream>>> =
-        const { std::cell::Cell::new(None) };
-}
-
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl CDLLADDERBOTTOM_Stream {
@@ -757,8 +713,10 @@ impl CDLLADDERBOTTOM_Stream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return (it is the same code, run
     /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy it runs on is held per thread and reused,
-    /// so only the first peek of this function on a thread allocates.
+    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
+    /// often removed outright by the optimizer, which is why nothing is
+    /// reused here, but that is not a guarantee: budget for a clone of the
+    /// window and prefer `update` on a `clone()` in a hot loop.
     ///
     /// # Errors
     ///
@@ -769,13 +727,8 @@ impl CDLLADDERBOTTOM_Stream {
         if !inOpen.is_finite() || !inHigh.is_finite() || !inLow.is_finite() || !inClose.is_finite() {
             return Err(RetCode::BadParam);
         }
-        CDLLADDERBOTTOM_PEEK_SCRATCH.with(|cell| {
-            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
-            scratch.restore_from(self);
-            let value = scratch.update(inOpen, inHigh, inLow, inClose);
-            cell.set(Some(scratch));
-            value
-        })
+        let mut scratch = self.clone();
+        scratch.update(inOpen, inHigh, inLow, inClose)
     }
 }
 

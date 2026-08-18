@@ -4549,23 +4549,6 @@ fn derived_ring_census(
     }
 }
 
-/// Candle settings reach an expression as `<Setting>_rangeType` and friends,
-/// resolved from the mutable globals. A derived ring freezes whatever they say
-/// when the bar is buffered, which is a semantic question rather than a
-/// mechanical one (#229), so expressions naming them are held back until that
-/// is settled. Everything else -- AO's `(high+low)/2`, QSTICK's `close-open` --
-/// is a pure function of the bar and can be collapsed today.
-fn mentions_candle_settings(e: &Expr) -> bool {
-    let mut found = false;
-    walk_expr(e, &mut |x| {
-        if let Expr::Var(n) = x {
-            if n.ends_with("_rangeType") || n.ends_with("_avgPeriod") || n.ends_with("_factor") {
-                found = true;
-            }
-        }
-    });
-    found
-}
 
 /// The eligible derived rings: one shape covering every read at that index,
 /// more than one array behind it, and no settings dependency.
@@ -4602,9 +4585,6 @@ fn eligible_derived(
             continue;
         }
         let expr = shapes[0].clone();
-        if mentions_candle_settings(&expr) {
-            continue;
-        }
         let mut raw: BTreeSet<String> = BTreeSet::new();
         walk_expr(&expr, &mut |x| {
             if let Expr::ArrayAccess(n, _) = x {
@@ -6063,30 +6043,53 @@ fn derived_slot_read(
 /// every `in<Array>[idx]` swapped for the scalar `update` parameter carrying
 /// that array's bar. Same operations on the same doubles as the batch performs
 /// at subtraction time, which is what keeps the collapse bit-exact.
-fn derived_bar_value(dr: &DerivedRing, names: &dyn NameMap) -> Expr {
-    fn go(e: &Expr, names: &dyn NameMap) -> Expr {
-        match e {
-            Expr::ArrayAccess(arr, _) => Expr::Var(names.bar(arr)),
-            Expr::BinOp(lhs, op, rhs) => Expr::BinOp(
-                Box::new(go(lhs, names)),
-                op.clone(),
-                Box::new(go(rhs, names)),
-            ),
-            Expr::FuncCall(name, args) => {
-                Expr::FuncCall(name.clone(), args.iter().map(|a| go(a, names)).collect())
-            }
-            Expr::Cast(t, inner) => Expr::Cast(t.clone(), Box::new(go(inner, names))),
-            Expr::Not(inner) => Expr::Not(Box::new(go(inner, names))),
-            Expr::BitwiseNot(inner) => Expr::BitwiseNot(Box::new(go(inner, names))),
-            Expr::Ternary(cond, then_e, else_e) => Expr::Ternary(
-                Box::new(go(cond, names)),
-                Box::new(go(then_e, names)),
-                Box::new(go(else_e, names)),
-            ),
-            other => other.clone(),
-        }
+/// Rewrite every input-array read in a derived-ring expression, leaving the
+/// rest of the tree alone. The only thing that varies between the places this
+/// is needed is what an `in<Array>[...]` becomes, so it is a parameter:
+///
+///   - the per-bar store wants the scalar `update` parameter for that array;
+///   - the open-time fill wants the same array re-indexed to the fill counter.
+///
+/// One walk rather than one per backend. The two defects fixed in 8352b3a6d
+/// and 34523b517 both lived in copies of this that had drifted apart, so the
+/// duplication was the bug rather than an untidiness next to it.
+pub fn map_array_reads(e: &Expr, f: &dyn Fn(&str) -> Expr) -> Expr {
+    match e {
+        Expr::ArrayAccess(arr, _) => f(arr),
+        Expr::BinOp(lhs, op, rhs) => Expr::BinOp(
+            Box::new(map_array_reads(lhs, f)),
+            op.clone(),
+            Box::new(map_array_reads(rhs, f)),
+        ),
+        Expr::FuncCall(name, args) => Expr::FuncCall(
+            name.clone(),
+            args.iter().map(|a| map_array_reads(a, f)).collect(),
+        ),
+        Expr::Cast(t, inner) => Expr::Cast(t.clone(), Box::new(map_array_reads(inner, f))),
+        Expr::Not(inner) => Expr::Not(Box::new(map_array_reads(inner, f))),
+        Expr::BitwiseNot(inner) => Expr::BitwiseNot(Box::new(map_array_reads(inner, f))),
+        Expr::Ternary(cond, then_e, else_e) => Expr::Ternary(
+            Box::new(map_array_reads(cond, f)),
+            Box::new(map_array_reads(then_e, f)),
+            Box::new(map_array_reads(else_e, f)),
+        ),
+        other => other.clone(),
     }
-    go(&dr.expr, names)
+}
+
+/// The expression a derived ring stores for the CURRENT bar: the same
+/// operations on the same doubles the batch performs at subtraction time,
+/// which is what keeps the collapse bit-exact.
+fn derived_bar_value(dr: &DerivedRing, names: &dyn NameMap) -> Expr {
+    map_array_reads(&dr.expr, &|arr| Expr::Var(names.bar(arr)))
+}
+
+/// The expression the OPEN-time fill stores for the bar at `idx_var`. Backends
+/// render this; none of them walks the tree themselves.
+pub fn derived_fill_value(dr: &DerivedRing, idx_var: &str) -> Expr {
+    map_array_reads(&dr.expr, &|arr| {
+        Expr::ArrayAccess(arr.to_string(), Box::new(Expr::Var(idx_var.to_string())))
+    })
 }
 
 /// `if (cap == 0) ring[0] = bar;` for every array of a ring — makes the
