@@ -3406,32 +3406,7 @@ fn derived_fill_expr(
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
 ) -> String {
-    fn reindex(e: &Expr, idx_var: &str) -> Expr {
-        match e {
-            Expr::ArrayAccess(arr, _) => {
-                Expr::ArrayAccess(arr.clone(), Box::new(Expr::Var(idx_var.to_string())))
-            }
-            Expr::BinOp(lhs, op, rhs) => Expr::BinOp(
-                Box::new(reindex(lhs, idx_var)),
-                op.clone(),
-                Box::new(reindex(rhs, idx_var)),
-            ),
-            Expr::FuncCall(name, args) => Expr::FuncCall(
-                name.clone(),
-                args.iter().map(|a| reindex(a, idx_var)).collect(),
-            ),
-            Expr::Cast(t, inner) => Expr::Cast(t.clone(), Box::new(reindex(inner, idx_var))),
-            Expr::Not(inner) => Expr::Not(Box::new(reindex(inner, idx_var))),
-            Expr::BitwiseNot(inner) => Expr::BitwiseNot(Box::new(reindex(inner, idx_var))),
-            Expr::Ternary(cond, then_e, else_e) => Expr::Ternary(
-                Box::new(reindex(cond, idx_var)),
-                Box::new(reindex(then_e, idx_var)),
-                Box::new(reindex(else_e, idx_var)),
-            ),
-            other => other.clone(),
-        }
-    }
-    super::c::render_expression_stream_candles(&reindex(&dr.expr, idx_var), registry, helpers, counter)
+    super::c::render_expression_stream_candles(&streaming::derived_fill_value(dr, idx_var), registry, helpers, counter)
 }
 
 /// Emit one ring's per-slot allocation and its open-time fill. Split out of
