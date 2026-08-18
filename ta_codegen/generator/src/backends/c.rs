@@ -2075,6 +2075,32 @@ pub(crate) fn c_predicate_expr(which: SpecialBuiltin, args: &[String]) -> String
 
 /// Crate-visible expression rendering (used by the stream emitter for
 /// private-param init expressions and identity-guard conditions).
+/// Render an expression the way a stream transition renders one: candle
+/// helpers map onto the scalar `TA_STREAM_CANDLE*` mirrors rather than the
+/// array-indexed batch macros. The open-time derived fill uses this so ONE
+/// spelling produces the ring's contents at both the fill and the per-bar push
+/// (#229) -- otherwise the buffer is written by `TA_CANDLERANGE(SET,j)` and
+/// read back against `TA_STREAM_CANDLERANGE(SET,o,h,l,c)`, and their agreement
+/// rests only on the mirror comment in `ta_utility.h`.
+pub(crate) fn render_expression_stream_candles(
+    expr: &Expr,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    inline_counter: &std::cell::Cell<usize>,
+) -> String {
+    STREAM_FMA.with(|f| {
+        let fma_sets = f.borrow();
+        let ctx = CRenderCtx {
+            single_precision: false,
+            inline_counter,
+            stream_scalar_candles: true,
+            fma: fma_sets.as_ref(),
+            nullable_outputs: &[],
+        };
+        render_expr(expr, &ctx, registry, helpers)
+    })
+}
+
 pub(crate) fn render_expression(
     expr: &Expr,
     registry: &Registry,

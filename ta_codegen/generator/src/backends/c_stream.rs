@@ -3431,7 +3431,7 @@ fn derived_fill_expr(
             other => other.clone(),
         }
     }
-    render_expression(&reindex(&dr.expr, idx_var), registry, helpers, counter)
+    super::c::render_expression_stream_candles(&reindex(&dr.expr, idx_var), registry, helpers, counter)
 }
 
 /// Emit one ring's per-slot allocation and its open-time fill. Split out of

@@ -1814,7 +1814,17 @@ fn emit_capture(
                 o,
                 "        let mut ring_{v}_{arr}: Vec<f64> = vec![0.0_f64; allocN_{v}];"
             );
+            // A derived ring stores f(bar); the fill VALUE changes but the slot
+            // arithmetic must not -- `back > 0` keeps the absolute-mod layout
+            // (bar j at j % cap) that `ringPos = historyLen % cap` is seeded
+            // against, and only `back == 0` uses the linear form (#229).
+            let fill_rhs = ring.derived.as_ref().map(|dr| {
+                derived_fill_expr_rust(dr, "fillJ", typing, &opt_real_params_cap, registry, helpers)
+            });
             if back > 0 {
+                let rhs = fill_rhs
+                    .clone()
+                    .unwrap_or_else(|| format!("{arr}[fillJ]"));
                 let _ = writeln!(o, "        {{");
                 let _ = writeln!(
                     o,
@@ -1823,16 +1833,13 @@ fn emit_capture(
                 let _ = writeln!(o, "            while fillJ < historyLen {{");
                 let _ = writeln!(
                     o,
-                    "                ring_{v}_{arr}[fillJ % cap_{v} as usize] = {arr}[fillJ];"
+                    "                ring_{v}_{arr}[fillJ % cap_{v} as usize] = {rhs};"
                 );
                 let _ = writeln!(o, "                fillJ += 1;");
                 let _ = writeln!(o, "            }}");
                 let _ = writeln!(o, "        }}");
-            } else if let Some(dr) = ring.derived.as_ref() {
+            } else if let Some(rhs) = fill_rhs {
                 // Derived ring: evaluate f(bar) per history bar (#229).
-                let rhs = derived_fill_expr_rust(
-                    dr, "fillJ", typing, &opt_real_params_cap, registry, helpers,
-                );
                 let _ = writeln!(o, "        {{");
                 let _ = writeln!(
                     o,

@@ -2041,18 +2041,25 @@ fn emit_capture(
         let _ = writeln!(o, "      int allocN_{v} = (cap_{v} > 0)? cap_{v} : 1;");
         for arr in &ring.arrays {
             let _ = writeln!(o, "      double[] capRing_{v}_{arr} = new double[allocN_{v}];");
+            // A derived ring stores f(bar); the fill VALUE changes but the slot
+            // arithmetic must not -- see the note in `rust_stream.rs` (#229).
+            let fill_rhs = ring.derived.as_ref().map(|dr| {
+                let empty_fill = HashSet::new();
+                let fill_ctx = stream_ctx(&empty_fill, counter, stream_fma);
+                derived_fill_expr_cs(dr, "fillJ", &fill_ctx, registry, helpers)
+            });
             if back > 0 {
                 // Absolute-mod layout: bar j lives at j % cap.
+                let rhs = fill_rhs
+                    .clone()
+                    .unwrap_or_else(|| format!("{arr}[fillJ]"));
                 let _ = writeln!(
                     o,
                     "      for( int fillJ = historyLen - cap_{v}; fillJ < historyLen; fillJ++ ) {{"
                 );
-                let _ = writeln!(o, "         capRing_{v}_{arr}[fillJ % cap_{v}] = {arr}[fillJ];");
+                let _ = writeln!(o, "         capRing_{v}_{arr}[fillJ % cap_{v}] = {rhs};");
                 let _ = writeln!(o, "      }}");
-            } else if let Some(dr) = ring.derived.as_ref() {
-                let empty_fill = HashSet::new();
-                let fill_ctx = stream_ctx(&empty_fill, counter, stream_fma);
-                let rhs = derived_fill_expr_cs(dr, "fillJ", &fill_ctx, registry, helpers);
+            } else if let Some(rhs) = fill_rhs {
                 let _ = writeln!(
                     o,
                     "      for( int fillJ = historyLen - cap_{v}; fillJ < historyLen; fillJ++ ) {{"
