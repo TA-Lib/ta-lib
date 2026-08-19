@@ -121,6 +121,24 @@ TA_LIB_API TA_RetCode TA_PPO( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
+   /* Nothing to produce: the range is shorter than the lookback. Return before
+    * touching anything.
+    *
+    * Without this the fast MA below runs first, and its lookback is SMALLER
+    * than ppo's own — so it reads the whole range and computes a result the
+    * empty slow MA then discards. Observably identical (the slow MA's own early
+    * return already yields 0,0 here), but it is the difference between "a range
+    * shorter than the lookback reads nothing" being true of this function and
+    * being false: with a caller-supplied inReal that stops short of endIdx, that
+    * discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
+    * probe over every guarded core.
+    */
+   if( TA_MA_Lookback(max(optInSlowPeriod,optInFastPeriod),optInMAType) > endIdx )
+   {
+      *outBegIdx= 0;
+      *outNBElement= 0;
+      return TA_SUCCESS;
+   }
    /* Allocate an intermediate buffer. */
    tempBuffer = malloc((endIdx - startIdx + 1) * sizeof(double));
    if( !tempBuffer )
@@ -213,6 +231,12 @@ TA_RetCode TA_S_PPO( int    startIdx,
    if( !outReal )
       return TA_BAD_PARAM;
 
+   if( TA_MA_Lookback(max(optInSlowPeriod,optInFastPeriod),optInMAType) > endIdx )
+   {
+      *outBegIdx= 0;
+      *outNBElement= 0;
+      return TA_SUCCESS;
+   }
    tempBuffer = malloc((endIdx - startIdx + 1) * sizeof(double));
    if( !tempBuffer )
    {
@@ -358,6 +382,25 @@ static TA_RetCode TA_PPO_OpenCore( struct TA_PPO_Stream **stream, const double i
       int fastNb;
       int offset;
       int i;
+      /* Nothing to produce: the range is shorter than the lookback. Return before
+       * touching anything.
+       *
+       * Without this the fast MA below runs first, and its lookback is SMALLER
+       * than ppo's own — so it reads the whole range and computes a result the
+       * empty slow MA then discards. Observably identical (the slow MA's own early
+       * return already yields 0,0 here), but it is the difference between "a range
+       * shorter than the lookback reads nothing" being true of this function and
+       * being false: with a caller-supplied inReal that stops short of endIdx, that
+       * discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
+       * probe over every guarded core.
+       */
+      if( TA_MA_Lookback(max(optInSlowPeriod,optInFastPeriod),optInMAType) > endIdx )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal );
+         return TA_BAD_PARAM;
+      }
       /* Allocate an intermediate buffer. */
       tempBuffer = malloc((endIdx - startIdx + 1) * sizeof(double));
       if( !tempBuffer )

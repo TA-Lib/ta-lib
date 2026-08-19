@@ -468,6 +468,25 @@ impl Core {
         // average and the deviation is the standard deviation of the input, combined
         // at the same bar. Two intermediate buffers are allocated so the input may
         // safely alias an output (it is only read here).
+        // Nothing to produce: the range is shorter than the lookback. Return before
+        // touching anything.
+        //
+        // Without this the moving average below runs first, and for the MA types whose
+        // lookback is BELOW the deviation's - TA_MAType_DISABLED (MA lookback 0) and
+        // TA_MAType_MAMA at optInTimePeriod >= 34 - it reads the whole range and
+        // computes a middle band the empty standard deviation then discards.
+        // Observably identical (the empty deviation already yields 0,0 here), but it
+        // is the difference between "a range shorter than the lookback reads nothing"
+        // being true of this function and being false: with a caller-supplied inReal
+        // that stops short of endIdx, that discarded work is an out-of-bounds read.
+        // The SMA fast path above needs no such guard - its own lookback IS the
+        // deviation's, so its clamp already covers it. Pinned by the zero-length
+        // no-I/O probe over every guarded core, at every MA type.
+        if self.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return RetCode::Success;
+        }
         tempBuffer1 = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
         tempBuffer2 = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
         // Calculate the middle band moving average.
@@ -668,6 +687,25 @@ impl Core {
         // average and the deviation is the standard deviation of the input, combined
         // at the same bar. Two intermediate buffers are allocated so the input may
         // safely alias an output (it is only read here).
+        // Nothing to produce: the range is shorter than the lookback. Return before
+        // touching anything.
+        //
+        // Without this the moving average below runs first, and for the MA types whose
+        // lookback is BELOW the deviation's - TA_MAType_DISABLED (MA lookback 0) and
+        // TA_MAType_MAMA at optInTimePeriod >= 34 - it reads the whole range and
+        // computes a middle band the empty standard deviation then discards.
+        // Observably identical (the empty deviation already yields 0,0 here), but it
+        // is the difference between "a range shorter than the lookback reads nothing"
+        // being true of this function and being false: with a caller-supplied inReal
+        // that stops short of endIdx, that discarded work is an out-of-bounds read.
+        // The SMA fast path above needs no such guard - its own lookback IS the
+        // deviation's, so its clamp already covers it. Pinned by the zero-length
+        // no-I/O probe over every guarded core, at every MA type.
+        if self.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::BadParam);
+        }
         tempBuffer1 = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
         tempBuffer2 = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
         // Calculate the middle band moving average.

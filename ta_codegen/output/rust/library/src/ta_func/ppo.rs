@@ -226,6 +226,22 @@ impl Core {
         let mut fastNb: usize = 0_usize;
         let mut offset: usize = 0_usize;
         let mut i: usize = 0_usize;
+        // Nothing to produce: the range is shorter than the lookback. Return before
+        // touching anything.
+        //
+        // Without this the fast MA below runs first, and its lookback is SMALLER
+        // than ppo's own — so it reads the whole range and computes a result the
+        // empty slow MA then discards. Observably identical (the slow MA's own early
+        // return already yields 0,0 here), but it is the difference between "a range
+        // shorter than the lookback reads nothing" being true of this function and
+        // being false: with a caller-supplied inReal that stops short of endIdx, that
+        // discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
+        // probe over every guarded core.
+        if self.MA_Lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType) > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return RetCode::Success;
+        }
         // Allocate an intermediate buffer.
         tempBuffer = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
         // Make sure slow is really slower than
@@ -378,6 +394,22 @@ impl Core {
         let mut fastNb: usize = 0_usize;
         let mut offset: usize = 0_usize;
         let mut i: usize = 0_usize;
+        // Nothing to produce: the range is shorter than the lookback. Return before
+        // touching anything.
+        //
+        // Without this the fast MA below runs first, and its lookback is SMALLER
+        // than ppo's own — so it reads the whole range and computes a result the
+        // empty slow MA then discards. Observably identical (the slow MA's own early
+        // return already yields 0,0 here), but it is the difference between "a range
+        // shorter than the lookback reads nothing" being true of this function and
+        // being false: with a caller-supplied inReal that stops short of endIdx, that
+        // discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
+        // probe over every guarded core.
+        if self.MA_Lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType) > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::BadParam);
+        }
         // Allocate an intermediate buffer.
         tempBuffer = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
         // Make sure slow is really slower than

@@ -338,6 +338,27 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
     * at the same bar. Two intermediate buffers are allocated so the input may
     * safely alias an output (it is only read here).
     */
+   /* Nothing to produce: the range is shorter than the lookback. Return before
+    * touching anything.
+    *
+    * Without this the moving average below runs first, and for the MA types whose
+    * lookback is BELOW the deviation's - TA_MAType_DISABLED (MA lookback 0) and
+    * TA_MAType_MAMA at optInTimePeriod >= 34 - it reads the whole range and
+    * computes a middle band the empty standard deviation then discards.
+    * Observably identical (the empty deviation already yields 0,0 here), but it
+    * is the difference between "a range shorter than the lookback reads nothing"
+    * being true of this function and being false: with a caller-supplied inReal
+    * that stops short of endIdx, that discarded work is an out-of-bounds read.
+    * The SMA fast path above needs no such guard - its own lookback IS the
+    * deviation's, so its clamp already covers it. Pinned by the zero-length
+    * no-I/O probe over every guarded core, at every MA type.
+    */
+   if( TA_BBANDS_Lookback(optInTimePeriod,optInNbDevUp,optInNbDevDn,optInMAType) > endIdx )
+   {
+      *outBegIdx= 0;
+      *outNBElement= 0;
+      return TA_SUCCESS;
+   }
    tempBuffer1 = malloc((endIdx - startIdx + 1) * sizeof(double));
    if( !tempBuffer1 )
    {
@@ -611,6 +632,12 @@ TA_RetCode TA_S_BBANDS( int    startIdx,
       }
       return TA_SUCCESS;
    }
+   if( TA_BBANDS_Lookback(optInTimePeriod,optInNbDevUp,optInNbDevDn,optInMAType) > endIdx )
+   {
+      *outBegIdx= 0;
+      *outNBElement= 0;
+      return TA_SUCCESS;
+   }
    tempBuffer1 = malloc((endIdx - startIdx + 1) * sizeof(double));
    if( !tempBuffer1 )
    {
@@ -809,6 +836,28 @@ static TA_RetCode TA_BBANDS_OpenCore( struct TA_BBANDS_Stream **stream, const do
        * at the same bar. Two intermediate buffers are allocated so the input may
        * safely alias an output (it is only read here).
        */
+      /* Nothing to produce: the range is shorter than the lookback. Return before
+       * touching anything.
+       *
+       * Without this the moving average below runs first, and for the MA types whose
+       * lookback is BELOW the deviation's - TA_MAType_DISABLED (MA lookback 0) and
+       * TA_MAType_MAMA at optInTimePeriod >= 34 - it reads the whole range and
+       * computes a middle band the empty standard deviation then discards.
+       * Observably identical (the empty deviation already yields 0,0 here), but it
+       * is the difference between "a range shorter than the lookback reads nothing"
+       * being true of this function and being false: with a caller-supplied inReal
+       * that stops short of endIdx, that discarded work is an out-of-bounds read.
+       * The SMA fast path above needs no such guard - its own lookback IS the
+       * deviation's, so its clamp already covers it. Pinned by the zero-length
+       * no-I/O probe over every guarded core, at every MA type.
+       */
+      if( TA_BBANDS_Lookback(optInTimePeriod,optInNbDevUp,optInNbDevDn,optInMAType) > endIdx )
+      {
+         dummyBegIdx = 0;
+         dummyNBElement = 0;
+         TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
+         return TA_BAD_PARAM;
+      }
       tempBuffer1 = malloc((endIdx - startIdx + 1) * sizeof(double));
       if( !tempBuffer1 )
       {
