@@ -1083,19 +1083,23 @@ impl Core {
     }
 
     /// [`Core::CDLINVERTEDHAMMER_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::CDLINVERTEDHAMMER`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLINVERTEDHAMMER`] over `0..len` in the same single pass, and reports the range it
+    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLINVERTEDHAMMER_OpenAndFill")]
     pub fn CDLINVERTEDHAMMER_OpenAndFill(
-        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CDLINVERTEDHAMMER_Stream, RetCode> {
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outInteger: &mut [i32],
+    ) -> Result<(CDLINVERTEDHAMMER_Stream, OutRange), RetCode> {
         if inOpen.iter().any(|v| !v.is_finite())
             || inHigh.iter().any(|v| !v.is_finite())
             || inLow.iter().any(|v| !v.is_finite())
             || inClose.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
-        self.CDLINVERTEDHAMMER_OpenCore(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1)
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let handle = self.CDLINVERTEDHAMMER_OpenCore(inOpen, inHigh, inLow, inClose, 0, &mut outBegIdx, &mut outNBElement, outInteger, 1)?;
+        Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
     /// [`Core::CDLINVERTEDHAMMER_OpenAndFill`] anchored at `startIdx` — the composed-open

@@ -317,17 +317,21 @@ impl Core {
     }
 
     /// [`Core::ADD_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::ADD`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::ADD`] over `0..len` in the same single pass, and reports the range it
+    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_ADD_OpenAndFill")]
     pub fn ADD_OpenAndFill(
-        &self, inReal0: &[f64], inReal1: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<ADD_Stream, RetCode> {
+        &self, inReal0: &[f64], inReal1: &[f64], outReal: &mut [f64],
+    ) -> Result<(ADD_Stream, OutRange), RetCode> {
         if inReal0.iter().any(|v| !v.is_finite())
             || inReal1.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
-        self.ADD_OpenCore(inReal0, inReal1, 0, outBegIdx, outNBElement, outReal, 1)
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let handle = self.ADD_OpenCore(inReal0, inReal1, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
     /// [`Core::ADD_OpenAndFill`] anchored at `startIdx` — the composed-open

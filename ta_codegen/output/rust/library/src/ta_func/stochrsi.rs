@@ -582,19 +582,23 @@ impl Core {
     }
 
     /// [`Core::STOCHRSI_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::STOCHRSI`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::STOCHRSI`] over `0..len` in the same single pass, and reports the range it
+    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_STOCHRSI_OpenAndFill")]
     pub fn STOCHRSI_OpenAndFill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outFastK: &mut [f64], outFastD: &mut [f64],
-    ) -> Result<STOCHRSI_Stream, RetCode> {
+        &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType, outFastK: &mut [f64], outFastD: &mut [f64],
+    ) -> Result<(STOCHRSI_Stream, OutRange), RetCode> {
         if outFastK.as_ptr() == outFastD.as_ptr() {
             return Err(RetCode::BadParam);
         }
         if inReal.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
-        self.STOCHRSI_OpenCore(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1)
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let handle = self.STOCHRSI_OpenCore(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut outBegIdx, &mut outNBElement, outFastK, outFastD, 1)?;
+        Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
     /// [`Core::STOCHRSI_OpenAndFill`] anchored at `startIdx` — the composed-open

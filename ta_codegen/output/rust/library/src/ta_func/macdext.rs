@@ -766,12 +766,13 @@ impl Core {
     }
 
     /// [`Core::MACDEXT_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::MACDEXT`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::MACDEXT`] over `0..len` in the same single pass, and reports the range it
+    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_MACDEXT_OpenAndFill")]
     pub fn MACDEXT_OpenAndFill(
-        &self, inReal: &[f64], mut optInFastPeriod: i32, mut optInFastMAType: MAType, mut optInSlowPeriod: i32, mut optInSlowMAType: MAType, mut optInSignalPeriod: i32, mut optInSignalMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64],
-    ) -> Result<MACDEXT_Stream, RetCode> {
+        &self, inReal: &[f64], mut optInFastPeriod: i32, mut optInFastMAType: MAType, mut optInSlowPeriod: i32, mut optInSlowMAType: MAType, mut optInSignalPeriod: i32, mut optInSignalMAType: MAType, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64],
+    ) -> Result<(MACDEXT_Stream, OutRange), RetCode> {
         if outMACD.as_ptr() == outMACDSignal.as_ptr() {
             return Err(RetCode::BadParam);
         }
@@ -784,7 +785,10 @@ impl Core {
         if inReal.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
-        self.MACDEXT_OpenCore(inReal, 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1)
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let handle = self.MACDEXT_OpenCore(inReal, 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &mut outBegIdx, &mut outNBElement, outMACD, outMACDSignal, outMACDHist, 1)?;
+        Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
     /// [`Core::MACDEXT_OpenAndFill`] anchored at `startIdx` — the composed-open

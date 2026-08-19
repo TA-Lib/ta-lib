@@ -415,19 +415,23 @@ impl Core {
     }
 
     /// [`Core::AD_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::AD`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::AD`] over `0..len` in the same single pass, and reports the range it
+    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_AD_OpenAndFill")]
     pub fn AD_OpenAndFill(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<AD_Stream, RetCode> {
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], outReal: &mut [f64],
+    ) -> Result<(AD_Stream, OutRange), RetCode> {
         if inHigh.iter().any(|v| !v.is_finite())
             || inLow.iter().any(|v| !v.is_finite())
             || inClose.iter().any(|v| !v.is_finite())
             || inVolume.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
-        self.AD_OpenCore(inHigh, inLow, inClose, inVolume, 0, outBegIdx, outNBElement, outReal, 1)
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let handle = self.AD_OpenCore(inHigh, inLow, inClose, inVolume, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
     /// [`Core::AD_OpenAndFill`] anchored at `startIdx` — the composed-open

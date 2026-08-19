@@ -842,12 +842,13 @@ impl Core {
     }
 
     /// [`Core::BBANDS_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::BBANDS`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::BBANDS`] over `0..len` in the same single pass, and reports the range it
+    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_BBANDS_OpenAndFill")]
     pub fn BBANDS_OpenAndFill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64],
-    ) -> Result<BBANDS_Stream, RetCode> {
+        &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: MAType, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64],
+    ) -> Result<(BBANDS_Stream, OutRange), RetCode> {
         if outRealUpperBand.as_ptr() == outRealMiddleBand.as_ptr() {
             return Err(RetCode::BadParam);
         }
@@ -860,7 +861,10 @@ impl Core {
         if inReal.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
-        self.BBANDS_OpenCore(inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1)
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let handle = self.BBANDS_OpenCore(inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut outBegIdx, &mut outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1)?;
+        Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
     /// [`Core::BBANDS_OpenAndFill`] anchored at `startIdx` — the composed-open

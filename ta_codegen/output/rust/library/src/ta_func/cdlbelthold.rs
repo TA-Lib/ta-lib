@@ -851,19 +851,23 @@ impl Core {
     }
 
     /// [`Core::CDLBELTHOLD_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::CDLBELTHOLD`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLBELTHOLD`] over `0..len` in the same single pass, and reports the range it
+    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLBELTHOLD_OpenAndFill")]
     pub fn CDLBELTHOLD_OpenAndFill(
-        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CDLBELTHOLD_Stream, RetCode> {
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outInteger: &mut [i32],
+    ) -> Result<(CDLBELTHOLD_Stream, OutRange), RetCode> {
         if inOpen.iter().any(|v| !v.is_finite())
             || inHigh.iter().any(|v| !v.is_finite())
             || inLow.iter().any(|v| !v.is_finite())
             || inClose.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
-        self.CDLBELTHOLD_OpenCore(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1)
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let handle = self.CDLBELTHOLD_OpenCore(inOpen, inHigh, inLow, inClose, 0, &mut outBegIdx, &mut outNBElement, outInteger, 1)?;
+        Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
     /// [`Core::CDLBELTHOLD_OpenAndFill`] anchored at `startIdx` — the composed-open

@@ -1242,17 +1242,21 @@ impl Core {
     }
 
     /// [`Core::SAREXT_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::SAREXT`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::SAREXT`] over `0..len` in the same single pass, and reports the range it
+    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_SAREXT_OpenAndFill")]
     pub fn SAREXT_OpenAndFill(
-        &self, inHigh: &[f64], inLow: &[f64], mut optInStartValue: f64, mut optInOffsetOnReverse: f64, mut optInAccelerationInitLong: f64, mut optInAccelerationLong: f64, mut optInAccelerationMaxLong: f64, mut optInAccelerationInitShort: f64, mut optInAccelerationShort: f64, mut optInAccelerationMaxShort: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<SAREXT_Stream, RetCode> {
+        &self, inHigh: &[f64], inLow: &[f64], mut optInStartValue: f64, mut optInOffsetOnReverse: f64, mut optInAccelerationInitLong: f64, mut optInAccelerationLong: f64, mut optInAccelerationMaxLong: f64, mut optInAccelerationInitShort: f64, mut optInAccelerationShort: f64, mut optInAccelerationMaxShort: f64, outReal: &mut [f64],
+    ) -> Result<(SAREXT_Stream, OutRange), RetCode> {
         if inHigh.iter().any(|v| !v.is_finite())
             || inLow.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
-        self.SAREXT_OpenCore(inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal, 1)
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let handle = self.SAREXT_OpenCore(inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
     /// [`Core::SAREXT_OpenAndFill`] anchored at `startIdx` — the composed-open

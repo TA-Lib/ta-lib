@@ -1482,19 +1482,23 @@ impl Core {
     }
 
     /// [`Core::MAMA_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::MAMA`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::MAMA`] over `0..len` in the same single pass, and reports the range it
+    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_MAMA_OpenAndFill")]
     pub fn MAMA_OpenAndFill(
-        &self, inReal: &[f64], mut optInFastLimit: f64, mut optInSlowLimit: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMAMA: &mut [f64], outFAMA: &mut [f64],
-    ) -> Result<MAMA_Stream, RetCode> {
+        &self, inReal: &[f64], mut optInFastLimit: f64, mut optInSlowLimit: f64, outMAMA: &mut [f64], outFAMA: &mut [f64],
+    ) -> Result<(MAMA_Stream, OutRange), RetCode> {
         if outMAMA.as_ptr() == outFAMA.as_ptr() {
             return Err(RetCode::BadParam);
         }
         if inReal.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
-        self.MAMA_OpenCore(inReal, 0, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1)
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let handle = self.MAMA_OpenCore(inReal, 0, optInFastLimit, optInSlowLimit, &mut outBegIdx, &mut outNBElement, outMAMA, outFAMA, 1)?;
+        Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
     /// [`Core::MAMA_OpenAndFill`] anchored at `startIdx` — the composed-open

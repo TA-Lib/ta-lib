@@ -1651,8 +1651,12 @@ fn emit_rust_warmup_arms(
         "                rc = match core.{base}_Open({ins}{opts}) {{ Ok(_h) => RetCode::Success, Err(e) => e }};\n"
     ));
     s.push_str("            } else {\n");
+    // The fill reports its range as an `OutRange` beside the handle (#179 C15);
+    // unpack it into the same two locals the batch arm sets, which the output
+    // hash below reads.
     s.push_str(&format!(
-        "                rc = match core.{base}_OpenAndFill({ins}{opts}&mut outBegIdx, &mut outNBElement{fill_outs}) {{ Ok(_h) => RetCode::Success, Err(e) => e }};\n"
+        "                rc = match core.{base}_OpenAndFill({ins}{opts}{}) {{ Ok((_h, r)) => {{ outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }} Err(e) => e }};\n",
+        fill_outs.trim_start_matches(", ")
     ));
     s.push_str("            }\n");
 }
@@ -5255,10 +5259,9 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
             "            let r1 = c2.{fname}_Open({full_ins}{opts_tail}).is_err();"
         );
         s.push_str(&fdecls.replace("        ", "            "));
-        s.push_str("            let mut fBeg = 0usize;\n            let mut fNb = 0usize;\n");
         let _ = writeln!(
             s,
-            "            let r2 = c2.{fname}_OpenAndFill({full_ins}{opts_tail}, &mut fBeg, &mut fNb{fargs}).is_err();"
+            "            let r2 = c2.{fname}_OpenAndFill({full_ins}{opts_tail}{fargs}).is_err();"
         );
         s.push_str("            let okr = r1 && r2;\n");
         s.push_str("            return format!(\"{{\\\"retCode\\\":0,\\\"legs\\\":0,\\\"unsupportedArm\\\":1,\\\"ok\\\":{},\\\"peek_ok\\\":1}}\", i32::from(okr));\n");
@@ -5291,13 +5294,12 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     // OpenAndFill leg (fill == batch arrays, bitwise).
     s.push_str("        fill_checked = 1;\n        {\n");
     s.push_str(&fdecls);
-    s.push_str("        let mut fBeg = 0usize;\n        let mut fNb = 0usize;\n");
     let _ = writeln!(
         s,
-        "        match c2.{fname}_OpenAndFill({full_ins}{opts_tail}, &mut fBeg, &mut fNb{fargs}) {{"
+        "        match c2.{fname}_OpenAndFill({full_ins}{opts_tail}{fargs}) {{"
     );
     s.push_str("            Err(_) => { fill_ok = false; }\n");
-    s.push_str("            Ok(_h) => {\n                if fBeg != beg || fNb != nb { fill_ok = false; }\n                else {\n");
+    s.push_str("            Ok((_h, fr)) => {\n                if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }\n                else {\n");
     for (i, is_int) in out_is_int.iter().enumerate() {
         if *is_int {
             let _ = writeln!(s, "                    for i in 0..nb {{ if f{i}[i] != b{i}[i] {{ fill_ok = false; }} }}");

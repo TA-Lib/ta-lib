@@ -108,13 +108,11 @@ fn open_rejects_a_non_finite_history() {
                 "SMA_Open accepted {bad} at bar {idx}"
             );
             let mut fill = vec![0.0_f64; WARM];
-            let mut fb = 0usize;
-            let mut fnb = 0usize;
             let mut c2 = close[..WARM].to_vec();
             let saved = c2[idx];
             c2[idx] = bad;
             assert!(
-                probed(&mut checked, is_bad_param(&core.SMA_OpenAndFill(&c2, 14, &mut fb, &mut fnb, &mut fill))),
+                probed(&mut checked, is_bad_param(&core.SMA_OpenAndFill(&c2, 14, &mut fill))),
                 "SMA_OpenAndFill accepted {bad} at bar {idx}"
             );
             c2[idx] = saved;
@@ -184,14 +182,12 @@ fn open_rejects_a_non_finite_history() {
             // MA at period 1 is the dispatch IDENTITY arm, which copies the bar
             // straight into the caller's buffer without touching a sub-stream:
             // the one fill path that no sub-stream's own scan can cover.
-            let mut fb = 0usize;
-            let mut fnb = 0usize;
             let mut fill = vec![0.0_f64; WARM];
             let mut mf = close[..WARM].to_vec();
             let savedm = mf[idx];
             mf[idx] = bad;
             assert!(
-                probed(&mut checked, is_bad_param(&core.MA_OpenAndFill(&mf, 1, MAType::SMA, &mut fb, &mut fnb, &mut fill))),
+                probed(&mut checked, is_bad_param(&core.MA_OpenAndFill(&mf, 1, MAType::SMA, &mut fill))),
                 "MA_OpenAndFill (identity arm) accepted {bad} at bar {idx}"
             );
             mf[idx] = savedm;
@@ -200,7 +196,7 @@ fn open_rejects_a_non_finite_history() {
             let savedv = vp[idx];
             vp[idx] = bad;
             assert!(
-                probed(&mut checked, is_bad_param(&core.MAVP_OpenAndFill(&cc, &vp, 2, 30, MAType::SMA, &mut fb, &mut fnb, &mut fill))),
+                probed(&mut checked, is_bad_param(&core.MAVP_OpenAndFill(&cc, &vp, 2, 30, MAType::SMA, &mut fill))),
                 "MAVP_OpenAndFill accepted {bad} in inPeriods at bar {idx}"
             );
             vp[idx] = savedv;

@@ -562,12 +562,13 @@ impl Core {
     }
 
     /// [`Core::MA_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::MA`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::MA`] over `0..len` in the same single pass, and reports the range it
+    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_MA_OpenAndFill")]
     pub fn MA_OpenAndFill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<MA_Stream, RetCode> {
+        &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInMAType: MAType, outReal: &mut [f64],
+    ) -> Result<(MA_Stream, OutRange), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -591,51 +592,59 @@ impl Core {
                 return Err(RetCode::BadParam);
             }
             let fillLb: usize = self.MA_Lookback(optInTimePeriod, optInMAType);
-            (*outBegIdx) = fillLb;
-            (*outNBElement) = historyLen - fillLb;
             let mut fillIdx: usize = 0;
             while fillIdx < historyLen - fillLb {
                 outReal[fillIdx] = inReal[fillLb + fillIdx];
                 fillIdx += 1;
             }
             let state = MA_StreamState { optInTimePeriod, optInMAType, sub: MA_Sub::Identity };
-            return Ok(MA_Stream { core: self.clone(), state });
+            return Ok((MA_Stream { core: self.clone(), state }, OutRange { beg_idx: fillLb, count: historyLen - fillLb }));
         }
-        let sub = match optInMAType {
-            MAType::SMA => MA_Sub::SMA(
-                self.SMA_OpenAndFill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
-            ),
-            MAType::EMA => MA_Sub::EMA(
-                self.EMA_OpenAndFill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
-            ),
-            MAType::WMA => MA_Sub::WMA(
-                self.WMA_OpenAndFill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
-            ),
-            MAType::DEMA => MA_Sub::DEMA(
-                self.DEMA_OpenAndFill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
-            ),
-            MAType::TEMA => MA_Sub::TEMA(
-                self.TEMA_OpenAndFill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
-            ),
-            MAType::TRIMA => MA_Sub::TRIMA(
-                self.TRIMA_OpenAndFill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
-            ),
-            MAType::KAMA => MA_Sub::KAMA(
-                self.KAMA_OpenAndFill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
-            ),
-            MAType::MAMA => MA_Sub::MAMA(
-                self.MAMA_OpenAndFill(inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, &mut vec![0.0_f64; inReal.len()][..])?,
-            ),
-            MAType::T3 => MA_Sub::T3(
-                self.T3_OpenAndFill(inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal)?,
-            ),
-            MAType::HMA => MA_Sub::HMA(
-                self.HMA_OpenAndFill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
-            ),
+        let (sub, fillRange) = match optInMAType {
+            MAType::SMA => {
+                let (sub, fillRange) = self.SMA_OpenAndFill(inReal, optInTimePeriod, outReal)?;
+                (MA_Sub::SMA(sub), fillRange)
+            }
+            MAType::EMA => {
+                let (sub, fillRange) = self.EMA_OpenAndFill(inReal, optInTimePeriod, outReal)?;
+                (MA_Sub::EMA(sub), fillRange)
+            }
+            MAType::WMA => {
+                let (sub, fillRange) = self.WMA_OpenAndFill(inReal, optInTimePeriod, outReal)?;
+                (MA_Sub::WMA(sub), fillRange)
+            }
+            MAType::DEMA => {
+                let (sub, fillRange) = self.DEMA_OpenAndFill(inReal, optInTimePeriod, outReal)?;
+                (MA_Sub::DEMA(sub), fillRange)
+            }
+            MAType::TEMA => {
+                let (sub, fillRange) = self.TEMA_OpenAndFill(inReal, optInTimePeriod, outReal)?;
+                (MA_Sub::TEMA(sub), fillRange)
+            }
+            MAType::TRIMA => {
+                let (sub, fillRange) = self.TRIMA_OpenAndFill(inReal, optInTimePeriod, outReal)?;
+                (MA_Sub::TRIMA(sub), fillRange)
+            }
+            MAType::KAMA => {
+                let (sub, fillRange) = self.KAMA_OpenAndFill(inReal, optInTimePeriod, outReal)?;
+                (MA_Sub::KAMA(sub), fillRange)
+            }
+            MAType::MAMA => {
+                let (sub, fillRange) = self.MAMA_OpenAndFill(inReal, 0.5, 0.05, outReal, &mut vec![0.0_f64; inReal.len()][..])?;
+                (MA_Sub::MAMA(sub), fillRange)
+            }
+            MAType::T3 => {
+                let (sub, fillRange) = self.T3_OpenAndFill(inReal, optInTimePeriod, 0.7, outReal)?;
+                (MA_Sub::T3(sub), fillRange)
+            }
+            MAType::HMA => {
+                let (sub, fillRange) = self.HMA_OpenAndFill(inReal, optInTimePeriod, outReal)?;
+                (MA_Sub::HMA(sub), fillRange)
+            }
             _ => return Err(RetCode::BadParam),
         };
         let state = MA_StreamState { optInTimePeriod, optInMAType, sub };
-        Ok(MA_Stream { core: self.clone(), state })
+        Ok((MA_Stream { core: self.clone(), state }, fillRange))
     }
 
     /// [`Core::MA_OpenAndFill`] anchored at `startIdx` — the composed-open

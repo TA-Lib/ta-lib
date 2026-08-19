@@ -582,19 +582,23 @@ impl Core {
     }
 
     /// [`Core::MINMAXINDEX_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::MINMAXINDEX`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::MINMAXINDEX`] over `0..len` in the same single pass, and reports the range it
+    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_MINMAXINDEX_OpenAndFill")]
     pub fn MINMAXINDEX_OpenAndFill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMinIdx: &mut [i32], outMaxIdx: &mut [i32],
-    ) -> Result<MINMAXINDEX_Stream, RetCode> {
+        &self, inReal: &[f64], mut optInTimePeriod: i32, outMinIdx: &mut [i32], outMaxIdx: &mut [i32],
+    ) -> Result<(MINMAXINDEX_Stream, OutRange), RetCode> {
         if outMinIdx.as_ptr() == outMaxIdx.as_ptr() {
             return Err(RetCode::BadParam);
         }
         if inReal.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
-        self.MINMAXINDEX_OpenCore(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx, 1)
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let handle = self.MINMAXINDEX_OpenCore(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outMinIdx, outMaxIdx, 1)?;
+        Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
     /// [`Core::MINMAXINDEX_OpenAndFill`] anchored at `startIdx` — the composed-open

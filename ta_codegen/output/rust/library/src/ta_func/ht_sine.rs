@@ -1527,19 +1527,23 @@ impl Core {
     }
 
     /// [`Core::HT_SINE_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::HT_SINE`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::HT_SINE`] over `0..len` in the same single pass, and reports the range it
+    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_HT_SINE_OpenAndFill")]
     pub fn HT_SINE_OpenAndFill(
-        &self, inReal: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outSine: &mut [f64], outLeadSine: &mut [f64],
-    ) -> Result<HT_SINE_Stream, RetCode> {
+        &self, inReal: &[f64], outSine: &mut [f64], outLeadSine: &mut [f64],
+    ) -> Result<(HT_SINE_Stream, OutRange), RetCode> {
         if outSine.as_ptr() == outLeadSine.as_ptr() {
             return Err(RetCode::BadParam);
         }
         if inReal.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
-        self.HT_SINE_OpenCore(inReal, 0, outBegIdx, outNBElement, outSine, outLeadSine, 1)
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let handle = self.HT_SINE_OpenCore(inReal, 0, &mut outBegIdx, &mut outNBElement, outSine, outLeadSine, 1)?;
+        Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
     /// [`Core::HT_SINE_OpenAndFill`] anchored at `startIdx` — the composed-open

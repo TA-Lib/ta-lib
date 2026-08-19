@@ -311,16 +311,20 @@ impl Core {
     }
 
     /// [`Core::ASIN_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::ASIN`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::ASIN`] over `0..len` in the same single pass, and reports the range it
+    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_ASIN_OpenAndFill")]
     pub fn ASIN_OpenAndFill(
-        &self, inReal: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<ASIN_Stream, RetCode> {
+        &self, inReal: &[f64], outReal: &mut [f64],
+    ) -> Result<(ASIN_Stream, OutRange), RetCode> {
         if inReal.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
-        self.ASIN_OpenCore(inReal, 0, outBegIdx, outNBElement, outReal, 1)
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let handle = self.ASIN_OpenCore(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
     /// [`Core::ASIN_OpenAndFill`] anchored at `startIdx` — the composed-open

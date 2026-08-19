@@ -663,12 +663,13 @@ impl Core {
     }
 
     /// [`Core::MAVP_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::MAVP`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::MAVP`] over `0..len` in the same single pass, and reports the range it
+    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_MAVP_OpenAndFill")]
     pub fn MAVP_OpenAndFill(
-        &self, inReal: &[f64], inPeriods: &[f64], mut optInMinPeriod: i32, mut optInMaxPeriod: i32, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<MAVP_Stream, RetCode> {
+        &self, inReal: &[f64], inPeriods: &[f64], mut optInMinPeriod: i32, mut optInMaxPeriod: i32, mut optInMAType: MAType, outReal: &mut [f64],
+    ) -> Result<(MAVP_Stream, OutRange), RetCode> {
         if inReal.is_empty() || inPeriods.is_empty() || inPeriods.len() != inReal.len() {
             return Err(RetCode::BadParam);
         }
@@ -732,10 +733,8 @@ impl Core {
             outReal[t - lookbackTotal] = scratch[(cp - optInMinPeriod) as usize];
             t += 1;
         }
-        (*outBegIdx) = lookbackTotal;
-        (*outNBElement) = historyLen - lookbackTotal;
         let state = MAVP_StreamState { optInMinPeriod, optInMaxPeriod, optInMAType, bank };
-        Ok(MAVP_Stream { core: self.clone(), state })
+        Ok((MAVP_Stream { core: self.clone(), state }, OutRange { beg_idx: lookbackTotal, count: historyLen - lookbackTotal }))
     }
 
 }

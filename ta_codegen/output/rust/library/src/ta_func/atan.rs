@@ -309,16 +309,20 @@ impl Core {
     }
 
     /// [`Core::ATAN_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::ATAN`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::ATAN`] over `0..len` in the same single pass, and reports the range it
+    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_ATAN_OpenAndFill")]
     pub fn ATAN_OpenAndFill(
-        &self, inReal: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<ATAN_Stream, RetCode> {
+        &self, inReal: &[f64], outReal: &mut [f64],
+    ) -> Result<(ATAN_Stream, OutRange), RetCode> {
         if inReal.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
-        self.ATAN_OpenCore(inReal, 0, outBegIdx, outNBElement, outReal, 1)
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let handle = self.ATAN_OpenCore(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
     /// [`Core::ATAN_OpenAndFill`] anchored at `startIdx` — the composed-open

@@ -87,7 +87,11 @@ fn test_rust_sma_ring_stream_section() {
     // Open family: internal seam + thin wrapper + fill in batch param order.
     assert!(s.contains("pub(crate) fn SMA_OpenInternal("));
     assert!(s.contains("self.SMA_OpenInternal(inReal, 0, optInTimePeriod)"));
-    assert!(s.contains("pub fn SMA_OpenAndFill(\n        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],"));
+    // The public fill takes the batch output tail MINUS the out-meta pair, and
+    // hands the range back as the `OutRange` the batch entry point returns
+    // (#179 C15) — the crate ships one convention for "which slots were filled".
+    assert!(s.contains("pub fn SMA_OpenAndFill(\n        &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],\n    ) -> Result<(SMA_Stream, OutRange), RetCode> {"));
+    assert!(s.contains("Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))"));
     // Capture: numeric ring cap from live locals + tail copy.
     assert!(s.contains("let cap_trailingIdx: i64 = (i as i64) - (trailingIdx as i64);"));
     assert!(s.contains(".copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);"));
@@ -386,8 +390,8 @@ fn rust_exempt_tiers_keep_their_own_bodies() {
 /// issue #204 all three open entry points come out of one emitter over a mode
 /// list, so this is what pins which mode owns which difference. Rust needs no
 /// aliasing rejection — `&mut [f64]` parameters cannot overlap — so the
-/// differences are the out-meta pair, the startIdx anchor, and the callee entry
-/// point each arm delegates to.
+/// differences are how the filled range is reported, the startIdx anchor, and
+/// the callee entry point each arm delegates to.
 #[test]
 fn rust_dispatch_open_modes_differ_only_where_intended() {
     let s = rust_stream_section("ma");
@@ -395,10 +399,19 @@ fn rust_dispatch_open_modes_differ_only_where_intended() {
     let fill = body_of(&s, "fn MA_OpenAndFill(");
     let internal = body_of(&s, "fn MA_OpenAndFillInternal(");
 
+    // Only the internal seam still reports through out-parameters: the public
+    // fill returns an `OutRange` beside the handle, like the batch tier (#179
+    // C15). The exempt tiers hand-roll their fills, so nothing else pins this.
     assert!(!scalar.contains("outBegIdx"), "the scalar open has no out-meta:\n{scalar}");
-    for (what, body) in [("OpenAndFill", &fill), ("OpenAndFillInternal", &internal)] {
-        assert!(body.contains("outBegIdx"), "{what} carries the out-meta pair:\n{body}");
-    }
+    assert!(!fill.contains("outBegIdx"), "the public fill carries no out-meta pair:\n{fill}");
+    assert!(
+        fill.contains("Ok((MA_Stream { core: self.clone(), state }, fillRange))"),
+        "the public fill returns the arm's own range beside the handle:\n{fill}"
+    );
+    assert!(
+        internal.contains("(*outBegIdx) = fillLb;"),
+        "OpenAndFillInternal is a composition seam and keeps the out-meta pair:\n{internal}"
+    );
 
     assert!(
         internal.contains("let fillLb = if startIdx > fillLb"),

@@ -475,16 +475,20 @@ impl Core {
     }
 
     /// [`Core::ROCR100_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::ROCR100`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::ROCR100`] over `0..len` in the same single pass, and reports the range it
+    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_ROCR100_OpenAndFill")]
     pub fn ROCR100_OpenAndFill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<ROCR100_Stream, RetCode> {
+        &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+    ) -> Result<(ROCR100_Stream, OutRange), RetCode> {
         if inReal.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
-        self.ROCR100_OpenCore(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let handle = self.ROCR100_OpenCore(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
     /// [`Core::ROCR100_OpenAndFill`] anchored at `startIdx` — the composed-open

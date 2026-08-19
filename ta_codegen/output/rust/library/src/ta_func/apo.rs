@@ -491,16 +491,20 @@ impl Core {
     }
 
     /// [`Core::APO_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::APO`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::APO`] over `0..len` in the same single pass, and reports the range it
+    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_APO_OpenAndFill")]
     pub fn APO_OpenAndFill(
-        &self, inReal: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<APO_Stream, RetCode> {
+        &self, inReal: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType, outReal: &mut [f64],
+    ) -> Result<(APO_Stream, OutRange), RetCode> {
         if inReal.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
-        self.APO_OpenCore(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1)
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let handle = self.APO_OpenCore(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
     /// [`Core::APO_OpenAndFill`] anchored at `startIdx` — the composed-open

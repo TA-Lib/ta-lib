@@ -1001,18 +1001,22 @@ impl Core {
     }
 
     /// [`Core::DX_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::DX`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::DX`] over `0..len` in the same single pass, and reports the range it
+    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_DX_OpenAndFill")]
     pub fn DX_OpenAndFill(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<DX_Stream, RetCode> {
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
+    ) -> Result<(DX_Stream, OutRange), RetCode> {
         if inHigh.iter().any(|v| !v.is_finite())
             || inLow.iter().any(|v| !v.is_finite())
             || inClose.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
-        self.DX_OpenCore(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let handle = self.DX_OpenCore(inHigh, inLow, inClose, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
     /// [`Core::DX_OpenAndFill`] anchored at `startIdx` — the composed-open

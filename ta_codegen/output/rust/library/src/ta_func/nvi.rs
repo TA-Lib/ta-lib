@@ -445,17 +445,21 @@ impl Core {
     }
 
     /// [`Core::NVI_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::NVI`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::NVI`] over `0..len` in the same single pass, and reports the range it
+    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_NVI_OpenAndFill")]
     pub fn NVI_OpenAndFill(
-        &self, inClose: &[f64], inVolume: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<NVI_Stream, RetCode> {
+        &self, inClose: &[f64], inVolume: &[f64], outReal: &mut [f64],
+    ) -> Result<(NVI_Stream, OutRange), RetCode> {
         if inClose.iter().any(|v| !v.is_finite())
             || inVolume.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
-        self.NVI_OpenCore(inClose, inVolume, 0, outBegIdx, outNBElement, outReal, 1)
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let handle = self.NVI_OpenCore(inClose, inVolume, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
     /// [`Core::NVI_OpenAndFill`] anchored at `startIdx` — the composed-open

@@ -662,17 +662,21 @@ impl Core {
     }
 
     /// [`Core::AO_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::AO`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::AO`] over `0..len` in the same single pass, and reports the range it
+    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_AO_OpenAndFill")]
     pub fn AO_OpenAndFill(
-        &self, inHigh: &[f64], inLow: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<AO_Stream, RetCode> {
+        &self, inHigh: &[f64], inLow: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, outReal: &mut [f64],
+    ) -> Result<(AO_Stream, OutRange), RetCode> {
         if inHigh.iter().any(|v| !v.is_finite())
             || inLow.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
-        self.AO_OpenCore(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1)
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let handle = self.AO_OpenCore(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
     /// [`Core::AO_OpenAndFill`] anchored at `startIdx` — the composed-open

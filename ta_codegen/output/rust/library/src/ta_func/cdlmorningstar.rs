@@ -1084,19 +1084,23 @@ impl Core {
     }
 
     /// [`Core::CDLMORNINGSTAR_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::CDLMORNINGSTAR`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLMORNINGSTAR`] over `0..len` in the same single pass, and reports the range it
+    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLMORNINGSTAR_OpenAndFill")]
     pub fn CDLMORNINGSTAR_OpenAndFill(
-        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInPenetration: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CDLMORNINGSTAR_Stream, RetCode> {
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInPenetration: f64, outInteger: &mut [i32],
+    ) -> Result<(CDLMORNINGSTAR_Stream, OutRange), RetCode> {
         if inOpen.iter().any(|v| !v.is_finite())
             || inHigh.iter().any(|v| !v.is_finite())
             || inLow.iter().any(|v| !v.is_finite())
             || inClose.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
-        self.CDLMORNINGSTAR_OpenCore(inOpen, inHigh, inLow, inClose, 0, optInPenetration, outBegIdx, outNBElement, outInteger, 1)
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let handle = self.CDLMORNINGSTAR_OpenCore(inOpen, inHigh, inLow, inClose, 0, optInPenetration, &mut outBegIdx, &mut outNBElement, outInteger, 1)?;
+        Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
     /// [`Core::CDLMORNINGSTAR_OpenAndFill`] anchored at `startIdx` — the composed-open

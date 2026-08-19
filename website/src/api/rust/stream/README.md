@@ -15,7 +15,7 @@ Each streamable function adds two constructors on `Core` and a handful of method
 | Call | When | Does |
 |------|------|------|
 | `core.<NAME>_Open(history, params)` | once | validate params, consume warm-up history, return `(stream, value)` |
-| `core.<NAME>_OpenAndFill(..)` | once, instead of `Open` | like `Open`, but also fills the output for **every** history bar — see [below](#full-history-output-openandfill) |
+| `core.<NAME>_OpenAndFill(..)` | once, instead of `Open` | like `Open`, but also fills the output for **every** history bar, returning `(stream, OutRange)` — see [below](#full-history-output-openandfill) |
 | `stream.update(bar)` | once per **closed** bar | commit one bar, return the new value |
 | `stream.peek(bar)` | any time on the **forming** bar | evaluate a provisional bar **without** committing |
 
@@ -65,17 +65,15 @@ This covers the warm-up history at open, every bar value at update/peek, and a r
 `Open` gives you only the value at the last history bar. `OpenAndFill` also writes the output for **every** history bar — the same values the [batch method](/api/rust/) would produce — while still returning the live stream, in one pass:
 
 ```rust
-let mut beg = 0usize;
-let mut nb = 0usize;
 let mut warmup = vec![0.0; history.len()];
 
-let mut s = core.SMA_OpenAndFill(&history, 30, &mut beg, &mut nb, &mut warmup)?;
+let (mut s, filled) = core.SMA_OpenAndFill(&history, 30, &mut warmup)?;
 
-// warmup[0..nb] is the SMA over all of history; then stream on:
+// warmup[..filled.count] is the SMA over all of history; then stream on:
 let v = s.update(new_close)?;
 ```
 
-`OpenAndFill` takes the [batch method](/api/rust/)'s optional parameters, and reports the filled range through `outBegIdx` and `outNBElement` alongside one slice per output; the output slices must not alias the input or each other.
+`OpenAndFill` takes the [batch method](/api/rust/)'s optional parameters and one slice per output, and returns the range it wrote as the same `OutRange` the batch method returns, beside the live stream. The output slices must not alias the input or each other.
 
 ## Multi-input / multi-output
 

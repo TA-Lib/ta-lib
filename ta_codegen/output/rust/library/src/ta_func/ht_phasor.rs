@@ -1289,19 +1289,23 @@ impl Core {
     }
 
     /// [`Core::HT_PHASOR_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::HT_PHASOR`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::HT_PHASOR`] over `0..len` in the same single pass, and reports the range it
+    /// wrote as the [`OutRange`] beside the handle. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_HT_PHASOR_OpenAndFill")]
     pub fn HT_PHASOR_OpenAndFill(
-        &self, inReal: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInPhase: &mut [f64], outQuadrature: &mut [f64],
-    ) -> Result<HT_PHASOR_Stream, RetCode> {
+        &self, inReal: &[f64], outInPhase: &mut [f64], outQuadrature: &mut [f64],
+    ) -> Result<(HT_PHASOR_Stream, OutRange), RetCode> {
         if outInPhase.as_ptr() == outQuadrature.as_ptr() {
             return Err(RetCode::BadParam);
         }
         if inReal.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
-        self.HT_PHASOR_OpenCore(inReal, 0, outBegIdx, outNBElement, outInPhase, outQuadrature, 1)
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let handle = self.HT_PHASOR_OpenCore(inReal, 0, &mut outBegIdx, &mut outNBElement, outInPhase, outQuadrature, 1)?;
+        Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
     /// [`Core::HT_PHASOR_OpenAndFill`] anchored at `startIdx` — the composed-open
