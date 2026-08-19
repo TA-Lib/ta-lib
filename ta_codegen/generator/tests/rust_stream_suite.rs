@@ -147,18 +147,38 @@ fn test_rust_cdldoji_candle_settings_and_int_output() {
     // Integer output end to end.
     assert!(s.contains("pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> Result<i32, RetCode> {"));
     assert!(s.contains("outInteger: &mut i32"));
-    // OHLC ring over all four price arrays.
-    assert!(s.contains("ring_BodyDojiTrailingIdx_inOpen"));
-    assert!(s.contains("ring_BodyDojiTrailingIdx_inClose"));
-    // Four buffers is several allocations per clone, none of which the
-    // optimizer folds away, so peek reuses a per-thread scratch (#201).
-    assert!(s.contains("static CDLDOJI_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLDOJI_Stream>>>"));
-    assert!(s.contains("CDLDOJI_PEEK_SCRATCH.with(|cell| {"));
-    assert!(s.contains("scratch.restore_from(self);"));
-    // The scratch is a HANDLE and peek calls `update` on it, so the transition
-    // keeps the single call site it had before #201 — see the emitter's note.
-    assert!(s.contains("let value = scratch.update(inOpen, inHigh, inLow, inClose);"));
-    assert!(s.contains("cell.set(Some(scratch));"));
+    // ONE ring over the computed candle range, not four over the price arrays:
+    // #229 collapsed the per-OHLC rings into a derived ring, which is the whole
+    // point of that work. This assertion named `_inOpen`/`_inClose` until then,
+    // and the collapse left it matching nothing.
+    assert!(s.contains("ring_BodyDojiTrailingIdx_derived"));
+    // #201 gave `peek` a per-thread scratch wherever copying a handle really
+    // allocates — `StateShape::scratch_pays()`, `buffers >= 2 || subs >= 2 ||
+    // banks >= 1`. CDLDOJI used to qualify on four per-OHLC ring buffers.
+    //
+    // #229 then collapsed those four into one derived ring, which drops the
+    // handle to a SINGLE buffer, so the election no longer fires and `peek` is a
+    // plain clone again. That is a behaviour change, not a rename: twelve
+    // functions crossed the threshold (cdl2crows, cdlbreakaway, cdldarkcloudcover,
+    // cdldoji, cdlhikkakemod, cdlladderbottom, cdlmatchinglow, cdlspinningtop,
+    // cdlsticksandwich, cdltasukigap, cdltristar, qstick), consistently in Rust
+    // and Java, and their peek went from zero allocations per call after warm-up
+    // to one — against a clone a quarter the size. That trade is a CONSEQUENCE of
+    // #229 rather than a decision it recorded.
+    //
+    // Measured, so nobody has to re-derive the worry from the mechanism:
+    // CDLDOJI peek is 27.7 ns/call before the collapse and 27.1 ns/call after
+    // (best of 4 alternating passes) — a 2% gap inside a 5–28% run-to-run
+    // spread, i.e. no difference this machine can resolve. The extra
+    // allocation is paid for by the smaller copy. That is evidence it is not
+    // a regression on the shape that prompted the question, not evidence the
+    // trade is free on every shape.
+    //
+    // Asserted in both directions on purpose: the absence check alone would start
+    // passing for free the day the emitter stopped naming the scratch at all.
+    assert!(!s.contains("CDLDOJI_PEEK_SCRATCH"));
+    assert!(s.contains("let mut scratch = self.clone();"));
+    assert!(s.contains("scratch.update(inOpen, inHigh, inLow, inClose)"));
 }
 
 #[test]

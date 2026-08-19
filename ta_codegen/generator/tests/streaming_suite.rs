@@ -263,14 +263,18 @@ fn all_declared_functions_are_streamable() {
 /* ---- CDL tranche: candle helpers, offset rings, array state ---- */
 
 #[test]
-fn cdldoji_is_t3_with_plain_ohlc_ring() {
+fn cdldoji_is_t3_with_a_derived_ring() {
     let f = load("cdldoji");
     let m = streaming::analyze(&f).expect("CDLDOJI analyzes");
     assert_eq!(m.tier, StreamTier::T3);
     assert_eq!(m.rings().len(), 1);
     let r = &m.rings()[0];
     assert_eq!(r.var, "BodyDojiTrailingIdx");
-    assert_eq!(r.arrays, ["inOpen", "inHigh", "inLow", "inClose"]);
+    // ONE derived lane holding the computed candle range, not four raw OHLC
+    // lanes: #229's collapse. The trailing subtraction needs the range, not the
+    // prices, so retaining the prices was four times the memory and four times
+    // the copy for a value the step recomputed anyway.
+    assert_eq!(r.arrays, ["derived"]);
     assert_eq!((r.back, r.fwd), (0, 0), "plain oldest-slot ring");
     assert!(m.state.iter().any(|(n, _)| n == "BodyDojiPeriodTotal"));
 }

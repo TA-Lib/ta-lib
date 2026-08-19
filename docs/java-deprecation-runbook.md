@@ -4,7 +4,7 @@
 credentials only.** The API-shape work landed 2026-07-25/26 (immutable `Core` + builder, `OutRange`,
 the package rename, the generated metadata registry + call-by-name). The packaging track landed
 2026-08-05: `ta_codegen/output/java/library/pom.xml`, the Maven standard layout, and the retirement
-of Ant (`build.xml`, `.classpath`) and the checked-in `ta-lib.jar`. `mvn package` produces the three
+of Ant (`build.xml`, `.classpath`) and the checked-in `ta-lib.jar`. `./mvnw package` produces the three
 required jars; **what remains is entirely account work** — namespace verification, a GPG key, and a
 Central Portal token (§5, Phase 2). Note the root `java/` tree this document describes as "the
 shipped library" was deleted in `f00131f3` (2026-07-15) — the library lives at
@@ -205,14 +205,14 @@ To make `output/java` a self-contained, buildable, publishable library, `ta_code
 - ✅ Shared types, assembled `Core`, `FuncUnstId`, package decls — landed 2026-07-25/26.
 - ✅ `ta_codegen/output/java/library/pom.xml` — hand-written (see §2b), coordinates
   `io.github.ta-lib:ta-lib`, all Central-required metadata, sources + javadoc jars, GPG signing and
-  `central-publishing-maven-plugin` behind a `release` profile so a plain `mvn package` needs no
+  `central-publishing-maven-plugin` behind a `release` profile so a plain `./mvnw package` needs no
   credentials.
 - ✅ Maven standard layout: `src/main/java` (ships) + `src/test/java` (the suites). This is what keeps
   the test package out of all three jars *structurally* — the flat `src/` alternative needed the same
   exclusion repeated in the compiler, source and javadoc plugins, each failing silently if forgotten.
 - ✅ Ant retired: `build.xml`, `.classpath`, and the stale checked-in `ta-lib.jar` deleted.
 - ✅ `pom.xml` version joined `sync_versions()` in `scripts/utilities/versions.py`.
-- **Checkpoint (green):** `mvn package` builds `ta-lib-0.8.1{,-sources,-javadoc}.jar`;
+- **Checkpoint (green):** `./mvnw package` builds `ta-lib-0.8.1{,-sources,-javadoc}.jar`;
   `ta_codegen build --backend=java` green (server + library compile, javadoc doclint, 5 suites /
   1192 checks); the main jar holds 211 classes and **zero** test classes; sources jar and javadoc
   contain no test package; `Automatic-Module-Name: io.github.talib` present; entry timestamps pinned
@@ -231,23 +231,37 @@ Nothing is published under `com.tictactec` (green field, and §7 is now closed).
    hyphenated exactly like ours.
    Verification does not expire and is not re-checked; the proving repo is disposable. What the
    namespace *is* anchored to is the org's identity — **never rename or transfer the `TA-Lib` org**.
-2. **Generate a GPG key** and publish it to a keyserver; `mvn -Prelease` signs with it. Expiry is an
+2. **Which Maven runs, and how to change it.** Always `./mvnw`, never a bare `mvn`: the
+   wrapper (`ta_codegen/output/java/library/mvnw`, `mvnw.cmd`,
+   `.mvn/wrapper/maven-wrapper.properties`) downloads the exact Apache distribution pinned there,
+   verifies it against `distributionSha256Sum`, and then execs the real `mvn` inside it — same
+   binary, same plugins, same `~/.m2/settings.xml` and `~/.m2/repository`. It is what makes "which
+   Maven produced this release" answerable, and it is why the java backend needs no Maven
+   installed. Currently Apache Maven 3.9.16 (`distributionType=only-script`, so no
+   `maven-wrapper.jar` binary is committed; 3.9.x rather than 4.x because Maven 4 is still RC).
+   To bump it: change `distributionUrl`, download the new zip, check its SHA-512 against the
+   `.sha512` published on *both* repo.maven.apache.org and downloads.apache.org, then put that
+   file's SHA-256 in `distributionSha256Sum` (Central publishes no `.sha256` for it). A stale sum
+   fails the build rather than silently skipping validation. The wrapper needs `unzip` on PATH —
+   without it mvnw quietly falls back to the `.tar.gz` distribution and then fails the checksum
+   with "your Maven distribution might be compromised", which is a missing utility, not an attack.
+3. **Generate a GPG key** and publish it to a keyserver; `./mvnw -Prelease` signs with it. Expiry is an
    editable property (`gpg --quick-set-expire <FPR> <period>`) and works even after the key has
    expired, so the 2-year default is not a commitment; this key is set to `never` and relies on the
    revocation certificate (`~/.gnupg/openpgp-revocs.d/<FPR>.rev`) instead. Losing the key entirely is
    recoverable — Central binds the namespace to the *account*, not to a key, so a fresh key signs
    future releases and already-published artifacts keep verifying against the old public key.
-3. **Mint a Central Portal user token** and put it in `~/.m2/settings.xml` under `<id>central</id>`
+4. **Mint a Central Portal user token** and put it in `~/.m2/settings.xml` under `<id>central</id>`
    (the pom's `publishingServerId`). Shown once in a modal, never retrievable again — only
    replaceable. This token, not the GPG key, is the credential that authorizes a release: a stolen
    laptop means rotating *this* first (from any browser), since a signing key alone cannot publish.
-4. `mvn -Prelease deploy` from `ta_codegen/output/java/library/`. `autoPublish` is **false**: the
+5. `./mvnw -Prelease deploy` from `ta_codegen/output/java/library/`. `autoPublish` is **false**: the
    upload validates and sits pending in the Portal.
-5. **Checkpoint:** resolve `io.github.ta-lib:ta-lib:<version>` from a clean consumer project and call
+6. **Checkpoint:** resolve `io.github.ta-lib:ta-lib:<version>` from a clean consumer project and call
    `SMA`/`RSI`. **Rollback:** drop the pending deployment in the Portal — nothing is public until
    promoted by hand. Central is immutable, so a released bad artifact cannot be withdrawn; that is
    the whole reason `autoPublish` is off.
-6. Drop the "Not yet released — estimated Q1 2027" banner from `website/src/api/java/README.md` and
+7. Drop the "Not yet released — estimated Q1 2027" banner from `website/src/api/java/README.md` and
    `website/src/api/java/stream/README.md`, and add the `<dependency>` snippet.
 
 ### Phase 3 — Announce

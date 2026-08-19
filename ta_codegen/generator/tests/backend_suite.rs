@@ -7633,16 +7633,38 @@ fn test_c_back_offset_ring_writes_the_current_bar_once() {
     // current bar into slot `pos` so the runtime-lag-0 case reads it through the
     // same formula. Nothing between there and the end of the step moves
     // `ringPos`, so repeating that store before the advance is a dead store.
+    //
+    // `test_c_no_step_internal_stores_a_ring_slot_twice` sweeps the same
+    // invariant over the whole streaming corpus; this one keeps a named witness
+    // for the offset-ring layout, which is the shape that made the dead store
+    // possible in the first place.
     let (mut func, enums) = load_indicator("cdlonneck");
     func.streaming = true;
     let c = backends::c::generate(&func, &enums, &make_registry(), &HelperRegistry::empty());
     let step = step_internal_body(&c);
-    for arr in ["inOpen", "inHigh", "inLow", "inClose"] {
-        let store = format!("sp->ring_EqualTrailingIdx_{arr}[sp->ringPos_EqualTrailingIdx] = {arr};");
-        assert_eq!(
-            step.matches(&store).count(),
-            1,
-            "stored twice per bar, with ringPos unmoved between: {store}"
+
+    // The ring is found by its POSITION variable, not by a hardcoded name. The
+    // first version of this test spelled out `ring_EqualTrailingIdx_inOpen` and
+    // friends; #229 then collapsed those four per-OHLC rings into one derived
+    // ring holding the computed range, and the needle silently stopped matching
+    // anything at all -- the assertion failed with a count of 0, not of 2. A
+    // rename must not be able to turn this into a test of nothing, so the store
+    // count is read off whatever the generator emits.
+    let stores: Vec<&str> = step
+        .lines()
+        .map(str::trim)
+        .filter(|l| l.contains("[sp->ringPos_EqualTrailingIdx] ="))
+        .collect();
+    assert!(
+        !stores.is_empty(),
+        "no store into the Equal trailing ring: this test is looking at nothing"
+    );
+    let mut seen = std::collections::BTreeSet::new();
+    for s in &stores {
+        let ring = s.split('[').next().unwrap_or(s);
+        assert!(
+            seen.insert(ring),
+            "stored twice per bar, with ringPos unmoved between: {s}"
         );
     }
 }

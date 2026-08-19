@@ -1176,8 +1176,8 @@ fn build_servers(backend_filter: Option<&str>) {
                 // build's bytes -- and every Java gate would agree with it,
                 // because they all drive this same classpath. Demonstrated by
                 // corrupting FunctionDescription.java: the abstract gate passed
-                // until this directory was removed by hand. The library test
-                // build (ta_codegen_java_lib, below) has always done this.
+                // until this directory was removed by hand. The library build
+                // below gets the same property from `mvnw clean`.
                 let _ = std::fs::remove_dir_all(&class_dir);
                 std::fs::create_dir_all(&class_dir).ok();
                 // The server's ta_abstract RPCs answer from the SHIPPED registry
@@ -1323,32 +1323,186 @@ fn build_servers(backend_filter: Option<&str>) {
 ///
 /// Returns `true` on success.
 fn build_java_library(root: &Path, bin_dir: &Path) -> bool {
-    // Both Maven source roots: `src/main/java` (what ships) and `src/test/java`
-    // (the gate below runs it). One walk over `src/` covers both, and the javadoc
-    // pass filters the test root back out by path.
-    let src_root = root.join("ta_codegen/output/java/library/src");
+    let lib_dir = root.join("ta_codegen/output/java/library");
+    let src_root = lib_dir.join("src");
     if !src_root.exists() {
         println!("  Building Java library... SKIPPED (no {})", src_root.display());
         return true;
     }
 
+    // Maven builds the artifact -- there is no second builder, and nothing here
+    // tests a class directory. Everything downstream binds to the jar this
+    // command just produced, which is the same file `./mvnw -Prelease deploy`
+    // uploads.
+    //
+    // Through the committed wrapper, never a `mvn` off PATH. `./mvnw` is not a
+    // different Maven: it downloads the exact Apache distribution pinned (and
+    // SHA-256 verified) in .mvn/wrapper/maven-wrapper.properties and execs the
+    // real `mvn` inside it -- same binary, same plugins, same ~/.m2. So the
+    // backend needs no Maven installed -- a JDK and `unzip` -- and "which Maven
+    // built the release" has one answer on every machine instead of one per distro.
+    //
+    // `clean` on purpose. maven-compiler-plugin's incremental check is
+    // all-or-nothing on the sources it can see, but a class whose source was
+    // DELETED survives in target/classes and would be packaged -- and this repo
+    // has already been bitten twice by a stale Java artifact reading green
+    // (a class directory javac would not refresh, and a stale server binary).
+    // The jar is the artifact; it gets built from nothing, every time.
+    //
+    // Tests are skipped here, not run: the five suites are junit-free `main()`
+    // classes, so surefire discovers them and executes zero methods. They are
+    // compiled and run below, against the jar. (The Maven-native way to bind
+    // tests to the packaged artifact is maven-failsafe-plugin, which uses the
+    // project artifact by default -- but it still needs a junit/testng provider
+    // to find anything, so it would mean porting the suites first.)
+    // Probe `unzip` first. The only-script wrapper prefers the pinned -bin.zip, but
+    // silently falls back to the -bin.tar.gz distribution when unzip is absent -- and
+    // then compares THAT file against the zip's distributionSha256Sum, so the failure
+    // reads "your Maven distribution might be compromised". Reproduced; it is a missing
+    // utility, not an attack, and nobody should have to learn that the hard way.
+    if std::process::Command::new("unzip")
+        .arg("-v")
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .status()
+        .is_err()
+    {
+        println!(
+            "  Building Java library... FAILED (no `unzip` on PATH). The Maven wrapper \
+             needs it to unpack the pinned distribution; without it the download falls \
+             back to .tar.gz and fails the checksum with a misleading \"might be \
+             compromised\". Install unzip, or narrow the build to skip java."
+        );
+        return false;
+    }
+
+    print!("  Building Java library (./mvnw clean package)... ");
+    // Absolute path on purpose: Command::new resolves a relative program against
+    // the PARENT's cwd, not `current_dir`, so "./mvnw" would look in the wrong
+    // place from anywhere but the library directory.
+    let mvnw = lib_dir.join("mvnw");
+    match std::process::Command::new(&mvnw)
+        .args(["-B", "-q", "clean", "package", "-Dmaven.test.skip=true"])
+        .current_dir(&lib_dir)
+        .status()
+    {
+        Ok(s) if s.success() => println!("OK"),
+        Ok(s) => {
+            println!("FAILED (exit {})", s.code().unwrap_or(-1));
+            return false;
+        }
+        Err(e) => {
+            println!(
+                "FAILED (cannot run {}: {e}). It is committed and executable; the java \
+                 backend needs a JDK, and the wrapper's first run needs the network. \
+                 Narrow the build (--backend=, build.py --language=) to skip java.",
+                mvnw.display()
+            );
+            return false;
+        }
+    }
+
+    // Where the three jars landed, named by the build itself rather than by a
+    // literal or a re-parse of pom.xml: maven-archiver writes the coordinates it
+    // actually used. A publish ships all three and Central is immutable, so all
+    // three are checked.
+    let target = lib_dir.join("target");
+    let props_path = target.join("maven-archiver/pom.properties");
+    let props = std::fs::read_to_string(&props_path).unwrap_or_default();
+    let field = |k: &str| {
+        props
+            .lines()
+            .find_map(|l| l.trim().strip_prefix(&format!("{k}=")))
+            .map(|v| v.trim().to_string())
+    };
+    let (Some(artifact), Some(version)) = (field("artifactId"), field("version")) else {
+        println!(
+            "  Checking Java jars... FAILED (no artifactId/version in {})",
+            props_path.display()
+        );
+        return false;
+    };
+    let main_jar = target.join(format!("{artifact}-{version}.jar"));
+    let sources_jar = target.join(format!("{artifact}-{version}-sources.jar"));
+    let javadoc_jar = target.join(format!("{artifact}-{version}-javadoc.jar"));
+    for jar in [&main_jar, &sources_jar, &javadoc_jar] {
+        if !jar.exists() {
+            println!("  Checking Java jars... FAILED (the build produced no {})", jar.display());
+            return false;
+        }
+    }
+
+    if !check_java_jars(root, bin_dir, &main_jar, &sources_jar, &javadoc_jar) {
+        return false;
+    }
+
+    if !check_java_doc_examples(&src_root, &main_jar, bin_dir) {
+        return false;
+    }
+
+    // The suites: discovered, not listed. A hardcoded roster is how the retired
+    // `AllTests` suite went vacuous (it named one class, a later change deleted
+    // it, and `ant test` kept passing). Discovery walks BOTH Maven source roots,
+    // so a suite misfiled under src/main/java is caught twice over -- once by the
+    // jar-content check above, and again by the run below failing to resolve
+    // `io.github.talib.test.<name>`.
     let mut sources: Vec<std::path::PathBuf> = Vec::new();
     let mut junit_skipped: Vec<String> = Vec::new();
     collect_java_sources(&src_root, &mut sources, &mut junit_skipped);
     sources.sort();
     junit_skipped.sort();
-
-    print!("  Building Java library ({} files)... ", sources.len());
-    let class_dir = bin_dir.join("ta_codegen_java_lib");
-    let _ = std::fs::remove_dir_all(&class_dir);
-    std::fs::create_dir_all(&class_dir).ok();
-
-    let mut cmd = std::process::Command::new("javac");
-    cmd.arg("--release").arg(JAVA_RELEASE).arg("-d").arg(&class_dir).arg("-nowarn");
-    for src in &sources {
-        cmd.arg(src);
+    // A junit-importing suite used to be dropped from `sources` with an informational
+    // line, so it was neither compiled nor run and the build stayed green -- the exact
+    // AllTests vacuity the discovery below exists to prevent, reachable again now that
+    // Maven could supply a junit dependency in one line. Fail instead: either add the
+    // dependency and run it, or do not ship the file.
+    if !junit_skipped.is_empty() {
+        println!(
+            "  Building Java tests... FAILED ({} junit-dependent file(s) would be \
+             compiled by neither Maven nor this gate, so they would never run: {}). \
+             Add a test-scoped junit dependency to pom.xml, or convert them to the \
+             junit-free main() form the other suites use.",
+            junit_skipped.len(),
+            junit_skipped.join(", ")
+        );
+        return false;
     }
-    match cmd.status() {
+    let test_sources: Vec<_> = sources
+        .iter()
+        .filter(|p| p.to_string_lossy().contains("/test/"))
+        .cloned()
+        .collect();
+
+    let (tests, unrunnable) = discover_java_tests(&sources);
+    if !unrunnable.is_empty() {
+        println!(
+            "  Building Java tests... FAILED ({} test class(es) with no main(): {})",
+            unrunnable.len(),
+            unrunnable.join(", ")
+        );
+        return false;
+    }
+    if tests.is_empty() {
+        println!("  Building Java tests... FAILED (no test classes discovered)");
+        return false;
+    }
+
+    print!("  Building Java tests ({} files, against the jar)... ", test_sources.len());
+    let test_dir = bin_dir.join("ta_codegen_java_test");
+    let _ = std::fs::remove_dir_all(&test_dir);
+    std::fs::create_dir_all(&test_dir).ok();
+    let mut tc = std::process::Command::new("javac");
+    tc.arg("--release")
+        .arg(JAVA_RELEASE)
+        .arg("-nowarn")
+        .arg("-cp")
+        .arg(&main_jar)
+        .arg("-d")
+        .arg(&test_dir);
+    for src in &test_sources {
+        tc.arg(src);
+    }
+    match tc.status() {
         Ok(s) if s.success() => println!("OK"),
         Ok(s) => {
             println!("FAILED (exit {})", s.code().unwrap_or(-1));
@@ -1359,76 +1513,16 @@ fn build_java_library(root: &Path, bin_dir: &Path) -> bool {
             return false;
         }
     }
-    if !junit_skipped.is_empty() {
-        println!(
-            "    (skipped {} junit-dependent test file(s), no junit.jar in tree: {})",
-            junit_skipped.len(),
-            junit_skipped.join(", ")
-        );
-    }
 
-    // Javadoc doclint: the "do the docs actually build" gate. The Javadoc on the
-    // batch API is generated from the canonical `<name>.md` prose, so a stray `<`
-    // or an unresolvable `@see` would otherwise ship silently — javac does not
-    // look inside comments. `-missing` is off: the streaming handles and the
-    // internal cores are deliberately undocumented.
-    print!("  Checking Java javadoc (doclint)... ");
-    let doc_dir = bin_dir.join("ta_codegen_java_doc");
-    let _ = std::fs::remove_dir_all(&doc_dir);
-    let mut jdoc = std::process::Command::new("javadoc");
-    jdoc.arg("-Xdoclint:all,-missing")
-        .arg("-quiet")
-        .arg("--release")
-        .arg(JAVA_RELEASE)
-        .arg("-d")
-        .arg(&doc_dir);
-    for src in &sources {
-        // Test sources are not part of the published API surface.
-        if !src.to_string_lossy().contains("/test/") {
-            jdoc.arg(src);
-        }
-    }
-    match jdoc.output() {
-        Ok(o) if o.status.success() => println!("OK"),
-        Ok(o) => {
-            println!("FAILED (exit {})", o.status.code().unwrap_or(-1));
-            print!("{}", String::from_utf8_lossy(&o.stderr));
-            return false;
-        }
-        Err(e) => {
-            // javadoc ships with the JDK; if it is absent so is javac, and the
-            // compile above would already have failed.
-            println!("SKIPPED (javadoc not found: {e})");
-        }
-    }
-
-    if !check_java_doc_examples(&src_root, &class_dir, bin_dir) {
+    let Ok(run_cp) = std::env::join_paths([main_jar.as_os_str(), test_dir.as_os_str()]) else {
+        println!("  Running Java tests... FAILED (cannot build a classpath)");
         return false;
-    }
-
-    // Run every test class DISCOVERED in the sources, not a hardcoded list: a
-    // hardcoded roster is how the retired `AllTests` suite went vacuous (it
-    // named one class, which a later change deleted, and `ant test` kept
-    // passing). A new *Test.java with a main() is picked up automatically; one
-    // without a main() is a hard error rather than a silent skip.
-    let (tests, unrunnable) = discover_java_tests(&sources);
-    if !unrunnable.is_empty() {
-        println!(
-            "  Building Java library... FAILED ({} test class(es) with no main(): {})",
-            unrunnable.len(),
-            unrunnable.join(", ")
-        );
-        return false;
-    }
-    if tests.is_empty() {
-        println!("  Building Java library... FAILED (no test classes discovered)");
-        return false;
-    }
+    };
     for test in &tests {
-        print!("  Running Java {}... ", test);
+        print!("  Running Java {} (on the jar)... ", test);
         match std::process::Command::new("java")
             .arg("-cp")
-            .arg(&class_dir)
+            .arg(&run_cp)
             .arg(format!("io.github.talib.test.{test}"))
             .status()
         {
@@ -1444,6 +1538,265 @@ fn build_java_library(root: &Path, bin_dir: &Path) -> bool {
         }
     }
     true
+}
+
+/// Assert what the three published archives contain -- the half of a release
+/// that no other gate sees.
+///
+/// Everything else about Java is proven from source: the suites, the servers, the
+/// cross-language values, and (since Maven owns the build) the compile and the
+/// doclint pass. Packaging is proven by nothing, and a Central release is
+/// immutable -- a `<compilerArgs>`, an `<excludes>` or a plugin bump can change
+/// what reaches an archive without changing a single class, and `./mvnw -Prelease
+/// deploy` would still print BUILD SUCCESS.
+///
+/// Four questions, none of which a compile can answer:
+///
+/// 1. **Did every function get in?** Each definition under `ta_codegen/input/`
+///    must appear on the jar's `Core` as exactly two public `OutRange` methods
+///    (the `double[]` and `float[]` overloads). Read with `javap` off the
+///    archive, so a function that failed to splice, spliced without its wrapper,
+///    or lost one overload cannot hide. Pinned against the input tree rather
+///    than a literal, for the reason `StreamSmokeTest` stopped hardcoding its
+///    corpus size: a number here breaks the build the day an indicator lands,
+///    and the pressure is then to bump it rather than to check it.
+///
+/// 2. **Did the suites stay out?** Of all three. `src/test/java` is excluded by
+///    living in its own Maven source root -- one silent mechanism, and the reason
+///    pom.xml warns against the flat layout.
+///
+/// 3. **Is the redistribution licence-complete?** BSD-3 clause 2 for the two
+///    archives that carry code. The javadoc jar is exempt by design: the plugin
+///    consumes no `<resources>`, so pom.xml renders the notice into every page
+///    via `<bottom>` instead -- which is why this asserts a rendered page rather
+///    than a `META-INF/LICENSE` that will never be there.
+///
+/// 4. **Will JPMS see the name we promised?** Without the manifest entry it
+///    derives `ta.lib` from the artifactId, and a derived name is not a name a
+///    library may promise.
+///
+/// The registry's own completeness is NOT re-checked here: `MetadataTest`
+/// resolves every `Functions.all()` row against the jar's `Core` by reflection
+/// and asserts an exact count, and C's `ta_abstract` compares its independently
+/// derived function set against the Java server's metadata RPC, which since #164
+/// answers out of this same shipped registry.
+fn check_java_jars(
+    root: &Path,
+    bin_dir: &Path,
+    main_jar: &Path,
+    sources_jar: &Path,
+    javadoc_jar: &Path,
+) -> bool {
+    print!("  Checking Java jars (main, sources, javadoc)... ");
+
+    // The function set, straight from the source of truth. Same rule the
+    // generator itself uses to decide a directory is a function.
+    let input = root.join("ta_codegen/input");
+    let mut expected: Vec<String> = Vec::new();
+    let Ok(entries) = std::fs::read_dir(&input) else {
+        println!("FAILED (cannot read {})", input.display());
+        return false;
+    };
+    for entry in entries.flatten() {
+        if !entry.path().is_dir() {
+            continue;
+        }
+        let name = entry.file_name().to_string_lossy().to_string();
+        if parser::yaml::is_reserved_dir(&name) {
+            continue;
+        }
+        if entry.path().join(format!("{name}.yaml")).exists() {
+            expected.push(name.to_uppercase());
+        }
+    }
+    expected.sort();
+
+    // 1. Every function on the jar's Core, with both overloads.
+    let javap = match std::process::Command::new("javap")
+        .arg("-cp")
+        .arg(main_jar)
+        .arg("io.github.talib.Core")
+        .output()
+    {
+        Ok(o) if o.status.success() => String::from_utf8_lossy(&o.stdout).into_owned(),
+        Ok(o) => {
+            println!("FAILED (javap exit {})", o.status.code().unwrap_or(-1));
+            print!("{}", String::from_utf8_lossy(&o.stderr));
+            return false;
+        }
+        Err(e) => {
+            println!("FAILED (javap not found: {})", e);
+            return false;
+        }
+    };
+    const RET: &str = "public io.github.talib.OutRange ";
+    let mut found: std::collections::BTreeMap<String, usize> = std::collections::BTreeMap::new();
+    for line in javap.lines() {
+        let Some(rest) = line.trim_start().strip_prefix(RET) else {
+            continue;
+        };
+        let Some(name) = rest.split('(').next() else {
+            continue;
+        };
+        *found.entry(name.trim().to_string()).or_insert(0) += 1;
+    }
+    let missing: Vec<&String> = expected.iter().filter(|f| !found.contains_key(*f)).collect();
+    let unexpected: Vec<&String> = found.keys().filter(|f| !expected.contains(f)).collect();
+    let wrong_arity: Vec<String> = found
+        .iter()
+        .filter(|(_, n)| **n != 2)
+        .map(|(f, n)| format!("{f} x{n}"))
+        .collect();
+    if !missing.is_empty() || !unexpected.is_empty() || !wrong_arity.is_empty() {
+        println!("FAILED");
+        if !missing.is_empty() {
+            println!("    in ta_codegen/input/ but not on the jar's Core: {:?}", missing);
+        }
+        if !unexpected.is_empty() {
+            println!("    on the jar's Core but not in ta_codegen/input/: {:?}", unexpected);
+        }
+        if !wrong_arity.is_empty() {
+            println!(
+                "    not exactly two public OutRange overloads (double[] + float[]): {:?}",
+                wrong_arity
+            );
+        }
+        return false;
+    }
+
+    // 2/3. Listings: what leaked in, and what must be there.
+    let listing = |jar: &Path| -> Option<Vec<String>> {
+        match std::process::Command::new("jar").arg("--list").arg("--file").arg(jar).output() {
+            Ok(o) if o.status.success() => {
+                Some(String::from_utf8_lossy(&o.stdout).lines().map(str::to_string).collect())
+            }
+            _ => None,
+        }
+    };
+    let mut total = 0usize;
+    for (label, jar, wants_license) in [
+        ("main", main_jar, true),
+        ("sources", sources_jar, true),
+        ("javadoc", javadoc_jar, false),
+    ] {
+        let Some(entries) = listing(jar) else {
+            println!("FAILED (cannot list the {label} jar: {})", jar.display());
+            return false;
+        };
+        total += entries.len();
+        let leaked: Vec<&String> = entries
+            .iter()
+            .filter(|l| {
+                l.contains("/test/")
+                    || l.ends_with("Test.class")
+                    || l.ends_with("Test.java")
+                    || l.ends_with("Test.html")
+            })
+            .collect();
+        if !leaked.is_empty() {
+            println!(
+                "FAILED ({} test entr(ies) in the {label} jar: {:?})",
+                leaked.len(),
+                leaked
+            );
+            return false;
+        }
+        if wants_license && !entries.iter().any(|l| l.trim() == "META-INF/LICENSE") {
+            println!(
+                "FAILED (no META-INF/LICENSE in the {label} jar -- BSD-3 clause 2 requires \
+                 the notice in a binary redistribution, and a Central release cannot be \
+                 corrected)"
+            );
+            return false;
+        }
+    }
+    // The javadoc jar's share of the same clause: pom.xml renders the notice into
+    // every page's footer instead, so assert a rendered page carries it.
+    if !javadoc_notice_present(bin_dir, javadoc_jar) {
+        println!(
+            "FAILED (the javadoc jar's pages carry no copyright notice -- pom.xml's \
+             <bottom> is how the javadoc artifact meets BSD-3 clause 2)"
+        );
+        return false;
+    }
+
+    // 4. The module name JPMS will actually derive, read off the archive.
+    let module_out = match std::process::Command::new("jar")
+        .arg("--describe-module")
+        .arg("--file")
+        .arg(main_jar)
+        .output()
+    {
+        Ok(o) if o.status.success() => String::from_utf8_lossy(&o.stdout).into_owned(),
+        Ok(o) => {
+            println!("FAILED (jar --describe-module exit {})", o.status.code().unwrap_or(-1));
+            print!("{}", String::from_utf8_lossy(&o.stderr));
+            return false;
+        }
+        Err(e) => {
+            println!("FAILED (jar not found: {})", e);
+            return false;
+        }
+    };
+    let derived = module_out
+        .lines()
+        .find_map(|l| l.trim().strip_suffix(" automatic"))
+        .map(|l| l.split('@').next().unwrap_or(l).to_string());
+    if derived.as_deref() != Some(JAVA_MODULE_NAME) {
+        println!(
+            "FAILED (the jar derives module `{}`, not `{}` -- pom.xml's \
+             <Automatic-Module-Name> is missing or wrong)",
+            derived.as_deref().unwrap_or("<none>"),
+            JAVA_MODULE_NAME
+        );
+        return false;
+    }
+
+    println!("OK ({} functions, {} entries across three jars)", expected.len(), total);
+    true
+}
+
+/// Whether the javadoc jar's rendered pages carry the copyright notice.
+///
+/// Checked on `Core`'s own page rather than on any page: it is the one every
+/// reader lands on, and naming it makes the failure legible.
+fn javadoc_notice_present(bin_dir: &Path, javadoc_jar: &Path) -> bool {
+    let Ok(listing) = std::process::Command::new("jar")
+        .arg("--list")
+        .arg("--file")
+        .arg(javadoc_jar)
+        .output()
+    else {
+        return false;
+    };
+    let listing = String::from_utf8_lossy(&listing.stdout);
+    let Some(page) = listing.lines().find(|l| l.ends_with("/Core.html")) else {
+        return false;
+    };
+    // `jar --extract` has no --dir option, so extract relative to a scratch cwd. That
+    // cwd lives under bin/ like every other scratch path here, NOT under /tmp: a fixed
+    // /tmp name is shared across concurrent runs (this repo is routinely worked in
+    // several worktrees at once), and this function starts by deleting it.
+    let tmp = bin_dir.join("ta_codegen_javadoc_notice");
+    let _ = std::fs::remove_dir_all(&tmp);
+    if std::fs::create_dir_all(&tmp).is_err() {
+        return false;
+    }
+    let ok = std::process::Command::new("jar")
+        .arg("--extract")
+        .arg("--file")
+        .arg(javadoc_jar.canonicalize().unwrap_or_else(|_| javadoc_jar.to_path_buf()))
+        .arg(page)
+        .current_dir(&tmp)
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false);
+    if !ok {
+        return false;
+    }
+    let text = std::fs::read_to_string(tmp.join(page)).unwrap_or_default();
+    let _ = std::fs::remove_dir_all(&tmp);
+    text.contains("BSD 3-Clause License") && text.contains("Mario Fortier")
 }
 
 /// Compile the Java examples embedded in the shipped javadoc.
@@ -1463,7 +1816,7 @@ fn build_java_library(root: &Path, bin_dir: &Path) -> bool {
 /// A snippet may use `close` and `out`; anything else fails, which is the point
 /// — the alternative is a preamble that quietly grows until the gate compiles
 /// something no reader could.
-fn check_java_doc_examples(src_root: &Path, class_dir: &Path, bin_dir: &Path) -> bool {
+fn check_java_doc_examples(src_root: &Path, jar_path: &Path, bin_dir: &Path) -> bool {
     const DOC_EXAMPLE_FILES: &[&str] = &[
         "main/java/io/github/talib/package-info.java",
         "main/java/io/github/talib/CoreBuilder.java",
@@ -1536,7 +1889,7 @@ fn check_java_doc_examples(src_root: &Path, class_dir: &Path, bin_dir: &Path) ->
     }
 
     let mut cmd = std::process::Command::new("javac");
-    cmd.arg("--release").arg(JAVA_RELEASE).arg("-nowarn").arg("-cp").arg(class_dir);
+    cmd.arg("--release").arg(JAVA_RELEASE).arg("-nowarn").arg("-cp").arg(jar_path);
     cmd.arg("-d").arg(dir.join("classes"));
     for f in &files {
         cmd.arg(f);
@@ -1645,6 +1998,12 @@ fn has_java_main(text: &str) -> bool {
 /// server and the shipped library cannot drift apart. Mirrors `pom.xml`'s
 /// `<maven.compiler.release>`.
 const JAVA_RELEASE: &str = "17";
+
+/// The jar's JPMS automatic module name. `check_java_jars` asserts the built jar
+/// derives exactly this: without pom.xml's `<Automatic-Module-Name>` entry JPMS falls
+/// back to the artifactId and consumers get `ta.lib`, and a derived name is not a name
+/// a library may promise. Equal to the root package, deliberately.
+const JAVA_MODULE_NAME: &str = "io.github.talib";
 
 /// Recursively collect `.java` sources under `dir`, partitioning out the files
 /// that need junit (which is not in the tree).
