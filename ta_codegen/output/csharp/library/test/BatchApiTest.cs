@@ -130,7 +130,6 @@ public static class BatchApiTest
         Check(r.Count == 2, $"MAX Count == 2 (got {r.Count})");
         Check(output[0] == 2.0, "MAX[0] == 2.0");
         Check(output[1] == 1.5, "MAX[1] == 1.5");
-        Check(r.EndIdx == 3, "MAX EndIdx == BegIdx + Count");
         Check(!r.IsEmpty, "MAX range is not empty");
     }
 

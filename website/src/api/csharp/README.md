@@ -47,7 +47,7 @@ Arrays still work everywhere — `double[]` converts to a span implicitly, so th
 
 Two consequences worth knowing. A span is never null, so passing `null` arrives as an empty span and is rejected as one (`ArgumentException` naming the parameter). And a span cannot be boxed, so the API cannot be invoked through `MethodInfo.Invoke` — to call indicators chosen at run time, use the catalogue below, which is the supported path and is faster besides.
 
-`OutRange` is a readonly struct with two components — `BegIdx` and `Count` — plus the conveniences `IsEmpty`, `EndIdx` and `Empty`. The component names match the C, Rust and Java surfaces (`outBegIdx` / `outNBElement`), so the same concept reads the same way in every backend.
+`OutRange` is a readonly struct with two components — `BegIdx` and `Count` — plus the conveniences `IsEmpty` and `Empty`. The component names match the C, Rust and Java surfaces (`outBegIdx` / `outNBElement`), so the same concept reads the same way in every backend.
 
 ## Output size and lookback
 

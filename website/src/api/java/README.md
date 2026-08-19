@@ -35,7 +35,7 @@ for (int i = 0; i < r.count(); i++) {
 }
 ```
 
-`OutRange` is an immutable record with two components — `begIdx()` and `count()` — plus the conveniences `isEmpty()` and `endIdx()`. The component names match the C and Rust surfaces (`outBegIdx` / `outNBElement`), so the same concept reads the same way in every backend.
+`OutRange` is an immutable record with two components — `begIdx()` and `count()` — plus the conveniences `isEmpty()` and `EMPTY`. The component names match the C and Rust surfaces (`outBegIdx` / `outNBElement`), so the same concept reads the same way in every backend.
 
 ## Output size and lookback
 

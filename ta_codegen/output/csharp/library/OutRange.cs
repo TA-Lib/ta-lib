@@ -65,10 +65,6 @@ public readonly struct OutRange
     /// <summary>True when no values were written.</summary>
     public bool IsEmpty => Count == 0;
 
-    /// <summary>One past the input index of the last output value
-    /// (<c>BegIdx + Count</c>).</summary>
-    public int EndIdx => BegIdx + Count;
-
     /// <summary>The range that wrote nothing.</summary>
     /// <remarks>A plain <c>Open</c> fills no output, so its
     /// <c>FillRange</c> is this; <c>OpenAndFill</c>'s is not. Equal to

@@ -117,7 +117,6 @@ public class BatchApiTest {
         check(r.count() == 2, "MAX count == 2 (got " + r.count() + ")");
         check(output[0] == 2.0, "MAX[0] == 2.0");
         check(output[1] == 1.5, "MAX[1] == 1.5");
-        check(r.endIdx() == 3, "MAX endIdx == begIdx + count");
         check(!r.isEmpty(), "MAX range is not empty");
     }
 

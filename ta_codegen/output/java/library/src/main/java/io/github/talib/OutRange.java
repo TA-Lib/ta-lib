@@ -80,12 +80,4 @@ public record OutRange(int begIdx, int count) {
     public boolean isEmpty() {
         return count == 0;
     }
-
-    /**
-     * Index, in the input array's coordinates, one past the last computed value.
-     * {@code begIdx} when the range is empty.
-     */
-    public int endIdx() {
-        return begIdx + count;
-    }
 }
