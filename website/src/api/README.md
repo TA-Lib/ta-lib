@@ -109,19 +109,24 @@ TA_RetCode TA_Shutdown( void );</pre>
 <p>This calling pattern takes some getting used to, but it lets your app spend time and memory only on the data it actually needs.
 </p>
 <p>For example, here is how to calculate a 30-day simple moving average (SMA) of daily closing prices:</p>
+
 <pre>TA_Real    closePrice[400];
 TA_Real    out[400];
 TA_Integer outBeg;
-TA_Integer outNBElement;</pre>
-<pre>/* ... initialize your closing price here... */</pre>
-<pre>retCode = TA_MA( <span class="ta-arg-range">0</span>, <span class="ta-arg-range">399</span>,
+TA_Integer outNBElement;
+
+/* ... initialize your closing price here... */
+
+retCode = TA_MA( <span class="ta-arg-range">0</span>, <span class="ta-arg-range">399</span>,
                  <span class="ta-arg-in">&amp;closePrice[0]</span>,
                  <span class="ta-arg-opt">30</span>, <span class="ta-arg-opt">TA_MAType_SMA</span>,
-                 <span class="ta-arg-out">&amp;outBeg</span>, <span class="ta-arg-out">&amp;outNBElement</span>, <span class="ta-arg-out">&amp;out[0]</span> );</pre>
-<pre>/* The output is displayed here */
+                 <span class="ta-arg-out">&amp;outBeg</span>, <span class="ta-arg-out">&amp;outNBElement</span>, <span class="ta-arg-out">&amp;out[0]</span> );
+
+/* The output is displayed here */
 for( i=0; i &lt; outNBElement; i++ )
    printf( &quot;Day %d = %f\n&quot;, outBeg+i, out[i] );
 </pre>
+
 <p>After the call, it is important to check the values returned in outBeg and outNBElement. Even though we requested the whole range (0 to 399), a 30-day average is not defined until the 30th day. Consequently, outBeg will be 29 (zero-based) and
 outNBElement will be 400-29 = 371. In other words, only the first 371 elements of out[] are written, and they correspond to input elements 29 through 399.</p>
 <p>As another example, if you had requested only the range 125 to 225, outBeg
@@ -131,15 +136,19 @@ the requested range provide the needed history. As you may have guessed, only
 the first 101 elements of out[] are written; the rest is left untouched.</p>
 <p>Here is another example. This time we calculate a 14-bar exponential moving average
 for a single price bar (say, the last of 300 bars):</p>
+
 <pre>TA_Real    closePrice[300];
 TA_Real    out;
 TA_Integer outBeg;
-TA_Integer outNBElement;</pre>
-<pre>/* ... initialize your closing price here... */</pre>
-<pre>retCode = TA_MA( <span class="ta-arg-range">299</span>, <span class="ta-arg-range">299</span>,
+TA_Integer outNBElement;
+
+/* ... initialize your closing price here... */
+
+retCode = TA_MA( <span class="ta-arg-range">299</span>, <span class="ta-arg-range">299</span>,
                  <span class="ta-arg-in">&amp;closePrice[0]</span>,
                  <span class="ta-arg-opt">14</span>, <span class="ta-arg-opt">TA_MAType_EMA</span>,
                  <span class="ta-arg-out">&amp;outBeg</span>, <span class="ta-arg-out">&amp;outNBElement</span>, <span class="ta-arg-out">&amp;out</span> );</pre>
+
 <p>In this example, outBeg will be 299, outNBElement will be 1, and only one value is written into out.</p>
 <p>If you do not provide enough data to calculate even one value, outNBElement will be 0 and outBeg should be ignored.</p>
 <p>If the input and output of a TA function are of the same type, the caller can reuse the input buffer to store <b>one of the outputs</b>. The following example works:</p>
@@ -210,7 +219,7 @@ Error 1(TA_LIB_NOT_INITIALIZE): TA_Initialize was not successfully called
 | `startIdx < 0` or `startIdx > TA_MAX_INDEX` | `TA_OUT_OF_RANGE_START_INDEX` |
 | `endIdx < 0`, `endIdx > TA_MAX_INDEX`, or `endIdx < startIdx` | `TA_OUT_OF_RANGE_END_INDEX` |
 
-<p>The limit is the same number in every language binding — <code>TA_MAX_INDEX</code> in C, <code>ta_lib::MAX_INDEX</code> in Rust, <code>Core.MAX_INDEX</code> in Java and C# — so a call is accepted or rejected identically whichever you use. It is a constant rather than a buffer length, so the check costs two comparisons and is done before anything is read.</p>
+<p>The limit is the same number in every language binding — <code>TA_MAX_INDEX</code> in C, <code>Core::MAX_INDEX</code> in Rust, <code>Core.MAX_INDEX</code> in Java and C# — so a call is accepted or rejected identically whichever you use. It is a constant rather than a buffer length, so the check costs two comparisons and is done before anything is read.</p>
 
 <p>For context on the size: 100 million one-minute bars is about 190 years of 24/7 data, or a century of a regular equity session. Series that long are usually tick data, where the <a href="/api/stream/">streaming API</a> is the better tool anyway.</p>
 

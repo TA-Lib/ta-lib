@@ -192,6 +192,27 @@ body .vp-toc-placeholder {
 // `html[data-theme="dark"]` is the theme's own toggle attribute, so these can
 // never desync from the switch. Plain attribute selector and plain hex on
 // purpose: no light-dark(), color-mix() or oklch(), whose support is recent.
+// The signature blocks those colours live in are hand-written `<pre>`, because a
+// fenced block cannot carry per-argument markup. That puts them outside the
+// theme's code styling entirely: `_code.scss` scopes everything to
+// `div[class*="language-"]`, and `_normalize.scss` puts the mono font on `code`,
+// not on `pre` -- and these have no `<code>` inside. Left alone they render in
+// the browser's default monospace with no padding, visibly unlike every fenced
+// block on the same page.
+//
+// The selector keys on the parent rather than on a class of the `<pre>` itself,
+// so it does not depend on what the highlighter happens to emit.
+:not(div[class*="language-"]) > pre {
+  font-family: var(--vp-font-mono);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  padding: 1rem 1.25rem;
+  border-radius: var(--code-border-radius, 6px);
+  background: var(--code-c-bg, var(--vp-c-bg-alt));
+  color: var(--code-c-text, var(--vp-c-text));
+  overflow-x: auto;
+}
+
 .ta-arg-range,
 .ta-arg-in,
 .ta-arg-opt,

@@ -75,7 +75,7 @@ let mut s = core.SMA_OpenAndFill(&history, 30, &mut beg, &mut nb, &mut warmup)?;
 let v = s.update(new_close)?;
 ```
 
-The optional parameters and outputs (`outBegIdx`, `outNBElement`, one slice per output) are exactly the [batch method](/api/rust/)'s; the output slices must not alias the input or each other.
+`OpenAndFill` takes the [batch method](/api/rust/)'s optional parameters, and reports the filled range through `outBegIdx` and `outNBElement` alongside one slice per output; the output slices must not alias the input or each other.
 
 ## Multi-input / multi-output
 

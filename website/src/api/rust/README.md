@@ -17,7 +17,7 @@ The Rust API is not yet released. Estimated release: **Q1 2027**.
 <blockquote>
 <p><a href="#direct_call">3.1 Batch Processing</a><br>
 <a href="#output_size">3.2 Output Size and Lookback</a><br>
-<a href="#retcode">3.3 Return Codes</a><br></p>
+<a href="#retcode">3.3 Results and Return Codes</a><br></p>
 </blockquote>
 
 <p><a href="#advanced">4.0 Advanced Features</a></p>
@@ -38,7 +38,7 @@ The `ta-lib` crate is a native Rust port of TA-Lib — no C bindings, no `unsafe
 The **Core API** provides:
 
 - The [`Core`](#direct_call) type and the builder that configures it.
-- The settings each `Core` carries: [unstable period](/api/unstable-period/) and [candlestick settings](/api/candle-settings/). Nothing is global.
+- The settings each `Core` carries: [unstable period](/api/unstable-period/) and [candlestick settings](/api/candle-settings/). Multiple `Core` instances can safely co-exist (say for different settings).
 - Every TA function, each processing a whole array of data at once.
 - An optional [abstraction layer](#abstract) for calling those functions dynamically.
 
@@ -69,9 +69,7 @@ As an example, let's walk through `MA`, a method to calculate a moving average.
        <span class="ta-arg-in">inReal: &amp;[f64],</span>
        <span class="ta-arg-opt">optInTimePeriod: i32,</span>
        <span class="ta-arg-opt">optInMAType: MAType,</span>
-       <span class="ta-arg-out">outBegIdx: &amp;mut usize,</span>
-       <span class="ta-arg-out">outNBElement: &amp;mut usize,</span>
-       <span class="ta-arg-out">outReal: &amp;mut [f64]</span> ) -&gt; RetCode
+       <span class="ta-arg-out">outReal: &amp;mut [f64]</span> ) -&gt; Result&lt;OutRange, RetCode&gt;
 </pre>
 
 All TA functions use the same calling pattern, divided into four groups:
@@ -79,55 +77,48 @@ All TA functions use the same calling pattern, divided into four groups:
 <ul>
 <li><span class="ta-arg-range">The output will be calculated only for the range specified by startIdx and endIdx. These are zero-based indices into the input slices.</span></li>
 <li><span class="ta-arg-in">One or more input slices are then specified. Typically, these are the "price" data. In this example there is only one input. All input parameter names start with "in".</span></li>
-<li><span class="ta-arg-opt">Zero or more optional inputs are then specified. In this example there are two optional inputs. These parameters give finer control specific to each function. Integer parameters are i32 and real parameters are f64; an enumerated choice has its own type, here MAType. If you do not care about a particular optIn, just pass INTEGER_DEFAULT or REAL_DEFAULT (depending on the type) — or MAType::DEFAULT, since a typed enum has no room for a sentinel — and the function substitutes its documented default.</span></li>
-<li><span class="ta-arg-out">One or more output slices come last. In this example there is only one output (outReal). The parameters outBegIdx and outNBElement always come just before the output slices.</span></li>
+<li><span class="ta-arg-opt">Zero or more optional inputs are then specified. In this example there are two optional inputs. These parameters give finer control specific to each function. If you do not care about a particular optIn, just pass Core::INTEGER_DEFAULT, Core::REAL_DEFAULT or MAType::DEFAULT (depending on the type), and the function substitutes its documented default.</span></li>
+<li><span class="ta-arg-out">One or more output slices come last. In this example there is only one output (outReal). Where the values landed is the return value, not a parameter: on success you get an <code>OutRange</code>.</span></li>
 </ul>
 
 This calling pattern takes some getting used to, but it lets your app spend time and memory only on the data it actually needs.
 
 For example, here is how to calculate a 30-day simple moving average (SMA) of daily closing prices:
 
-```rust
-use ta_lib::{Core, MAType, RetCode};
+<pre>use ta_lib::{Core, MAType, RetCode};
 
 let core = Core::new();
 
-let close: Vec<f64> = vec![0.0; 400];  // ...initialize your closing prices here...
+// ...initialize your closing prices here...
+let close: Vec&lt;f64&gt; = vec![0.0; 400];
 let mut out = vec![0.0; 400];
-let mut out_beg = 0usize;
-let mut out_nb  = 0usize;
-```
 
-<pre>let ret_code = core.MA( <span class="ta-arg-range">0</span>, <span class="ta-arg-range">399</span>,
-                        <span class="ta-arg-in">&amp;close</span>,
-                        <span class="ta-arg-opt">30</span>, <span class="ta-arg-opt">MAType::SMA</span>,
-                        <span class="ta-arg-out">&amp;mut out_beg</span>, <span class="ta-arg-out">&amp;mut out_nb</span>, <span class="ta-arg-out">&amp;mut out</span> );
-</pre>
-
-```rust
-assert_eq!(ret_code, RetCode::Success);
+let range = core.MA( <span class="ta-arg-range">0</span>, <span class="ta-arg-range">399</span>,
+                     <span class="ta-arg-in">&amp;close</span>,
+                     <span class="ta-arg-opt">30</span>, <span class="ta-arg-opt">MAType::SMA</span>,
+                     <span class="ta-arg-out">&amp;mut out</span> )?;
 
 // The output is displayed here
-for i in 0..out_nb {
-    println!("Day {} = {}", out_beg + i, out[i]);
+for i in 0..range.count {
+    println!("Day {} = {}", range.beg_idx + i, out[i]);
 }
-```
+</pre>
 
-After the call, it is important to check the values written into `out_beg` and `out_nb`. Even though we requested the whole range (0 to 399), a 30-day average is not defined until the 30th day. Consequently, `out_beg` will be 29 (zero-based) and `out_nb` will be 400-29 = 371. In other words, only the first 371 elements of `out` are written, and they correspond to input elements 29 through 399.
+After the call, read `range` to learn what was produced. Even though we requested the whole range (0 to 399), a 30-day average is not defined until the 30th day. Consequently, `range.beg_idx` will be 29 (zero-based) and `range.count` will be 400-29 = 371. In other words, only the first 371 elements of `out` are written, and they correspond to input elements 29 through 399.
 
-As another example, if you had requested only the range 125 to 225, `out_beg` would be 125 and `out_nb` would be 101 (`endIdx` is inclusive: 225-125+1). The 30-day minimum is not a problem here, because the 125 closing prices before the requested range provide the needed history. As you may have guessed, only the first 101 elements of `out` are written; the rest is left untouched.
+As another example, if you had requested only the range 125 to 225, `range.beg_idx` would be 125 and `range.count` would be 101 (`endIdx` is inclusive: 225-125+1). The 30-day minimum is not a problem here, because the 125 closing prices before the requested range provide the needed history. As you may have guessed, only the first 101 elements of `out` are written; the rest is left untouched.
 
 Here is another example. This time we calculate a 14-bar exponential moving average for a single price bar (say, the last one, at index 299):
 
-<pre>let ret_code = core.MA( <span class="ta-arg-range">299</span>, <span class="ta-arg-range">299</span>,
-                        <span class="ta-arg-in">&amp;close</span>,
-                        <span class="ta-arg-opt">14</span>, <span class="ta-arg-opt">MAType::EMA</span>,
-                        <span class="ta-arg-out">&amp;mut out_beg</span>, <span class="ta-arg-out">&amp;mut out_nb</span>, <span class="ta-arg-out">&amp;mut out</span> );
+<pre>let range = core.MA( <span class="ta-arg-range">299</span>, <span class="ta-arg-range">299</span>,
+                     <span class="ta-arg-in">&amp;close</span>,
+                     <span class="ta-arg-opt">14</span>, <span class="ta-arg-opt">MAType::EMA</span>,
+                     <span class="ta-arg-out">&amp;mut out</span> )?;
 </pre>
 
-In this example, `out_beg` will be 299, `out_nb` will be 1, and only one value is written into `out`.
+In this example, `range.beg_idx` will be 299, `range.count` will be 1, and only one value is written into `out`.
 
-If you do not provide enough data to calculate even one value, `out_nb` will be 0 and `out_beg` should be ignored.
+If you do not provide enough data to calculate even one value, the call still succeeds and `range.count` is 0 — `range.is_empty()` says so directly.
 
 The input and the output are separate borrows, so a function cannot read and write the same buffer: pass a distinct output slice, and copy it back afterwards if you want the result in place.
 
@@ -166,22 +157,23 @@ let allocation_size = if temp > endIdx { 0 } else { endIdx - temp + 1 };
 let mut out = vec![0.0; allocation_size];
 ```
 
-Too little data is a success, not an error: a range shorter than the lookback simply produces no values, and `outNBElement` is `0`. When it is `0`, ignore `outBegIdx`.
+Too little data is a success, not an error: a range shorter than the lookback simply produces no values, and the returned range is empty (`count == 0`).
 
-### 3.3 Return Codes {#retcode}
+### 3.3 Results and Return Codes {#retcode}
 
-Every TA function returns a [`RetCode`](https://docs.rs/ta-lib). `Success` means the call completed and wrote its outputs; on anything else, treat `outBegIdx` and `outNBElement` as undefined and the output slices as untouched. The codes a caller normally encounters:
+Every TA function returns `Result<OutRange, RetCode>`, so it composes with `?`. `RetCode` implements `std::error::Error`.
+
+On success you get an [`OutRange`](https://docs.rs/ta-lib): `beg_idx` is the input index of the first value written, and `count` is how many were written.
 
 | Code | Meaning |
 |------|---------|
-| `RetCode::Success` | No error. |
 | `RetCode::BadParam` | An optional parameter is outside its documented range. |
-| `RetCode::OutOfRangeStartIndex` | `startIdx` is above `MAX_INDEX` (100,000,000). |
-| `RetCode::OutOfRangeEndIndex` | `endIdx` is above `MAX_INDEX`, or below `startIdx`. |
+| `RetCode::OutOfRangeStartIndex` | `startIdx` is above `Core::MAX_INDEX` (100,000,000). |
+| `RetCode::OutOfRangeEndIndex` | `endIdx` is above `Core::MAX_INDEX`, or below `startIdx`. |
 
-`RetCode` implements `std::error::Error`, so results compose with `?`. It also carries `AllocErr` and `InternalError`, which the safe Rust code paths do not produce.
+`RetCode` also carries `Success` — the code C returns and the one the other ports expose — plus `AllocErr` and `InternalError`, which the safe Rust code paths do not produce.
 
-Indexing is safe throughout: the crate is `#![forbid(unsafe_code)]`, so a violated slice-size precondition panics rather than reading or writing out of bounds. A call that returns `Success` with zero elements cannot panic.
+Indexing is safe throughout: the crate is `#![forbid(unsafe_code)]`, so a violated slice-size precondition panics rather than reading or writing out of bounds. A successful call that produced zero elements cannot panic.
 
 ## 4.0 Advanced Features {#advanced}
 
@@ -220,7 +212,7 @@ call.set_opt(0, 30)?;                // takes i32 or f64
 call.set_output(0, &mut out)?;
 
 let range = call.call(0, close.len() - 1)?;
-println!("{} values from bar {}", range.nb_element, range.beg_idx);
+println!("{} values from bar {}", range.count, range.beg_idx);
 ```
 
 Optional parameters left unset carry the same default sentinel an omitted argument does in C, so "unset" and "explicitly the default" are one code path. `FuncId::COUNT` is the registry size, and `MAX_INPUTS` / `MAX_OPT_INPUTS` / `MAX_OUTPUTS` bound the slots.
