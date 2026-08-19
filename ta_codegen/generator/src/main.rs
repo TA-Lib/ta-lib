@@ -1473,6 +1473,11 @@ fn build_java_library(root: &Path, bin_dir: &Path) -> bool {
         .cloned()
         .collect();
 
+    // Each entry is the FULLY QUALIFIED name: the package comes from the file's
+    // own `package` line, not from an assumption that every suite lives in one
+    // package. NoPhantomIoTest deliberately sits in `io.github.talib` so it can
+    // reach the package-private cores and MInteger without `setAccessible`, and a
+    // hardcoded package prefix would have launched it under the wrong name.
     let (tests, unrunnable) = discover_java_tests(&sources);
     if !unrunnable.is_empty() {
         println!(
@@ -1519,11 +1524,12 @@ fn build_java_library(root: &Path, bin_dir: &Path) -> bool {
         return false;
     };
     for test in &tests {
-        print!("  Running Java {} (on the jar)... ", test);
+        let short = test.rsplit('.').next().unwrap_or(test);
+        print!("  Running Java {short} (on the jar)... ");
         match std::process::Command::new("java")
             .arg("-cp")
             .arg(&run_cp)
-            .arg(format!("io.github.talib.test.{test}"))
+            .arg(test)
             .status()
         {
             Ok(s) if s.success() => println!("OK"),
@@ -1958,10 +1964,23 @@ fn discover_java_tests(sources: &[std::path::PathBuf]) -> (Vec<String>, Vec<Stri
             continue;
         }
         let text = std::fs::read_to_string(src).unwrap_or_default();
+        // Qualify with the file's declared package. A suite that declares none
+        // would be launched by its bare name, which is also how `java` names a
+        // class in the unnamed package -- so this stays correct either way.
+        let pkg = text
+            .lines()
+            .find_map(|l| l.trim().strip_prefix("package "))
+            .and_then(|l| l.split(';').next())
+            .map(str::trim)
+            .filter(|p| !p.is_empty());
+        let fq = match pkg {
+            Some(p) => format!("{p}.{stem}"),
+            None => stem.clone(),
+        };
         if has_java_main(&text) {
-            out.push(stem);
+            out.push(fq);
         } else {
-            unrunnable.push(stem);
+            unrunnable.push(fq);
         }
     }
     out.sort();

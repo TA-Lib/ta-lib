@@ -7336,6 +7336,23 @@ public final class Core {
       if( optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.EMA;
       }
+      /* Nothing to produce: the range is shorter than the lookback. Return before
+       * touching anything.
+       *
+       * Without this the fast MA below runs first, and its lookback is SMALLER
+       * than apo's own — so it reads the whole range and computes a result the
+       * empty slow MA then discards. Observably identical (the slow MA's own early
+       * return already yields 0,0 here), but it is the difference between "a range
+       * shorter than the lookback reads nothing" being true of this function and
+       * being false: with a caller-supplied inReal that stops short of endIdx, that
+       * discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
+       * probe over every guarded core.
+       */
+      if( MA_Lookback(Math.max(optInSlowPeriod, optInFastPeriod), optInMAType) > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.Success ;
+      }
       /* Allocate an intermediate buffer. */
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
       /* Make sure slow is really slower than
@@ -7403,6 +7420,11 @@ public final class Core {
       }
       if( optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.EMA;
+      }
+      if( MA_Lookback(Math.max(optInSlowPeriod, optInFastPeriod), optInMAType) > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.Success ;
       }
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
       if( optInSlowPeriod < optInFastPeriod ) {
@@ -7727,6 +7749,23 @@ public final class Core {
          return RetCode.OutOfRangeEndIndex;
       }
       double[] sc_outReal = outStride == 1 ? outReal : new double[historyLen];
+      /* Nothing to produce: the range is shorter than the lookback. Return before
+       * touching anything.
+       *
+       * Without this the fast MA below runs first, and its lookback is SMALLER
+       * than apo's own — so it reads the whole range and computes a result the
+       * empty slow MA then discards. Observably identical (the slow MA's own early
+       * return already yields 0,0 here), but it is the difference between "a range
+       * shorter than the lookback reads nothing" being true of this function and
+       * being false: with a caller-supplied inReal that stops short of endIdx, that
+       * discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
+       * probe over every guarded core.
+       */
+      if( MA_Lookback(Math.max(optInSlowPeriod, optInFastPeriod), optInMAType) > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.OutOfRangeEndIndex ;
+      }
       /* Allocate an intermediate buffer. */
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
       /* Make sure slow is really slower than
@@ -12421,6 +12460,26 @@ public final class Core {
        * at the same bar. Two intermediate buffers are allocated so the input may
        * safely alias an output (it is only read here).
        */
+      /* Nothing to produce: the range is shorter than the lookback. Return before
+       * touching anything.
+       *
+       * Without this the moving average below runs first, and for the MA types whose
+       * lookback is BELOW the deviation's - TA_MAType_DISABLED (MA lookback 0) and
+       * TA_MAType_MAMA at optInTimePeriod >= 34 - it reads the whole range and
+       * computes a middle band the empty standard deviation then discards.
+       * Observably identical (the empty deviation already yields 0,0 here), but it
+       * is the difference between "a range shorter than the lookback reads nothing"
+       * being true of this function and being false: with a caller-supplied inReal
+       * that stops short of endIdx, that discarded work is an out-of-bounds read.
+       * The SMA fast path above needs no such guard - its own lookback IS the
+       * deviation's, so its clamp already covers it. Pinned by the zero-length
+       * no-I/O probe over every guarded core, at every MA type.
+       */
+      if( BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.Success ;
+      }
       tempBuffer1 = new double[(int)((endIdx - startIdx + 1) * 1)];
       tempBuffer2 = new double[(int)((endIdx - startIdx + 1) * 1)];
       /* Calculate the middle band moving average. */
@@ -12641,6 +12700,11 @@ public final class Core {
                outRealLowerBand[i] = tempReal2 - tempReal * optInNbDevDn;
             }
          }
+         return RetCode.Success ;
+      }
+      if( BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
          return RetCode.Success ;
       }
       tempBuffer1 = new double[(int)((endIdx - startIdx + 1) * 1)];
@@ -13068,6 +13132,26 @@ public final class Core {
        * at the same bar. Two intermediate buffers are allocated so the input may
        * safely alias an output (it is only read here).
        */
+      /* Nothing to produce: the range is shorter than the lookback. Return before
+       * touching anything.
+       *
+       * Without this the moving average below runs first, and for the MA types whose
+       * lookback is BELOW the deviation's - TA_MAType_DISABLED (MA lookback 0) and
+       * TA_MAType_MAMA at optInTimePeriod >= 34 - it reads the whole range and
+       * computes a middle band the empty standard deviation then discards.
+       * Observably identical (the empty deviation already yields 0,0 here), but it
+       * is the difference between "a range shorter than the lookback reads nothing"
+       * being true of this function and being false: with a caller-supplied inReal
+       * that stops short of endIdx, that discarded work is an out-of-bounds read.
+       * The SMA fast path above needs no such guard - its own lookback IS the
+       * deviation's, so its clamp already covers it. Pinned by the zero-length
+       * no-I/O probe over every guarded core, at every MA type.
+       */
+      if( BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.OutOfRangeEndIndex ;
+      }
       tempBuffer1 = new double[(int)((endIdx - startIdx + 1) * 1)];
       tempBuffer2 = new double[(int)((endIdx - startIdx + 1) * 1)];
       /* Calculate the middle band moving average. */
@@ -115566,6 +115650,23 @@ public final class Core {
       if( optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.EMA;
       }
+      /* Nothing to produce: the range is shorter than the lookback. Return before
+       * touching anything.
+       *
+       * Without this the fast MA below runs first, and its lookback is SMALLER
+       * than ppo's own — so it reads the whole range and computes a result the
+       * empty slow MA then discards. Observably identical (the slow MA's own early
+       * return already yields 0,0 here), but it is the difference between "a range
+       * shorter than the lookback reads nothing" being true of this function and
+       * being false: with a caller-supplied inReal that stops short of endIdx, that
+       * discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
+       * probe over every guarded core.
+       */
+      if( MA_Lookback(Math.max(optInSlowPeriod, optInFastPeriod), optInMAType) > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.Success ;
+      }
       /* Allocate an intermediate buffer. */
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
       /* Make sure slow is really slower than
@@ -115639,6 +115740,11 @@ public final class Core {
       }
       if( optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.EMA;
+      }
+      if( MA_Lookback(Math.max(optInSlowPeriod, optInFastPeriod), optInMAType) > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.Success ;
       }
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
       if( optInSlowPeriod < optInFastPeriod ) {
@@ -115973,6 +116079,23 @@ public final class Core {
          return RetCode.OutOfRangeEndIndex;
       }
       double[] sc_outReal = outStride == 1 ? outReal : new double[historyLen];
+      /* Nothing to produce: the range is shorter than the lookback. Return before
+       * touching anything.
+       *
+       * Without this the fast MA below runs first, and its lookback is SMALLER
+       * than ppo's own — so it reads the whole range and computes a result the
+       * empty slow MA then discards. Observably identical (the slow MA's own early
+       * return already yields 0,0 here), but it is the difference between "a range
+       * shorter than the lookback reads nothing" being true of this function and
+       * being false: with a caller-supplied inReal that stops short of endIdx, that
+       * discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
+       * probe over every guarded core.
+       */
+      if( MA_Lookback(Math.max(optInSlowPeriod, optInFastPeriod), optInMAType) > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.OutOfRangeEndIndex ;
+      }
       /* Allocate an intermediate buffer. */
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
       /* Make sure slow is really slower than
@@ -116771,6 +116894,23 @@ public final class Core {
       if( optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.EMA;
       }
+      /* Nothing to produce: the range is shorter than the lookback. Return before
+       * touching anything.
+       *
+       * Without this the fast MA below runs first, and its lookback is SMALLER
+       * than pvo's own — so it reads the whole range and computes a result the
+       * empty slow MA then discards. Observably identical (the slow MA's own early
+       * return already yields 0,0 here), but it is the difference between "a range
+       * shorter than the lookback reads nothing" being true of this function and
+       * being false: with a caller-supplied inVolume that stops short of endIdx, that
+       * discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
+       * probe over every guarded core.
+       */
+      if( MA_Lookback(Math.max(optInSlowPeriod, optInFastPeriod), optInMAType) > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.Success ;
+      }
       /* Allocate an intermediate buffer. */
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
       /* Make sure slow is really slower than
@@ -116844,6 +116984,11 @@ public final class Core {
       }
       if( optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.EMA;
+      }
+      if( MA_Lookback(Math.max(optInSlowPeriod, optInFastPeriod), optInMAType) > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.Success ;
       }
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
       if( optInSlowPeriod < optInFastPeriod ) {
@@ -117182,6 +117327,23 @@ public final class Core {
          return RetCode.OutOfRangeEndIndex;
       }
       double[] sc_outReal = outStride == 1 ? outReal : new double[historyLen];
+      /* Nothing to produce: the range is shorter than the lookback. Return before
+       * touching anything.
+       *
+       * Without this the fast MA below runs first, and its lookback is SMALLER
+       * than pvo's own — so it reads the whole range and computes a result the
+       * empty slow MA then discards. Observably identical (the slow MA's own early
+       * return already yields 0,0 here), but it is the difference between "a range
+       * shorter than the lookback reads nothing" being true of this function and
+       * being false: with a caller-supplied inVolume that stops short of endIdx, that
+       * discarded work is an out-of-bounds read. Pinned by the zero-length no-I/O
+       * probe over every guarded core.
+       */
+      if( MA_Lookback(Math.max(optInSlowPeriod, optInFastPeriod), optInMAType) > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.OutOfRangeEndIndex ;
+      }
       /* Allocate an intermediate buffer. */
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
       /* Make sure slow is really slower than
