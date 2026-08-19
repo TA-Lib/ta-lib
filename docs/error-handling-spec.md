@@ -108,9 +108,11 @@ backends.
 
 ---
 
-## Part 1 — Normal behaviour that is not an error
+## Part 1 — Normal behaviour, and what is simply unspecified
 
-These are the conditions most often mistaken for failures. None of them is one.
+The conditions most often mistaken for failures. None of them is reported as one.
+N-5 is the only row that is *unspecified* rather than defined: the library
+neither detects it nor promises anything about the result.
 
 | # | Condition | Result |
 |---|---|---|
@@ -118,21 +120,15 @@ These are the conditions most often mistaken for failures. None of them is one.
 | N-2 | Anywhere outside the reported output range | Not written. The library never pads, and never emits a fill value. |
 | N-3 | An optional parameter set to its **default sentinel** | The documented default is substituted, then validated like any other value. |
 | N-4 | An output buffer that **is** an input buffer (whole-buffer, in place) | Allowed, in the batch tier. Several bodies are written for it. |
-| N-5 | A **non-finite value in a batch input** | Computed on, and propagated to the output. The batch tier does not filter. See N-5a. |
+| N-5 | A **non-finite value in a batch input** | **Unspecified.** Not detected, not rejected, and nothing is promised about the result. Do not rely on any particular output. The streaming tier does reject it (S-4, U-3). |
 | N-6 | A **negative** candlestick `factor` | Legal. It does not "never match" — it makes the comparison unconditionally true. |
 | N-7 | The set-all / restore-all **wildcards**, where a setter documents one | Legal on those setters, and rejected on the ones that name a single target (rule G-1). |
-| N-8 | Reading a stream's current value, or peeking, any number of times | Never fails and never advances the stream. |
-
-**N-5a — why the streaming tier disagrees.** Batch computes and forgets, so a
-non-finite bar reaches only the outputs that depend on it. A stream carries
-recursive accumulators, so one non-finite bar poisons every value it will ever
-produce afterwards. Every *public* streaming entry point therefore rejects
-non-finite input (rules S-4, U-3) where batch accepts it. Measured on the batch
-tier: a single `+Inf` bar leaves the running accumulator NaN for the rest of the
-series, long after the bar itself has left the window.
+| N-8 | **Peeking** a forming bar, any number of times | Never advances the stream and never writes the handle. It can still be *rejected* (U-3), and a rejected peek changes nothing either. |
 
 Part 1 is not a checklist — these behaviours are pinned by the value gates and
-the cross-language hash, over the whole corpus, on every run.
+the cross-language hash, over the whole corpus, on every run. N-5 is the
+exception, and deliberately so: it is unspecified precisely so that nothing has
+to hold it.
 
 ---
 
@@ -293,8 +289,14 @@ panic in Rust.
 | U-3 | Any bar is non-finite | `TA_BAD_PARAM` | ✅ | ✅ | ✅ | ✅ |
 
 A rejected `Update` leaves the handle usable and unadvanced — that is the whole
-point of rejecting rather than computing (N-5a). `Peek` never writes the handle
-under any outcome.
+point of rejecting rather than computing. `Peek` never writes the handle under
+any outcome.
+
+**There is no value accessor in C or Rust**, so "read the current value" is a
+rule only two backends could carry, and it has no error surface in either: Java's
+`value()` and C#'s `Value` are plain field reads of the last committed bar. In C
+the value arrives through the out-parameter of `Open`/`Update`/`Peek`, and in
+Rust through their return values — a caller who wants it later keeps it.
 
 **One documented hole.** A composed function drives its sub-streams through their
 *public* entry points, so a sub-stream re-checks a value the library itself
