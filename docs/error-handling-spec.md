@@ -114,13 +114,24 @@ The conditions most often mistaken for failures. None of them is reported as one
 N-5 is the only row that is *unspecified* rather than defined: the library
 neither detects it nor promises anything about the result.
 
+**The finite/non-finite line runs between arrays and single values**, not between
+tiers. An **array** is never scanned — checking one costs a pass over the data
+the caller already owns, on every call, so N-5 declines to promise anything about
+its contents. A **single value** is always verified: every bar handed to
+`Update` or `Peek` (rule U-3), and every real optional parameter, in both tiers
+(rule B-4). Verified: 174 of 174 `Update` and `Peek` entry points check their
+bar, and 96 of 96 real-parameter range checks are spelled `!(x >= min && x <=
+max)` rather than `x < min || x > max`, which is what makes them reject NaN —
+both plain comparisons are false for NaN. There is no plain spelling left in the
+tree.
+
 | # | Condition | Result |
 |---|---|---|
 | N-1 | A **valid range shorter than the lookback** | Success, zero values produced, reported count `0`. Never an error. |
 | N-2 | Anywhere outside the reported output range | Not written. The library never pads, and never emits a fill value. |
 | N-3 | An optional parameter set to its **default sentinel** | The documented default is substituted, then validated like any other value. |
 | N-4 | An output buffer that **is** an input buffer (whole-buffer, in place) | Allowed, in the batch tier. Several bodies are written for it. |
-| N-5 | A **non-finite value in a batch input** | **Unspecified.** Not detected, not rejected, and nothing is promised about the result. Do not rely on any particular output. The streaming tier does reject it (S-4, U-3). |
+| N-5 | A **non-finite value in an input array** | **Unspecified.** Not detected, not rejected, and nothing is promised about the result. Do not rely on any particular output. |
 | N-6 | A **negative** candlestick `factor` | Legal. It does not "never match" — it makes the comparison unconditionally true. |
 | N-7 | The set-all / restore-all **wildcards**, where a setter documents one | Legal on those setters, and rejected on the ones that name a single target (rule G-1). |
 | N-8 | **Peeking** a forming bar, any number of times | Never advances the stream and never writes the handle. It can still be *rejected* (U-3), and a rejected peek changes nothing either. |
@@ -235,7 +246,7 @@ express — so reference equality is complete for this rule.
 | S-1 | A required argument (handle, history, output) was not supplied | `TA_BAD_PARAM` | ✅ | — | ❌ [14] | — |
 | S-2 | The history is empty | `TA_BAD_PARAM` | ✅ | ✅ | ✅ | ✅ [15] |
 | S-3 | The history is longer than `MAX_INDEX + 1` | `TA_OUT_OF_RANGE_END_INDEX` | ✅ | [16] | [16] | [16] |
-| S-4 | Any history bar is non-finite | `TA_BAD_PARAM` | ✅ | ❌ [17] | ❌ [17] | ✅ |
+| S-4 | Any history bar is non-finite | `TA_BAD_PARAM` | [17] | [17] | [17] | [17] |
 | S-5 | An optional parameter is outside its documented domain | `TA_BAD_PARAM` | ✅ | ✅ | ✅ | ✅ |
 | S-6 | The history holds fewer than `lookback + 1` bars | [A] | ❌ [18] | ❌ [18] | ⚠️ [18] | ⚠️ [18] |
 | S-7 | (`OpenAndFill`) an output aliases an input, or another output | `TA_BAD_PARAM` | ✅ | — | ✅ | ✅ |
@@ -258,10 +269,27 @@ right, the message is not.
 
 [16] Not probed — the condition needs a >100 000 001-element allocation.
 
-[17] The non-finite scan is hoisted above S-2 and S-3. Against S-2 this is
-unobservable (an empty history has no bar to be non-finite). Against S-3 it
-changes the answer: an over-long history containing a non-finite bar reports
-`NON_FINITE` where C reports `END_INDEX_RANGE`.
+[17] **This rule contradicts N-5 and needs a decision; no backend is marked
+either way until it is made.** The history handed to `Open` / `OpenAndFill` is an
+input *array*, which N-5 leaves unspecified — yet all four backends scan it, at
+174 of 174 `Open` and 174 of 174 `OpenAndFill` entry points, and reject a
+non-finite bar. It is the only array in the library that is checked.
+
+The case for keeping it is in `docs/streaming-api-design.md`: a handle carries
+recursive accumulators, so one non-finite bar in the warm-up poisons every value
+that handle will ever produce, long after the bad bar has left the window — which
+is not true of batch, where a bad bar reaches only the outputs depending on it.
+The case for removing it is N-5 itself: it is a full pass over caller-owned data
+on every open, for a class of input the library otherwise declines to
+characterise, and it makes "arrays are never scanned" a rule with one exception
+instead of a rule.
+
+Two smaller facts either way. The scan is ordered above S-2 and S-3 in Rust and
+Java: unobservable against S-2 (an empty history has no bar to be non-finite),
+but against S-3 an over-long history containing a non-finite bar reports
+`TA_BAD_PARAM` where C reports `TA_OUT_OF_RANGE_END_INDEX`. And removing the scan
+would not touch U-3 — the per-bar check on `Update` and `Peek` is a single value,
+which N-5 does not cover.
 
 [18] Nobody fully conforms, because the signal does not exist (see [A]). C and
 Rust return the **same** code for "history too short" and "parameter out of
@@ -297,6 +325,9 @@ rule only two backends could carry, and it has no error surface in either: Java'
 `value()` and C#'s `Value` are plain field reads of the last committed bar. In C
 the value arrives through the out-parameter of `Open`/`Update`/`Peek`, and in
 Rust through their return values — a caller who wants it later keeps it.
+
+N-5 covers only arrays. The per-bar check here is a **single value**, so it
+stands regardless of how S-4 is decided.
 
 **One documented hole.** A composed function drives its sub-streams through their
 *public* entry points, so a sub-stream re-checks a value the library itself
@@ -371,7 +402,7 @@ alongside a passing rule (item 7). Each is measured, not inferred.
 | 5 | C | B-6 | Partial output↔input overlap is undetected: success, wrong values. Issue #225. |
 | 6 | Java | S-1 | A null history, or a null `OpenAndFill` output, yields a raw JVM exception from inside the algorithm. |
 | 7 | C# | S-2 | Rule passes; the empty-history *message* omits the cross-language `<NAME> open: ` prefix. |
-| 8 | Rust, Java | S-3/S-4 | The non-finite scan is ordered above the index-ceiling check. |
+| 8 | all | S-4 | The stream-open history scan is the **only** array the library checks, which contradicts N-5. Needs a decision: keep it (retained state poisons, per `docs/streaming-api-design.md`) or drop it (arrays are never scanned, and it is a full pass on every open). Sub-issue: Rust and Java order the scan above the index-ceiling check. |
 | 9 | all | S-6 | `TA_RetCode` has **no member** for "history shorter than the lookback". C and Rust fall back to the catch-all, so the library's only recoverable condition is indistinguishable from a programming error; Java and C# borrow `TA_OUT_OF_RANGE_END_INDEX` and re-type it. The fix is additive — append a member — and would let all four converge. |
 | 10 | Rust, Java, C# | S-8 | `OpenAndFill` validates no output capacity, unlike the batch tier which does; an undersized output faults inside the fill. (C cannot — no sizes.) |
 | 11 | C | G-7 | The compatibility setter accepts any value and the getter echoes it back. |
