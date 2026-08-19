@@ -74,8 +74,8 @@ impl Core {
     /// * `optInTimePeriod` — Number of bars in the weighting window (default 30, range
     ///   1..=100000)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
-    /// to select their default value.
+    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[inline]
     pub fn VWMA_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -85,101 +85,9 @@ impl Core {
         }
         return (optInTimePeriod - 1) as usize;
     }
-    /// Volume Weighted Moving Average: the mean price over a trailing window of `optInTimePeriod`
-    /// bars, each bar weighted by its own volume. Heavily traded bars pull the average toward their
-    /// price; quiet bars barely move it. Read like any moving average — price above is strength,
-    /// below is weakness. Against a plain [`SMA`](https://ta-lib.org/functions/sma) of the same
-    /// window it leads on high-volume moves and lags on low-volume drift, so the gap between the
-    /// two lines measures how volume-confirmed a move is. It has no attributable inventor —
-    /// charting-package folklore — and every published definition agrees, so there is no
-    /// competing variant.
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// VWMA = ( sum_{k=t-N+1..t} P[k] * V[k] ) / ( sum_{k=t-N+1..t} V[k] ), N = optInTimePeriod
-    ///
-    /// Equivalently, and bit-identically so in TA-Lib for N of 2 or more, SMA(P * V, N) / SMA(V, N) — the composition TradingView documents for `ta.vwma`. There is no seeding and no recursion, hence no unstable period.
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * A period of 1 performs no smoothing: the output is a copy of the input, whatever the
-    ///   volume.
-    /// * Volume is expected to be non-negative. Individual zero-volume bars are fine: a bar that
-    ///   did not trade simply carries no weight, and the average stays well defined as long as some
-    ///   bar in the window has volume. At a period of 2 or more, a window in which *every* volume
-    ///   is zero has no weights at all; the weighted mean is then undefined and that element is
-    ///   NaN, as it is in every other implementation. Series carrying no volume on any bar, such as
-    ///   cash-index feeds, are outside what a volume-weighted average can describe — use SMA or
-    ///   WMA there.
-    ///
-    /// # Arguments
-    ///
-    /// * `startIdx` — Start index of the requested calculation range.
-    /// * `endIdx` — End index of the requested calculation range (inclusive).
-    /// * `inReal` — Source price series, close by convention.
-    /// * `inVolume` — Volume of each bar.
-    /// * `optInTimePeriod` — Number of bars in the weighting window (default 30, range
-    ///   1..=100000)
-    /// * `outBegIdx` — Set to the input index of the first output value.
-    /// * `outNBElement` — Set to the number of output values written.
-    /// * `outReal` — Volume weighted moving average of the input.
-    ///
-    /// Integer parameters accept `i32::MIN` to select their default value.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds [`MAX_INDEX`],
-    /// [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below `startIdx`, and
-    /// [`RetCode::BadParam`] when an optional parameter is outside its documented range.
-    ///
-    /// # Panics
-    ///
-    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
-    /// length is always sufficient.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use ta_lib::{Core, RetCode};
-    ///
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let volume: Vec<f64> = (0..252)
-    ///     .map(|i| 10_000.0 + 100.0 * i as f64 + 2_000.0 * (0.3 * i as f64).sin())
-    ///     .collect();
-    ///
-    /// let core = Core::new();
-    /// let mut out_beg = 0;
-    /// let mut out_nb = 0;
-    /// let mut out = vec![0.0; 252];
-    ///
-    /// let ret = core.VWMA(
-    ///     0, data.len() - 1, &data, &volume, 30,
-    ///     &mut out_beg, &mut out_nb, &mut out,
-    /// );
-    /// assert_eq!(ret, RetCode::Success);
-    /// assert!(out_nb > 0);
-    /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
-    /// ```
-    ///
-    /// # See also
-    ///
-    /// [`Core::SMA`] · [`Core::WMA`] · [`Core::MA`] · [`Core::OBV`]
-    ///
-    /// # References
-    ///
-    /// * VWMA has no separately documented originator; its definition is uniform across charting
-    ///   packages.
-    /// * MotiveWave, *Volume Weighted Moving Average* study documentation — the closest thing to
-    ///   a primary definition.
-    /// * TradingView, *Volume Weighted Moving Average (VWMA)* — documents the equivalence with
-    ///   SMA(price * volume) / SMA(volume).
-    ///
-    /// Further reading: [ta-lib.org/functions/vwma](https://ta-lib.org/functions/vwma)
-    #[doc(alias = "VolumeWeightedMovingAverage")]
-    pub fn VWMA(
+    /// C-shaped body behind [`Core::VWMA`]: a `RetCode` plus two out-params,
+    /// which is what the transcribed body and its cross-indicator callers expect.
+    pub(crate) fn VWMA_Internal(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -190,10 +98,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        if startIdx > MAX_INDEX {
+        if startIdx > Self::MAX_INDEX {
             return RetCode::OutOfRangeStartIndex;
         }
-        if endIdx > MAX_INDEX || endIdx < startIdx {
+        if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -291,6 +199,128 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
+    /// Volume Weighted Moving Average: the mean price over a trailing window of `optInTimePeriod`
+    /// bars, each bar weighted by its own volume. Heavily traded bars pull the average toward their
+    /// price; quiet bars barely move it. Read like any moving average — price above is strength,
+    /// below is weakness. Against a plain [`SMA`](https://ta-lib.org/functions/sma) of the same
+    /// window it leads on high-volume moves and lags on low-volume drift, so the gap between the
+    /// two lines measures how volume-confirmed a move is. It has no attributable inventor —
+    /// charting-package folklore — and every published definition agrees, so there is no
+    /// competing variant.
+    ///
+    /// # Formula
+    ///
+    /// ```text
+    /// VWMA = ( sum_{k=t-N+1..t} P[k] * V[k] ) / ( sum_{k=t-N+1..t} V[k] ), N = optInTimePeriod
+    ///
+    /// Equivalently, and bit-identically so in TA-Lib for N of 2 or more, SMA(P * V, N) / SMA(V, N) — the composition TradingView documents for `ta.vwma`. There is no seeding and no recursion, hence no unstable period.
+    /// ```
+    ///
+    /// # Notes
+    ///
+    /// * A period of 1 performs no smoothing: the output is a copy of the input, whatever the
+    ///   volume.
+    /// * Volume is expected to be non-negative. Individual zero-volume bars are fine: a bar that
+    ///   did not trade simply carries no weight, and the average stays well defined as long as some
+    ///   bar in the window has volume. At a period of 2 or more, a window in which *every* volume
+    ///   is zero has no weights at all; the weighted mean is then undefined and that element is
+    ///   NaN, as it is in every other implementation. Series carrying no volume on any bar, such as
+    ///   cash-index feeds, are outside what a volume-weighted average can describe — use SMA or
+    ///   WMA there.
+    ///
+    /// # Arguments
+    ///
+    /// * `startIdx` — Start index of the requested calculation range.
+    /// * `endIdx` — End index of the requested calculation range (inclusive).
+    /// * `inReal` — Source price series, close by convention.
+    /// * `inVolume` — Volume of each bar.
+    /// * `optInTimePeriod` — Number of bars in the weighting window (default 30, range
+    ///   1..=100000)
+    /// * `outReal` — Volume weighted moving average of the input.
+    ///
+    /// Integer parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
+    ///
+    /// # Returns
+    ///
+    /// On success, an [`OutRange`]: `beg_idx` is the index of the first value written, in the input
+    /// series' coordinates, and `count` is how many were written. A range shorter than the lookback
+    /// succeeds with `count == 0`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Err`] carrying [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds
+    /// [`Core::MAX_INDEX`], [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below
+    /// `startIdx`, and [`RetCode::BadParam`] when an optional parameter is outside its documented
+    /// range. A range shorter than the lookback is not an error: it is [`Ok`] with a zero
+    /// [`OutRange::count`].
+    ///
+    /// # Panics
+    ///
+    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    ///
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let volume: Vec<f64> = (0..252)
+    ///     .map(|i| 10_000.0 + 100.0 * i as f64 + 2_000.0 * (0.3 * i as f64).sin())
+    ///     .collect();
+    ///
+    /// let core = Core::new();
+    /// let mut out = vec![0.0; 252];
+    ///
+    /// let out_range = core.VWMA(0, data.len() - 1, &data, &volume, 30, &mut out)?;
+    /// assert!(out_range.count > 0);
+    /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// [`Core::SMA`] · [`Core::WMA`] · [`Core::MA`] · [`Core::OBV`]
+    ///
+    /// # References
+    ///
+    /// * VWMA has no separately documented originator; its definition is uniform across charting
+    ///   packages.
+    /// * MotiveWave, *Volume Weighted Moving Average* study documentation — the closest thing to
+    ///   a primary definition.
+    /// * TradingView, *Volume Weighted Moving Average (VWMA)* — documents the equivalence with
+    ///   SMA(price * volume) / SMA(volume).
+    ///
+    /// Further reading: [ta-lib.org/functions/vwma](https://ta-lib.org/functions/vwma)
+    #[doc(alias = "VolumeWeightedMovingAverage")]
+    pub fn VWMA(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        inVolume: &[f64],
+        optInTimePeriod: i32,
+        outReal: &mut [f64],
+    ) -> Result<OutRange, RetCode> {
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let retCode = self.VWMA_Internal(
+            startIdx,
+            endIdx,
+            inReal,
+            inVolume,
+            optInTimePeriod,
+            &mut outBegIdx,
+            &mut outNBElement,
+            outReal,
+        );
+        match retCode {
+            RetCode::Success => Ok(OutRange { beg_idx: outBegIdx, count: outNBElement }),
+            e => Err(e),
+        }
+    }
+
 }
 /**** Streaming API *****/
 
@@ -393,7 +423,7 @@ impl Core {
         if inReal.is_empty() || inVolume.is_empty() || inVolume.len() != inReal.len() {
             return Err(RetCode::BadParam);
         }
-        if inReal.len() > MAX_INDEX + 1 {
+        if inReal.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {

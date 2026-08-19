@@ -71,8 +71,8 @@ impl Core {
     /// * `optInTimePeriod` — EMA period applied to the force series (default 13, range
     ///   1..=100000)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
-    /// to select their default value.
+    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[inline]
     pub fn EFI_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -86,92 +86,9 @@ impl Core {
         //  = 1 + (optInTimePeriod - 1) + TA_GetUnstablePeriod(TA_FUNC_UNST_EMA)
         return (optInTimePeriod + self.unstable_period[FuncUnstId::EMA as usize]) as usize;
     }
-    /// Alexander Elder's Force Index (*Trading for a Living*, 1993): volume-weighted momentum. Each
-    /// bar's close-to-close move is weighted by that bar's volume, and the result is smoothed with
-    /// an exponential moving average. The sign is the direction of the move; the size combines how
-    /// far price travelled with how much volume stood behind it. Elder reads two settings — 2 for
-    /// the short term, which he pairs with a 22-period EMA of price to mark corrections against an
-    /// established trend, and 13 for the intermediate term, the default here. A divergence against
-    /// price can be confirmed by a zero-line cross. Beyond Elder, much longer settings are also in
-    /// use, 100 or so, for the longer-term balance between buyers and sellers. Nothing normalises
-    /// the result, so it scales with the instrument's own volume: read its sign and its shape over
-    /// time, not its level against another instrument.
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// force_t = ( close_t - close_{t-1} ) * volume_t; EFI = EMA( force, optInTimePeriod )
-    ///
-    /// The EMA is TA-Lib's, seeded with a simple average of the first `optInTimePeriod` force values. A period of 1 leaves the raw one-bar Force Index.
-    /// ```
-    ///
-    /// # Arguments
-    ///
-    /// * `startIdx` — Start index of the requested calculation range.
-    /// * `endIdx` — End index of the requested calculation range (inclusive).
-    /// * `inClose` — Close price of each bar.
-    /// * `inVolume` — Volume of each bar.
-    /// * `optInTimePeriod` — EMA period applied to the force series (default 13, range
-    ///   1..=100000)
-    /// * `outBegIdx` — Set to the input index of the first output value.
-    /// * `outNBElement` — Set to the number of output values written.
-    /// * `outReal` — Smoothed force.
-    ///
-    /// Integer parameters accept `i32::MIN` to select their default value.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds [`MAX_INDEX`],
-    /// [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below `startIdx`, and
-    /// [`RetCode::BadParam`] when an optional parameter is outside its documented range.
-    ///
-    /// # Panics
-    ///
-    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
-    /// length is always sufficient.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use ta_lib::{Core, RetCode};
-    ///
-    /// let close: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
-    ///     .collect();
-    /// let volume: Vec<f64> = (0..252)
-    ///     .map(|i| 10_000.0 + 100.0 * i as f64 + 2_000.0 * (0.3 * i as f64).sin())
-    ///     .collect();
-    ///
-    /// let core = Core::new();
-    /// let mut out_beg = 0;
-    /// let mut out_nb = 0;
-    /// let mut out = vec![0.0; 252];
-    ///
-    /// let ret = core.EFI(
-    ///     0, close.len() - 1, &close, &volume, 13,
-    ///     &mut out_beg, &mut out_nb, &mut out,
-    /// );
-    /// assert_eq!(ret, RetCode::Success);
-    /// assert!(out_nb > 0);
-    /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
-    /// ```
-    ///
-    /// # See also
-    ///
-    /// [`Core::AD`] · [`Core::EMA`] · [`Core::MFI`] · [`Core::OBV`] · [`Core::PVO`]
-    ///
-    /// # References
-    ///
-    /// * Alexander Elder, *Trading for a Living*, Wiley, 1993, introduces the Force Index and the
-    ///   2-period and 13-period smoothing he reads as short- and intermediate-term.
-    /// * StockCharts ChartSchool, *Force Index*: `Force Index(1) = {Close - Close prior} x Volume`,
-    ///   `Force Index(13) = 13-period EMA of Force Index(1)`.
-    /// * MotiveWave, *Elder's Force Index*: `rawForce = vol * (price - prevP)`, smoothed by a
-    ///   moving average whose default method is EMA, at 2 and 13. No competing formula was found.
-    ///
-    /// Further reading: [ta-lib.org/functions/efi](https://ta-lib.org/functions/efi)
-    pub fn EFI(
+    /// C-shaped body behind [`Core::EFI`]: a `RetCode` plus two out-params,
+    /// which is what the transcribed body and its cross-indicator callers expect.
+    pub(crate) fn EFI_Internal(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -183,13 +100,13 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, EFI_fma, EFI_impl, (startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, EFI_Internal_fma, EFI_Internal_impl, (startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.EFI_impl(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal)
+        self.EFI_Internal_impl(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn EFI_fma(
+    fn EFI_Internal_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -200,10 +117,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.EFI_impl(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal)
+        self.EFI_Internal_impl(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn EFI_impl(
+    fn EFI_Internal_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -214,10 +131,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        if startIdx > MAX_INDEX {
+        if startIdx > Self::MAX_INDEX {
             return RetCode::OutOfRangeStartIndex;
         }
-        if endIdx > MAX_INDEX || endIdx < startIdx {
+        if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -343,6 +260,119 @@ impl Core {
         (*outNBElement) = outIdx;
         return RetCode::Success;
     }
+    /// Alexander Elder's Force Index (*Trading for a Living*, 1993): volume-weighted momentum. Each
+    /// bar's close-to-close move is weighted by that bar's volume, and the result is smoothed with
+    /// an exponential moving average. The sign is the direction of the move; the size combines how
+    /// far price travelled with how much volume stood behind it. Elder reads two settings — 2 for
+    /// the short term, which he pairs with a 22-period EMA of price to mark corrections against an
+    /// established trend, and 13 for the intermediate term, the default here. A divergence against
+    /// price can be confirmed by a zero-line cross. Beyond Elder, much longer settings are also in
+    /// use, 100 or so, for the longer-term balance between buyers and sellers. Nothing normalises
+    /// the result, so it scales with the instrument's own volume: read its sign and its shape over
+    /// time, not its level against another instrument.
+    ///
+    /// # Formula
+    ///
+    /// ```text
+    /// force_t = ( close_t - close_{t-1} ) * volume_t; EFI = EMA( force, optInTimePeriod )
+    ///
+    /// The EMA is TA-Lib's, seeded with a simple average of the first `optInTimePeriod` force values. A period of 1 leaves the raw one-bar Force Index.
+    /// ```
+    ///
+    /// # Arguments
+    ///
+    /// * `startIdx` — Start index of the requested calculation range.
+    /// * `endIdx` — End index of the requested calculation range (inclusive).
+    /// * `inClose` — Close price of each bar.
+    /// * `inVolume` — Volume of each bar.
+    /// * `optInTimePeriod` — EMA period applied to the force series (default 13, range
+    ///   1..=100000)
+    /// * `outReal` — Smoothed force.
+    ///
+    /// Integer parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
+    ///
+    /// # Returns
+    ///
+    /// On success, an [`OutRange`]: `beg_idx` is the index of the first value written, in the input
+    /// series' coordinates, and `count` is how many were written. A range shorter than the lookback
+    /// succeeds with `count == 0`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Err`] carrying [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds
+    /// [`Core::MAX_INDEX`], [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below
+    /// `startIdx`, and [`RetCode::BadParam`] when an optional parameter is outside its documented
+    /// range. A range shorter than the lookback is not an error: it is [`Ok`] with a zero
+    /// [`OutRange::count`].
+    ///
+    /// # Panics
+    ///
+    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    ///
+    /// let close: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
+    ///     .collect();
+    /// let volume: Vec<f64> = (0..252)
+    ///     .map(|i| 10_000.0 + 100.0 * i as f64 + 2_000.0 * (0.3 * i as f64).sin())
+    ///     .collect();
+    ///
+    /// let core = Core::new();
+    /// let mut out = vec![0.0; 252];
+    ///
+    /// let out_range = core.EFI(0, close.len() - 1, &close, &volume, 13, &mut out)?;
+    /// assert!(out_range.count > 0);
+    /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// [`Core::AD`] · [`Core::EMA`] · [`Core::MFI`] · [`Core::OBV`] · [`Core::PVO`]
+    ///
+    /// # References
+    ///
+    /// * Alexander Elder, *Trading for a Living*, Wiley, 1993, introduces the Force Index and the
+    ///   2-period and 13-period smoothing he reads as short- and intermediate-term.
+    /// * StockCharts ChartSchool, *Force Index*: `Force Index(1) = {Close - Close prior} x Volume`,
+    ///   `Force Index(13) = 13-period EMA of Force Index(1)`.
+    /// * MotiveWave, *Elder's Force Index*: `rawForce = vol * (price - prevP)`, smoothed by a
+    ///   moving average whose default method is EMA, at 2 and 13. No competing formula was found.
+    ///
+    /// Further reading: [ta-lib.org/functions/efi](https://ta-lib.org/functions/efi)
+    pub fn EFI(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inClose: &[f64],
+        inVolume: &[f64],
+        optInTimePeriod: i32,
+        outReal: &mut [f64],
+    ) -> Result<OutRange, RetCode> {
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let retCode = self.EFI_Internal(
+            startIdx,
+            endIdx,
+            inClose,
+            inVolume,
+            optInTimePeriod,
+            &mut outBegIdx,
+            &mut outNBElement,
+            outReal,
+        );
+        match retCode {
+            RetCode::Success => Ok(OutRange { beg_idx: outBegIdx, count: outNBElement }),
+            e => Err(e),
+        }
+    }
+
 }
 /**** Streaming API *****/
 
@@ -418,7 +448,7 @@ impl Core {
         if inClose.is_empty() || inVolume.is_empty() || inVolume.len() != inClose.len() {
             return Err(RetCode::BadParam);
         }
-        if inClose.len() > MAX_INDEX + 1 {
+        if inClose.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {

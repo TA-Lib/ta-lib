@@ -81,85 +81,9 @@ impl Core {
         let ShadowLong_factor: f64 = self.candle_settings.shadow_long.factor;
         return ((BodyDoji_avgPeriod).max(ShadowLong_avgPeriod)) as usize;
     }
-    /// Single-candle doji (open ~ close) with at least one long shadow. Signals market indecision,
-    /// not a directional bias. Marks indecision/uncertainty; not inherently bullish or bearish
-    /// despite the positive sign.
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// One candle. Hit when: real body <= BodyDoji average (doji body) AND (lower shadow > ShadowLong average OR upper shadow > ShadowLong average), i.e. at least one long shadow.
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * Only one long shadow (upper or lower) is required, whereas the classic pattern shows both
-    ///   long upper and lower shadows.
-    /// * Bulkowski's testing found this continues in the direction of the prior trend only 51% of
-    ///   the time — statistically random — and ranks 37th of 103 patterns overall; in his
-    ///   words, "it means nothing."
-    ///   ([thepatternsite.com](https://thepatternsite.com/LongLegDoji.html))
-    ///
-    /// # Arguments
-    ///
-    /// * `startIdx` — Start index of the requested calculation range.
-    /// * `endIdx` — End index of the requested calculation range (inclusive).
-    /// * `inOpen` — Open price of each bar.
-    /// * `inHigh` — High price of each bar.
-    /// * `inLow` — Low price of each bar.
-    /// * `inClose` — Close price of each bar.
-    /// * `outBegIdx` — Set to the input index of the first output value.
-    /// * `outNBElement` — Set to the number of output values written.
-    /// * `outInteger` — +100 when the pattern is present, 0 otherwise. Only +100 is emitted; the
-    ///   code never emits -100, and the positive sign does NOT mean bullish.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds [`MAX_INDEX`], and
-    /// [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below `startIdx`.
-    ///
-    /// # Panics
-    ///
-    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
-    /// length is always sufficient.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use ta_lib::{Core, RetCode};
-    ///
-    /// let open: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin())
-    ///     .collect();
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let close: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
-    ///     .collect();
-    ///
-    /// let core = Core::new();
-    /// let mut out_beg = 0;
-    /// let mut out_nb = 0;
-    /// let mut out = vec![0i32; 252];
-    ///
-    /// let ret = core.CDLLONGLEGGEDDOJI(
-    ///     0, open.len() - 1, &open, &high, &low, &close,
-    ///     &mut out_beg, &mut out_nb, &mut out,
-    /// );
-    /// assert_eq!(ret, RetCode::Success);
-    /// assert!(out_nb > 0);
-    /// ```
-    ///
-    /// # See also
-    ///
-    /// [`Core::CDLDOJI`] · [`Core::CDLGRAVESTONEDOJI`] · [`Core::CDLDRAGONFLYDOJI`] ·
-    /// [`Core::CDLRICKSHAWMAN`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdllongleggeddoji](https://ta-lib.org/functions/cdllongleggeddoji)
-    #[doc(alias = "LongLeggedDoji")]
-    pub fn CDLLONGLEGGEDDOJI(
+    /// C-shaped body behind [`Core::CDLLONGLEGGEDDOJI`]: a `RetCode` plus two out-params,
+    /// which is what the transcribed body and its cross-indicator callers expect.
+    pub(crate) fn CDLLONGLEGGEDDOJI_Internal(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -171,10 +95,10 @@ impl Core {
         outNBElement: &mut usize,
         outInteger: &mut [i32],
     ) -> RetCode {
-        if startIdx > MAX_INDEX {
+        if startIdx > Self::MAX_INDEX {
             return RetCode::OutOfRangeStartIndex;
         }
-        if endIdx > MAX_INDEX || endIdx < startIdx {
+        if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
         let _assertLb = self.CDLLONGLEGGEDDOJI_Lookback();
@@ -354,6 +278,117 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
+    /// Single-candle doji (open ~ close) with at least one long shadow. Signals market indecision,
+    /// not a directional bias. Marks indecision/uncertainty; not inherently bullish or bearish
+    /// despite the positive sign.
+    ///
+    /// # Formula
+    ///
+    /// ```text
+    /// One candle. Hit when: real body <= BodyDoji average (doji body) AND (lower shadow > ShadowLong average OR upper shadow > ShadowLong average), i.e. at least one long shadow.
+    /// ```
+    ///
+    /// # Notes
+    ///
+    /// * Only one long shadow (upper or lower) is required, whereas the classic pattern shows both
+    ///   long upper and lower shadows.
+    /// * Bulkowski's testing found this continues in the direction of the prior trend only 51% of
+    ///   the time — statistically random — and ranks 37th of 103 patterns overall; in his
+    ///   words, "it means nothing."
+    ///   ([thepatternsite.com](https://thepatternsite.com/LongLegDoji.html))
+    ///
+    /// # Arguments
+    ///
+    /// * `startIdx` — Start index of the requested calculation range.
+    /// * `endIdx` — End index of the requested calculation range (inclusive).
+    /// * `inOpen` — Open price of each bar.
+    /// * `inHigh` — High price of each bar.
+    /// * `inLow` — Low price of each bar.
+    /// * `inClose` — Close price of each bar.
+    /// * `outInteger` — +100 when the pattern is present, 0 otherwise. Only +100 is emitted; the
+    ///   code never emits -100, and the positive sign does NOT mean bullish.
+    ///
+    /// # Returns
+    ///
+    /// On success, an [`OutRange`]: `beg_idx` is the index of the first value written, in the input
+    /// series' coordinates, and `count` is how many were written. A range shorter than the lookback
+    /// succeeds with `count == 0`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Err`] carrying [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds
+    /// [`Core::MAX_INDEX`], and [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is
+    /// below `startIdx`. A range shorter than the lookback is not an error: it is [`Ok`] with a
+    /// zero [`OutRange::count`].
+    ///
+    /// # Panics
+    ///
+    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    ///
+    /// let open: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin())
+    ///     .collect();
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
+    ///     .collect();
+    ///
+    /// let core = Core::new();
+    /// let mut out = vec![0i32; 252];
+    ///
+    /// let out_range = core.CDLLONGLEGGEDDOJI(
+    ///     0, open.len() - 1, &open, &high, &low, &close,
+    ///     &mut out,
+    /// )?;
+    /// assert!(out_range.count > 0);
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// [`Core::CDLDOJI`] · [`Core::CDLGRAVESTONEDOJI`] · [`Core::CDLDRAGONFLYDOJI`] ·
+    /// [`Core::CDLRICKSHAWMAN`]
+    ///
+    /// Further reading:
+    /// [ta-lib.org/functions/cdllongleggeddoji](https://ta-lib.org/functions/cdllongleggeddoji)
+    #[doc(alias = "LongLeggedDoji")]
+    pub fn CDLLONGLEGGEDDOJI(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inOpen: &[f64],
+        inHigh: &[f64],
+        inLow: &[f64],
+        inClose: &[f64],
+        outInteger: &mut [i32],
+    ) -> Result<OutRange, RetCode> {
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let retCode = self.CDLLONGLEGGEDDOJI_Internal(
+            startIdx,
+            endIdx,
+            inOpen,
+            inHigh,
+            inLow,
+            inClose,
+            &mut outBegIdx,
+            &mut outNBElement,
+            outInteger,
+        );
+        match retCode {
+            RetCode::Success => Ok(OutRange { beg_idx: outBegIdx, count: outNBElement }),
+            e => Err(e),
+        }
+    }
+
 }
 /**** Streaming API *****/
 
@@ -552,7 +587,7 @@ impl Core {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
-        if inOpen.len() > MAX_INDEX + 1 {
+        if inOpen.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
         let historyLen: usize = inOpen.len();

@@ -459,14 +459,21 @@ fn test_ma_rust_cross_calls() {
         r.contains("self.EMA_Lookback("),
         "Rust: MA should call self.EMA_Lookback"
     );
-    // Bare cross-indicator calls go to the guarded fn
+    // Bare cross-indicator calls go to the guarded, C-shaped entry point --
+    // never the public `Result`-returning wrapper, whose OutRange the
+    // transcribed body has nowhere to put. `self.` makes these calls rather
+    // than definitions, so the negatives below are real.
     assert!(
-        r.contains("self.SMA("),
-        "Rust: MA should call self.SMA"
+        r.contains("self.SMA_Internal("),
+        "Rust: MA should call self.SMA_Internal"
     );
     assert!(
-        r.contains("self.EMA("),
-        "Rust: MA should call self.EMA"
+        r.contains("self.EMA_Internal("),
+        "Rust: MA should call self.EMA_Internal"
+    );
+    assert!(
+        !r.contains("self.SMA(") && !r.contains("self.EMA("),
+        "Rust: MA must not call the public Result-returning wrappers"
     );
     assert!(
         !r.contains("self.sma_unguarded(") && !r.contains("self.ema_unguarded("),
@@ -590,7 +597,7 @@ fn test_rust_sma_guarded_has_validation() {
 
     // The guarded Rust function holds the algorithm and validates first, bounded
     // by the end of the impl block.
-    let guarded = extract_section(&out.rust, "pub fn SMA(", "\n}\n");
+    let guarded = extract_section(&out.rust, "pub(crate) fn SMA_Internal(", "\n}\n");
     assert!(
         guarded.contains("endIdx < startIdx"),
         "Rust guarded SMA should have endIdx < startIdx check"
@@ -3714,14 +3721,14 @@ fn rust_cross_indicator_call_via_generate() {
     let helpers = make_helpers();
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
 
-    // Cross-indicator calls resolve to the guarded fn
+    // Cross-indicator calls resolve to the guarded, C-shaped entry point
     assert!(
-        rust_out.contains("self.SMA("),
-        "MA Rust should call self.SMA(): {rust_out}"
+        rust_out.contains("self.SMA_Internal("),
+        "MA Rust should call self.SMA_Internal(): {rust_out}"
     );
     assert!(
-        rust_out.contains("self.EMA("),
-        "MA Rust should call self.EMA(): {rust_out}"
+        rust_out.contains("self.EMA_Internal("),
+        "MA Rust should call self.EMA_Internal(): {rust_out}"
     );
     // `self.` makes this a call, not a definition, so the negative is real.
     // step 1 still emits — so the negative is real, not vacuous.
@@ -3772,8 +3779,8 @@ fn rust_private_cross_indicator_call() {
     let (func, enums) = load_indicator("ma");
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
     assert!(
-        rust_out.contains("self.EMA("),
-        "MA Rust dispatch should call self.EMA(): {rust_out}"
+        rust_out.contains("self.EMA_Internal("),
+        "MA Rust dispatch should call self.EMA_Internal(): {rust_out}"
     );
 
     let synth_registry = make_synth_registry();
@@ -3783,6 +3790,72 @@ fn rust_private_cross_indicator_call() {
         rust_out.contains("self.SYNTH4_Private("),
         "SYNTH4 Rust guarded body should delegate to self.SYNTH4_Private(): {rust_out}"
     );
+}
+
+#[test]
+fn rust_public_entry_documents_exactly_its_parameters() {
+    // The `# Arguments` list and the signature are emitted by two different
+    // functions (rust_doc::guarded_docs and rust_lang::gen_public_entry), so they
+    // can disagree silently: rustdoc has no lint for documenting a parameter that
+    // does not exist, and a doctest exercises the call, not its prose. That is
+    // exactly how the out-param bullets survived the move to a Result-returning
+    // wrapper. Sweep every indicator and require the two to agree, in order.
+    let registry = make_registry();
+    let helpers = make_helpers();
+    let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
+    let mut checked = 0usize;
+    for entry in std::fs::read_dir(&base).expect("input dir") {
+        let entry = entry.expect("dir entry");
+        if !entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
+            continue;
+        }
+        let name = entry.file_name().to_string_lossy().to_string();
+        let dir = entry.path();
+        if !dir.join(format!("{name}.c")).is_file() || !dir.join(format!("{name}.yaml")).is_file() {
+            continue;
+        }
+        let (func, enums) = load_indicator(&name);
+        let out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+
+        // The public wrapper is the only fn returning Result<OutRange, RetCode>.
+        let sig_open = format!("    pub fn {}(\n", func.name);
+        let at = out
+            .find(&sig_open)
+            .unwrap_or_else(|| panic!("{name}: no public entry `{sig_open}`"));
+        let rest = &out[at + sig_open.len()..];
+        let end = rest
+            .find("    ) -> Result<OutRange, RetCode> {")
+            .unwrap_or_else(|| panic!("{name}: public entry does not return Result<OutRange, RetCode>"));
+        let params: Vec<String> = rest[..end]
+            .lines()
+            .filter_map(|l| l.trim().strip_suffix(','))
+            .filter(|l| *l != "&self")
+            .filter_map(|l| l.split_once(": ").map(|(n, _)| n.trim().to_string()))
+            .collect();
+
+        // The `# Arguments` block immediately above that signature (the lookback
+        // has one of its own further up, hence rfind).
+        let head = &out[..at];
+        let a = head
+            .rfind("/// # Arguments")
+            .unwrap_or_else(|| panic!("{name}: public entry has no # Arguments"));
+        let r = head[a..]
+            .find("/// # Returns")
+            .unwrap_or_else(|| panic!("{name}: public entry has no # Returns"));
+        let documented: Vec<String> = head[a..a + r]
+            .lines()
+            .filter_map(|l| l.trim().strip_prefix("/// * `"))
+            .filter_map(|l| l.split('`').next().map(str::to_string))
+            .collect();
+
+        assert_eq!(
+            documented, params,
+            "{name}: rustdoc `# Arguments` disagrees with the public signature"
+        );
+        assert!(!params.is_empty(), "{name}: parsed no parameters -- the test would be vacuous");
+        checked += 1;
+    }
+    assert!(checked > 150, "expected the whole corpus, checked only {checked}");
 }
 
 #[test]
@@ -3797,7 +3870,7 @@ fn rust_cross_indicator_vec_input_gets_ref() {
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
 
     assert!(
-        rust_out.contains("self.MA(") && rust_out.contains("&tempBuffer"),
+        rust_out.contains("self.MA_Internal(") && rust_out.contains("&tempBuffer"),
         "STOCH Rust should pass &tempBuffer into self.MA(): {rust_out}"
     );
 }
@@ -3860,7 +3933,7 @@ fn rust_lookback_code_with_vars() {
 
     // CDL indicators have local vars in their lookback body (e.g., lookbackTotal)
     // They should be declared as `let mut` or `let`
-    let lookback_section = extract_section(&rust_out, "_Lookback(", "pub fn CDLKICKING(");
+    let lookback_section = extract_section(&rust_out, "_Lookback(", "pub(crate) fn CDLKICKING_Internal(");
     assert!(
         lookback_section.contains("let ") || lookback_section.contains("let mut "),
         "Lookback code should declare local variables: {lookback_section}"
@@ -3875,7 +3948,7 @@ fn rust_lookback_literal_renders_return() {
     let helpers = make_helpers();
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
 
-    let lookback_section = extract_section(&rust_out, "_Lookback(", "pub fn MULT(");
+    let lookback_section = extract_section(&rust_out, "_Lookback(", "pub(crate) fn MULT_Internal(");
     assert!(
         lookback_section.contains("return"),
         "Lookback should have return statement: {lookback_section}"
@@ -4633,7 +4706,7 @@ fn rust_lookback_none() {
     let helpers = HelperRegistry::empty();
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
 
-    let lookback_section = extract_section(&rust_out, "_Lookback(", "pub fn TEST(");
+    let lookback_section = extract_section(&rust_out, "_Lookback(", "pub(crate) fn TEST_Internal(");
     assert!(
         lookback_section.contains("return 0"),
         "None lookback should return 0: {lookback_section}"
@@ -4837,7 +4910,7 @@ fn rust_lookback_code_renders_var_types_correctly() {
     let helpers = HelperRegistry::empty();
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
 
-    let lookback_section = extract_section(&rust_out, "_Lookback(", "pub fn TEST(");
+    let lookback_section = extract_section(&rust_out, "_Lookback(", "pub(crate) fn TEST_Internal(");
     // sum has no assignments in the body, so count_assignments returns 0 => `let` not `let mut`
     assert!(
         lookback_section.contains("let sum: f64 = 0.0_f64"),
@@ -8513,11 +8586,13 @@ fn rust_fma_dispatch_fires_for_exactly_the_fusing_functions() {
             let calls = out.matches("ta_lib_dispatch::dispatch_fma!").count();
             let clones = out.matches("#[target_feature(enable = \"fma\")]").count();
             assert_eq!(calls, clones, "{name}: dispatcher/clone count mismatch");
-            // The batch variant must carry its clone. (A future
-            // private-delegating fused function would trip the dispatcher/clone
-            // balance above on purpose.)
+            // The batch variant must carry its clone. Dispatch sits on the
+            // C-shaped `_Internal` entry point, which is where the fused body
+            // lives; the public `Result`-returning wrapper only forwards. (A
+            // future private-delegating fused function would trip the
+            // dispatcher/clone balance above on purpose.)
             assert!(
-                out.contains(&format!("fn {}_fma(", func.name)),
+                out.contains(&format!("fn {}_Internal_fma(", func.name)),
                 "{name}: guarded variant lost its FMA clone"
             );
             // The fused sites live on in the renamed portable impl.

@@ -73,8 +73,6 @@ pub fn guarded_docs(
     for opt in &func.optional_inputs {
         d.bullet(&param_doc(opt, doc, enums));
     }
-    d.bullet("`outBegIdx` — Set to the input index of the first output value.");
-    d.bullet("`outNBElement` — Set to the number of output values written.");
     for output in &func.outputs {
         d.bullet(&format!(
             "`{}` — {}",
@@ -87,21 +85,34 @@ pub fn guarded_docs(
         d.paragraph(sentence);
     }
 
+    // Where the values landed is the return value, not a pair of out-params, so it
+    // belongs here rather than in `# Arguments` above.
+    d.blank();
+    d.paragraph("# Returns");
+    d.blank();
+    d.paragraph(
+        "On success, an [`OutRange`]: `beg_idx` is the index of the first value written, \
+         in the input series' coordinates, and `count` is how many were written. A range \
+         shorter than the lookback succeeds with `count == 0`.",
+    );
+
     d.blank();
     d.paragraph("# Errors");
     d.blank();
     if func.optional_inputs.is_empty() {
         d.paragraph(
-            "Returns [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds \
-             [`MAX_INDEX`], and [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds \
-             it or is below `startIdx`.",
+            "Returns [`Err`] carrying [`RetCode::OutOfRangeStartIndex`] when `startIdx` \
+             exceeds [`Core::MAX_INDEX`], and [`RetCode::OutOfRangeEndIndex`] when `endIdx` \
+             exceeds it or is below `startIdx`. A range shorter than the lookback is not an \
+             error: it is [`Ok`] with a zero [`OutRange::count`].",
         );
     } else {
         d.paragraph(
-            "Returns [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds \
-             [`MAX_INDEX`], [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or \
-             is below `startIdx`, and [`RetCode::BadParam`] when an optional parameter \
-             is outside its documented range.",
+            "Returns [`Err`] carrying [`RetCode::OutOfRangeStartIndex`] when `startIdx` \
+             exceeds [`Core::MAX_INDEX`], [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds \
+             it or is below `startIdx`, and [`RetCode::BadParam`] when an optional parameter is \
+             outside its documented range. A range shorter than the lookback is not an error: \
+             it is [`Ok`] with a zero [`OutRange::count`].",
         );
     }
 
@@ -213,11 +224,15 @@ fn default_sentinel_sentence(func: &FuncDef) -> Option<&'static str> {
     let has_real = takes(|t| matches!(t, ParamType::Real));
     match (has_int, has_real) {
         (true, true) => Some(
-            "Integer parameters accept `i32::MIN`, and real parameters `-4e37`, to select \
-             their default value.",
+            "Integer parameters accept [`Core::INTEGER_DEFAULT`], and real parameters \
+             [`Core::REAL_DEFAULT`], to select their default value.",
         ),
-        (true, false) => Some("Integer parameters accept `i32::MIN` to select their default value."),
-        (false, true) => Some("Real parameters accept `-4e37` to select their default value."),
+        (true, false) => {
+            Some("Integer parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.")
+        }
+        (false, true) => {
+            Some("Real parameters accept [`Core::REAL_DEFAULT`] to select their default value.")
+        }
         (false, false) => None,
     }
 }
@@ -494,7 +509,10 @@ fn example_doctest(
 ) -> Option<Vec<String>> {
     let mut lines: Vec<String> = Vec::new();
     lines.push("```".to_string());
-    let mut imports = vec!["Core".to_string(), "RetCode".to_string()];
+    // `RetCode` is not imported: the call returns `Result<OutRange, RetCode>` and
+    // the example propagates with `?`, naming the error type once, fully
+    // qualified, on the hidden trailing line that lets `?` work in a doctest.
+    let mut imports = vec!["Core".to_string()];
     imports.extend(example_enum_imports(func));
     lines.push(example_use_line(&imports));
     lines.push(String::new());
@@ -520,10 +538,8 @@ fn example_doctest(
 
     lines.push(String::new());
     lines.push("let core = Core::new();".to_string());
-    lines.push("let mut out_beg = 0;".to_string());
-    lines.push("let mut out_nb = 0;".to_string());
 
-    let mut out_args: Vec<String> = vec!["&mut out_beg".to_string(), "&mut out_nb".to_string()];
+    let mut out_args: Vec<String> = Vec::new();
     for output in &func.outputs {
         let var = output_var_name(output);
         let zero = match output.param_type {
@@ -537,20 +553,19 @@ fn example_doctest(
     lines.push(String::new());
     let range = format!("0, {first}.len() - 1");
     let call_one_line = format!(
-        "let ret = core.{snake}({range}, {}, {});",
+        "let out_range = core.{snake}({range}, {}, {})?;",
         args.join(", "),
         out_args.join(", ")
     );
     if call_one_line.len() <= WRAP {
         lines.push(call_one_line);
     } else {
-        lines.push(format!("let ret = core.{snake}("));
+        lines.push(format!("let out_range = core.{snake}("));
         lines.push(format!("    {range}, {},", args.join(", ")));
         lines.push(format!("    {},", out_args.join(", ")));
-        lines.push(");".to_string());
+        lines.push(")?;".to_string());
     }
-    lines.push("assert_eq!(ret, RetCode::Success);".to_string());
-    lines.push("assert!(out_nb > 0);".to_string());
+    lines.push("assert!(out_range.count > 0);".to_string());
     // Assert on the values, not just the return code: a successful call never
     // emits NaN or infinity.
     if let Some(output) = func
@@ -560,9 +575,11 @@ fn example_doctest(
     {
         let var = output_var_name(output);
         lines.push(format!(
-            "assert!({var}[..out_nb].iter().all(|v| v.is_finite()));"
+            "assert!({var}[..out_range.count].iter().all(|v| v.is_finite()));"
         ));
     }
+    // Lets the example above use `?`; hidden from the rendered docs.
+    lines.push("# Ok::<(), ta_lib::RetCode>(())".to_string());
     lines.push("```".to_string());
     Some(lines)
 }

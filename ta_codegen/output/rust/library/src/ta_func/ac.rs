@@ -78,8 +78,8 @@ impl Core {
     ///   Default 5. MetaTrader, Quantower and cTrader hardcode all three; trading-signals exposes
     ///   all three with these same values. (default 5, range 2..=100000)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
-    /// to select their default value.
+    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[inline]
     pub fn AC_Lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32) -> usize {
         if ((optInFastPeriod) as i32) == (i32::MIN) {
@@ -102,105 +102,9 @@ impl Core {
         // function they come from, so neither is restated here.
         return (self.AO_Lookback(optInFastPeriod, optInSlowPeriod) + self.SMA_Lookback(optInSignalPeriod)) as usize;
     }
-    /// Bill Williams' Accelerator/Decelerator Oscillator (*New Trading Dimensions*, 1998): the rate
-    /// at which market momentum is itself speeding up or slowing down. Where the Awesome Oscillator
-    /// measures momentum, this measures the change in that momentum, by taking the oscillator's
-    /// distance above or below its own moving average. Because acceleration turns before speed
-    /// does, the reading changes sign ahead of the oscillator it is built from — it is meant as
-    /// the early half of a pair, not as a signal on its own. Above zero acceleration is with the
-    /// bulls, below zero with the bears, and it is drawn as a zero-centred histogram whose colour
-    /// convention is the bar-to-bar change: rising bars accelerating, falling bars decelerating.
-    /// Williams' rule of thumb is that two same-coloured bars are what confirms the turn, which is
-    /// why the sign and the direction matter more than the level. The oscillator is one leg of
-    /// Williams' Profitunity system, alongside the Awesome Oscillator and the Alligator.
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// median_t = ( high_t + low_t ) / 2; AO_t = SMA(median, fast)_t − SMA(median, slow)_t; AC_t = AO_t − SMA(AO, signal)_t
-    ///
-    /// Every leg is a plain simple moving average, so there is no seeding convention and none of the cross-library divergence that comes with one.
-    /// ```
-    ///
-    /// # Arguments
-    ///
-    /// * `startIdx` — Start index of the requested calculation range.
-    /// * `endIdx` — End index of the requested calculation range (inclusive).
-    /// * `inHigh` — High price of each bar.
-    /// * `inLow` — Low price of each bar.
-    /// * `optInFastPeriod` — Number of bars in the short moving average of the median price.
-    ///   Default 5, the value Williams uses and every surveyed package ships. (default 5, range
-    ///   2..=100000)
-    /// * `optInSlowPeriod` — Number of bars in the long moving average of the median price.
-    ///   Default 34, likewise universal. (default 34, range 2..=100000)
-    /// * `optInSignalPeriod` — Number of bars in the moving average taken over the oscillator.
-    ///   Default 5. MetaTrader, Quantower and cTrader hardcode all three; trading-signals exposes
-    ///   all three with these same values. (default 5, range 2..=100000)
-    /// * `outBegIdx` — Set to the input index of the first output value.
-    /// * `outNBElement` — Set to the number of output values written.
-    /// * `outReal` — Distance of the Awesome Oscillator from its own moving average, centred on
-    ///   zero.
-    ///
-    /// Integer parameters accept `i32::MIN` to select their default value.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds [`MAX_INDEX`],
-    /// [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below `startIdx`, and
-    /// [`RetCode::BadParam`] when an optional parameter is outside its documented range.
-    ///
-    /// # Panics
-    ///
-    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
-    /// length is always sufficient.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use ta_lib::{Core, RetCode};
-    ///
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    ///
-    /// let core = Core::new();
-    /// let mut out_beg = 0;
-    /// let mut out_nb = 0;
-    /// let mut out = vec![0.0; 252];
-    ///
-    /// let ret = core.AC(
-    ///     0, high.len() - 1, &high, &low, 5, 34, 5,
-    ///     &mut out_beg, &mut out_nb, &mut out,
-    /// );
-    /// assert_eq!(ret, RetCode::Success);
-    /// assert!(out_nb > 0);
-    /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
-    /// ```
-    ///
-    /// # See also
-    ///
-    /// [`Core::AO`] · [`Core::MACD`] · [`Core::MEDPRICE`] · [`Core::PPO`] · [`Core::SMA`]
-    ///
-    /// # References
-    ///
-    /// * Bill Williams, *New Trading Dimensions*, Wiley, 1998, and *Trading Chaos*, define the
-    ///   Accelerator/Decelerator as the Awesome Oscillator less the 5-period simple moving average
-    ///   of that oscillator.
-    /// * MetaTrader 4 and 5 expose the indicator as `iAC`, cTrader as `AcceleratorOscillator`, and
-    ///   Quantower documents the same three-average decomposition; the abbreviation is settled
-    ///   across the industry.
-    /// * trading-signals 8.3.0 (`momentum/AC`) computes the same form on the same inputs and
-    ///   reports its first value at the same bar. Its moving average re-sums the stored window on
-    ///   every bar where this rolls a running total, so the two agree to rounding rather than to
-    ///   the bit.
-    ///
-    /// Further reading: [ta-lib.org/functions/ac](https://ta-lib.org/functions/ac)
-    #[doc(alias = "AcceleratorOscillator")]
-    #[doc(alias = "DeceleratorOscillator")]
-    #[doc(alias = "AcceleratorDecelerator")]
-    #[doc(alias = "BillWilliamsAccelerator")]
-    #[doc(alias = "ACOscillator")]
-    pub fn AC(
+    /// C-shaped body behind [`Core::AC`]: a `RetCode` plus two out-params,
+    /// which is what the transcribed body and its cross-indicator callers expect.
+    pub(crate) fn AC_Internal(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -213,10 +117,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        if startIdx > MAX_INDEX {
+        if startIdx > Self::MAX_INDEX {
             return RetCode::OutOfRangeStartIndex;
         }
-        if endIdx > MAX_INDEX || endIdx < startIdx {
+        if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
         if ((optInFastPeriod) as i32) == (i32::MIN) {
@@ -392,6 +296,136 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
+    /// Bill Williams' Accelerator/Decelerator Oscillator (*New Trading Dimensions*, 1998): the rate
+    /// at which market momentum is itself speeding up or slowing down. Where the Awesome Oscillator
+    /// measures momentum, this measures the change in that momentum, by taking the oscillator's
+    /// distance above or below its own moving average. Because acceleration turns before speed
+    /// does, the reading changes sign ahead of the oscillator it is built from — it is meant as
+    /// the early half of a pair, not as a signal on its own. Above zero acceleration is with the
+    /// bulls, below zero with the bears, and it is drawn as a zero-centred histogram whose colour
+    /// convention is the bar-to-bar change: rising bars accelerating, falling bars decelerating.
+    /// Williams' rule of thumb is that two same-coloured bars are what confirms the turn, which is
+    /// why the sign and the direction matter more than the level. The oscillator is one leg of
+    /// Williams' Profitunity system, alongside the Awesome Oscillator and the Alligator.
+    ///
+    /// # Formula
+    ///
+    /// ```text
+    /// median_t = ( high_t + low_t ) / 2; AO_t = SMA(median, fast)_t − SMA(median, slow)_t; AC_t = AO_t − SMA(AO, signal)_t
+    ///
+    /// Every leg is a plain simple moving average, so there is no seeding convention and none of the cross-library divergence that comes with one.
+    /// ```
+    ///
+    /// # Arguments
+    ///
+    /// * `startIdx` — Start index of the requested calculation range.
+    /// * `endIdx` — End index of the requested calculation range (inclusive).
+    /// * `inHigh` — High price of each bar.
+    /// * `inLow` — Low price of each bar.
+    /// * `optInFastPeriod` — Number of bars in the short moving average of the median price.
+    ///   Default 5, the value Williams uses and every surveyed package ships. (default 5, range
+    ///   2..=100000)
+    /// * `optInSlowPeriod` — Number of bars in the long moving average of the median price.
+    ///   Default 34, likewise universal. (default 34, range 2..=100000)
+    /// * `optInSignalPeriod` — Number of bars in the moving average taken over the oscillator.
+    ///   Default 5. MetaTrader, Quantower and cTrader hardcode all three; trading-signals exposes
+    ///   all three with these same values. (default 5, range 2..=100000)
+    /// * `outReal` — Distance of the Awesome Oscillator from its own moving average, centred on
+    ///   zero.
+    ///
+    /// Integer parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
+    ///
+    /// # Returns
+    ///
+    /// On success, an [`OutRange`]: `beg_idx` is the index of the first value written, in the input
+    /// series' coordinates, and `count` is how many were written. A range shorter than the lookback
+    /// succeeds with `count == 0`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Err`] carrying [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds
+    /// [`Core::MAX_INDEX`], [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below
+    /// `startIdx`, and [`RetCode::BadParam`] when an optional parameter is outside its documented
+    /// range. A range shorter than the lookback is not an error: it is [`Ok`] with a zero
+    /// [`OutRange::count`].
+    ///
+    /// # Panics
+    ///
+    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    ///
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let mut out = vec![0.0; 252];
+    ///
+    /// let out_range = core.AC(0, high.len() - 1, &high, &low, 5, 34, 5, &mut out)?;
+    /// assert!(out_range.count > 0);
+    /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// [`Core::AO`] · [`Core::MACD`] · [`Core::MEDPRICE`] · [`Core::PPO`] · [`Core::SMA`]
+    ///
+    /// # References
+    ///
+    /// * Bill Williams, *New Trading Dimensions*, Wiley, 1998, and *Trading Chaos*, define the
+    ///   Accelerator/Decelerator as the Awesome Oscillator less the 5-period simple moving average
+    ///   of that oscillator.
+    /// * MetaTrader 4 and 5 expose the indicator as `iAC`, cTrader as `AcceleratorOscillator`, and
+    ///   Quantower documents the same three-average decomposition; the abbreviation is settled
+    ///   across the industry.
+    /// * trading-signals 8.3.0 (`momentum/AC`) computes the same form on the same inputs and
+    ///   reports its first value at the same bar. Its moving average re-sums the stored window on
+    ///   every bar where this rolls a running total, so the two agree to rounding rather than to
+    ///   the bit.
+    ///
+    /// Further reading: [ta-lib.org/functions/ac](https://ta-lib.org/functions/ac)
+    #[doc(alias = "AcceleratorOscillator")]
+    #[doc(alias = "DeceleratorOscillator")]
+    #[doc(alias = "AcceleratorDecelerator")]
+    #[doc(alias = "BillWilliamsAccelerator")]
+    #[doc(alias = "ACOscillator")]
+    pub fn AC(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inHigh: &[f64],
+        inLow: &[f64],
+        optInFastPeriod: i32,
+        optInSlowPeriod: i32,
+        optInSignalPeriod: i32,
+        outReal: &mut [f64],
+    ) -> Result<OutRange, RetCode> {
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let retCode = self.AC_Internal(
+            startIdx,
+            endIdx,
+            inHigh,
+            inLow,
+            optInFastPeriod,
+            optInSlowPeriod,
+            optInSignalPeriod,
+            &mut outBegIdx,
+            &mut outNBElement,
+            outReal,
+        );
+        match retCode {
+            RetCode::Success => Ok(OutRange { beg_idx: outBegIdx, count: outNBElement }),
+            e => Err(e),
+        }
+    }
+
 }
 /**** Streaming API *****/
 
@@ -528,7 +562,7 @@ impl Core {
         if inHigh.is_empty() || inLow.is_empty() || inLow.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
-        if inHigh.len() > MAX_INDEX + 1 {
+        if inHigh.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
         if ((optInFastPeriod) as i32) == (i32::MIN) {

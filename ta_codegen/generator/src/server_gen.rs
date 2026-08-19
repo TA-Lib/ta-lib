@@ -2278,7 +2278,6 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("record OutRange(int begIdx, int count) {\n");
     s.push_str("    static final OutRange EMPTY = new OutRange(0, 0);\n");
     s.push_str("    boolean isEmpty() { return count == 0; }\n");
-    s.push_str("    int endIdx() { return begIdx + count; }\n");
     s.push_str("}\n\n");
 
     // FuncUnstId and Compatibility enums (referenced by generated Core methods).
@@ -3823,7 +3822,7 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("use serde_json::{self, Value};\n");
     s.push_str("use std::io::{self, BufRead, Write};\n");
     s.push_str("use std::time::Instant;\n");
-    s.push_str("use ta_lib::{Core, CoreBuilder, RetCode, FuncUnstId, MAX_INDEX};\n");
+    s.push_str("use ta_lib::{Core, CoreBuilder, RetCode, FuncUnstId};\n");
     s.push_str("use ta_lib::{CandleSetting, CandleSettings, CandleSettingType, RangeType};\n");
     s.push_str("use ta_lib::abstract_api::{self, InputType, OutputType, OptInputType};\n");
     // The enum types the handlers convert wire ints into, from what the
@@ -3909,17 +3908,12 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("    }\n");
     s.push_str("}\n\n");
 
-    // Helper: RetCode to integer
+    // Helper: RetCode to integer. Delegates to the library, whose match is total
+    // -- re-spelling it here would need a `_` arm (`RetCode` is `#[non_exhaustive]`
+    // and this is a downstream crate), and a new variant would then be reported to
+    // the driver as whatever that arm said instead of failing to compile.
     s.push_str("fn retcode_to_int(rc: RetCode) -> i32 {\n");
-    s.push_str("    match rc {\n");
-    s.push_str("        RetCode::Success => 0,\n");
-    s.push_str("        RetCode::BadParam => 2,\n");
-    s.push_str("        RetCode::AllocErr => 3,\n");
-    s.push_str("        RetCode::InternalError => 5000,\n");
-    s.push_str("        RetCode::OutOfRangeStartIndex => 12,\n");
-    s.push_str("        RetCode::OutOfRangeEndIndex => 13,\n");
-    s.push_str("        _ => 5000,\n");
-    s.push_str("    }\n");
+    s.push_str("    rc.as_c_int()\n");
     s.push_str("}\n\n");
 
     // Helper: serialize an f64 slice as a JSON-ish array. Finite values use
@@ -4333,8 +4327,11 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         s.push_str("            for _bi in 0..=bench_iters {\n");
         s.push_str("                if _bi == 1 { start_time = Instant::now(); }\n");
         s.push_str("            if bench_mode == 0 {\n");
+        // `tools` is a separate crate, so the only entry point reachable here is
+        // the public one -- which means the value gates drive the API users call,
+        // not the crate-private C-shaped body behind it.
         s.push_str(&format!(
-            "            rc = core.{fn_name}(\n"
+            "            let _out = core.{fn_name}(\n"
         ));
         s.push_str("                startIdx, endIdx,\n");
         for name in &input_names {
@@ -4343,20 +4340,24 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         for opt in &func.optional_inputs {
             s.push_str(&format!("                {},\n", opt.name));
         }
-        s.push_str("                &mut outBegIdx, &mut outNBElement");
         real_idx = 0;
         int_idx = 0;
+        let mut out_args: Vec<String> = Vec::new();
         for out in outputs {
             if out.param_type == ParamType::Integer {
-                s.push_str(&format!(", &mut outIntBuf{int_idx}"));
+                out_args.push(format!("&mut outIntBuf{int_idx}"));
                 int_idx += 1;
             } else {
-                s.push_str(&format!(", &mut outBuf{real_idx}"));
+                out_args.push(format!("&mut outBuf{real_idx}"));
                 real_idx += 1;
             }
         }
-        s.push_str(",\n");
+        s.push_str(&format!("                {},\n", out_args.join(", ")));
         s.push_str("            );\n");
+        s.push_str("            rc = match _out {\n");
+        s.push_str("                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }\n");
+        s.push_str("                Err(e) => { outBegIdx = 0; outNBElement = 0; e }\n");
+        s.push_str("            };\n");
         s.push_str("            } else {\n");
         emit_rust_warmup_arms(&mut s, func, &input_names, outputs);
         s.push_str("            }\n");
@@ -4792,11 +4793,11 @@ fn abs_call(core: &Core, params: &Value) -> String {
     // clamping, and the driver compares retCodes.
     let raw_start = params["startIdx"].as_i64().unwrap_or(0);
     let raw_end = params["endIdx"].as_i64().unwrap_or(0);
-    if raw_start < 0 || raw_start > MAX_INDEX as i64 {
+    if raw_start < 0 || raw_start > Core::MAX_INDEX as i64 {
         return format!("{{\"binder\":1,\"lookback\":-1,\"retCode\":{},\"outBegIdx\":0,\"outNBElement\":0}}",
                        retcode_to_int(RetCode::OutOfRangeStartIndex));
     }
-    if raw_end < 0 || raw_end > MAX_INDEX as i64 || raw_end < raw_start {
+    if raw_end < 0 || raw_end > Core::MAX_INDEX as i64 || raw_end < raw_start {
         return format!("{{\"binder\":1,\"lookback\":-1,\"retCode\":{},\"outBegIdx\":0,\"outNBElement\":0}}",
                        retcode_to_int(RetCode::OutOfRangeEndIndex));
     }
@@ -4870,7 +4871,7 @@ fn abs_call(core: &Core, params: &Value) -> String {
             (retcode_to_int(e), lb, 0usize, 0usize)
         } else {
             match h.call(start, end) {
-                Ok(r) => (0i32, lb, r.beg_idx, r.nb_element),
+                Ok(r) => (0i32, lb, r.beg_idx, r.count),
                 Err(e) => (retcode_to_int(e), lb, 0usize, 0usize),
             }
         }
@@ -5265,9 +5266,12 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     }
 
     // Batch leg.
+    // The public tier returns the range; `beg`/`nb` stay as locals because the legs
+    // below (OpenAndFill, Peek) compare against them.
+    let bargs_head = bargs.trim_start_matches(", ");
     let _ = writeln!(
         s,
-        "        let rc = c2.{fname}(0, svN - 1, {full_ins}, {opts_lead}&mut beg, &mut nb{bargs});"
+        "        let rc = match c2.{fname}(0, svN - 1, {full_ins}, {opts_lead}{bargs_head}) {{ Ok(r) => {{ beg = r.beg_idx; nb = r.count; RetCode::Success }} Err(e) => {{ beg = 0; nb = 0; e }} }};"
     );
     let _ = writeln!(s, "        let lb = c2.{fname}_Lookback({opts});");
     s.push_str("        if rc != RetCode::Success || nb == 0 {\n");

@@ -98,9 +98,7 @@ fn bbands(
     let mut upper = vec![fill; cap];
     let mut middle = vec![fill; cap];
     let mut lower = vec![fill; cap];
-    let mut beg = 0usize;
-    let mut nb = 0usize;
-    let rc = core.BBANDS(
+    let out = core.BBANDS(
         0,
         input.len() - 1,
         input,
@@ -108,12 +106,14 @@ fn bbands(
         dev_up,
         dev_dn,
         matype,
-        &mut beg,
-        &mut nb,
         &mut upper,
         &mut middle,
         &mut lower,
     );
+    let (rc, beg, nb) = match out {
+        Ok(r) => (RetCode::Success, r.beg_idx, r.count),
+        Err(e) => (e, 0, 0),
+    };
     upper.truncate(nb);
     middle.truncate(nb);
     lower.truncate(nb);
@@ -133,23 +133,17 @@ fn bbands_from_ma_and_stddev(
 ) -> Option<Bands> {
     let n = input.len();
     let mut ma = vec![f64::NAN; n];
-    let mut ma_beg = 0usize;
-    let mut ma_nb = 0usize;
-    if core.MA(0, n - 1, input, period, matype, &mut ma_beg, &mut ma_nb, &mut ma) != RetCode::Success
-    {
+    let Ok(ma_out) = core.MA(0, n - 1, input, period, matype, &mut ma) else {
         return None;
-    }
-    if ma_nb == 0 {
+    };
+    if ma_out.is_empty() {
         return None;
     }
     let mut sd = vec![f64::NAN; n];
-    let mut sd_beg = 0usize;
-    let mut sd_nb = 0usize;
-    if core.STDDEV(ma_beg, n - 1, input, period, 1.0, &mut sd_beg, &mut sd_nb, &mut sd)
-        != RetCode::Success
-    {
+    let Ok(sd_out) = core.STDDEV(ma_out.beg_idx, n - 1, input, period, 1.0, &mut sd) else {
         return None;
-    }
+    };
+    let (ma_beg, sd_beg, sd_nb) = (ma_out.beg_idx, sd_out.beg_idx, sd_out.count);
     // The standard deviation can clamp to a later bar than the moving average
     // did; the source shifts the MA forward so each band pairs the two at the
     // same bar.

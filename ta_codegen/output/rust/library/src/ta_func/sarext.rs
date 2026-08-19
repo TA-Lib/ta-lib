@@ -89,133 +89,57 @@ impl Core {
     /// * `optInAccelerationMaxShort` — Cap on the short acceleration factor (default 0.2, minimum
     ///   0)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Real parameters accept `-4e37` to
-    /// select their default value.
+    /// Returns `usize::MAX` when a parameter is out of range. Real parameters accept
+    /// [`Core::REAL_DEFAULT`] to select their default value.
     #[inline]
     pub fn SAREXT_Lookback(&self, mut optInStartValue: f64, mut optInOffsetOnReverse: f64, mut optInAccelerationInitLong: f64, mut optInAccelerationLong: f64, mut optInAccelerationMaxLong: f64, mut optInAccelerationInitShort: f64, mut optInAccelerationShort: f64, mut optInAccelerationMaxShort: f64) -> usize {
-        if optInStartValue == REAL_DEFAULT {
+        if optInStartValue == Self::REAL_DEFAULT {
             optInStartValue = 0e0;
-        } else if !((optInStartValue >= REAL_MIN) && (optInStartValue <= REAL_MAX)) {
+        } else if !((optInStartValue >= Self::REAL_MIN) && (optInStartValue <= Self::REAL_MAX)) {
             return usize::MAX;
         }
-        if optInOffsetOnReverse == REAL_DEFAULT {
+        if optInOffsetOnReverse == Self::REAL_DEFAULT {
             optInOffsetOnReverse = 0e0;
-        } else if !((optInOffsetOnReverse >= 0e0) && (optInOffsetOnReverse <= REAL_MAX)) {
+        } else if !((optInOffsetOnReverse >= 0e0) && (optInOffsetOnReverse <= Self::REAL_MAX)) {
             return usize::MAX;
         }
-        if optInAccelerationInitLong == REAL_DEFAULT {
+        if optInAccelerationInitLong == Self::REAL_DEFAULT {
             optInAccelerationInitLong = 2e-2;
-        } else if !((optInAccelerationInitLong >= 0e0) && (optInAccelerationInitLong <= REAL_MAX)) {
+        } else if !((optInAccelerationInitLong >= 0e0) && (optInAccelerationInitLong <= Self::REAL_MAX)) {
             return usize::MAX;
         }
-        if optInAccelerationLong == REAL_DEFAULT {
+        if optInAccelerationLong == Self::REAL_DEFAULT {
             optInAccelerationLong = 2e-2;
-        } else if !((optInAccelerationLong >= 0e0) && (optInAccelerationLong <= REAL_MAX)) {
+        } else if !((optInAccelerationLong >= 0e0) && (optInAccelerationLong <= Self::REAL_MAX)) {
             return usize::MAX;
         }
-        if optInAccelerationMaxLong == REAL_DEFAULT {
+        if optInAccelerationMaxLong == Self::REAL_DEFAULT {
             optInAccelerationMaxLong = 2e-1;
-        } else if !((optInAccelerationMaxLong >= 0e0) && (optInAccelerationMaxLong <= REAL_MAX)) {
+        } else if !((optInAccelerationMaxLong >= 0e0) && (optInAccelerationMaxLong <= Self::REAL_MAX)) {
             return usize::MAX;
         }
-        if optInAccelerationInitShort == REAL_DEFAULT {
+        if optInAccelerationInitShort == Self::REAL_DEFAULT {
             optInAccelerationInitShort = 2e-2;
-        } else if !((optInAccelerationInitShort >= 0e0) && (optInAccelerationInitShort <= REAL_MAX)) {
+        } else if !((optInAccelerationInitShort >= 0e0) && (optInAccelerationInitShort <= Self::REAL_MAX)) {
             return usize::MAX;
         }
-        if optInAccelerationShort == REAL_DEFAULT {
+        if optInAccelerationShort == Self::REAL_DEFAULT {
             optInAccelerationShort = 2e-2;
-        } else if !((optInAccelerationShort >= 0e0) && (optInAccelerationShort <= REAL_MAX)) {
+        } else if !((optInAccelerationShort >= 0e0) && (optInAccelerationShort <= Self::REAL_MAX)) {
             return usize::MAX;
         }
-        if optInAccelerationMaxShort == REAL_DEFAULT {
+        if optInAccelerationMaxShort == Self::REAL_DEFAULT {
             optInAccelerationMaxShort = 2e-1;
-        } else if !((optInAccelerationMaxShort >= 0e0) && (optInAccelerationMaxShort <= REAL_MAX)) {
+        } else if !((optInAccelerationMaxShort >= 0e0) && (optInAccelerationMaxShort <= Self::REAL_MAX)) {
             return usize::MAX;
         }
         // SAR always sacrifices one price bar to establish the
         // initial extreme price.
         return (1) as usize;
     }
-    /// Extended Parabolic SAR (stop and reverse) giving the caller full control over the initial
-    /// state and separate acceleration factors for long and short positions. Unlike SAR, it returns
-    /// negative values while short so reversals are distinguishable. Sign flip of the output marks
-    /// a trend reversal (positive=long stop, negative=short stop).
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// SAR_next = SAR + AF*(EP - SAR), then clamped within the prior and current bar's range. On penetration, reverse: set SAR=EP (clamped), reset AF to its Init value, EP=extreme of the new direction. Output is +SAR when long, -SAR when short. On reversal an optional offset is applied: long->short SAR*(1+offset), short->long SAR*(1-offset).
-    /// ```
-    ///
-    /// # Arguments
-    ///
-    /// * `startIdx` — Start index of the requested calculation range.
-    /// * `endIdx` — End index of the requested calculation range (inclusive).
-    /// * `inHigh` — High price of each bar.
-    /// * `inLow` — Low price of each bar.
-    /// * `optInStartValue` — Initial SAR/direction: 0 auto, >0 start long at value, \<0 start
-    ///   short at |value| (default 0)
-    /// * `optInOffsetOnReverse` — Fractional offset applied to the stop on each reversal (default
-    ///   0, minimum 0)
-    /// * `optInAccelerationInitLong` — Initial acceleration factor when long (default 0.02,
-    ///   minimum 0)
-    /// * `optInAccelerationLong` — AF increment per new long extreme (default 0.02, minimum 0)
-    /// * `optInAccelerationMaxLong` — Cap on the long acceleration factor (default 0.2, minimum
-    ///   0)
-    /// * `optInAccelerationInitShort` — Initial acceleration factor when short (default 0.02,
-    ///   minimum 0)
-    /// * `optInAccelerationShort` — AF increment per new short extreme (default 0.02, minimum 0)
-    /// * `optInAccelerationMaxShort` — Cap on the short acceleration factor (default 0.2, minimum
-    ///   0)
-    /// * `outBegIdx` — Set to the input index of the first output value.
-    /// * `outNBElement` — Set to the number of output values written.
-    /// * `outReal` — SAR stop level; positive while long, negative while short.
-    ///
-    /// Real parameters accept `-4e37` to select their default value.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds [`MAX_INDEX`],
-    /// [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below `startIdx`, and
-    /// [`RetCode::BadParam`] when an optional parameter is outside its documented range.
-    ///
-    /// # Panics
-    ///
-    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
-    /// length is always sufficient.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use ta_lib::{Core, RetCode};
-    ///
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    ///
-    /// let core = Core::new();
-    /// let mut out_beg = 0;
-    /// let mut out_nb = 0;
-    /// let mut out = vec![0.0; 252];
-    ///
-    /// let ret = core.SAREXT(
-    ///     0, high.len() - 1, &high, &low, 0.0, 0.0, 0.02, 0.02, 0.2, 0.02, 0.02, 0.2,
-    ///     &mut out_beg, &mut out_nb, &mut out,
-    /// );
-    /// assert_eq!(ret, RetCode::Success);
-    /// assert!(out_nb > 0);
-    /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
-    /// ```
-    ///
-    /// # See also
-    ///
-    /// [`Core::SAR`] · [`Core::MINUS_DM`]
-    ///
-    /// Further reading: [ta-lib.org/functions/sarext](https://ta-lib.org/functions/sarext)
-    #[doc(alias = "ParabolicSARExtended")]
-    #[doc(alias = "ExtendedParabolicStopandReverse")]
-    pub fn SAREXT(
+    /// C-shaped body behind [`Core::SAREXT`]: a `RetCode` plus two out-params,
+    /// which is what the transcribed body and its cross-indicator callers expect.
+    pub(crate) fn SAREXT_Internal(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -234,13 +158,13 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, SAREXT_fma, SAREXT_impl, (startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, SAREXT_Internal_fma, SAREXT_Internal_impl, (startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.SAREXT_impl(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal)
+        self.SAREXT_Internal_impl(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn SAREXT_fma(
+    fn SAREXT_Internal_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -258,10 +182,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.SAREXT_impl(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal)
+        self.SAREXT_Internal_impl(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn SAREXT_impl(
+    fn SAREXT_Internal_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -279,50 +203,50 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        if startIdx > MAX_INDEX {
+        if startIdx > Self::MAX_INDEX {
             return RetCode::OutOfRangeStartIndex;
         }
-        if endIdx > MAX_INDEX || endIdx < startIdx {
+        if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if optInStartValue == REAL_DEFAULT {
+        if optInStartValue == Self::REAL_DEFAULT {
             optInStartValue = 0e0;
-        } else if !((optInStartValue >= REAL_MIN) && (optInStartValue <= REAL_MAX)) {
+        } else if !((optInStartValue >= Self::REAL_MIN) && (optInStartValue <= Self::REAL_MAX)) {
             return RetCode::BadParam;
         }
-        if optInOffsetOnReverse == REAL_DEFAULT {
+        if optInOffsetOnReverse == Self::REAL_DEFAULT {
             optInOffsetOnReverse = 0e0;
-        } else if !((optInOffsetOnReverse >= 0e0) && (optInOffsetOnReverse <= REAL_MAX)) {
+        } else if !((optInOffsetOnReverse >= 0e0) && (optInOffsetOnReverse <= Self::REAL_MAX)) {
             return RetCode::BadParam;
         }
-        if optInAccelerationInitLong == REAL_DEFAULT {
+        if optInAccelerationInitLong == Self::REAL_DEFAULT {
             optInAccelerationInitLong = 2e-2;
-        } else if !((optInAccelerationInitLong >= 0e0) && (optInAccelerationInitLong <= REAL_MAX)) {
+        } else if !((optInAccelerationInitLong >= 0e0) && (optInAccelerationInitLong <= Self::REAL_MAX)) {
             return RetCode::BadParam;
         }
-        if optInAccelerationLong == REAL_DEFAULT {
+        if optInAccelerationLong == Self::REAL_DEFAULT {
             optInAccelerationLong = 2e-2;
-        } else if !((optInAccelerationLong >= 0e0) && (optInAccelerationLong <= REAL_MAX)) {
+        } else if !((optInAccelerationLong >= 0e0) && (optInAccelerationLong <= Self::REAL_MAX)) {
             return RetCode::BadParam;
         }
-        if optInAccelerationMaxLong == REAL_DEFAULT {
+        if optInAccelerationMaxLong == Self::REAL_DEFAULT {
             optInAccelerationMaxLong = 2e-1;
-        } else if !((optInAccelerationMaxLong >= 0e0) && (optInAccelerationMaxLong <= REAL_MAX)) {
+        } else if !((optInAccelerationMaxLong >= 0e0) && (optInAccelerationMaxLong <= Self::REAL_MAX)) {
             return RetCode::BadParam;
         }
-        if optInAccelerationInitShort == REAL_DEFAULT {
+        if optInAccelerationInitShort == Self::REAL_DEFAULT {
             optInAccelerationInitShort = 2e-2;
-        } else if !((optInAccelerationInitShort >= 0e0) && (optInAccelerationInitShort <= REAL_MAX)) {
+        } else if !((optInAccelerationInitShort >= 0e0) && (optInAccelerationInitShort <= Self::REAL_MAX)) {
             return RetCode::BadParam;
         }
-        if optInAccelerationShort == REAL_DEFAULT {
+        if optInAccelerationShort == Self::REAL_DEFAULT {
             optInAccelerationShort = 2e-2;
-        } else if !((optInAccelerationShort >= 0e0) && (optInAccelerationShort <= REAL_MAX)) {
+        } else if !((optInAccelerationShort >= 0e0) && (optInAccelerationShort <= Self::REAL_MAX)) {
             return RetCode::BadParam;
         }
-        if optInAccelerationMaxShort == REAL_DEFAULT {
+        if optInAccelerationMaxShort == Self::REAL_DEFAULT {
             optInAccelerationMaxShort = 2e-1;
-        } else if !((optInAccelerationMaxShort >= 0e0) && (optInAccelerationMaxShort <= REAL_MAX)) {
+        } else if !((optInAccelerationMaxShort >= 0e0) && (optInAccelerationMaxShort <= Self::REAL_MAX)) {
             return RetCode::BadParam;
         }
         let _assertLb = self.SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
@@ -442,7 +366,7 @@ impl Core {
             // (ep is just used as a temp buffer here, the name
             //  of the parameter is not significant).
             let mut _dup_out: usize = 0_usize;
-            retCode = self.MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, &mut tempInt, &mut _dup_out, &mut ep_temp);
+            retCode = self.MINUS_DM_Internal(startIdx, startIdx, inHigh, inLow, 1, &mut tempInt, &mut _dup_out, &mut ep_temp);
             if ep_temp[0] > 0_f64 {
                 isLong = 0;
             } else {
@@ -611,6 +535,129 @@ impl Core {
         (*outNBElement) = outIdx;
         return RetCode::Success;
     }
+    /// Extended Parabolic SAR (stop and reverse) giving the caller full control over the initial
+    /// state and separate acceleration factors for long and short positions. Unlike SAR, it returns
+    /// negative values while short so reversals are distinguishable. Sign flip of the output marks
+    /// a trend reversal (positive=long stop, negative=short stop).
+    ///
+    /// # Formula
+    ///
+    /// ```text
+    /// SAR_next = SAR + AF*(EP - SAR), then clamped within the prior and current bar's range. On penetration, reverse: set SAR=EP (clamped), reset AF to its Init value, EP=extreme of the new direction. Output is +SAR when long, -SAR when short. On reversal an optional offset is applied: long->short SAR*(1+offset), short->long SAR*(1-offset).
+    /// ```
+    ///
+    /// # Arguments
+    ///
+    /// * `startIdx` — Start index of the requested calculation range.
+    /// * `endIdx` — End index of the requested calculation range (inclusive).
+    /// * `inHigh` — High price of each bar.
+    /// * `inLow` — Low price of each bar.
+    /// * `optInStartValue` — Initial SAR/direction: 0 auto, >0 start long at value, \<0 start
+    ///   short at |value| (default 0)
+    /// * `optInOffsetOnReverse` — Fractional offset applied to the stop on each reversal (default
+    ///   0, minimum 0)
+    /// * `optInAccelerationInitLong` — Initial acceleration factor when long (default 0.02,
+    ///   minimum 0)
+    /// * `optInAccelerationLong` — AF increment per new long extreme (default 0.02, minimum 0)
+    /// * `optInAccelerationMaxLong` — Cap on the long acceleration factor (default 0.2, minimum
+    ///   0)
+    /// * `optInAccelerationInitShort` — Initial acceleration factor when short (default 0.02,
+    ///   minimum 0)
+    /// * `optInAccelerationShort` — AF increment per new short extreme (default 0.02, minimum 0)
+    /// * `optInAccelerationMaxShort` — Cap on the short acceleration factor (default 0.2, minimum
+    ///   0)
+    /// * `outReal` — SAR stop level; positive while long, negative while short.
+    ///
+    /// Real parameters accept [`Core::REAL_DEFAULT`] to select their default value.
+    ///
+    /// # Returns
+    ///
+    /// On success, an [`OutRange`]: `beg_idx` is the index of the first value written, in the input
+    /// series' coordinates, and `count` is how many were written. A range shorter than the lookback
+    /// succeeds with `count == 0`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Err`] carrying [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds
+    /// [`Core::MAX_INDEX`], [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below
+    /// `startIdx`, and [`RetCode::BadParam`] when an optional parameter is outside its documented
+    /// range. A range shorter than the lookback is not an error: it is [`Ok`] with a zero
+    /// [`OutRange::count`].
+    ///
+    /// # Panics
+    ///
+    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    ///
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let mut out = vec![0.0; 252];
+    ///
+    /// let out_range = core.SAREXT(
+    ///     0, high.len() - 1, &high, &low, 0.0, 0.0, 0.02, 0.02, 0.2, 0.02, 0.02, 0.2,
+    ///     &mut out,
+    /// )?;
+    /// assert!(out_range.count > 0);
+    /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// [`Core::SAR`] · [`Core::MINUS_DM`]
+    ///
+    /// Further reading: [ta-lib.org/functions/sarext](https://ta-lib.org/functions/sarext)
+    #[doc(alias = "ParabolicSARExtended")]
+    #[doc(alias = "ExtendedParabolicStopandReverse")]
+    pub fn SAREXT(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inHigh: &[f64],
+        inLow: &[f64],
+        optInStartValue: f64,
+        optInOffsetOnReverse: f64,
+        optInAccelerationInitLong: f64,
+        optInAccelerationLong: f64,
+        optInAccelerationMaxLong: f64,
+        optInAccelerationInitShort: f64,
+        optInAccelerationShort: f64,
+        optInAccelerationMaxShort: f64,
+        outReal: &mut [f64],
+    ) -> Result<OutRange, RetCode> {
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let retCode = self.SAREXT_Internal(
+            startIdx,
+            endIdx,
+            inHigh,
+            inLow,
+            optInStartValue,
+            optInOffsetOnReverse,
+            optInAccelerationInitLong,
+            optInAccelerationLong,
+            optInAccelerationMaxLong,
+            optInAccelerationInitShort,
+            optInAccelerationShort,
+            optInAccelerationMaxShort,
+            &mut outBegIdx,
+            &mut outNBElement,
+            outReal,
+        );
+        match retCode {
+            RetCode::Success => Ok(OutRange { beg_idx: outBegIdx, count: outNBElement }),
+            e => Err(e),
+        }
+    }
+
 }
 /**** Streaming API *****/
 
@@ -811,47 +858,47 @@ impl Core {
         if inHigh.is_empty() || inLow.is_empty() || inLow.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
-        if inHigh.len() > MAX_INDEX + 1 {
+        if inHigh.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if optInStartValue == REAL_DEFAULT {
+        if optInStartValue == Self::REAL_DEFAULT {
             optInStartValue = 0e0;
-        } else if !((optInStartValue >= REAL_MIN) && (optInStartValue <= REAL_MAX)) {
+        } else if !((optInStartValue >= Self::REAL_MIN) && (optInStartValue <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
-        if optInOffsetOnReverse == REAL_DEFAULT {
+        if optInOffsetOnReverse == Self::REAL_DEFAULT {
             optInOffsetOnReverse = 0e0;
-        } else if !((optInOffsetOnReverse >= 0e0) && (optInOffsetOnReverse <= REAL_MAX)) {
+        } else if !((optInOffsetOnReverse >= 0e0) && (optInOffsetOnReverse <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
-        if optInAccelerationInitLong == REAL_DEFAULT {
+        if optInAccelerationInitLong == Self::REAL_DEFAULT {
             optInAccelerationInitLong = 2e-2;
-        } else if !((optInAccelerationInitLong >= 0e0) && (optInAccelerationInitLong <= REAL_MAX)) {
+        } else if !((optInAccelerationInitLong >= 0e0) && (optInAccelerationInitLong <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
-        if optInAccelerationLong == REAL_DEFAULT {
+        if optInAccelerationLong == Self::REAL_DEFAULT {
             optInAccelerationLong = 2e-2;
-        } else if !((optInAccelerationLong >= 0e0) && (optInAccelerationLong <= REAL_MAX)) {
+        } else if !((optInAccelerationLong >= 0e0) && (optInAccelerationLong <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
-        if optInAccelerationMaxLong == REAL_DEFAULT {
+        if optInAccelerationMaxLong == Self::REAL_DEFAULT {
             optInAccelerationMaxLong = 2e-1;
-        } else if !((optInAccelerationMaxLong >= 0e0) && (optInAccelerationMaxLong <= REAL_MAX)) {
+        } else if !((optInAccelerationMaxLong >= 0e0) && (optInAccelerationMaxLong <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
-        if optInAccelerationInitShort == REAL_DEFAULT {
+        if optInAccelerationInitShort == Self::REAL_DEFAULT {
             optInAccelerationInitShort = 2e-2;
-        } else if !((optInAccelerationInitShort >= 0e0) && (optInAccelerationInitShort <= REAL_MAX)) {
+        } else if !((optInAccelerationInitShort >= 0e0) && (optInAccelerationInitShort <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
-        if optInAccelerationShort == REAL_DEFAULT {
+        if optInAccelerationShort == Self::REAL_DEFAULT {
             optInAccelerationShort = 2e-2;
-        } else if !((optInAccelerationShort >= 0e0) && (optInAccelerationShort <= REAL_MAX)) {
+        } else if !((optInAccelerationShort >= 0e0) && (optInAccelerationShort <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
-        if optInAccelerationMaxShort == REAL_DEFAULT {
+        if optInAccelerationMaxShort == Self::REAL_DEFAULT {
             optInAccelerationMaxShort = 2e-1;
-        } else if !((optInAccelerationMaxShort >= 0e0) && (optInAccelerationMaxShort <= REAL_MAX)) {
+        } else if !((optInAccelerationMaxShort >= 0e0) && (optInAccelerationMaxShort <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inHigh.len();
@@ -970,7 +1017,7 @@ impl Core {
             // (ep is just used as a temp buffer here, the name
             //  of the parameter is not significant).
             let mut _dup_out: usize = 0_usize;
-            retCode = self.MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, &mut tempInt, &mut _dup_out, &mut ep_temp);
+            retCode = self.MINUS_DM_Internal(startIdx, startIdx, inHigh, inLow, 1, &mut tempInt, &mut _dup_out, &mut ep_temp);
             if ep_temp[0] > 0_f64 {
                 isLong = 0;
             } else {

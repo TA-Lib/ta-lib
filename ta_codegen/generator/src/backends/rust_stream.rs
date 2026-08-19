@@ -1423,7 +1423,7 @@ fn emit_open_validation_head(o: &mut String, func: &FuncDef, mode: OutMode, enum
     // up front keeps "no panics post-open" true.
     let _ = writeln!(
         o,
-        "        if {first}.len() > MAX_INDEX + 1 {{\n            return Err(RetCode::OutOfRangeEndIndex);\n        }}"
+        "        if {first}.len() > Self::MAX_INDEX + 1 {{\n            return Err(RetCode::OutOfRangeEndIndex);\n        }}"
     );
     if mode == OutMode::Fill {
         // `Fill` is a PUBLIC entry point, so the caller's history is scanned

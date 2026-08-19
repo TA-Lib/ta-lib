@@ -85,8 +85,8 @@ impl Core {
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
     ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
-    /// to select their default value.
+    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[inline]
     pub fn MACDEXT_Lookback(&self, mut optInFastPeriod: i32, mut optInFastMAType: MAType, mut optInSlowPeriod: i32, mut optInSlowMAType: MAType, mut optInSignalPeriod: i32, mut optInSignalMAType: MAType) -> usize {
         if ((optInFastPeriod) as i32) == (i32::MIN) {
@@ -124,99 +124,9 @@ impl Core {
         // Add to the largest MA lookback the signal line lookback
         return (lookbackLargest + self.MA_Lookback(optInSignalPeriod, optInSignalMAType)) as usize;
     }
-    /// MACD variant where the fast, slow, and signal moving averages each use a user-selectable MA
-    /// type. Outputs the MACD line, its signal line, and their difference (histogram). Hist sign
-    /// change (MACD crossing its signal line) flags momentum shifts.
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// MACD = MA_fast(inReal) - MA_slow(inReal)
-    /// Signal = MA_signal(MACD)
-    /// Hist = MACD - Signal
-    /// (each MA_* uses its own MA type and period)
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * If the slow period is set smaller than the fast period, the fast and slow periods and
-    ///   their MA types are swapped so the slow moving average is always the longer one.
-    /// * A signal period of 1 disables signal-line smoothing for every signal MAType: the signal
-    ///   equals the MACD line and the histogram is zero.
-    /// * `TA_MAType_MAMA` ignores its period argument, so it always produces the same series
-    ///   regardless of the period requested. If both `optInFastMAType` and `optInSlowMAType` are
-    ///   set to MAMA, the fast and slow lines are therefore identical and MACD, Signal, and Hist
-    ///   are all zero at every bar. Select MAMA for only one side to get a meaningful spread.
-    ///
-    /// # Arguments
-    ///
-    /// * `startIdx` — Start index of the requested calculation range.
-    /// * `endIdx` — End index of the requested calculation range (inclusive).
-    /// * `inReal` — Source series.
-    /// * `optInFastPeriod` — Period of the fast MA (default 12, range 2..=100000)
-    /// * `optInFastMAType` — MA type for the fast MA (default 0 = SMA, values: 0=SMA, 1=EMA,
-    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
-    ///   `MAType::DEFAULT` selects the default)
-    /// * `optInSlowPeriod` — Period of the slow MA (default 26, range 2..=100000)
-    /// * `optInSlowMAType` — MA type for the slow MA (default 0 = SMA, values: 0=SMA, 1=EMA,
-    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
-    ///   `MAType::DEFAULT` selects the default)
-    /// * `optInSignalPeriod` — Period of the signal-line MA (default 9, range 1..=100000)
-    /// * `optInSignalMAType` — MA type for the signal line (default 0 = SMA, values: 0=SMA,
-    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
-    /// * `outBegIdx` — Set to the input index of the first output value.
-    /// * `outNBElement` — Set to the number of output values written.
-    /// * `outMACD` — MACD line: fast MA minus slow MA.
-    /// * `outMACDSignal` — Signal line: MA of the MACD line.
-    /// * `outMACDHist` — Histogram: MACD minus signal.
-    ///
-    /// Integer parameters accept `i32::MIN` to select their default value.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds [`MAX_INDEX`],
-    /// [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below `startIdx`, and
-    /// [`RetCode::BadParam`] when an optional parameter is outside its documented range.
-    ///
-    /// # Panics
-    ///
-    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
-    /// length is always sufficient.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use ta_lib::{Core, RetCode, MAType};
-    ///
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    ///
-    /// let core = Core::new();
-    /// let mut out_beg = 0;
-    /// let mut out_nb = 0;
-    /// let mut macd = vec![0.0; 252];
-    /// let mut macd_signal = vec![0.0; 252];
-    /// let mut macd_hist = vec![0.0; 252];
-    ///
-    /// let ret = core.MACDEXT(
-    ///     0, data.len() - 1, &data, 12, MAType::SMA, 26, MAType::SMA, 9, MAType::SMA,
-    ///     &mut out_beg, &mut out_nb, &mut macd, &mut macd_signal, &mut macd_hist,
-    /// );
-    /// assert_eq!(ret, RetCode::Success);
-    /// assert!(out_nb > 0);
-    /// assert!(macd[..out_nb].iter().all(|v| v.is_finite()));
-    /// ```
-    ///
-    /// # See also
-    ///
-    /// [`Core::MACD`] · [`Core::MACDFIX`] · [`Core::MA`] · [`Core::EMA`] · [`Core::APO`] ·
-    /// [`Core::PPO`]
-    ///
-    /// Further reading: [ta-lib.org/functions/macdext](https://ta-lib.org/functions/macdext)
-    #[doc(alias = "MACDExtended")]
-    #[doc(alias = "MACDwithcontrollableMAtype")]
-    pub fn MACDEXT(
+    /// C-shaped body behind [`Core::MACDEXT`]: a `RetCode` plus two out-params,
+    /// which is what the transcribed body and its cross-indicator callers expect.
+    pub(crate) fn MACDEXT_Internal(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -233,10 +143,10 @@ impl Core {
         outMACDSignal: &mut [f64],
         outMACDHist: &mut [f64],
     ) -> RetCode {
-        if startIdx > MAX_INDEX {
+        if startIdx > Self::MAX_INDEX {
             return RetCode::OutOfRangeStartIndex;
         }
-        if endIdx > MAX_INDEX || endIdx < startIdx {
+        if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
         if ((optInFastPeriod) as i32) == (i32::MIN) {
@@ -298,7 +208,7 @@ impl Core {
             // stream_verify's multi-enum diagonal selects all-EMA and holds this
             // block to the composed path (issue #181). Keep the comment INSIDE the
             // block: above it, the stream inherits it and reads as if it delegated.
-            return self.MACD(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+            return self.MACD_Internal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
         }
         // Make sure slow is really slower than
         // the fast period! if not, swap...
@@ -343,14 +253,14 @@ impl Core {
         // signal calculation is done, all the output
         // will start at the requested 'startIdx'.
         tempInteger = startIdx - lookbackSignal;
-        retCode = self.MA(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, &mut outBegIdx1, &mut outNbElement1, &mut slowMABuffer[..]);
+        retCode = self.MA_Internal(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, &mut outBegIdx1, &mut outNbElement1, &mut slowMABuffer[..]);
         if retCode != RetCode::Success {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
             return retCode;
         }
         // Calculate the fast MA.
-        retCode = self.MA(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, &mut outBegIdx2, &mut outNbElement2, &mut fastMABuffer[..]);
+        retCode = self.MA_Internal(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, &mut outBegIdx2, &mut outNbElement2, &mut fastMABuffer[..]);
         if retCode != RetCode::Success {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
@@ -379,7 +289,7 @@ impl Core {
             outMACD[_di.._di + _n].copy_from_slice(&fastMABuffer[_si.._si + _n]);
         };
         // Calculate the signal/trigger line.
-        retCode = self.MA(0, outNbElement1 - 1, &fastMABuffer, optInSignalPeriod, optInSignalMAType, &mut outBegIdx2, &mut outNbElement2, outMACDSignal);
+        retCode = self.MA_Internal(0, outNbElement1 - 1, &fastMABuffer, optInSignalPeriod, optInSignalMAType, &mut outBegIdx2, &mut outNbElement2, outMACDSignal);
         if retCode != RetCode::Success {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
@@ -397,6 +307,141 @@ impl Core {
         (*outNBElement) = outNbElement2;
         return RetCode::Success;
     }
+    /// MACD variant where the fast, slow, and signal moving averages each use a user-selectable MA
+    /// type. Outputs the MACD line, its signal line, and their difference (histogram). Hist sign
+    /// change (MACD crossing its signal line) flags momentum shifts.
+    ///
+    /// # Formula
+    ///
+    /// ```text
+    /// MACD = MA_fast(inReal) - MA_slow(inReal)
+    /// Signal = MA_signal(MACD)
+    /// Hist = MACD - Signal
+    /// (each MA_* uses its own MA type and period)
+    /// ```
+    ///
+    /// # Notes
+    ///
+    /// * If the slow period is set smaller than the fast period, the fast and slow periods and
+    ///   their MA types are swapped so the slow moving average is always the longer one.
+    /// * A signal period of 1 disables signal-line smoothing for every signal MAType: the signal
+    ///   equals the MACD line and the histogram is zero.
+    /// * `TA_MAType_MAMA` ignores its period argument, so it always produces the same series
+    ///   regardless of the period requested. If both `optInFastMAType` and `optInSlowMAType` are
+    ///   set to MAMA, the fast and slow lines are therefore identical and MACD, Signal, and Hist
+    ///   are all zero at every bar. Select MAMA for only one side to get a meaningful spread.
+    ///
+    /// # Arguments
+    ///
+    /// * `startIdx` — Start index of the requested calculation range.
+    /// * `endIdx` — End index of the requested calculation range (inclusive).
+    /// * `inReal` — Source series.
+    /// * `optInFastPeriod` — Period of the fast MA (default 12, range 2..=100000)
+    /// * `optInFastMAType` — MA type for the fast MA (default 0 = SMA, values: 0=SMA, 1=EMA,
+    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
+    ///   `MAType::DEFAULT` selects the default)
+    /// * `optInSlowPeriod` — Period of the slow MA (default 26, range 2..=100000)
+    /// * `optInSlowMAType` — MA type for the slow MA (default 0 = SMA, values: 0=SMA, 1=EMA,
+    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
+    ///   `MAType::DEFAULT` selects the default)
+    /// * `optInSignalPeriod` — Period of the signal-line MA (default 9, range 1..=100000)
+    /// * `optInSignalMAType` — MA type for the signal line (default 0 = SMA, values: 0=SMA,
+    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
+    /// * `outMACD` — MACD line: fast MA minus slow MA.
+    /// * `outMACDSignal` — Signal line: MA of the MACD line.
+    /// * `outMACDHist` — Histogram: MACD minus signal.
+    ///
+    /// Integer parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
+    ///
+    /// # Returns
+    ///
+    /// On success, an [`OutRange`]: `beg_idx` is the index of the first value written, in the input
+    /// series' coordinates, and `count` is how many were written. A range shorter than the lookback
+    /// succeeds with `count == 0`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Err`] carrying [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds
+    /// [`Core::MAX_INDEX`], [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below
+    /// `startIdx`, and [`RetCode::BadParam`] when an optional parameter is outside its documented
+    /// range. A range shorter than the lookback is not an error: it is [`Ok`] with a zero
+    /// [`OutRange::count`].
+    ///
+    /// # Panics
+    ///
+    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::{Core, MAType};
+    ///
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let mut macd = vec![0.0; 252];
+    /// let mut macd_signal = vec![0.0; 252];
+    /// let mut macd_hist = vec![0.0; 252];
+    ///
+    /// let out_range = core.MACDEXT(
+    ///     0, data.len() - 1, &data, 12, MAType::SMA, 26, MAType::SMA, 9, MAType::SMA,
+    ///     &mut macd, &mut macd_signal, &mut macd_hist,
+    /// )?;
+    /// assert!(out_range.count > 0);
+    /// assert!(macd[..out_range.count].iter().all(|v| v.is_finite()));
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// [`Core::MACD`] · [`Core::MACDFIX`] · [`Core::MA`] · [`Core::EMA`] · [`Core::APO`] ·
+    /// [`Core::PPO`]
+    ///
+    /// Further reading: [ta-lib.org/functions/macdext](https://ta-lib.org/functions/macdext)
+    #[doc(alias = "MACDExtended")]
+    #[doc(alias = "MACDwithcontrollableMAtype")]
+    pub fn MACDEXT(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        optInFastPeriod: i32,
+        optInFastMAType: MAType,
+        optInSlowPeriod: i32,
+        optInSlowMAType: MAType,
+        optInSignalPeriod: i32,
+        optInSignalMAType: MAType,
+        outMACD: &mut [f64],
+        outMACDSignal: &mut [f64],
+        outMACDHist: &mut [f64],
+    ) -> Result<OutRange, RetCode> {
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let retCode = self.MACDEXT_Internal(
+            startIdx,
+            endIdx,
+            inReal,
+            optInFastPeriod,
+            optInFastMAType,
+            optInSlowPeriod,
+            optInSlowMAType,
+            optInSignalPeriod,
+            optInSignalMAType,
+            &mut outBegIdx,
+            &mut outNBElement,
+            outMACD,
+            outMACDSignal,
+            outMACDHist,
+        );
+        match retCode {
+            RetCode::Success => Ok(OutRange { beg_idx: outBegIdx, count: outNBElement }),
+            e => Err(e),
+        }
+    }
+
 }
 /**** Streaming API *****/
 
@@ -487,7 +532,7 @@ impl Core {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
-        if inReal.len() > MAX_INDEX + 1 {
+        if inReal.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
         if ((optInFastPeriod) as i32) == (i32::MIN) {

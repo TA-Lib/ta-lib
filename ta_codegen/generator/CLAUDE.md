@@ -275,13 +275,23 @@ is concrete-`f64` only.
 
 | Variant | Purpose |
 |---------|---------|
-| `fn <N>_Lookback(...) -> usize` | Lookback (first valid output index) |
-| `fn <N>(...)` | Guarded public API: validates params, pre-computes optimization values, delegates |
+| `pub fn <N>_Lookback(...) -> usize` | Lookback (first valid output index) |
+| `pub fn <N>(...) -> Result<OutRange, RetCode>` | The batch API. A thin generated wrapper with no out-params: it calls `<N>_Internal` and turns `Success` into `Ok(OutRange { beg_idx, count })`. Same two-tier shape Java (`<N>_Internal` + `OutRange`) and C# already ship |
+| `pub(crate) fn <N>_Internal(...) -> RetCode` | The guarded body: validates params, pre-computes optimization values, delegates. Keeps C's shape — a code plus `&mut outBegIdx` / `&mut outNBElement` — because that is what the transcribed bodies are written against, and it is where the FMA dispatch sits |
 | `fn <N>_Private(...)` | Only where the definition declares one. Extra pre-computed params, no validation prologue — its only caller is the guarded body above it. No shipped indicator declares one; the construct is carried by the `SYNTH4` gate fixture (`input_synth/README.md`) |
 
-Cross-indicator calls target the **guarded** entry point, which carries the
-bounds-assert preamble; that preamble takes an empty-range escape so a call
-computing nothing cannot panic.
+Cross-indicator calls target **`<N>_Internal`**, the guarded entry point, never
+the public wrapper: 19 of the 33 call sites hand the callee their own
+`&mut outBegIdx` / `&mut outNBElement` and read them back, and four fold "success
+with zero output" into the same conditional as the error, which `?` cannot
+express. `<N>_Internal` carries the bounds-assert preamble; that preamble takes an
+empty-range escape so a call computing nothing cannot panic.
+
+`rust_doc::guarded_docs` is the rustdoc for the **public** wrapper, so its
+`# Arguments` list must match that signature — not the internal one.
+`rust_public_entry_documents_exactly_its_parameters` pins the two together;
+nothing else can, since rustdoc has no lint for documenting a parameter that does
+not exist.
 
 ### Documentation (rustdoc)
 
@@ -289,7 +299,7 @@ computing nothing cannot panic.
 (parsed into `DocDef` by `parser/doc_md.rs`, attached as `FuncDef.doc`) as rustdoc
 on all three variants, and every guarded function gets a **generated runnable
 doctest** (252 bars of deterministic synthetic data, all params at defaults,
-asserts `Success`). Crate-level docs, Cargo.toml package metadata, and the crate
+propagating with `?` and asserting the returned `OutRange` is non-empty). Crate-level docs, Cargo.toml package metadata, and the crate
 README.md are emitted by `generate_rust_crate_scaffolding` in `main.rs`. Verify
 with `cargo doc --no-deps` (must be warning-free — prose escaping of `[`/`<` is
 load-bearing) and `cargo test --doc` in `ta_codegen/output/rust/`.

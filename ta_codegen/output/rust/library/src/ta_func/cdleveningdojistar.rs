@@ -72,13 +72,13 @@ impl Core {
     /// * `optInPenetration` — Fraction of the 1st real body the 3rd candle's close must
     ///   penetrate; larger demands a deeper close into the first body (default 0.3, minimum 0)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Real parameters accept `-4e37` to
-    /// select their default value.
+    /// Returns `usize::MAX` when a parameter is out of range. Real parameters accept
+    /// [`Core::REAL_DEFAULT`] to select their default value.
     #[inline]
     pub fn CDLEVENINGDOJISTAR_Lookback(&self, mut optInPenetration: f64) -> usize {
-        if optInPenetration == REAL_DEFAULT {
+        if optInPenetration == Self::REAL_DEFAULT {
             optInPenetration = 3e-1;
-        } else if !((optInPenetration >= 0e0) && (optInPenetration <= REAL_MAX)) {
+        } else if !((optInPenetration >= 0e0) && (optInPenetration <= Self::REAL_MAX)) {
             return usize::MAX;
         }
         #[allow(non_snake_case)]
@@ -101,79 +101,9 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         return (((BodyDoji_avgPeriod).max(BodyLong_avgPeriod)).max(BodyShort_avgPeriod) + 2) as usize;
     }
-    /// A three-candle bearish reversal pattern: a long white candle, a doji that gaps up (the
-    /// star), then a black candle closing well down into the first candle's body. A stricter
-    /// Evening Star whose middle candle must be a doji. Hit (-100) signals a bearish top reversal.
-    ///
-    /// # Notes
-    ///
-    /// * Does not verify the preceding uptrend the bearish reversal classically assumes.
-    ///
-    /// # Arguments
-    ///
-    /// * `startIdx` — Start index of the requested calculation range.
-    /// * `endIdx` — End index of the requested calculation range (inclusive).
-    /// * `inOpen` — Open price of each bar.
-    /// * `inHigh` — High price of each bar.
-    /// * `inLow` — Low price of each bar.
-    /// * `inClose` — Close price of each bar.
-    /// * `optInPenetration` — Fraction of the 1st real body the 3rd candle's close must
-    ///   penetrate; larger demands a deeper close into the first body (default 0.3, minimum 0)
-    /// * `outBegIdx` — Set to the input index of the first output value.
-    /// * `outNBElement` — Set to the number of output values written.
-    /// * `outInteger` — -100 when the pattern is detected, 0 otherwise. Always bearish; never
-    ///   emits +100.
-    ///
-    /// Real parameters accept `-4e37` to select their default value.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds [`MAX_INDEX`],
-    /// [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below `startIdx`, and
-    /// [`RetCode::BadParam`] when an optional parameter is outside its documented range.
-    ///
-    /// # Panics
-    ///
-    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
-    /// length is always sufficient.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use ta_lib::{Core, RetCode};
-    ///
-    /// let open: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin())
-    ///     .collect();
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let close: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
-    ///     .collect();
-    ///
-    /// let core = Core::new();
-    /// let mut out_beg = 0;
-    /// let mut out_nb = 0;
-    /// let mut out = vec![0i32; 252];
-    ///
-    /// let ret = core.CDLEVENINGDOJISTAR(
-    ///     0, open.len() - 1, &open, &high, &low, &close, 0.3,
-    ///     &mut out_beg, &mut out_nb, &mut out,
-    /// );
-    /// assert_eq!(ret, RetCode::Success);
-    /// assert!(out_nb > 0);
-    /// ```
-    ///
-    /// # See also
-    ///
-    /// [`Core::CDLEVENINGSTAR`] · [`Core::CDLMORNINGDOJISTAR`] · [`Core::CDLDOJISTAR`] ·
-    /// [`Core::CDLABANDONEDBABY`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdleveningdojistar](https://ta-lib.org/functions/cdleveningdojistar)
-    #[doc(alias = "EveningDojiStar")]
-    pub fn CDLEVENINGDOJISTAR(
+    /// C-shaped body behind [`Core::CDLEVENINGDOJISTAR`]: a `RetCode` plus two out-params,
+    /// which is what the transcribed body and its cross-indicator callers expect.
+    pub(crate) fn CDLEVENINGDOJISTAR_Internal(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -186,15 +116,15 @@ impl Core {
         outNBElement: &mut usize,
         outInteger: &mut [i32],
     ) -> RetCode {
-        if startIdx > MAX_INDEX {
+        if startIdx > Self::MAX_INDEX {
             return RetCode::OutOfRangeStartIndex;
         }
-        if endIdx > MAX_INDEX || endIdx < startIdx {
+        if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if optInPenetration == REAL_DEFAULT {
+        if optInPenetration == Self::REAL_DEFAULT {
             optInPenetration = 3e-1;
-        } else if !((optInPenetration >= 0e0) && (optInPenetration <= REAL_MAX)) {
+        } else if !((optInPenetration >= 0e0) && (optInPenetration <= Self::REAL_MAX)) {
             return RetCode::BadParam;
         }
         let _assertLb = self.CDLEVENINGDOJISTAR_Lookback(optInPenetration);
@@ -449,6 +379,113 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
+    /// A three-candle bearish reversal pattern: a long white candle, a doji that gaps up (the
+    /// star), then a black candle closing well down into the first candle's body. A stricter
+    /// Evening Star whose middle candle must be a doji. Hit (-100) signals a bearish top reversal.
+    ///
+    /// # Notes
+    ///
+    /// * Does not verify the preceding uptrend the bearish reversal classically assumes.
+    ///
+    /// # Arguments
+    ///
+    /// * `startIdx` — Start index of the requested calculation range.
+    /// * `endIdx` — End index of the requested calculation range (inclusive).
+    /// * `inOpen` — Open price of each bar.
+    /// * `inHigh` — High price of each bar.
+    /// * `inLow` — Low price of each bar.
+    /// * `inClose` — Close price of each bar.
+    /// * `optInPenetration` — Fraction of the 1st real body the 3rd candle's close must
+    ///   penetrate; larger demands a deeper close into the first body (default 0.3, minimum 0)
+    /// * `outInteger` — -100 when the pattern is detected, 0 otherwise. Always bearish; never
+    ///   emits +100.
+    ///
+    /// Real parameters accept [`Core::REAL_DEFAULT`] to select their default value.
+    ///
+    /// # Returns
+    ///
+    /// On success, an [`OutRange`]: `beg_idx` is the index of the first value written, in the input
+    /// series' coordinates, and `count` is how many were written. A range shorter than the lookback
+    /// succeeds with `count == 0`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Err`] carrying [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds
+    /// [`Core::MAX_INDEX`], [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below
+    /// `startIdx`, and [`RetCode::BadParam`] when an optional parameter is outside its documented
+    /// range. A range shorter than the lookback is not an error: it is [`Ok`] with a zero
+    /// [`OutRange::count`].
+    ///
+    /// # Panics
+    ///
+    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    ///
+    /// let open: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin())
+    ///     .collect();
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
+    ///     .collect();
+    ///
+    /// let core = Core::new();
+    /// let mut out = vec![0i32; 252];
+    ///
+    /// let out_range = core.CDLEVENINGDOJISTAR(
+    ///     0, open.len() - 1, &open, &high, &low, &close, 0.3,
+    ///     &mut out,
+    /// )?;
+    /// assert!(out_range.count > 0);
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// [`Core::CDLEVENINGSTAR`] · [`Core::CDLMORNINGDOJISTAR`] · [`Core::CDLDOJISTAR`] ·
+    /// [`Core::CDLABANDONEDBABY`]
+    ///
+    /// Further reading:
+    /// [ta-lib.org/functions/cdleveningdojistar](https://ta-lib.org/functions/cdleveningdojistar)
+    #[doc(alias = "EveningDojiStar")]
+    pub fn CDLEVENINGDOJISTAR(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inOpen: &[f64],
+        inHigh: &[f64],
+        inLow: &[f64],
+        inClose: &[f64],
+        optInPenetration: f64,
+        outInteger: &mut [i32],
+    ) -> Result<OutRange, RetCode> {
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let retCode = self.CDLEVENINGDOJISTAR_Internal(
+            startIdx,
+            endIdx,
+            inOpen,
+            inHigh,
+            inLow,
+            inClose,
+            optInPenetration,
+            &mut outBegIdx,
+            &mut outNBElement,
+            outInteger,
+        );
+        match retCode {
+            RetCode::Success => Ok(OutRange { beg_idx: outBegIdx, count: outNBElement }),
+            e => Err(e),
+        }
+    }
+
 }
 /**** Streaming API *****/
 
@@ -748,12 +785,12 @@ impl Core {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
-        if inOpen.len() > MAX_INDEX + 1 {
+        if inOpen.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if optInPenetration == REAL_DEFAULT {
+        if optInPenetration == Self::REAL_DEFAULT {
             optInPenetration = 3e-1;
-        } else if !((optInPenetration >= 0e0) && (optInPenetration <= REAL_MAX)) {
+        } else if !((optInPenetration >= 0e0) && (optInPenetration <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inOpen.len();

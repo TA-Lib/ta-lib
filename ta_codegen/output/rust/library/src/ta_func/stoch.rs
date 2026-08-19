@@ -88,8 +88,8 @@ impl Core {
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
     ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
-    /// to select their default value.
+    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[inline]
     pub fn STOCH_Lookback(&self, mut optInFastK_Period: i32, mut optInSlowK_Period: i32, mut optInSlowK_MAType: MAType, mut optInSlowD_Period: i32, mut optInSlowD_MAType: MAType) -> usize {
         if ((optInFastK_Period) as i32) == (i32::MIN) {
@@ -122,96 +122,9 @@ impl Core {
         retValue += self.MA_Lookback(optInSlowD_Period, optInSlowD_MAType);
         return retValue;
     }
-    /// Slow Stochastic oscillator: locates the close within the high-low range over a lookback
-    /// period, then double-smooths it. Returns the Slow-%K and Slow-%D lines. SlowK/SlowD > 80
-    /// overbought, \< 20 oversold; %K crossing %D signals momentum shifts.
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// FastK = 100*(Close - LL_n)/(HH_n - LL_n), n = FastK_Period (LL/HH = lowest low / highest high over n)
-    /// SlowK = MA(FastK, SlowK_Period, SlowK_MAType)
-    /// SlowD = MA(SlowK, SlowD_Period, SlowD_MAType)
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * When the high-low range over the window is zero, the raw stochastic is set to 0 instead of
-    ///   being undefined.
-    ///
-    /// # Arguments
-    ///
-    /// * `startIdx` — Start index of the requested calculation range.
-    /// * `endIdx` — End index of the requested calculation range (inclusive).
-    /// * `inHigh` — High price of each bar.
-    /// * `inLow` — Low price of each bar.
-    /// * `inClose` — Close price of each bar.
-    /// * `optInFastK_Period` — Lookback window for the raw %K high-low range (default 5, range
-    ///   1..=100000)
-    /// * `optInSlowK_Period` — Smoothing period turning FastK into SlowK (default 3, range
-    ///   1..=100000)
-    /// * `optInSlowK_MAType` — MA type used to smooth into SlowK (default 0 = SMA, values: 0=SMA,
-    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
-    /// * `optInSlowD_Period` — Smoothing period for the SlowD signal line (default 3, range
-    ///   1..=100000)
-    /// * `optInSlowD_MAType` — MA type used for the SlowD line (default 0 = SMA, values: 0=SMA,
-    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
-    /// * `outBegIdx` — Set to the input index of the first output value.
-    /// * `outNBElement` — Set to the number of output values written.
-    /// * `outSlowK` — Raw FastK smoothed by SlowK_Period MA.
-    /// * `outSlowD` — Signal line: SlowK smoothed by SlowD_Period MA.
-    ///
-    /// Integer parameters accept `i32::MIN` to select their default value.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds [`MAX_INDEX`],
-    /// [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below `startIdx`, and
-    /// [`RetCode::BadParam`] when an optional parameter is outside its documented range.
-    ///
-    /// # Panics
-    ///
-    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
-    /// length is always sufficient.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use ta_lib::{Core, RetCode, MAType};
-    ///
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let close: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
-    ///     .collect();
-    ///
-    /// let core = Core::new();
-    /// let mut out_beg = 0;
-    /// let mut out_nb = 0;
-    /// let mut slow_k = vec![0.0; 252];
-    /// let mut slow_d = vec![0.0; 252];
-    ///
-    /// let ret = core.STOCH(
-    ///     0, high.len() - 1, &high, &low, &close, 5, 3, MAType::SMA, 3, MAType::SMA,
-    ///     &mut out_beg, &mut out_nb, &mut slow_k, &mut slow_d,
-    /// );
-    /// assert_eq!(ret, RetCode::Success);
-    /// assert!(out_nb > 0);
-    /// assert!(slow_k[..out_nb].iter().all(|v| v.is_finite()));
-    /// ```
-    ///
-    /// # See also
-    ///
-    /// [`Core::STOCHF`] · [`Core::STOCHRSI`] · [`Core::MA`]
-    ///
-    /// Further reading: [ta-lib.org/functions/stoch](https://ta-lib.org/functions/stoch)
-    #[doc(alias = "Stochastic")]
-    #[doc(alias = "StochasticOscillator")]
-    #[doc(alias = "SlowStochastic")]
-    pub fn STOCH(
+    /// C-shaped body behind [`Core::STOCH`]: a `RetCode` plus two out-params,
+    /// which is what the transcribed body and its cross-indicator callers expect.
+    pub(crate) fn STOCH_Internal(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -228,10 +141,10 @@ impl Core {
         outSlowK: &mut [f64],
         outSlowD: &mut [f64],
     ) -> RetCode {
-        if startIdx > MAX_INDEX {
+        if startIdx > Self::MAX_INDEX {
             return RetCode::OutOfRangeStartIndex;
         }
-        if endIdx > MAX_INDEX || endIdx < startIdx {
+        if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
         if ((optInFastK_Period) as i32) == (i32::MIN) {
@@ -423,7 +336,7 @@ impl Core {
         // to the caller. It is always smoothed and then return.
         // Some documentation will refer to the smoothed version as being
         // "K-Slow", but often this end up to be shorten to "K".
-        retCode = { let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.MA(0, outIdx - 1, &tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc };
+        retCode = { let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.MA_Internal(0, outIdx - 1, &tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc };
         if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
             if bufferIsAllocated != 0 {
             }
@@ -434,7 +347,7 @@ impl Core {
         }
         // Calculate the %D which is simply a moving average of
         // the already smoothed %K.
-        retCode = self.MA(0, (((*outNBElement) as usize) - 1) as usize, &tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowD);
+        retCode = self.MA_Internal(0, (((*outNBElement) as usize) - 1) as usize, &tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowD);
         // Copy tempBuffer into the caller buffer.
         // (Calculation could not be done directly in the
         //  caller buffer because more input data then the
@@ -461,6 +374,138 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
+    /// Slow Stochastic oscillator: locates the close within the high-low range over a lookback
+    /// period, then double-smooths it. Returns the Slow-%K and Slow-%D lines. SlowK/SlowD > 80
+    /// overbought, \< 20 oversold; %K crossing %D signals momentum shifts.
+    ///
+    /// # Formula
+    ///
+    /// ```text
+    /// FastK = 100*(Close - LL_n)/(HH_n - LL_n), n = FastK_Period (LL/HH = lowest low / highest high over n)
+    /// SlowK = MA(FastK, SlowK_Period, SlowK_MAType)
+    /// SlowD = MA(SlowK, SlowD_Period, SlowD_MAType)
+    /// ```
+    ///
+    /// # Notes
+    ///
+    /// * When the high-low range over the window is zero, the raw stochastic is set to 0 instead of
+    ///   being undefined.
+    ///
+    /// # Arguments
+    ///
+    /// * `startIdx` — Start index of the requested calculation range.
+    /// * `endIdx` — End index of the requested calculation range (inclusive).
+    /// * `inHigh` — High price of each bar.
+    /// * `inLow` — Low price of each bar.
+    /// * `inClose` — Close price of each bar.
+    /// * `optInFastK_Period` — Lookback window for the raw %K high-low range (default 5, range
+    ///   1..=100000)
+    /// * `optInSlowK_Period` — Smoothing period turning FastK into SlowK (default 3, range
+    ///   1..=100000)
+    /// * `optInSlowK_MAType` — MA type used to smooth into SlowK (default 0 = SMA, values: 0=SMA,
+    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
+    /// * `optInSlowD_Period` — Smoothing period for the SlowD signal line (default 3, range
+    ///   1..=100000)
+    /// * `optInSlowD_MAType` — MA type used for the SlowD line (default 0 = SMA, values: 0=SMA,
+    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
+    /// * `outSlowK` — Raw FastK smoothed by SlowK_Period MA.
+    /// * `outSlowD` — Signal line: SlowK smoothed by SlowD_Period MA.
+    ///
+    /// Integer parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
+    ///
+    /// # Returns
+    ///
+    /// On success, an [`OutRange`]: `beg_idx` is the index of the first value written, in the input
+    /// series' coordinates, and `count` is how many were written. A range shorter than the lookback
+    /// succeeds with `count == 0`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Err`] carrying [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds
+    /// [`Core::MAX_INDEX`], [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below
+    /// `startIdx`, and [`RetCode::BadParam`] when an optional parameter is outside its documented
+    /// range. A range shorter than the lookback is not an error: it is [`Ok`] with a zero
+    /// [`OutRange::count`].
+    ///
+    /// # Panics
+    ///
+    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::{Core, MAType};
+    ///
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
+    ///     .collect();
+    ///
+    /// let core = Core::new();
+    /// let mut slow_k = vec![0.0; 252];
+    /// let mut slow_d = vec![0.0; 252];
+    ///
+    /// let out_range = core.STOCH(
+    ///     0, high.len() - 1, &high, &low, &close, 5, 3, MAType::SMA, 3, MAType::SMA,
+    ///     &mut slow_k, &mut slow_d,
+    /// )?;
+    /// assert!(out_range.count > 0);
+    /// assert!(slow_k[..out_range.count].iter().all(|v| v.is_finite()));
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// [`Core::STOCHF`] · [`Core::STOCHRSI`] · [`Core::MA`]
+    ///
+    /// Further reading: [ta-lib.org/functions/stoch](https://ta-lib.org/functions/stoch)
+    #[doc(alias = "Stochastic")]
+    #[doc(alias = "StochasticOscillator")]
+    #[doc(alias = "SlowStochastic")]
+    pub fn STOCH(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inHigh: &[f64],
+        inLow: &[f64],
+        inClose: &[f64],
+        optInFastK_Period: i32,
+        optInSlowK_Period: i32,
+        optInSlowK_MAType: MAType,
+        optInSlowD_Period: i32,
+        optInSlowD_MAType: MAType,
+        outSlowK: &mut [f64],
+        outSlowD: &mut [f64],
+    ) -> Result<OutRange, RetCode> {
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let retCode = self.STOCH_Internal(
+            startIdx,
+            endIdx,
+            inHigh,
+            inLow,
+            inClose,
+            optInFastK_Period,
+            optInSlowK_Period,
+            optInSlowK_MAType,
+            optInSlowD_Period,
+            optInSlowD_MAType,
+            &mut outBegIdx,
+            &mut outNBElement,
+            outSlowK,
+            outSlowD,
+        );
+        match retCode {
+            RetCode::Success => Ok(OutRange { beg_idx: outBegIdx, count: outNBElement }),
+            e => Err(e),
+        }
+    }
+
 }
 /**** Streaming API *****/
 
@@ -623,7 +668,7 @@ impl Core {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
-        if inHigh.len() > MAX_INDEX + 1 {
+        if inHigh.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
         if ((optInFastK_Period) as i32) == (i32::MIN) {
@@ -820,7 +865,7 @@ impl Core {
         // Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
         let (sub0, _) = self.MA_OpenInternal(&tempBuffer[..((outIdx - 1) as usize) + 1], ((0) as usize), optInSlowK_Period, optInSlowK_MAType)?;
-        retCode = { let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.MA(0, outIdx - 1, &tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc };
+        retCode = { let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.MA_Internal(0, outIdx - 1, &tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc };
         if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
             if bufferIsAllocated != 0 {
             }

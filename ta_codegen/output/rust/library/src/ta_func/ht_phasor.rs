@@ -71,73 +71,9 @@ impl Core {
         // See mama_lookback for an explanation of these
         return (32 + self.unstable_period[FuncUnstId::HT_PHASOR as usize]) as usize;
     }
-    /// Hilbert Transform indicator that decomposes the price series into its in-phase (I) and
-    /// quadrature (Q) phasor components. Shares the same detrend/Hilbert machinery as the other
-    /// HT_* cycle functions.
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// Smooth price with a 4-bar WMA (weights 1,2,3,4 /10). Apply the Hilbert Transform (a=0.0962, b=0.5769, scaled per bar by adjustedPrevPeriod = 0.075*period + 0.54) to get detrender = HT(smoothed) and Q1 = HT(detrender). Output: outInPhase = detrender delayed 3 price bars; outQuadrature = Q1.
-    /// ```
-    ///
-    /// # Arguments
-    ///
-    /// * `startIdx` — Start index of the requested calculation range.
-    /// * `endIdx` — End index of the requested calculation range (inclusive).
-    /// * `inReal` — Source price series.
-    /// * `outBegIdx` — Set to the input index of the first output value.
-    /// * `outNBElement` — Set to the number of output values written.
-    /// * `outInPhase` — In-phase component (detrender delayed 3 bars)
-    /// * `outQuadrature` — Quadrature component (Q1 of the Hilbert Transform)
-    ///
-    /// # Errors
-    ///
-    /// Returns [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds [`MAX_INDEX`], and
-    /// [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below `startIdx`.
-    ///
-    /// # Panics
-    ///
-    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
-    /// length is always sufficient.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use ta_lib::{Core, RetCode};
-    ///
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    ///
-    /// let core = Core::new();
-    /// let mut out_beg = 0;
-    /// let mut out_nb = 0;
-    /// let mut in_phase = vec![0.0; 252];
-    /// let mut quadrature = vec![0.0; 252];
-    ///
-    /// let ret = core.HT_PHASOR(
-    ///     0, data.len() - 1, &data,
-    ///     &mut out_beg, &mut out_nb, &mut in_phase, &mut quadrature,
-    /// );
-    /// assert_eq!(ret, RetCode::Success);
-    /// assert!(out_nb > 0);
-    /// assert!(in_phase[..out_nb].iter().all(|v| v.is_finite()));
-    /// ```
-    ///
-    /// # See also
-    ///
-    /// [`Core::HT_DCPERIOD`] · [`Core::HT_DCPHASE`] · [`Core::HT_SINE`] · [`Core::HT_TRENDMODE`]
-    /// · [`Core::MAMA`] · [`Core::WMA`]
-    ///
-    /// # References
-    ///
-    /// * John F. Ehlers, *Rocket Science for Traders: Digital Signal Processing Applications*, John
-    ///   Wiley & Sons (ISBN 0471405671)
-    ///
-    /// Further reading: [ta-lib.org/functions/ht_phasor](https://ta-lib.org/functions/ht_phasor)
-    #[doc(alias = "HilbertTransformPhasor")]
-    #[doc(alias = "InPhaseQuadrature")]
-    pub fn HT_PHASOR(
+    /// C-shaped body behind [`Core::HT_PHASOR`]: a `RetCode` plus two out-params,
+    /// which is what the transcribed body and its cross-indicator callers expect.
+    pub(crate) fn HT_PHASOR_Internal(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -148,13 +84,13 @@ impl Core {
         outQuadrature: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, HT_PHASOR_fma, HT_PHASOR_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature));
+        return ta_lib_dispatch::dispatch_fma!(self, HT_PHASOR_Internal_fma, HT_PHASOR_Internal_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature));
         #[cfg(not(target_arch = "x86_64"))]
-        self.HT_PHASOR_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature)
+        self.HT_PHASOR_Internal_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn HT_PHASOR_fma(
+    fn HT_PHASOR_Internal_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -164,10 +100,10 @@ impl Core {
         outInPhase: &mut [f64],
         outQuadrature: &mut [f64],
     ) -> RetCode {
-        self.HT_PHASOR_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature)
+        self.HT_PHASOR_Internal_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature)
     }
     #[inline(always)]
-    fn HT_PHASOR_impl(
+    fn HT_PHASOR_Internal_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -177,10 +113,10 @@ impl Core {
         outInPhase: &mut [f64],
         outQuadrature: &mut [f64],
     ) -> RetCode {
-        if startIdx > MAX_INDEX {
+        if startIdx > Self::MAX_INDEX {
             return RetCode::OutOfRangeStartIndex;
         }
-        if endIdx > MAX_INDEX || endIdx < startIdx {
+        if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
         if outInPhase.as_ptr() == outQuadrature.as_ptr() {
@@ -516,6 +452,98 @@ impl Core {
         (*outNBElement) = outIdx;
         return RetCode::Success;
     }
+    /// Hilbert Transform indicator that decomposes the price series into its in-phase (I) and
+    /// quadrature (Q) phasor components. Shares the same detrend/Hilbert machinery as the other
+    /// HT_* cycle functions.
+    ///
+    /// # Formula
+    ///
+    /// ```text
+    /// Smooth price with a 4-bar WMA (weights 1,2,3,4 /10). Apply the Hilbert Transform (a=0.0962, b=0.5769, scaled per bar by adjustedPrevPeriod = 0.075*period + 0.54) to get detrender = HT(smoothed) and Q1 = HT(detrender). Output: outInPhase = detrender delayed 3 price bars; outQuadrature = Q1.
+    /// ```
+    ///
+    /// # Arguments
+    ///
+    /// * `startIdx` — Start index of the requested calculation range.
+    /// * `endIdx` — End index of the requested calculation range (inclusive).
+    /// * `inReal` — Source price series.
+    /// * `outInPhase` — In-phase component (detrender delayed 3 bars)
+    /// * `outQuadrature` — Quadrature component (Q1 of the Hilbert Transform)
+    ///
+    /// # Returns
+    ///
+    /// On success, an [`OutRange`]: `beg_idx` is the index of the first value written, in the input
+    /// series' coordinates, and `count` is how many were written. A range shorter than the lookback
+    /// succeeds with `count == 0`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Err`] carrying [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds
+    /// [`Core::MAX_INDEX`], and [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is
+    /// below `startIdx`. A range shorter than the lookback is not an error: it is [`Ok`] with a
+    /// zero [`OutRange::count`].
+    ///
+    /// # Panics
+    ///
+    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    ///
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let mut in_phase = vec![0.0; 252];
+    /// let mut quadrature = vec![0.0; 252];
+    ///
+    /// let out_range = core.HT_PHASOR(0, data.len() - 1, &data, &mut in_phase, &mut quadrature)?;
+    /// assert!(out_range.count > 0);
+    /// assert!(in_phase[..out_range.count].iter().all(|v| v.is_finite()));
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// [`Core::HT_DCPERIOD`] · [`Core::HT_DCPHASE`] · [`Core::HT_SINE`] · [`Core::HT_TRENDMODE`]
+    /// · [`Core::MAMA`] · [`Core::WMA`]
+    ///
+    /// # References
+    ///
+    /// * John F. Ehlers, *Rocket Science for Traders: Digital Signal Processing Applications*, John
+    ///   Wiley & Sons (ISBN 0471405671)
+    ///
+    /// Further reading: [ta-lib.org/functions/ht_phasor](https://ta-lib.org/functions/ht_phasor)
+    #[doc(alias = "HilbertTransformPhasor")]
+    #[doc(alias = "InPhaseQuadrature")]
+    pub fn HT_PHASOR(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        outInPhase: &mut [f64],
+        outQuadrature: &mut [f64],
+    ) -> Result<OutRange, RetCode> {
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let retCode = self.HT_PHASOR_Internal(
+            startIdx,
+            endIdx,
+            inReal,
+            &mut outBegIdx,
+            &mut outNBElement,
+            outInPhase,
+            outQuadrature,
+        );
+        match retCode {
+            RetCode::Success => Ok(OutRange { beg_idx: outBegIdx, count: outNBElement }),
+            e => Err(e),
+        }
+    }
+
 }
 /**** Streaming API *****/
 
@@ -824,7 +852,7 @@ impl Core {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
-        if inReal.len() > MAX_INDEX + 1 {
+        if inReal.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
         let historyLen: usize = inReal.len();

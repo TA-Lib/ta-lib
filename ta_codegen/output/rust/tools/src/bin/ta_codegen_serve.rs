@@ -4,7 +4,7 @@
 use serde_json::{self, Value};
 use std::io::{self, BufRead, Write};
 use std::time::Instant;
-use ta_lib::{Core, CoreBuilder, RetCode, FuncUnstId, MAX_INDEX};
+use ta_lib::{Core, CoreBuilder, RetCode, FuncUnstId};
 use ta_lib::{CandleSetting, CandleSettings, CandleSettingType, RangeType};
 use ta_lib::abstract_api::{self, InputType, OutputType, OptInputType};
 use ta_lib::MAType;
@@ -764,15 +764,7 @@ fn parse_f64_array(val: &Value) -> Vec<f64> {
 }
 
 fn retcode_to_int(rc: RetCode) -> i32 {
-    match rc {
-        RetCode::Success => 0,
-        RetCode::BadParam => 2,
-        RetCode::AllocErr => 3,
-        RetCode::InternalError => 5000,
-        RetCode::OutOfRangeStartIndex => 12,
-        RetCode::OutOfRangeEndIndex => 13,
-        _ => 5000,
-    }
+    rc.as_c_int()
 }
 
 fn json_f64_array(data: &[f64]) -> String {
@@ -994,15 +986,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.AC(
+            let _out = core.AC(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
                 optInFastPeriod,
                 optInSlowPeriod,
                 optInSignalPeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.AC_Open(&inHigh[..=endIdx], &inLow[..=endIdx], optInFastPeriod, optInSlowPeriod, optInSignalPeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -1082,14 +1078,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.ACCBANDS(
+            let _out = core.ACCBANDS(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
                 &inClose,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1, &mut outBuf2,
+                &mut outBuf0, &mut outBuf1, &mut outBuf2,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.ACCBANDS_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -1156,11 +1156,15 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.ACOS(
+            let _out = core.ACOS(
                 startIdx, endIdx,
                 &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.ACOS_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -1244,14 +1248,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.AD(
+            let _out = core.AD(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
                 &inClose,
                 &inVolume,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.AD_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &inVolume[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -1321,12 +1329,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.ADD(
+            let _out = core.ADD(
                 startIdx, endIdx,
                 &inReal0,
                 &inReal1,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.ADD_Open(&inReal0[..=endIdx], &inReal1[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -1412,7 +1424,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.ADOSC(
+            let _out = core.ADOSC(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
@@ -1420,8 +1432,12 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inVolume,
                 optInFastPeriod,
                 optInSlowPeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.ADOSC_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &inVolume[..=endIdx], optInFastPeriod, optInSlowPeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -1502,14 +1518,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.ADX(
+            let _out = core.ADX(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
                 &inClose,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.ADX_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -1587,14 +1607,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.ADXR(
+            let _out = core.ADXR(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
                 &inClose,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.ADXR_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -1666,14 +1690,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.AO(
+            let _out = core.AO(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
                 optInFastPeriod,
                 optInSlowPeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.AO_Open(&inHigh[..=endIdx], &inLow[..=endIdx], optInFastPeriod, optInSlowPeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -1743,14 +1771,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.APO(
+            let _out = core.APO(
                 startIdx, endIdx,
                 &inReal,
                 optInFastPeriod,
                 optInSlowPeriod,
                 optInMAType,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.APO_Open(&inReal[..=endIdx], optInFastPeriod, optInSlowPeriod, optInMAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -1823,13 +1855,17 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.AROON(
+            let _out = core.AROON(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1,
+                &mut outBuf0, &mut outBuf1,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.AROON_Open(&inHigh[..=endIdx], &inLow[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -1902,13 +1938,17 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.AROONOSC(
+            let _out = core.AROONOSC(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.AROONOSC_Open(&inHigh[..=endIdx], &inLow[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -1971,11 +2011,15 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.ASIN(
+            let _out = core.ASIN(
                 startIdx, endIdx,
                 &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.ASIN_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -2038,11 +2082,15 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.ATAN(
+            let _out = core.ATAN(
                 startIdx, endIdx,
                 &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.ATAN_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -2123,14 +2171,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.ATR(
+            let _out = core.ATR(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
                 &inClose,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.ATR_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -2194,12 +2246,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.AVGDEV(
+            let _out = core.AVGDEV(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.AVGDEV_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -2283,14 +2339,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.AVGPRICE(
+            let _out = core.AVGPRICE(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.AVGPRICE_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -2363,15 +2423,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.BBANDS(
+            let _out = core.BBANDS(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 optInNbDevUp,
                 optInNbDevDn,
                 optInMAType,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1, &mut outBuf2,
+                &mut outBuf0, &mut outBuf1, &mut outBuf2,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.BBANDS_Open(&inReal[..=endIdx], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -2447,13 +2511,17 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.BETA(
+            let _out = core.BETA(
                 startIdx, endIdx,
                 &inReal0,
                 &inReal1,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.BETA_Open(&inReal0[..=endIdx], &inReal1[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -2537,14 +2605,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.BOP(
+            let _out = core.BOP(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.BOP_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -2622,14 +2694,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CCI(
+            let _out = core.CCI(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
                 &inClose,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CCI_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -2713,14 +2789,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDL2CROWS(
+            let _out = core.CDL2CROWS(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDL2CROWS_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -2804,14 +2884,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDL3BLACKCROWS(
+            let _out = core.CDL3BLACKCROWS(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDL3BLACKCROWS_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -2895,14 +2979,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDL3INSIDE(
+            let _out = core.CDL3INSIDE(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDL3INSIDE_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -2986,14 +3074,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDL3LINESTRIKE(
+            let _out = core.CDL3LINESTRIKE(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDL3LINESTRIKE_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -3077,14 +3169,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDL3OUTSIDE(
+            let _out = core.CDL3OUTSIDE(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDL3OUTSIDE_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -3168,14 +3264,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDL3STARSINSOUTH(
+            let _out = core.CDL3STARSINSOUTH(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDL3STARSINSOUTH_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -3259,14 +3359,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDL3WHITESOLDIERS(
+            let _out = core.CDL3WHITESOLDIERS(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDL3WHITESOLDIERS_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -3351,15 +3455,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLABANDONEDBABY(
+            let _out = core.CDLABANDONEDBABY(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
                 optInPenetration,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLABANDONEDBABY_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -3443,14 +3551,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLADVANCEBLOCK(
+            let _out = core.CDLADVANCEBLOCK(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLADVANCEBLOCK_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -3534,14 +3646,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLBELTHOLD(
+            let _out = core.CDLBELTHOLD(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLBELTHOLD_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -3625,14 +3741,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLBREAKAWAY(
+            let _out = core.CDLBREAKAWAY(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLBREAKAWAY_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -3716,14 +3836,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLCLOSINGMARUBOZU(
+            let _out = core.CDLCLOSINGMARUBOZU(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLCLOSINGMARUBOZU_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -3807,14 +3931,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLCONCEALBABYSWALL(
+            let _out = core.CDLCONCEALBABYSWALL(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLCONCEALBABYSWALL_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -3898,14 +4026,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLCOUNTERATTACK(
+            let _out = core.CDLCOUNTERATTACK(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLCOUNTERATTACK_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -3990,15 +4122,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLDARKCLOUDCOVER(
+            let _out = core.CDLDARKCLOUDCOVER(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
                 optInPenetration,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLDARKCLOUDCOVER_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -4082,14 +4218,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLDOJI(
+            let _out = core.CDLDOJI(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLDOJI_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -4173,14 +4313,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLDOJISTAR(
+            let _out = core.CDLDOJISTAR(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLDOJISTAR_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -4264,14 +4408,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLDRAGONFLYDOJI(
+            let _out = core.CDLDRAGONFLYDOJI(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLDRAGONFLYDOJI_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -4355,14 +4503,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLENGULFING(
+            let _out = core.CDLENGULFING(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLENGULFING_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -4447,15 +4599,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLEVENINGDOJISTAR(
+            let _out = core.CDLEVENINGDOJISTAR(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
                 optInPenetration,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLEVENINGDOJISTAR_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -4540,15 +4696,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLEVENINGSTAR(
+            let _out = core.CDLEVENINGSTAR(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
                 optInPenetration,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLEVENINGSTAR_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -4632,14 +4792,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLGAPSIDESIDEWHITE(
+            let _out = core.CDLGAPSIDESIDEWHITE(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLGAPSIDESIDEWHITE_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -4723,14 +4887,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLGRAVESTONEDOJI(
+            let _out = core.CDLGRAVESTONEDOJI(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLGRAVESTONEDOJI_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -4814,14 +4982,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLHAMMER(
+            let _out = core.CDLHAMMER(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLHAMMER_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -4905,14 +5077,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLHANGINGMAN(
+            let _out = core.CDLHANGINGMAN(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLHANGINGMAN_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -4996,14 +5172,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLHARAMI(
+            let _out = core.CDLHARAMI(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLHARAMI_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -5087,14 +5267,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLHARAMICROSS(
+            let _out = core.CDLHARAMICROSS(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLHARAMICROSS_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -5178,14 +5362,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLHIGHWAVE(
+            let _out = core.CDLHIGHWAVE(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLHIGHWAVE_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -5269,14 +5457,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLHIKKAKE(
+            let _out = core.CDLHIKKAKE(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLHIKKAKE_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -5360,14 +5552,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLHIKKAKEMOD(
+            let _out = core.CDLHIKKAKEMOD(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLHIKKAKEMOD_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -5451,14 +5647,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLHOMINGPIGEON(
+            let _out = core.CDLHOMINGPIGEON(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLHOMINGPIGEON_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -5542,14 +5742,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLIDENTICAL3CROWS(
+            let _out = core.CDLIDENTICAL3CROWS(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLIDENTICAL3CROWS_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -5633,14 +5837,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLINNECK(
+            let _out = core.CDLINNECK(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLINNECK_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -5724,14 +5932,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLINVERTEDHAMMER(
+            let _out = core.CDLINVERTEDHAMMER(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLINVERTEDHAMMER_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -5815,14 +6027,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLKICKING(
+            let _out = core.CDLKICKING(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLKICKING_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -5906,14 +6122,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLKICKINGBYLENGTH(
+            let _out = core.CDLKICKINGBYLENGTH(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLKICKINGBYLENGTH_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -5997,14 +6217,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLLADDERBOTTOM(
+            let _out = core.CDLLADDERBOTTOM(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLLADDERBOTTOM_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -6088,14 +6312,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLLONGLEGGEDDOJI(
+            let _out = core.CDLLONGLEGGEDDOJI(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLLONGLEGGEDDOJI_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -6179,14 +6407,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLLONGLINE(
+            let _out = core.CDLLONGLINE(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLLONGLINE_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -6270,14 +6502,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLMARUBOZU(
+            let _out = core.CDLMARUBOZU(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLMARUBOZU_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -6361,14 +6597,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLMATCHINGLOW(
+            let _out = core.CDLMATCHINGLOW(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLMATCHINGLOW_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -6453,15 +6693,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLMATHOLD(
+            let _out = core.CDLMATHOLD(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
                 optInPenetration,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLMATHOLD_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -6546,15 +6790,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLMORNINGDOJISTAR(
+            let _out = core.CDLMORNINGDOJISTAR(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
                 optInPenetration,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLMORNINGDOJISTAR_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -6639,15 +6887,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLMORNINGSTAR(
+            let _out = core.CDLMORNINGSTAR(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
                 optInPenetration,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLMORNINGSTAR_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInPenetration, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -6731,14 +6983,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLONNECK(
+            let _out = core.CDLONNECK(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLONNECK_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -6822,14 +7078,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLPIERCING(
+            let _out = core.CDLPIERCING(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLPIERCING_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -6913,14 +7173,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLRICKSHAWMAN(
+            let _out = core.CDLRICKSHAWMAN(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLRICKSHAWMAN_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -7004,14 +7268,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLRISEFALL3METHODS(
+            let _out = core.CDLRISEFALL3METHODS(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLRISEFALL3METHODS_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -7095,14 +7363,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLSEPARATINGLINES(
+            let _out = core.CDLSEPARATINGLINES(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLSEPARATINGLINES_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -7186,14 +7458,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLSHOOTINGSTAR(
+            let _out = core.CDLSHOOTINGSTAR(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLSHOOTINGSTAR_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -7277,14 +7553,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLSHORTLINE(
+            let _out = core.CDLSHORTLINE(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLSHORTLINE_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -7368,14 +7648,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLSPINNINGTOP(
+            let _out = core.CDLSPINNINGTOP(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLSPINNINGTOP_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -7459,14 +7743,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLSTALLEDPATTERN(
+            let _out = core.CDLSTALLEDPATTERN(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLSTALLEDPATTERN_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -7550,14 +7838,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLSTICKSANDWICH(
+            let _out = core.CDLSTICKSANDWICH(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLSTICKSANDWICH_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -7641,14 +7933,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLTAKURI(
+            let _out = core.CDLTAKURI(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLTAKURI_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -7732,14 +8028,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLTASUKIGAP(
+            let _out = core.CDLTASUKIGAP(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLTASUKIGAP_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -7823,14 +8123,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLTHRUSTING(
+            let _out = core.CDLTHRUSTING(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLTHRUSTING_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -7914,14 +8218,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLTRISTAR(
+            let _out = core.CDLTRISTAR(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLTRISTAR_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -8005,14 +8313,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLUNIQUE3RIVER(
+            let _out = core.CDLUNIQUE3RIVER(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLUNIQUE3RIVER_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -8096,14 +8408,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLUPSIDEGAP2CROWS(
+            let _out = core.CDLUPSIDEGAP2CROWS(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLUPSIDEGAP2CROWS_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -8187,14 +8503,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CDLXSIDEGAP3METHODS(
+            let _out = core.CDLXSIDEGAP3METHODS(
                 startIdx, endIdx,
                 &inOpen,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CDLXSIDEGAP3METHODS_Open(&inOpen[..=endIdx], &inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -8257,11 +8577,15 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CEIL(
+            let _out = core.CEIL(
                 startIdx, endIdx,
                 &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CEIL_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -8346,15 +8670,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CMF(
+            let _out = core.CMF(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
                 &inClose,
                 &inVolume,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CMF_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &inVolume[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -8421,12 +8749,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CMO(
+            let _out = core.CMO(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CMO_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -8490,12 +8822,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CMOU(
+            let _out = core.CMOU(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CMOU_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -8566,13 +8902,17 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.CORREL(
+            let _out = core.CORREL(
                 startIdx, endIdx,
                 &inReal0,
                 &inReal1,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.CORREL_Open(&inReal0[..=endIdx], &inReal1[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -8635,11 +8975,15 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.COS(
+            let _out = core.COS(
                 startIdx, endIdx,
                 &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.COS_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -8702,11 +9046,15 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.COSH(
+            let _out = core.COSH(
                 startIdx, endIdx,
                 &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.COSH_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -8770,12 +9118,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.DEMA(
+            let _out = core.DEMA(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.DEMA_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -8845,12 +9197,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.DIV(
+            let _out = core.DIV(
                 startIdx, endIdx,
                 &inReal0,
                 &inReal1,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.DIV_Open(&inReal0[..=endIdx], &inReal1[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -8931,14 +9287,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.DX(
+            let _out = core.DX(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
                 &inClose,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.DX_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -9009,13 +9369,17 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.EFI(
+            let _out = core.EFI(
                 startIdx, endIdx,
                 &inClose,
                 &inVolume,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.EFI_Open(&inClose[..=endIdx], &inVolume[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -9082,12 +9446,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.EMA(
+            let _out = core.EMA(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.EMA_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -9150,11 +9518,15 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.EXP(
+            let _out = core.EXP(
                 startIdx, endIdx,
                 &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.EXP_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -9217,11 +9589,15 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.FLOOR(
+            let _out = core.FLOOR(
                 startIdx, endIdx,
                 &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.FLOOR_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -9285,12 +9661,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.HMA(
+            let _out = core.HMA(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.HMA_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -9356,11 +9736,15 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.HT_DCPERIOD(
+            let _out = core.HT_DCPERIOD(
                 startIdx, endIdx,
                 &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.HT_DCPERIOD_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -9426,11 +9810,15 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.HT_DCPHASE(
+            let _out = core.HT_DCPHASE(
                 startIdx, endIdx,
                 &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.HT_DCPHASE_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -9497,11 +9885,15 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.HT_PHASOR(
+            let _out = core.HT_PHASOR(
                 startIdx, endIdx,
                 &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1,
+                &mut outBuf0, &mut outBuf1,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.HT_PHASOR_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -9570,11 +9962,15 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.HT_SINE(
+            let _out = core.HT_SINE(
                 startIdx, endIdx,
                 &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1,
+                &mut outBuf0, &mut outBuf1,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.HT_SINE_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -9642,11 +10038,15 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.HT_TRENDLINE(
+            let _out = core.HT_TRENDLINE(
                 startIdx, endIdx,
                 &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.HT_TRENDLINE_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -9712,11 +10112,15 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.HT_TRENDMODE(
+            let _out = core.HT_TRENDMODE(
                 startIdx, endIdx,
                 &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.HT_TRENDMODE_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -9787,13 +10191,17 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.IMI(
+            let _out = core.IMI(
                 startIdx, endIdx,
                 &inOpen,
                 &inClose,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.IMI_Open(&inOpen[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -9860,12 +10268,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.KAMA(
+            let _out = core.KAMA(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.KAMA_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -9929,12 +10341,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.LINEARREG(
+            let _out = core.LINEARREG(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.LINEARREG_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -9998,12 +10414,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.LINEARREG_ANGLE(
+            let _out = core.LINEARREG_ANGLE(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.LINEARREG_ANGLE_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -10067,12 +10487,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.LINEARREG_INTERCEPT(
+            let _out = core.LINEARREG_INTERCEPT(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.LINEARREG_INTERCEPT_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -10136,12 +10560,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.LINEARREG_SLOPE(
+            let _out = core.LINEARREG_SLOPE(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.LINEARREG_SLOPE_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -10204,11 +10632,15 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.LN(
+            let _out = core.LN(
                 startIdx, endIdx,
                 &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.LN_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -10271,11 +10703,15 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.LOG10(
+            let _out = core.LOG10(
                 startIdx, endIdx,
                 &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.LOG10_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -10344,13 +10780,17 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.MA(
+            let _out = core.MA(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 optInMAType,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.MA_Open(&inReal[..=endIdx], optInTimePeriod, optInMAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -10419,14 +10859,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.MACD(
+            let _out = core.MACD(
                 startIdx, endIdx,
                 &inReal,
                 optInFastPeriod,
                 optInSlowPeriod,
                 optInSignalPeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1, &mut outBuf2,
+                &mut outBuf0, &mut outBuf1, &mut outBuf2,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.MACD_Open(&inReal[..=endIdx], optInFastPeriod, optInSlowPeriod, optInSignalPeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -10509,7 +10953,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.MACDEXT(
+            let _out = core.MACDEXT(
                 startIdx, endIdx,
                 &inReal,
                 optInFastPeriod,
@@ -10518,8 +10962,12 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInSlowMAType,
                 optInSignalPeriod,
                 optInSignalMAType,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1, &mut outBuf2,
+                &mut outBuf0, &mut outBuf1, &mut outBuf2,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.MACDEXT_Open(&inReal[..=endIdx], optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -10590,12 +11038,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.MACDFIX(
+            let _out = core.MACDFIX(
                 startIdx, endIdx,
                 &inReal,
                 optInSignalPeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1, &mut outBuf2,
+                &mut outBuf0, &mut outBuf1, &mut outBuf2,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.MACDFIX_Open(&inReal[..=endIdx], optInSignalPeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -10668,13 +11120,17 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.MAMA(
+            let _out = core.MAMA(
                 startIdx, endIdx,
                 &inReal,
                 optInFastLimit,
                 optInSlowLimit,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1,
+                &mut outBuf0, &mut outBuf1,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.MAMA_Open(&inReal[..=endIdx], optInFastLimit, optInSlowLimit, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -10753,13 +11209,17 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.MARKETFI(
+            let _out = core.MARKETFI(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
                 &inVolume,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.MARKETFI_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inVolume[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -10836,15 +11296,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.MAVP(
+            let _out = core.MAVP(
                 startIdx, endIdx,
                 &inReal0,
                 &inReal1,
                 optInMinPeriod,
                 optInMaxPeriod,
                 optInMAType,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.MAVP_Open(&inReal0[..=endIdx], &inReal1[..=endIdx], optInMinPeriod, optInMaxPeriod, optInMAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -10909,12 +11373,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.MAX(
+            let _out = core.MAX(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.MAX_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -10978,12 +11446,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.MAXINDEX(
+            let _out = core.MAXINDEX(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.MAXINDEX_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -11053,12 +11525,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.MEDPRICE(
+            let _out = core.MEDPRICE(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.MEDPRICE_Open(&inHigh[..=endIdx], &inLow[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -11143,15 +11619,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.MFI(
+            let _out = core.MFI(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
                 &inClose,
                 &inVolume,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.MFI_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], &inVolume[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -11215,12 +11695,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.MIDPOINT(
+            let _out = core.MIDPOINT(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.MIDPOINT_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -11291,13 +11775,17 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.MIDPRICE(
+            let _out = core.MIDPRICE(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.MIDPRICE_Open(&inHigh[..=endIdx], &inLow[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -11361,12 +11849,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.MIN(
+            let _out = core.MIN(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.MIN_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -11430,12 +11922,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.MININDEX(
+            let _out = core.MININDEX(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
+                &mut outIntBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.MININDEX_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -11500,12 +11996,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.MINMAX(
+            let _out = core.MINMAX(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1,
+                &mut outBuf0, &mut outBuf1,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.MINMAX_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -11572,12 +12072,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.MINMAXINDEX(
+            let _out = core.MINMAXINDEX(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outIntBuf0, &mut outIntBuf1,
+                &mut outIntBuf0, &mut outIntBuf1,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.MINMAXINDEX_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -11660,14 +12164,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.MINUS_DI(
+            let _out = core.MINUS_DI(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
                 &inClose,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.MINUS_DI_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -11741,13 +12249,17 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.MINUS_DM(
+            let _out = core.MINUS_DM(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.MINUS_DM_Open(&inHigh[..=endIdx], &inLow[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -11811,12 +12323,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.MOM(
+            let _out = core.MOM(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.MOM_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -11886,12 +12402,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.MULT(
+            let _out = core.MULT(
                 startIdx, endIdx,
                 &inReal0,
                 &inReal1,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.MULT_Open(&inReal0[..=endIdx], &inReal1[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -11972,14 +12492,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.NATR(
+            let _out = core.NATR(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
                 &inClose,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.NATR_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -12049,12 +12573,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.NVI(
+            let _out = core.NVI(
                 startIdx, endIdx,
                 &inClose,
                 &inVolume,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.NVI_Open(&inClose[..=endIdx], &inVolume[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -12124,12 +12652,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.OBV(
+            let _out = core.OBV(
                 startIdx, endIdx,
                 &inReal,
                 &inVolume,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.OBV_Open(&inReal[..=endIdx], &inVolume[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -12210,14 +12742,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.PLUS_DI(
+            let _out = core.PLUS_DI(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
                 &inClose,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.PLUS_DI_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -12291,13 +12827,17 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.PLUS_DM(
+            let _out = core.PLUS_DM(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.PLUS_DM_Open(&inHigh[..=endIdx], &inLow[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -12367,14 +12907,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.PPO(
+            let _out = core.PPO(
                 startIdx, endIdx,
                 &inReal,
                 optInFastPeriod,
                 optInSlowPeriod,
                 optInMAType,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.PPO_Open(&inReal[..=endIdx], optInFastPeriod, optInSlowPeriod, optInMAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -12445,12 +12989,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.PVI(
+            let _out = core.PVI(
                 startIdx, endIdx,
                 &inClose,
                 &inVolume,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.PVI_Open(&inClose[..=endIdx], &inVolume[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -12520,14 +13068,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.PVO(
+            let _out = core.PVO(
                 startIdx, endIdx,
                 &inVolume,
                 optInFastPeriod,
                 optInSlowPeriod,
                 optInMAType,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.PVO_Open(&inVolume[..=endIdx], optInFastPeriod, optInSlowPeriod, optInMAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -12599,13 +13151,17 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.QSTICK(
+            let _out = core.QSTICK(
                 startIdx, endIdx,
                 &inOpen,
                 &inClose,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.QSTICK_Open(&inOpen[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -12669,12 +13225,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.ROC(
+            let _out = core.ROC(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.ROC_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -12738,12 +13298,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.ROCP(
+            let _out = core.ROCP(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.ROCP_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -12807,12 +13371,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.ROCR(
+            let _out = core.ROCR(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.ROCR_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -12876,12 +13444,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.ROCR100(
+            let _out = core.ROCR100(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.ROCR100_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -12948,12 +13520,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.RSI(
+            let _out = core.RSI(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.RSI_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -13025,14 +13601,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.SAR(
+            let _out = core.SAR(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
                 optInAcceleration,
                 optInMaximum,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.SAR_Open(&inHigh[..=endIdx], &inLow[..=endIdx], optInAcceleration, optInMaximum, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -13110,7 +13690,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.SAREXT(
+            let _out = core.SAREXT(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
@@ -13122,8 +13702,12 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInAccelerationInitShort,
                 optInAccelerationShort,
                 optInAccelerationMaxShort,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.SAREXT_Open(&inHigh[..=endIdx], &inLow[..=endIdx], optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -13186,11 +13770,15 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.SIN(
+            let _out = core.SIN(
                 startIdx, endIdx,
                 &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.SIN_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -13253,11 +13841,15 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.SINH(
+            let _out = core.SINH(
                 startIdx, endIdx,
                 &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.SINH_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -13321,12 +13913,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.SMA(
+            let _out = core.SMA(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.SMA_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -13389,11 +13985,15 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.SQRT(
+            let _out = core.SQRT(
                 startIdx, endIdx,
                 &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.SQRT_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -13458,13 +14058,17 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.STDDEV(
+            let _out = core.STDDEV(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 optInNbDev,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.STDDEV_Open(&inReal[..=endIdx], optInTimePeriod, optInNbDev, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -13553,7 +14157,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.STOCH(
+            let _out = core.STOCH(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
@@ -13563,8 +14167,12 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInSlowK_MAType,
                 optInSlowD_Period,
                 optInSlowD_MAType,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1,
+                &mut outBuf0, &mut outBuf1,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.STOCH_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -13652,7 +14260,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.STOCHF(
+            let _out = core.STOCHF(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
@@ -13660,8 +14268,12 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInFastK_Period,
                 optInFastD_Period,
                 optInFastD_MAType,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1,
+                &mut outBuf0, &mut outBuf1,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.STOCHF_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInFastK_Period, optInFastD_Period, optInFastD_MAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -13736,15 +14348,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.STOCHRSI(
+            let _out = core.STOCHRSI(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 optInFastK_Period,
                 optInFastD_Period,
                 optInFastD_MAType,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1,
+                &mut outBuf0, &mut outBuf1,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.STOCHRSI_Open(&inReal[..=endIdx], optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -13817,12 +14433,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.SUB(
+            let _out = core.SUB(
                 startIdx, endIdx,
                 &inReal0,
                 &inReal1,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.SUB_Open(&inReal0[..=endIdx], &inReal1[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -13886,12 +14506,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.SUM(
+            let _out = core.SUM(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.SUM_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -13959,13 +14583,17 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.T3(
+            let _out = core.T3(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 optInVFactor,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.T3_Open(&inReal[..=endIdx], optInTimePeriod, optInVFactor, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -14028,11 +14656,15 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.TAN(
+            let _out = core.TAN(
                 startIdx, endIdx,
                 &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.TAN_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -14095,11 +14727,15 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.TANH(
+            let _out = core.TANH(
                 startIdx, endIdx,
                 &inReal,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.TANH_Open(&inReal[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -14163,12 +14799,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.TEMA(
+            let _out = core.TEMA(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.TEMA_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -14245,13 +14885,17 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.TRANGE(
+            let _out = core.TRANGE(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.TRANGE_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -14315,12 +14959,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.TRIMA(
+            let _out = core.TRIMA(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.TRIMA_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -14384,12 +15032,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.TRIX(
+            let _out = core.TRIX(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.TRIX_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -14453,12 +15105,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.TSF(
+            let _out = core.TSF(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.TSF_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -14535,13 +15191,17 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.TYPPRICE(
+            let _out = core.TYPPRICE(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.TYPPRICE_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -14621,7 +15281,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.ULTOSC(
+            let _out = core.ULTOSC(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
@@ -14629,8 +15289,12 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInTimePeriod1,
                 optInTimePeriod2,
                 optInTimePeriod3,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.ULTOSC_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -14695,13 +15359,17 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.VAR(
+            let _out = core.VAR(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 optInNbDev,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.VAR_Open(&inReal[..=endIdx], optInTimePeriod, optInNbDev, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -14772,13 +15440,17 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.VWMA(
+            let _out = core.VWMA(
                 startIdx, endIdx,
                 &inReal,
                 &inVolume,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.VWMA_Open(&inReal[..=endIdx], &inVolume[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -14855,13 +15527,17 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.WAD(
+            let _out = core.WAD(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.WAD_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -14938,13 +15614,17 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.WCLPRICE(
+            let _out = core.WCLPRICE(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
                 &inClose,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.WCLPRICE_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -15022,14 +15702,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.WILLR(
+            let _out = core.WILLR(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
                 &inClose,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.WILLR_Open(&inHigh[..=endIdx], &inLow[..=endIdx], &inClose[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -15093,12 +15777,16 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             if bench_mode == 0 {
-            rc = core.WMA(
+            let _out = core.WMA(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
-                &mut outBegIdx, &mut outNBElement, &mut outBuf0,
+                &mut outBuf0,
             );
+            rc = match _out {
+                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
+                Err(e) => { outBegIdx = 0; outNBElement = 0; e }
+            };
             } else {
             if bench_mode == 1 {
                 rc = match core.WMA_Open(&inReal[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
@@ -15552,11 +16240,11 @@ fn abs_call(core: &Core, params: &Value) -> String {
     // clamping, and the driver compares retCodes.
     let raw_start = params["startIdx"].as_i64().unwrap_or(0);
     let raw_end = params["endIdx"].as_i64().unwrap_or(0);
-    if raw_start < 0 || raw_start > MAX_INDEX as i64 {
+    if raw_start < 0 || raw_start > Core::MAX_INDEX as i64 {
         return format!("{{\"binder\":1,\"lookback\":-1,\"retCode\":{},\"outBegIdx\":0,\"outNBElement\":0}}",
                        retcode_to_int(RetCode::OutOfRangeStartIndex));
     }
-    if raw_end < 0 || raw_end > MAX_INDEX as i64 || raw_end < raw_start {
+    if raw_end < 0 || raw_end > Core::MAX_INDEX as i64 || raw_end < raw_start {
         return format!("{{\"binder\":1,\"lookback\":-1,\"retCode\":{},\"outBegIdx\":0,\"outNBElement\":0}}",
                        retcode_to_int(RetCode::OutOfRangeEndIndex));
     }
@@ -15630,7 +16318,7 @@ fn abs_call(core: &Core, params: &Value) -> String {
             (retcode_to_int(e), lb, 0usize, 0usize)
         } else {
             match h.call(start, end) {
-                Ok(r) => (0i32, lb, r.beg_idx, r.nb_element),
+                Ok(r) => (0i32, lb, r.beg_idx, r.count),
                 Err(e) => (retcode_to_int(e), lb, 0usize, 0usize),
             }
         }
@@ -15792,7 +16480,7 @@ fn sv_ac(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.AC(0, svN - 1, &fz_h, &fz_l, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.AC(0, svN - 1, &fz_h, &fz_l, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.AC_Open(&fz_h, &fz_l, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).is_err();
@@ -15888,7 +16576,7 @@ fn sv_accbands(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.ACCBANDS(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0, &mut b1, &mut b2);
+        let rc = match c2.ACCBANDS(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut b0, &mut b1, &mut b2) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.ACCBANDS_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.ACCBANDS_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
@@ -15995,7 +16683,7 @@ fn sv_acos(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.ACOS(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.ACOS(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.ACOS_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.ACOS_Open(&fz_c).is_err();
@@ -16088,7 +16776,7 @@ fn sv_ad(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.AD(0, svN - 1, &fz_h, &fz_l, &fz_c, &fz_v, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.AD(0, svN - 1, &fz_h, &fz_l, &fz_c, &fz_v, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.AD_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.AD_Open(&fz_h, &fz_l, &fz_c, &fz_v).is_err();
@@ -16181,7 +16869,7 @@ fn sv_add(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.ADD(0, svN - 1, &fz_c, &fz_v, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.ADD(0, svN - 1, &fz_c, &fz_v, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.ADD_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.ADD_Open(&fz_c, &fz_v).is_err();
@@ -16277,7 +16965,7 @@ fn sv_adosc(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.ADOSC(0, svN - 1, &fz_h, &fz_l, &fz_c, &fz_v, optInFastPeriod, optInSlowPeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.ADOSC(0, svN - 1, &fz_h, &fz_l, &fz_c, &fz_v, optInFastPeriod, optInSlowPeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.ADOSC_Lookback(optInFastPeriod, optInSlowPeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.ADOSC_Open(&fz_h, &fz_l, &fz_c, &fz_v, optInFastPeriod, optInSlowPeriod).is_err();
@@ -16372,7 +17060,7 @@ fn sv_adx(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.ADX(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.ADX(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.ADX_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.ADX_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
@@ -16467,7 +17155,7 @@ fn sv_adxr(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.ADXR(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.ADXR(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.ADXR_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.ADXR_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
@@ -16562,7 +17250,7 @@ fn sv_ao(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.AO(0, svN - 1, &fz_h, &fz_l, optInFastPeriod, optInSlowPeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.AO(0, svN - 1, &fz_h, &fz_l, optInFastPeriod, optInSlowPeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.AO_Lookback(optInFastPeriod, optInSlowPeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.AO_Open(&fz_h, &fz_l, optInFastPeriod, optInSlowPeriod).is_err();
@@ -16666,7 +17354,7 @@ fn sv_apo(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.APO(0, svN - 1, &fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.APO(0, svN - 1, &fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.APO_Open(&fz_c, optInFastPeriod, optInSlowPeriod, optInMAType).is_err();
@@ -16761,7 +17449,7 @@ fn sv_aroon(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.AROON(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, &mut beg, &mut nb, &mut b0, &mut b1);
+        let rc = match c2.AROON(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, &mut b0, &mut b1) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.AROON_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.AROON_Open(&fz_h, &fz_l, optInTimePeriod).is_err();
@@ -16862,7 +17550,7 @@ fn sv_aroonosc(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.AROONOSC(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.AROONOSC(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.AROONOSC_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.AROONOSC_Open(&fz_h, &fz_l, optInTimePeriod).is_err();
@@ -16955,7 +17643,7 @@ fn sv_asin(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.ASIN(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.ASIN(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.ASIN_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.ASIN_Open(&fz_c).is_err();
@@ -17048,7 +17736,7 @@ fn sv_atan(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.ATAN(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.ATAN(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.ATAN_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.ATAN_Open(&fz_c).is_err();
@@ -17143,7 +17831,7 @@ fn sv_atr(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.ATR(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.ATR(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.ATR_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.ATR_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
@@ -17237,7 +17925,7 @@ fn sv_avgdev(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.AVGDEV(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.AVGDEV(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.AVGDEV_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.AVGDEV_Open(&fz_c, optInTimePeriod).is_err();
@@ -17330,7 +18018,7 @@ fn sv_avgprice(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.AVGPRICE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.AVGPRICE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.AVGPRICE_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.AVGPRICE_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -17437,7 +18125,7 @@ fn sv_bbands(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.BBANDS(0, svN - 1, &fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut beg, &mut nb, &mut b0, &mut b1, &mut b2);
+        let rc = match c2.BBANDS(0, svN - 1, &fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut b0, &mut b1, &mut b2) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.BBANDS_Open(&fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType).is_err();
@@ -17545,7 +18233,7 @@ fn sv_beta(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.BETA(0, svN - 1, &fz_c, &fz_v, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.BETA(0, svN - 1, &fz_c, &fz_v, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.BETA_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.BETA_Open(&fz_c, &fz_v, optInTimePeriod).is_err();
@@ -17638,7 +18326,7 @@ fn sv_bop(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.BOP(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.BOP(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.BOP_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.BOP_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -17732,7 +18420,7 @@ fn sv_cci(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CCI(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CCI(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CCI_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CCI_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
@@ -17827,7 +18515,7 @@ fn sv_cdl2crows(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDL2CROWS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDL2CROWS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDL2CROWS_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDL2CROWS_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -17924,7 +18612,7 @@ fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDL3BLACKCROWS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDL3BLACKCROWS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDL3BLACKCROWS_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDL3BLACKCROWS_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -18021,7 +18709,7 @@ fn sv_cdl3inside(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDL3INSIDE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDL3INSIDE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDL3INSIDE_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDL3INSIDE_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -18118,7 +18806,7 @@ fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDL3LINESTRIKE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDL3LINESTRIKE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDL3LINESTRIKE_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDL3LINESTRIKE_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -18215,7 +18903,7 @@ fn sv_cdl3outside(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDL3OUTSIDE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDL3OUTSIDE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDL3OUTSIDE_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDL3OUTSIDE_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -18312,7 +19000,7 @@ fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDL3STARSINSOUTH(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDL3STARSINSOUTH(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDL3STARSINSOUTH_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDL3STARSINSOUTH_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -18409,7 +19097,7 @@ fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDL3WHITESOLDIERS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDL3WHITESOLDIERS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDL3WHITESOLDIERS_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDL3WHITESOLDIERS_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -18507,7 +19195,7 @@ fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLABANDONEDBABY(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLABANDONEDBABY(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLABANDONEDBABY_Lookback(optInPenetration);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLABANDONEDBABY_Open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
@@ -18604,7 +19292,7 @@ fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLADVANCEBLOCK(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLADVANCEBLOCK(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLADVANCEBLOCK_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLADVANCEBLOCK_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -18701,7 +19389,7 @@ fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLBELTHOLD(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLBELTHOLD(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLBELTHOLD_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLBELTHOLD_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -18798,7 +19486,7 @@ fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLBREAKAWAY(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLBREAKAWAY(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLBREAKAWAY_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLBREAKAWAY_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -18895,7 +19583,7 @@ fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLCLOSINGMARUBOZU(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLCLOSINGMARUBOZU(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLCLOSINGMARUBOZU_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLCLOSINGMARUBOZU_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -18992,7 +19680,7 @@ fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLCONCEALBABYSWALL(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLCONCEALBABYSWALL(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLCONCEALBABYSWALL_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLCONCEALBABYSWALL_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -19089,7 +19777,7 @@ fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLCOUNTERATTACK(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLCOUNTERATTACK(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLCOUNTERATTACK_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLCOUNTERATTACK_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -19187,7 +19875,7 @@ fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLDARKCLOUDCOVER(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLDARKCLOUDCOVER(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLDARKCLOUDCOVER_Lookback(optInPenetration);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLDARKCLOUDCOVER_Open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
@@ -19284,7 +19972,7 @@ fn sv_cdldoji(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLDOJI(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLDOJI(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLDOJI_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLDOJI_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -19381,7 +20069,7 @@ fn sv_cdldojistar(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLDOJISTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLDOJISTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLDOJISTAR_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLDOJISTAR_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -19478,7 +20166,7 @@ fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLDRAGONFLYDOJI(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLDRAGONFLYDOJI(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLDRAGONFLYDOJI_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLDRAGONFLYDOJI_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -19575,7 +20263,7 @@ fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLENGULFING(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLENGULFING(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLENGULFING_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLENGULFING_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -19673,7 +20361,7 @@ fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLEVENINGDOJISTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLEVENINGDOJISTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLEVENINGDOJISTAR_Lookback(optInPenetration);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLEVENINGDOJISTAR_Open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
@@ -19771,7 +20459,7 @@ fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLEVENINGSTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLEVENINGSTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLEVENINGSTAR_Lookback(optInPenetration);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLEVENINGSTAR_Open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
@@ -19868,7 +20556,7 @@ fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLGAPSIDESIDEWHITE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLGAPSIDESIDEWHITE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLGAPSIDESIDEWHITE_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLGAPSIDESIDEWHITE_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -19965,7 +20653,7 @@ fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLGRAVESTONEDOJI(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLGRAVESTONEDOJI(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLGRAVESTONEDOJI_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLGRAVESTONEDOJI_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -20062,7 +20750,7 @@ fn sv_cdlhammer(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLHAMMER(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLHAMMER(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLHAMMER_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLHAMMER_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -20159,7 +20847,7 @@ fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLHANGINGMAN(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLHANGINGMAN(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLHANGINGMAN_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLHANGINGMAN_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -20256,7 +20944,7 @@ fn sv_cdlharami(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLHARAMI(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLHARAMI(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLHARAMI_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLHARAMI_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -20353,7 +21041,7 @@ fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLHARAMICROSS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLHARAMICROSS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLHARAMICROSS_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLHARAMICROSS_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -20450,7 +21138,7 @@ fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLHIGHWAVE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLHIGHWAVE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLHIGHWAVE_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLHIGHWAVE_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -20547,7 +21235,7 @@ fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLHIKKAKE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLHIKKAKE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLHIKKAKE_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLHIKKAKE_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -20644,7 +21332,7 @@ fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLHIKKAKEMOD(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLHIKKAKEMOD(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLHIKKAKEMOD_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLHIKKAKEMOD_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -20741,7 +21429,7 @@ fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLHOMINGPIGEON(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLHOMINGPIGEON(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLHOMINGPIGEON_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLHOMINGPIGEON_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -20838,7 +21526,7 @@ fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLIDENTICAL3CROWS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLIDENTICAL3CROWS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLIDENTICAL3CROWS_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLIDENTICAL3CROWS_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -20935,7 +21623,7 @@ fn sv_cdlinneck(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLINNECK(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLINNECK(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLINNECK_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLINNECK_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -21032,7 +21720,7 @@ fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLINVERTEDHAMMER(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLINVERTEDHAMMER(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLINVERTEDHAMMER_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLINVERTEDHAMMER_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -21129,7 +21817,7 @@ fn sv_cdlkicking(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLKICKING(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLKICKING(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLKICKING_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLKICKING_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -21226,7 +21914,7 @@ fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLKICKINGBYLENGTH(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLKICKINGBYLENGTH(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLKICKINGBYLENGTH_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLKICKINGBYLENGTH_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -21323,7 +22011,7 @@ fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLLADDERBOTTOM(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLLADDERBOTTOM(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLLADDERBOTTOM_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLLADDERBOTTOM_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -21420,7 +22108,7 @@ fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLLONGLEGGEDDOJI(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLLONGLEGGEDDOJI(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLLONGLEGGEDDOJI_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLLONGLEGGEDDOJI_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -21517,7 +22205,7 @@ fn sv_cdllongline(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLLONGLINE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLLONGLINE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLLONGLINE_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLLONGLINE_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -21614,7 +22302,7 @@ fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLMARUBOZU(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLMARUBOZU(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLMARUBOZU_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLMARUBOZU_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -21711,7 +22399,7 @@ fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLMATCHINGLOW(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLMATCHINGLOW(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLMATCHINGLOW_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLMATCHINGLOW_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -21809,7 +22497,7 @@ fn sv_cdlmathold(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLMATHOLD(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLMATHOLD(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLMATHOLD_Lookback(optInPenetration);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLMATHOLD_Open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
@@ -21907,7 +22595,7 @@ fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLMORNINGDOJISTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLMORNINGDOJISTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLMORNINGDOJISTAR_Lookback(optInPenetration);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLMORNINGDOJISTAR_Open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
@@ -22005,7 +22693,7 @@ fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLMORNINGSTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLMORNINGSTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLMORNINGSTAR_Lookback(optInPenetration);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLMORNINGSTAR_Open(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration).is_err();
@@ -22102,7 +22790,7 @@ fn sv_cdlonneck(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLONNECK(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLONNECK(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLONNECK_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLONNECK_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -22199,7 +22887,7 @@ fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLPIERCING(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLPIERCING(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLPIERCING_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLPIERCING_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -22296,7 +22984,7 @@ fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLRICKSHAWMAN(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLRICKSHAWMAN(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLRICKSHAWMAN_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLRICKSHAWMAN_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -22393,7 +23081,7 @@ fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLRISEFALL3METHODS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLRISEFALL3METHODS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLRISEFALL3METHODS_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLRISEFALL3METHODS_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -22490,7 +23178,7 @@ fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLSEPARATINGLINES(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLSEPARATINGLINES(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLSEPARATINGLINES_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLSEPARATINGLINES_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -22587,7 +23275,7 @@ fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLSHOOTINGSTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLSHOOTINGSTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLSHOOTINGSTAR_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLSHOOTINGSTAR_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -22684,7 +23372,7 @@ fn sv_cdlshortline(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLSHORTLINE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLSHORTLINE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLSHORTLINE_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLSHORTLINE_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -22781,7 +23469,7 @@ fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLSPINNINGTOP(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLSPINNINGTOP(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLSPINNINGTOP_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLSPINNINGTOP_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -22878,7 +23566,7 @@ fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLSTALLEDPATTERN(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLSTALLEDPATTERN(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLSTALLEDPATTERN_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLSTALLEDPATTERN_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -22975,7 +23663,7 @@ fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLSTICKSANDWICH(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLSTICKSANDWICH(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLSTICKSANDWICH_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLSTICKSANDWICH_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -23072,7 +23760,7 @@ fn sv_cdltakuri(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLTAKURI(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLTAKURI(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLTAKURI_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLTAKURI_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -23169,7 +23857,7 @@ fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLTASUKIGAP(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLTASUKIGAP(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLTASUKIGAP_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLTASUKIGAP_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -23266,7 +23954,7 @@ fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLTHRUSTING(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLTHRUSTING(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLTHRUSTING_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLTHRUSTING_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -23363,7 +24051,7 @@ fn sv_cdltristar(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLTRISTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLTRISTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLTRISTAR_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLTRISTAR_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -23460,7 +24148,7 @@ fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLUNIQUE3RIVER(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLUNIQUE3RIVER(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLUNIQUE3RIVER_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLUNIQUE3RIVER_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -23557,7 +24245,7 @@ fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLUPSIDEGAP2CROWS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLUPSIDEGAP2CROWS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLUPSIDEGAP2CROWS_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLUPSIDEGAP2CROWS_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -23654,7 +24342,7 @@ fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CDLXSIDEGAP3METHODS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CDLXSIDEGAP3METHODS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CDLXSIDEGAP3METHODS_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CDLXSIDEGAP3METHODS_Open(&fz_o, &fz_h, &fz_l, &fz_c).is_err();
@@ -23749,7 +24437,7 @@ fn sv_ceil(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CEIL(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CEIL(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CEIL_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CEIL_Open(&fz_c).is_err();
@@ -23843,7 +24531,7 @@ fn sv_cmf(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CMF(0, svN - 1, &fz_h, &fz_l, &fz_c, &fz_v, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CMF(0, svN - 1, &fz_h, &fz_l, &fz_c, &fz_v, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CMF_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CMF_Open(&fz_h, &fz_l, &fz_c, &fz_v, optInTimePeriod).is_err();
@@ -23938,7 +24626,7 @@ fn sv_cmo(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CMO(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CMO(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CMO_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CMO_Open(&fz_c, optInTimePeriod).is_err();
@@ -24032,7 +24720,7 @@ fn sv_cmou(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CMOU(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CMOU(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CMOU_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CMOU_Open(&fz_c, optInTimePeriod).is_err();
@@ -24126,7 +24814,7 @@ fn sv_correl(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.CORREL(0, svN - 1, &fz_c, &fz_v, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.CORREL(0, svN - 1, &fz_c, &fz_v, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.CORREL_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.CORREL_Open(&fz_c, &fz_v, optInTimePeriod).is_err();
@@ -24219,7 +24907,7 @@ fn sv_cos(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.COS(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.COS(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.COS_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.COS_Open(&fz_c).is_err();
@@ -24312,7 +25000,7 @@ fn sv_cosh(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.COSH(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.COSH(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.COSH_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.COSH_Open(&fz_c).is_err();
@@ -24407,7 +25095,7 @@ fn sv_dema(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.DEMA(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.DEMA(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.DEMA_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.DEMA_Open(&fz_c, optInTimePeriod).is_err();
@@ -24500,7 +25188,7 @@ fn sv_div(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.DIV(0, svN - 1, &fz_c, &fz_v, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.DIV(0, svN - 1, &fz_c, &fz_v, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.DIV_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.DIV_Open(&fz_c, &fz_v).is_err();
@@ -24595,7 +25283,7 @@ fn sv_dx(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.DX(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.DX(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.DX_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.DX_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
@@ -24689,7 +25377,7 @@ fn sv_efi(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.EFI(0, svN - 1, &fz_c, &fz_v, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.EFI(0, svN - 1, &fz_c, &fz_v, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.EFI_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.EFI_Open(&fz_c, &fz_v, optInTimePeriod).is_err();
@@ -24784,7 +25472,7 @@ fn sv_ema(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.EMA(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.EMA(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.EMA_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.EMA_Open(&fz_c, optInTimePeriod).is_err();
@@ -24877,7 +25565,7 @@ fn sv_exp(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.EXP(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.EXP(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.EXP_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.EXP_Open(&fz_c).is_err();
@@ -24970,7 +25658,7 @@ fn sv_floor(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.FLOOR(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.FLOOR(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.FLOOR_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.FLOOR_Open(&fz_c).is_err();
@@ -25064,7 +25752,7 @@ fn sv_hma(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.HMA(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.HMA(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.HMA_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.HMA_Open(&fz_c, optInTimePeriod).is_err();
@@ -25158,7 +25846,7 @@ fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.HT_DCPERIOD(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.HT_DCPERIOD(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.HT_DCPERIOD_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.HT_DCPERIOD_Open(&fz_c).is_err();
@@ -25252,7 +25940,7 @@ fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.HT_DCPHASE(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.HT_DCPHASE(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.HT_DCPHASE_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.HT_DCPHASE_Open(&fz_c).is_err();
@@ -25347,7 +26035,7 @@ fn sv_ht_phasor(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.HT_PHASOR(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0, &mut b1);
+        let rc = match c2.HT_PHASOR(0, svN - 1, &fz_c, &mut b0, &mut b1) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.HT_PHASOR_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.HT_PHASOR_Open(&fz_c).is_err();
@@ -25449,7 +26137,7 @@ fn sv_ht_sine(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.HT_SINE(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0, &mut b1);
+        let rc = match c2.HT_SINE(0, svN - 1, &fz_c, &mut b0, &mut b1) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.HT_SINE_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.HT_SINE_Open(&fz_c).is_err();
@@ -25550,7 +26238,7 @@ fn sv_ht_trendline(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.HT_TRENDLINE(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.HT_TRENDLINE(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.HT_TRENDLINE_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.HT_TRENDLINE_Open(&fz_c).is_err();
@@ -25644,7 +26332,7 @@ fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.HT_TRENDMODE(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.HT_TRENDMODE(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.HT_TRENDMODE_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.HT_TRENDMODE_Open(&fz_c).is_err();
@@ -25738,7 +26426,7 @@ fn sv_imi(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.IMI(0, svN - 1, &fz_o, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.IMI(0, svN - 1, &fz_o, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.IMI_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.IMI_Open(&fz_o, &fz_c, optInTimePeriod).is_err();
@@ -25833,7 +26521,7 @@ fn sv_kama(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.KAMA(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.KAMA(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.KAMA_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.KAMA_Open(&fz_c, optInTimePeriod).is_err();
@@ -25927,7 +26615,7 @@ fn sv_linearreg(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.LINEARREG(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.LINEARREG(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.LINEARREG_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.LINEARREG_Open(&fz_c, optInTimePeriod).is_err();
@@ -26021,7 +26709,7 @@ fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.LINEARREG_ANGLE(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.LINEARREG_ANGLE(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.LINEARREG_ANGLE_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.LINEARREG_ANGLE_Open(&fz_c, optInTimePeriod).is_err();
@@ -26115,7 +26803,7 @@ fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.LINEARREG_INTERCEPT(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.LINEARREG_INTERCEPT(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.LINEARREG_INTERCEPT_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.LINEARREG_INTERCEPT_Open(&fz_c, optInTimePeriod).is_err();
@@ -26209,7 +26897,7 @@ fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.LINEARREG_SLOPE(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.LINEARREG_SLOPE(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.LINEARREG_SLOPE_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.LINEARREG_SLOPE_Open(&fz_c, optInTimePeriod).is_err();
@@ -26302,7 +26990,7 @@ fn sv_ln(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.LN(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.LN(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.LN_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.LN_Open(&fz_c).is_err();
@@ -26395,7 +27083,7 @@ fn sv_log10(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.LOG10(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.LOG10(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.LOG10_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.LOG10_Open(&fz_c).is_err();
@@ -26498,7 +27186,7 @@ fn sv_ma(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.MA(0, svN - 1, &fz_c, optInTimePeriod, optInMAType, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.MA(0, svN - 1, &fz_c, optInTimePeriod, optInMAType, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MA_Lookback(optInTimePeriod, optInMAType);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MA_Open(&fz_c, optInTimePeriod, optInMAType).is_err();
@@ -26597,7 +27285,7 @@ fn sv_macd(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.MACD(0, svN - 1, &fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut beg, &mut nb, &mut b0, &mut b1, &mut b2);
+        let rc = match c2.MACD(0, svN - 1, &fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut b0, &mut b1, &mut b2) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MACD_Open(&fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod).is_err();
@@ -26728,7 +27416,7 @@ fn sv_macdext(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.MACDEXT(0, svN - 1, &fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &mut beg, &mut nb, &mut b0, &mut b1, &mut b2);
+        let rc = match c2.MACDEXT(0, svN - 1, &fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &mut b0, &mut b1, &mut b2) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MACDEXT_Open(&fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType).is_err();
@@ -26839,7 +27527,7 @@ fn sv_macdfix(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.MACDFIX(0, svN - 1, &fz_c, optInSignalPeriod, &mut beg, &mut nb, &mut b0, &mut b1, &mut b2);
+        let rc = match c2.MACDFIX(0, svN - 1, &fz_c, optInSignalPeriod, &mut b0, &mut b1, &mut b2) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MACDFIX_Lookback(optInSignalPeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MACDFIX_Open(&fz_c, optInSignalPeriod).is_err();
@@ -26950,7 +27638,7 @@ fn sv_mama(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.MAMA(0, svN - 1, &fz_c, optInFastLimit, optInSlowLimit, &mut beg, &mut nb, &mut b0, &mut b1);
+        let rc = match c2.MAMA(0, svN - 1, &fz_c, optInFastLimit, optInSlowLimit, &mut b0, &mut b1) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MAMA_Lookback(optInFastLimit, optInSlowLimit);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MAMA_Open(&fz_c, optInFastLimit, optInSlowLimit).is_err();
@@ -27050,7 +27738,7 @@ fn sv_marketfi(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.MARKETFI(0, svN - 1, &fz_h, &fz_l, &fz_v, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.MARKETFI(0, svN - 1, &fz_h, &fz_l, &fz_v, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MARKETFI_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MARKETFI_Open(&fz_h, &fz_l, &fz_v).is_err();
@@ -27155,7 +27843,7 @@ fn sv_mavp(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.MAVP(0, svN - 1, &fz_c, &fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.MAVP(0, svN - 1, &fz_c, &fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MAVP_Open(&fz_c, &fz_v, optInMinPeriod, optInMaxPeriod, optInMAType).is_err();
@@ -27249,7 +27937,7 @@ fn sv_max(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.MAX(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.MAX(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MAX_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MAX_Open(&fz_c, optInTimePeriod).is_err();
@@ -27343,7 +28031,7 @@ fn sv_maxindex(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.MAXINDEX(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.MAXINDEX(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MAXINDEX_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MAXINDEX_Open(&fz_c, optInTimePeriod).is_err();
@@ -27436,7 +28124,7 @@ fn sv_medprice(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.MEDPRICE(0, svN - 1, &fz_h, &fz_l, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.MEDPRICE(0, svN - 1, &fz_h, &fz_l, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MEDPRICE_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MEDPRICE_Open(&fz_h, &fz_l).is_err();
@@ -27530,7 +28218,7 @@ fn sv_mfi(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.MFI(0, svN - 1, &fz_h, &fz_l, &fz_c, &fz_v, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.MFI(0, svN - 1, &fz_h, &fz_l, &fz_c, &fz_v, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MFI_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MFI_Open(&fz_h, &fz_l, &fz_c, &fz_v, optInTimePeriod).is_err();
@@ -27624,7 +28312,7 @@ fn sv_midpoint(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.MIDPOINT(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.MIDPOINT(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MIDPOINT_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MIDPOINT_Open(&fz_c, optInTimePeriod).is_err();
@@ -27718,7 +28406,7 @@ fn sv_midprice(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.MIDPRICE(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.MIDPRICE(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MIDPRICE_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MIDPRICE_Open(&fz_h, &fz_l, optInTimePeriod).is_err();
@@ -27812,7 +28500,7 @@ fn sv_min(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.MIN(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.MIN(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MIN_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MIN_Open(&fz_c, optInTimePeriod).is_err();
@@ -27906,7 +28594,7 @@ fn sv_minindex(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.MININDEX(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.MININDEX(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MININDEX_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MININDEX_Open(&fz_c, optInTimePeriod).is_err();
@@ -28001,7 +28689,7 @@ fn sv_minmax(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.MINMAX(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0, &mut b1);
+        let rc = match c2.MINMAX(0, svN - 1, &fz_c, optInTimePeriod, &mut b0, &mut b1) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MINMAX_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MINMAX_Open(&fz_c, optInTimePeriod).is_err();
@@ -28103,7 +28791,7 @@ fn sv_minmaxindex(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.MINMAXINDEX(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0, &mut b1);
+        let rc = match c2.MINMAXINDEX(0, svN - 1, &fz_c, optInTimePeriod, &mut b0, &mut b1) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MINMAXINDEX_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MINMAXINDEX_Open(&fz_c, optInTimePeriod).is_err();
@@ -28205,7 +28893,7 @@ fn sv_minus_di(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.MINUS_DI(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.MINUS_DI(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MINUS_DI_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MINUS_DI_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
@@ -28300,7 +28988,7 @@ fn sv_minus_dm(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.MINUS_DM(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.MINUS_DM(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MINUS_DM_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MINUS_DM_Open(&fz_h, &fz_l, optInTimePeriod).is_err();
@@ -28394,7 +29082,7 @@ fn sv_mom(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.MOM(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.MOM(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MOM_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MOM_Open(&fz_c, optInTimePeriod).is_err();
@@ -28487,7 +29175,7 @@ fn sv_mult(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.MULT(0, svN - 1, &fz_c, &fz_v, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.MULT(0, svN - 1, &fz_c, &fz_v, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.MULT_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.MULT_Open(&fz_c, &fz_v).is_err();
@@ -28582,7 +29270,7 @@ fn sv_natr(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.NATR(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.NATR(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.NATR_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.NATR_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
@@ -28675,7 +29363,7 @@ fn sv_nvi(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.NVI(0, svN - 1, &fz_c, &fz_v, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.NVI(0, svN - 1, &fz_c, &fz_v, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.NVI_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.NVI_Open(&fz_c, &fz_v).is_err();
@@ -28768,7 +29456,7 @@ fn sv_obv(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.OBV(0, svN - 1, &fz_c, &fz_v, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.OBV(0, svN - 1, &fz_c, &fz_v, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.OBV_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.OBV_Open(&fz_c, &fz_v).is_err();
@@ -28863,7 +29551,7 @@ fn sv_plus_di(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.PLUS_DI(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.PLUS_DI(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.PLUS_DI_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.PLUS_DI_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
@@ -28958,7 +29646,7 @@ fn sv_plus_dm(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.PLUS_DM(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.PLUS_DM(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.PLUS_DM_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.PLUS_DM_Open(&fz_h, &fz_l, optInTimePeriod).is_err();
@@ -29062,7 +29750,7 @@ fn sv_ppo(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.PPO(0, svN - 1, &fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.PPO(0, svN - 1, &fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.PPO_Open(&fz_c, optInFastPeriod, optInSlowPeriod, optInMAType).is_err();
@@ -29155,7 +29843,7 @@ fn sv_pvi(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.PVI(0, svN - 1, &fz_c, &fz_v, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.PVI(0, svN - 1, &fz_c, &fz_v, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.PVI_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.PVI_Open(&fz_c, &fz_v).is_err();
@@ -29259,7 +29947,7 @@ fn sv_pvo(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.PVO(0, svN - 1, &fz_v, optInFastPeriod, optInSlowPeriod, optInMAType, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.PVO(0, svN - 1, &fz_v, optInFastPeriod, optInSlowPeriod, optInMAType, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.PVO_Open(&fz_v, optInFastPeriod, optInSlowPeriod, optInMAType).is_err();
@@ -29353,7 +30041,7 @@ fn sv_qstick(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.QSTICK(0, svN - 1, &fz_o, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.QSTICK(0, svN - 1, &fz_o, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.QSTICK_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.QSTICK_Open(&fz_o, &fz_c, optInTimePeriod).is_err();
@@ -29447,7 +30135,7 @@ fn sv_roc(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.ROC(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.ROC(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.ROC_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.ROC_Open(&fz_c, optInTimePeriod).is_err();
@@ -29541,7 +30229,7 @@ fn sv_rocp(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.ROCP(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.ROCP(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.ROCP_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.ROCP_Open(&fz_c, optInTimePeriod).is_err();
@@ -29635,7 +30323,7 @@ fn sv_rocr(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.ROCR(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.ROCR(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.ROCR_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.ROCR_Open(&fz_c, optInTimePeriod).is_err();
@@ -29729,7 +30417,7 @@ fn sv_rocr100(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.ROCR100(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.ROCR100(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.ROCR100_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.ROCR100_Open(&fz_c, optInTimePeriod).is_err();
@@ -29824,7 +30512,7 @@ fn sv_rsi(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.RSI(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.RSI(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.RSI_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.RSI_Open(&fz_c, optInTimePeriod).is_err();
@@ -29919,7 +30607,7 @@ fn sv_sar(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.SAR(0, svN - 1, &fz_h, &fz_l, optInAcceleration, optInMaximum, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.SAR(0, svN - 1, &fz_h, &fz_l, optInAcceleration, optInMaximum, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.SAR_Lookback(optInAcceleration, optInMaximum);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.SAR_Open(&fz_h, &fz_l, optInAcceleration, optInMaximum).is_err();
@@ -30020,7 +30708,7 @@ fn sv_sarext(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.SAREXT(0, svN - 1, &fz_h, &fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.SAREXT(0, svN - 1, &fz_h, &fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.SAREXT_Open(&fz_h, &fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort).is_err();
@@ -30113,7 +30801,7 @@ fn sv_sin(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.SIN(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.SIN(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.SIN_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.SIN_Open(&fz_c).is_err();
@@ -30206,7 +30894,7 @@ fn sv_sinh(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.SINH(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.SINH(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.SINH_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.SINH_Open(&fz_c).is_err();
@@ -30300,7 +30988,7 @@ fn sv_sma(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.SMA(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.SMA(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.SMA_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.SMA_Open(&fz_c, optInTimePeriod).is_err();
@@ -30393,7 +31081,7 @@ fn sv_sqrt(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.SQRT(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.SQRT(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.SQRT_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.SQRT_Open(&fz_c).is_err();
@@ -30488,7 +31176,7 @@ fn sv_stddev(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.STDDEV(0, svN - 1, &fz_c, optInTimePeriod, optInNbDev, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.STDDEV(0, svN - 1, &fz_c, optInTimePeriod, optInNbDev, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.STDDEV_Lookback(optInTimePeriod, optInNbDev);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.STDDEV_Open(&fz_c, optInTimePeriod, optInNbDev).is_err();
@@ -30599,7 +31287,7 @@ fn sv_stoch(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.STOCH(0, svN - 1, &fz_h, &fz_l, &fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut beg, &mut nb, &mut b0, &mut b1);
+        let rc = match c2.STOCH(0, svN - 1, &fz_h, &fz_l, &fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut b0, &mut b1) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.STOCH_Open(&fz_h, &fz_l, &fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType).is_err();
@@ -30711,7 +31399,7 @@ fn sv_stochf(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.STOCHF(0, svN - 1, &fz_h, &fz_l, &fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut beg, &mut nb, &mut b0, &mut b1);
+        let rc = match c2.STOCHF(0, svN - 1, &fz_h, &fz_l, &fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut b0, &mut b1) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.STOCHF_Open(&fz_h, &fz_l, &fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType).is_err();
@@ -30825,7 +31513,7 @@ fn sv_stochrsi(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.STOCHRSI(0, svN - 1, &fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut beg, &mut nb, &mut b0, &mut b1);
+        let rc = match c2.STOCHRSI(0, svN - 1, &fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut b0, &mut b1) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.STOCHRSI_Open(&fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType).is_err();
@@ -30925,7 +31613,7 @@ fn sv_sub(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.SUB(0, svN - 1, &fz_c, &fz_v, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.SUB(0, svN - 1, &fz_c, &fz_v, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.SUB_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.SUB_Open(&fz_c, &fz_v).is_err();
@@ -31019,7 +31707,7 @@ fn sv_sum(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.SUM(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.SUM(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.SUM_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.SUM_Open(&fz_c, optInTimePeriod).is_err();
@@ -31115,7 +31803,7 @@ fn sv_t3(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.T3(0, svN - 1, &fz_c, optInTimePeriod, optInVFactor, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.T3(0, svN - 1, &fz_c, optInTimePeriod, optInVFactor, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.T3_Lookback(optInTimePeriod, optInVFactor);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.T3_Open(&fz_c, optInTimePeriod, optInVFactor).is_err();
@@ -31208,7 +31896,7 @@ fn sv_tan(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.TAN(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.TAN(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.TAN_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.TAN_Open(&fz_c).is_err();
@@ -31301,7 +31989,7 @@ fn sv_tanh(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.TANH(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.TANH(0, svN - 1, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.TANH_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.TANH_Open(&fz_c).is_err();
@@ -31396,7 +32084,7 @@ fn sv_tema(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.TEMA(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.TEMA(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.TEMA_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.TEMA_Open(&fz_c, optInTimePeriod).is_err();
@@ -31489,7 +32177,7 @@ fn sv_trange(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.TRANGE(0, svN - 1, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.TRANGE(0, svN - 1, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.TRANGE_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.TRANGE_Open(&fz_h, &fz_l, &fz_c).is_err();
@@ -31583,7 +32271,7 @@ fn sv_trima(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.TRIMA(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.TRIMA(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.TRIMA_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.TRIMA_Open(&fz_c, optInTimePeriod).is_err();
@@ -31678,7 +32366,7 @@ fn sv_trix(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.TRIX(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.TRIX(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.TRIX_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.TRIX_Open(&fz_c, optInTimePeriod).is_err();
@@ -31772,7 +32460,7 @@ fn sv_tsf(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.TSF(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.TSF(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.TSF_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.TSF_Open(&fz_c, optInTimePeriod).is_err();
@@ -31865,7 +32553,7 @@ fn sv_typprice(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.TYPPRICE(0, svN - 1, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.TYPPRICE(0, svN - 1, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.TYPPRICE_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.TYPPRICE_Open(&fz_h, &fz_l, &fz_c).is_err();
@@ -31961,7 +32649,7 @@ fn sv_ultosc(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.ULTOSC(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.ULTOSC(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.ULTOSC_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3).is_err();
@@ -32056,7 +32744,7 @@ fn sv_var(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.VAR(0, svN - 1, &fz_c, optInTimePeriod, optInNbDev, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.VAR(0, svN - 1, &fz_c, optInTimePeriod, optInNbDev, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.VAR_Lookback(optInTimePeriod, optInNbDev);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.VAR_Open(&fz_c, optInTimePeriod, optInNbDev).is_err();
@@ -32150,7 +32838,7 @@ fn sv_vwma(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.VWMA(0, svN - 1, &fz_c, &fz_v, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.VWMA(0, svN - 1, &fz_c, &fz_v, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.VWMA_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.VWMA_Open(&fz_c, &fz_v, optInTimePeriod).is_err();
@@ -32243,7 +32931,7 @@ fn sv_wad(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.WAD(0, svN - 1, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.WAD(0, svN - 1, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.WAD_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.WAD_Open(&fz_h, &fz_l, &fz_c).is_err();
@@ -32336,7 +33024,7 @@ fn sv_wclprice(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.WCLPRICE(0, svN - 1, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.WCLPRICE(0, svN - 1, &fz_h, &fz_l, &fz_c, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.WCLPRICE_Lookback();
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.WCLPRICE_Open(&fz_h, &fz_l, &fz_c).is_err();
@@ -32430,7 +33118,7 @@ fn sv_willr(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.WILLR(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.WILLR(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.WILLR_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.WILLR_Open(&fz_h, &fz_l, &fz_c, optInTimePeriod).is_err();
@@ -32524,7 +33212,7 @@ fn sv_wma(core: &Core, params: &Value) -> String {
             Ok(c) => c,
             Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
         };
-        let rc = c2.WMA(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
+        let rc = match c2.WMA(0, svN - 1, &fz_c, optInTimePeriod, &mut b0) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
         let lb = c2.WMA_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
             let open_rejects = c2.WMA_Open(&fz_c, optInTimePeriod).is_err();

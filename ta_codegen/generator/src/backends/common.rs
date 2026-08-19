@@ -49,9 +49,11 @@ pub(crate) fn real_range_reject(name: &str, lo: &str, hi: &str, paren: bool) -> 
 }
 
 /// Render a real range bound: the `REAL_MIN`/`REAL_MAX` sentinels by name, anything
-/// else as a literal. `prefix` is the backend's namespace (`"TA_"` for C, empty for
-/// Rust and Java, whose crate and package already namespace them) — so the generated
-/// sources name the constant instead of repeating ±3e37.
+/// else as a literal. `prefix` is the backend's namespace — `"TA_"` for C, `"Self::"`
+/// for Rust (they are associated consts on `Core`, as they are static members of
+/// Java's `Core`, and the emission site is inside `impl Core`), empty for Java, whose
+/// package already namespaces them — so the generated sources name the constant
+/// instead of repeating ±3e37.
 #[must_use]
 #[allow(clippy::float_cmp)] // these are exact sentinel values, not measurements
 pub fn real_bound_literal(v: f64, prefix: &str) -> String {

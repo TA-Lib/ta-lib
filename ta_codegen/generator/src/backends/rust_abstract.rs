@@ -259,16 +259,7 @@ fn emit_api(
 /// The hand-written half of the binder: the holder, its setters and the sealed
 /// `OptValue` trait. The two dispatch matches are generated after it.
 const BINDER_SCAFFOLDING: &str = r#"
-use crate::{Core, RetCode, MAX_INDEX};
-
-/// Where a call's output starts and how much of it there is.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct OutRange {
-    /// Index of the first computed value, relative to the input series.
-    pub beg_idx: usize,
-    /// How many values were written.
-    pub nb_element: usize,
-}
+use crate::{Core, OutRange, RetCode};
 
 mod sealed {
     pub trait Sealed {}
@@ -588,10 +579,10 @@ mod binder_tests {
             if let Ok(r) = a {
                 for k in 0..f.outputs.len() {
                     if f.outputs[k].kind == OutputType::Real {
-                        assert_eq!(ru[k][..r.nb_element], re[k][..r.nb_element],
+                        assert_eq!(ru[k][..r.count], re[k][..r.count],
                                    "{} output {k}", f.name);
                     } else {
-                        assert_eq!(iu[k][..r.nb_element], ie[k][..r.nb_element],
+                        assert_eq!(iu[k][..r.count], ie[k][..r.count],
                                    "{} output {k}", f.name);
                     }
                 }
@@ -715,13 +706,13 @@ fn emit_binder(
          \x20   ///\n\
          \x20   /// # Errors\n\
          \x20   /// [`RetCode::OutOfRangeStartIndex`] if `start_idx` exceeds\n\
-         \x20   /// [`MAX_INDEX`], [`RetCode::OutOfRangeEndIndex`] if `end_idx` exceeds\n\
+         \x20   /// [`Core::MAX_INDEX`], [`RetCode::OutOfRangeEndIndex`] if `end_idx` exceeds\n\
          \x20   /// it or is below `start_idx`, and [`RetCode::BadParam`] if a required\n\
          \x20   /// input or output was never bound, if an output is too short for the\n\
          \x20   /// range, or if the function rejects its parameters.\n\
          \x20   pub fn call(&mut self, start_idx: usize, end_idx: usize) -> Result<OutRange, RetCode> {\n\
-         \x20       if start_idx > MAX_INDEX { return Err(RetCode::OutOfRangeStartIndex); }\n\
-         \x20       if end_idx > MAX_INDEX || end_idx < start_idx {\n\
+         \x20       if start_idx > Core::MAX_INDEX { return Err(RetCode::OutOfRangeStartIndex); }\n\
+         \x20       if end_idx > Core::MAX_INDEX || end_idx < start_idx {\n\
          \x20           return Err(RetCode::OutOfRangeEndIndex);\n\
          \x20       }\n\
          \x20       // C cannot do this: TA_SetOutputParamRealPtr takes a bare pointer, so\n\
@@ -737,7 +728,7 @@ fn emit_binder(
     }
     o.push_str(
         "        };\n\
-         \x20       if rc == RetCode::Success { Ok(OutRange { beg_idx: beg, nb_element: nb }) } else { Err(rc) }\n\
+         \x20       if rc == RetCode::Success { Ok(OutRange { beg_idx: beg, count: nb }) } else { Err(rc) }\n\
          \x20   }\n}\n",
     );
 
@@ -886,7 +877,7 @@ fn emit_call_arm(
         args.push(format!("&mut *o{k}"));
     }
 
-    let _ = writeln!(o, "                let rc = self.core.{snake}({});", args.join(", "));
+    let _ = writeln!(o, "                let rc = self.core.{snake}_Internal({});", args.join(", "));
     for (k, out) in f.outputs.iter().enumerate() {
         let arr = match out.kind {
             OutputKind::Integer => "int_out",

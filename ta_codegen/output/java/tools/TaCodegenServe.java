@@ -23,7 +23,6 @@ class MInteger { public int value; }
 record OutRange(int begIdx, int count) {
     static final OutRange EMPTY = new OutRange(0, 0);
     boolean isEmpty() { return count == 0; }
-    int endIdx() { return begIdx + count; }
 }
 
 enum FuncUnstId {

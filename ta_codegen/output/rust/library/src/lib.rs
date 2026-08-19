@@ -16,14 +16,13 @@
 //! let close = [11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0];
 //! let core = Core::new();
 //! let mut sma = vec![0.0; close.len()];
-//! let (mut out_beg, mut out_nb) = (0, 0);
 //!
-//! let ret = core.SMA(0, close.len() - 1, &close, 3, &mut out_beg, &mut out_nb, &mut sma);
-//! assert_eq!(ret, RetCode::Success);
+//! let out = core.SMA(0, close.len() - 1, &close, 3, &mut sma)?;
 //!
 //! // The first 3-period average lands at input index 2 (the lookback):
-//! assert_eq!((out_beg, out_nb), (2, 8));
+//! assert_eq!((out.beg_idx, out.count), (2, 8));
 //! assert_eq!(sma[0], 12.0); // (11 + 12 + 13) / 3
+//! # Ok::<(), ta_lib::RetCode>(())
 //! ```
 //!
 //! # API shape
@@ -31,17 +30,16 @@
 //! Every indicator is a method on [`Core`] and follows the same pattern:
 //!
 //! * Inputs are `&[f64]` slices, computed over the range `startIdx..=endIdx`.
-//! * Outputs are written into caller-provided `&mut` slices; `outBegIdx` receives the
-//!   input index of the first output value and `outNBElement` the number of values
-//!   written. An indicator consumes a number of leading values (its *lookback*)
-//!   before producing output — query it with the matching `*_Lookback` method
-//!   (e.g. [`Core::SMA_Lookback`]).
-//! * Integer parameters accept `i32::MIN`, and real parameters `-4e37`, to select their
-//!   default value; a moving-average type takes [`MAType::DEFAULT`] instead, the
-//!   sentinel being unrepresentable at a typed enum. A parameter outside its
-//!   documented range returns [`RetCode::BadParam`].
-//! * Every call returns a [`RetCode`]; anything other than [`RetCode::Success`]
-//!   means no output was produced.
+//! * Outputs are written into caller-provided `&mut` slices. An indicator consumes a
+//!   number of leading values (its *lookback*) before producing output — query it with
+//!   the matching `*_Lookback` method (e.g. [`Core::SMA_Lookback`]).
+//! * Integer parameters accept [`Core::INTEGER_DEFAULT`], and real parameters
+//!   [`Core::REAL_DEFAULT`], to select their default value; a moving-average type takes
+//!   [`MAType::DEFAULT`] instead, the sentinel being unrepresentable at a typed enum.
+//! * Every call returns [`Result`]`<`[`OutRange`]`, `[`RetCode`]`>`, so it composes with
+//!   `?`. [`OutRange`] says where the values start ([`beg_idx`](OutRange::beg_idx), in the
+//!   input series' coordinates) and how many there are ([`count`](OutRange::count)).
+//!   A range shorter than the lookback is a **success with no values**, not an error.
 //!
 //! [`Core`] is immutable after construction: its per-instance settings — unstable
 //! period and candlestick thresholds — are chosen up front with
@@ -82,6 +80,9 @@
 // than applied. `too_many_arguments` is inherent to the C API arity.
 #![allow(clippy::all, clippy::pedantic)]
 #![allow(clippy::approx_constant)] // PI (180/3.141592653589793) is copied verbatim from the C source.
-pub mod ta_func;
+// Private, so every public type has exactly one path. `ta_func` is the C source
+// directory's name, and `ta_lib::ta_func::Core` would stutter; the glob below is
+// the only way in (#179 C5).
+mod ta_func;
 pub mod abstract_api;
 pub use ta_func::*;

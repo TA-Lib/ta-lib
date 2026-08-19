@@ -25,20 +25,29 @@ ta-lib = "0.8"
 ```rust
 use ta_lib::{Core, RetCode};
 
-let close = [11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0];
-let core = Core::new();
-let mut sma = vec![0.0; close.len()];
-let (mut out_beg, mut out_nb) = (0, 0);
+fn main() -> Result<(), RetCode> {
+    let close = [11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0];
+    let core = Core::new();
+    let mut sma = vec![0.0; close.len()];
 
-let ret = core.SMA(0, close.len() - 1, &close, 3, &mut out_beg, &mut out_nb, &mut sma);
-assert_eq!(ret, RetCode::Success);
-assert_eq!(sma[0], 12.0); // (11 + 12 + 13) / 3, at input index `out_beg` = 2
+    let out = core.SMA(0, close.len() - 1, &close, 3, &mut sma)?;
+
+    // The first 3-period average lands at input index 2 (the lookback):
+    assert_eq!((out.beg_idx, out.count), (2, 8));
+    assert_eq!(sma[0], 12.0); // (11 + 12 + 13) / 3
+    Ok(())
+}
 ```
 
 Every indicator is a method on `Core` with the same calling pattern: `&[f64]`
 input slices, a `startIdx..=endIdx` range, caller-provided output slices, and a
-`RetCode` result. `outBegIdx` reports the input index of the first output value;
-`*_Lookback` methods return how many leading values an indicator consumes.
+`Result<OutRange, RetCode>`. On success the `OutRange` says where the values
+start (`beg_idx`, in the input series' coordinates) and how many there are
+(`count`); `*_Lookback` methods return how many leading values an indicator
+consumes before the first one exists.
+
+A range shorter than the lookback is a **success with no values** (`count == 0`),
+not an error — the same contract as C, Java and C#.
 
 ## Configuration
 

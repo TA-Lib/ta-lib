@@ -71,83 +71,9 @@ impl Core {
     pub fn CDLENGULFING_Lookback(&self) -> usize {
         return (2) as usize;
     }
-    /// A two-candle reversal pattern where the second candle's real body engulfs the first candle's
-    /// opposite-colored real body. Bullish (white engulfs black) or bearish (black engulfs white)
-    /// reversal signal; ideally after a downtrend (bullish) or uptrend (bearish), which the code
-    /// does not verify.
-    ///
-    /// # Notes
-    ///
-    /// * Does not verify the prior trend (down for bullish, up for bearish) the reversal
-    ///   classically assumes.
-    /// * Bulkowski's testing found bearish Engulfing has a strong 79% reversal rate (5th-best of
-    ///   103 patterns by that measure alone) but a weak overall post-breakout performance rank of
-    ///   91st of 103 — the reversal fires reliably but rarely sustains. Bullish Engulfing
-    ///   reverses 63% of the time with a similarly weak overall rank of 84th of 103.
-    ///   ([thepatternsite.com](https://thepatternsite.com/BearEngulfing.html))
-    ///
-    /// # Arguments
-    ///
-    /// * `startIdx` — Start index of the requested calculation range.
-    /// * `endIdx` — End index of the requested calculation range (inclusive).
-    /// * `inOpen` — Open price of each bar.
-    /// * `inHigh` — High price of each bar.
-    /// * `inLow` — Low price of each bar.
-    /// * `inClose` — Close price of each bar.
-    /// * `outBegIdx` — Set to the input index of the first output value.
-    /// * `outNBElement` — Set to the number of output values written.
-    /// * `outInteger` — +100/+80 (bullish, white engulfs black), -100/-80 (bearish, black engulfs
-    ///   white), 0 otherwise. Magnitude 100 when the second body strictly engulfs both ends; 80
-    ///   when the bodies share an exact endpoint (open\[i]==close\[i-1] or close\[i]==open\[i-1])
-    ///
-    /// # Errors
-    ///
-    /// Returns [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds [`MAX_INDEX`], and
-    /// [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below `startIdx`.
-    ///
-    /// # Panics
-    ///
-    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
-    /// length is always sufficient.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use ta_lib::{Core, RetCode};
-    ///
-    /// let open: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin())
-    ///     .collect();
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let close: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
-    ///     .collect();
-    ///
-    /// let core = Core::new();
-    /// let mut out_beg = 0;
-    /// let mut out_nb = 0;
-    /// let mut out = vec![0i32; 252];
-    ///
-    /// let ret = core.CDLENGULFING(
-    ///     0, open.len() - 1, &open, &high, &low, &close,
-    ///     &mut out_beg, &mut out_nb, &mut out,
-    /// );
-    /// assert_eq!(ret, RetCode::Success);
-    /// assert!(out_nb > 0);
-    /// ```
-    ///
-    /// # See also
-    ///
-    /// [`Core::CDLHARAMI`] · [`Core::CDLCOUNTERATTACK`] · [`Core::CDLHARAMICROSS`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlengulfing](https://ta-lib.org/functions/cdlengulfing)
-    #[doc(alias = "EngulfingPattern")]
-    #[doc(alias = "Engulfing")]
-    #[doc(alias = "BullishBearishEngulfing")]
-    pub fn CDLENGULFING(
+    /// C-shaped body behind [`Core::CDLENGULFING`]: a `RetCode` plus two out-params,
+    /// which is what the transcribed body and its cross-indicator callers expect.
+    pub(crate) fn CDLENGULFING_Internal(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -159,10 +85,10 @@ impl Core {
         outNBElement: &mut usize,
         outInteger: &mut [i32],
     ) -> RetCode {
-        if startIdx > MAX_INDEX {
+        if startIdx > Self::MAX_INDEX {
             return RetCode::OutOfRangeStartIndex;
         }
-        if endIdx > MAX_INDEX || endIdx < startIdx {
+        if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
         let _assertLb = self.CDLENGULFING_Lookback();
@@ -225,6 +151,112 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
+    /// A two-candle reversal pattern where the second candle's real body engulfs the first candle's
+    /// opposite-colored real body. Bullish (white engulfs black) or bearish (black engulfs white)
+    /// reversal signal; ideally after a downtrend (bullish) or uptrend (bearish), which the code
+    /// does not verify.
+    ///
+    /// # Notes
+    ///
+    /// * Does not verify the prior trend (down for bullish, up for bearish) the reversal
+    ///   classically assumes.
+    /// * Bulkowski's testing found bearish Engulfing has a strong 79% reversal rate (5th-best of
+    ///   103 patterns by that measure alone) but a weak overall post-breakout performance rank of
+    ///   91st of 103 — the reversal fires reliably but rarely sustains. Bullish Engulfing
+    ///   reverses 63% of the time with a similarly weak overall rank of 84th of 103.
+    ///   ([thepatternsite.com](https://thepatternsite.com/BearEngulfing.html))
+    ///
+    /// # Arguments
+    ///
+    /// * `startIdx` — Start index of the requested calculation range.
+    /// * `endIdx` — End index of the requested calculation range (inclusive).
+    /// * `inOpen` — Open price of each bar.
+    /// * `inHigh` — High price of each bar.
+    /// * `inLow` — Low price of each bar.
+    /// * `inClose` — Close price of each bar.
+    /// * `outInteger` — +100/+80 (bullish, white engulfs black), -100/-80 (bearish, black engulfs
+    ///   white), 0 otherwise. Magnitude 100 when the second body strictly engulfs both ends; 80
+    ///   when the bodies share an exact endpoint (open\[i]==close\[i-1] or close\[i]==open\[i-1])
+    ///
+    /// # Returns
+    ///
+    /// On success, an [`OutRange`]: `beg_idx` is the index of the first value written, in the input
+    /// series' coordinates, and `count` is how many were written. A range shorter than the lookback
+    /// succeeds with `count == 0`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Err`] carrying [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds
+    /// [`Core::MAX_INDEX`], and [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is
+    /// below `startIdx`. A range shorter than the lookback is not an error: it is [`Ok`] with a
+    /// zero [`OutRange::count`].
+    ///
+    /// # Panics
+    ///
+    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    ///
+    /// let open: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin())
+    ///     .collect();
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
+    ///     .collect();
+    ///
+    /// let core = Core::new();
+    /// let mut out = vec![0i32; 252];
+    ///
+    /// let out_range = core.CDLENGULFING(0, open.len() - 1, &open, &high, &low, &close, &mut out)?;
+    /// assert!(out_range.count > 0);
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// [`Core::CDLHARAMI`] · [`Core::CDLCOUNTERATTACK`] · [`Core::CDLHARAMICROSS`]
+    ///
+    /// Further reading:
+    /// [ta-lib.org/functions/cdlengulfing](https://ta-lib.org/functions/cdlengulfing)
+    #[doc(alias = "EngulfingPattern")]
+    #[doc(alias = "Engulfing")]
+    #[doc(alias = "BullishBearishEngulfing")]
+    pub fn CDLENGULFING(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inOpen: &[f64],
+        inHigh: &[f64],
+        inLow: &[f64],
+        inClose: &[f64],
+        outInteger: &mut [i32],
+    ) -> Result<OutRange, RetCode> {
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let retCode = self.CDLENGULFING_Internal(
+            startIdx,
+            endIdx,
+            inOpen,
+            inHigh,
+            inLow,
+            inClose,
+            &mut outBegIdx,
+            &mut outNBElement,
+            outInteger,
+        );
+        match retCode {
+            RetCode::Success => Ok(OutRange { beg_idx: outBegIdx, count: outNBElement }),
+            e => Err(e),
+        }
+    }
+
 }
 /**** Streaming API *****/
 
@@ -297,7 +329,7 @@ impl Core {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
-        if inOpen.len() > MAX_INDEX + 1 {
+        if inOpen.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
         let historyLen: usize = inOpen.len();

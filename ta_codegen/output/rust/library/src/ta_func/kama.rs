@@ -81,8 +81,8 @@ impl Core {
     /// * `optInTimePeriod` — Lookback window for the efficiency ratio (default 30, range
     ///   1..=100000)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
-    /// to select their default value.
+    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[inline]
     pub fn KAMA_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -95,82 +95,9 @@ impl Core {
         }
         return (optInTimePeriod + self.unstable_period[FuncUnstId::KAMA as usize]) as usize;
     }
-    /// Kaufman Adaptive Moving Average: an EMA whose smoothing factor adapts each bar to an
-    /// efficiency ratio (directional move vs. total volatility). Reacts fast in trends and smooths
-    /// in ranging markets. Flat KAMA = non-trending/ranging market. KAMA tracking price closely =
-    /// efficient trend.
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// ER = |price[t] - price[t-period]| / sum(|price[i]-price[i-1]|, last period bars)
-    /// SC = (ER*(2/3 - 2/31) + 2/31)^2
-    /// KAMA[t] = KAMA[t-1] + SC*(price[t] - KAMA[t-1])
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * A period of 1 performs no smoothing: the output is a copy of the input, consistent with
-    ///   `MA(period=1)` for every MAType. (The natural KAMA math at period 1 would degenerate to a
-    ///   fixed-alpha EMA because the efficiency ratio is always 1, so the copy is made explicit.)
-    ///   Allowed since 0.6.5.
-    ///
-    /// # Arguments
-    ///
-    /// * `startIdx` — Start index of the requested calculation range.
-    /// * `endIdx` — End index of the requested calculation range (inclusive).
-    /// * `inReal` — Source price series.
-    /// * `optInTimePeriod` — Lookback window for the efficiency ratio (default 30, range
-    ///   1..=100000)
-    /// * `outBegIdx` — Set to the input index of the first output value.
-    /// * `outNBElement` — Set to the number of output values written.
-    /// * `outReal` — Adaptive moving average line.
-    ///
-    /// Integer parameters accept `i32::MIN` to select their default value.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds [`MAX_INDEX`],
-    /// [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below `startIdx`, and
-    /// [`RetCode::BadParam`] when an optional parameter is outside its documented range.
-    ///
-    /// # Panics
-    ///
-    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
-    /// length is always sufficient.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use ta_lib::{Core, RetCode};
-    ///
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    ///
-    /// let core = Core::new();
-    /// let mut out_beg = 0;
-    /// let mut out_nb = 0;
-    /// let mut out = vec![0.0; 252];
-    ///
-    /// let ret = core.KAMA(0, data.len() - 1, &data, 30, &mut out_beg, &mut out_nb, &mut out);
-    /// assert_eq!(ret, RetCode::Success);
-    /// assert!(out_nb > 0);
-    /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
-    /// ```
-    ///
-    /// # See also
-    ///
-    /// [`Core::MAMA`] · [`Core::EMA`] · [`Core::MA`]
-    ///
-    /// # References
-    ///
-    /// * Perry J. Kaufman, *Smarter Trading: Improving Performance in Changing Markets*,
-    ///   McGraw-Hill (1995)
-    ///
-    /// Further reading: [ta-lib.org/functions/kama](https://ta-lib.org/functions/kama)
-    #[doc(alias = "KaufmanAdaptiveMovingAverage")]
-    #[doc(alias = "KaufmansAdaptiveMovingAverage")]
-    pub fn KAMA(
+    /// C-shaped body behind [`Core::KAMA`]: a `RetCode` plus two out-params,
+    /// which is what the transcribed body and its cross-indicator callers expect.
+    pub(crate) fn KAMA_Internal(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -181,13 +108,13 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, KAMA_fma, KAMA_impl, (startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, KAMA_Internal_fma, KAMA_Internal_impl, (startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.KAMA_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
+        self.KAMA_Internal_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn KAMA_fma(
+    fn KAMA_Internal_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -197,10 +124,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.KAMA_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
+        self.KAMA_Internal_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn KAMA_impl(
+    fn KAMA_Internal_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -210,10 +137,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        if startIdx > MAX_INDEX {
+        if startIdx > Self::MAX_INDEX {
             return RetCode::OutOfRangeStartIndex;
         }
-        if endIdx > MAX_INDEX || endIdx < startIdx {
+        if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -378,6 +305,110 @@ impl Core {
         (*outNBElement) = outIdx;
         return RetCode::Success;
     }
+    /// Kaufman Adaptive Moving Average: an EMA whose smoothing factor adapts each bar to an
+    /// efficiency ratio (directional move vs. total volatility). Reacts fast in trends and smooths
+    /// in ranging markets. Flat KAMA = non-trending/ranging market. KAMA tracking price closely =
+    /// efficient trend.
+    ///
+    /// # Formula
+    ///
+    /// ```text
+    /// ER = |price[t] - price[t-period]| / sum(|price[i]-price[i-1]|, last period bars)
+    /// SC = (ER*(2/3 - 2/31) + 2/31)^2
+    /// KAMA[t] = KAMA[t-1] + SC*(price[t] - KAMA[t-1])
+    /// ```
+    ///
+    /// # Notes
+    ///
+    /// * A period of 1 performs no smoothing: the output is a copy of the input, consistent with
+    ///   `MA(period=1)` for every MAType. (The natural KAMA math at period 1 would degenerate to a
+    ///   fixed-alpha EMA because the efficiency ratio is always 1, so the copy is made explicit.)
+    ///   Allowed since 0.6.5.
+    ///
+    /// # Arguments
+    ///
+    /// * `startIdx` — Start index of the requested calculation range.
+    /// * `endIdx` — End index of the requested calculation range (inclusive).
+    /// * `inReal` — Source price series.
+    /// * `optInTimePeriod` — Lookback window for the efficiency ratio (default 30, range
+    ///   1..=100000)
+    /// * `outReal` — Adaptive moving average line.
+    ///
+    /// Integer parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
+    ///
+    /// # Returns
+    ///
+    /// On success, an [`OutRange`]: `beg_idx` is the index of the first value written, in the input
+    /// series' coordinates, and `count` is how many were written. A range shorter than the lookback
+    /// succeeds with `count == 0`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Err`] carrying [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds
+    /// [`Core::MAX_INDEX`], [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below
+    /// `startIdx`, and [`RetCode::BadParam`] when an optional parameter is outside its documented
+    /// range. A range shorter than the lookback is not an error: it is [`Ok`] with a zero
+    /// [`OutRange::count`].
+    ///
+    /// # Panics
+    ///
+    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    ///
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let mut out = vec![0.0; 252];
+    ///
+    /// let out_range = core.KAMA(0, data.len() - 1, &data, 30, &mut out)?;
+    /// assert!(out_range.count > 0);
+    /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// [`Core::MAMA`] · [`Core::EMA`] · [`Core::MA`]
+    ///
+    /// # References
+    ///
+    /// * Perry J. Kaufman, *Smarter Trading: Improving Performance in Changing Markets*,
+    ///   McGraw-Hill (1995)
+    ///
+    /// Further reading: [ta-lib.org/functions/kama](https://ta-lib.org/functions/kama)
+    #[doc(alias = "KaufmanAdaptiveMovingAverage")]
+    #[doc(alias = "KaufmansAdaptiveMovingAverage")]
+    pub fn KAMA(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        optInTimePeriod: i32,
+        outReal: &mut [f64],
+    ) -> Result<OutRange, RetCode> {
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let retCode = self.KAMA_Internal(
+            startIdx,
+            endIdx,
+            inReal,
+            optInTimePeriod,
+            &mut outBegIdx,
+            &mut outNBElement,
+            outReal,
+        );
+        match retCode {
+            RetCode::Success => Ok(OutRange { beg_idx: outBegIdx, count: outNBElement }),
+            e => Err(e),
+        }
+    }
+
 }
 /**** Streaming API *****/
 
@@ -493,7 +524,7 @@ impl Core {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
-        if inReal.len() > MAX_INDEX + 1 {
+        if inReal.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {

@@ -107,7 +107,7 @@ Indicators are methods on a `Core` struct, one file per indicator.
   bounds-assert preamble (the LLVM proof that elides per-access bounds checks);
   it is skipped when the lookback clamp means the call computes nothing, so a
   call that returns `Success` with zero elements cannot panic.
-- **Cross-indicator calls target the guarded entry point.**
+- **Cross-indicator calls target `<N>_Internal`**, the crate-private guarded entry point that keeps C's `RetCode` + out-param shape. The public batch API is `pub fn <N>(...) -> Result<OutRange, RetCode>`.
 - Rustdoc, including a runnable doctest per function, is generated from each
   function's canonical `<name>.md`. Verify with `cargo doc --no-deps`
   (warning-free) and `cargo test --doc` in the crate.

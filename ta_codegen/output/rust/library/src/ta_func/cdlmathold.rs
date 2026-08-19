@@ -72,13 +72,13 @@ impl Core {
     /// * `optInPenetration` — Max fraction of the 1st white body the reaction days (3rd, 4th) may
     ///   penetrate (default 0.5, minimum 0)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Real parameters accept `-4e37` to
-    /// select their default value.
+    /// Returns `usize::MAX` when a parameter is out of range. Real parameters accept
+    /// [`Core::REAL_DEFAULT`] to select their default value.
     #[inline]
     pub fn CDLMATHOLD_Lookback(&self, mut optInPenetration: f64) -> usize {
-        if optInPenetration == REAL_DEFAULT {
+        if optInPenetration == Self::REAL_DEFAULT {
             optInPenetration = 5e-1;
-        } else if !((optInPenetration >= 0e0) && (optInPenetration <= REAL_MAX)) {
+        } else if !((optInPenetration >= 0e0) && (optInPenetration <= Self::REAL_MAX)) {
             return usize::MAX;
         }
         #[allow(non_snake_case)]
@@ -95,84 +95,9 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         return ((BodyShort_avgPeriod).max(BodyLong_avgPeriod) + 4) as usize;
     }
-    /// A five-candle bullish continuation pattern: a long white candle, an upside real-body-gapped
-    /// small black candle, two more small falling candles that hold within the first body, and a
-    /// final white candle closing above the reaction days' highs. Signals continuation of the prior
-    /// uptrend. Hit = bullish continuation of the existing uptrend.
-    ///
-    /// # Notes
-    ///
-    /// * The colors of the third and fourth (reaction) candles are not checked, although they are
-    ///   classically black.
-    /// * The continuation reading assumes a prior uptrend, which is not verified.
-    /// * Bulkowski's own dataset contains only 52 Mat Hold occurrences out of 4.7 million candle
-    ///   lines; he explicitly warns the 78% continuation rate he measured "will likely be wrong or
-    ///   at least subject to large change as additional samples become available."
-    ///   ([thepatternsite.com](https://thepatternsite.com/MatHold.html))
-    ///
-    /// # Arguments
-    ///
-    /// * `startIdx` — Start index of the requested calculation range.
-    /// * `endIdx` — End index of the requested calculation range (inclusive).
-    /// * `inOpen` — Open price of each bar.
-    /// * `inHigh` — High price of each bar.
-    /// * `inLow` — Low price of each bar.
-    /// * `inClose` — Close price of each bar.
-    /// * `optInPenetration` — Max fraction of the 1st white body the reaction days (3rd, 4th) may
-    ///   penetrate (default 0.5, minimum 0)
-    /// * `outBegIdx` — Set to the input index of the first output value.
-    /// * `outNBElement` — Set to the number of output values written.
-    /// * `outInteger` — +100 when the bullish Mat Hold is detected, 0 otherwise. Never emits
-    ///   -100.
-    ///
-    /// Real parameters accept `-4e37` to select their default value.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds [`MAX_INDEX`],
-    /// [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below `startIdx`, and
-    /// [`RetCode::BadParam`] when an optional parameter is outside its documented range.
-    ///
-    /// # Panics
-    ///
-    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
-    /// length is always sufficient.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use ta_lib::{Core, RetCode};
-    ///
-    /// let open: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin())
-    ///     .collect();
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let close: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
-    ///     .collect();
-    ///
-    /// let core = Core::new();
-    /// let mut out_beg = 0;
-    /// let mut out_nb = 0;
-    /// let mut out = vec![0i32; 252];
-    ///
-    /// let ret = core.CDLMATHOLD(
-    ///     0, open.len() - 1, &open, &high, &low, &close, 0.5,
-    ///     &mut out_beg, &mut out_nb, &mut out,
-    /// );
-    /// assert_eq!(ret, RetCode::Success);
-    /// assert!(out_nb > 0);
-    /// ```
-    ///
-    /// # See also
-    ///
-    /// [`Core::CDLRISEFALL3METHODS`] · [`Core::CDLXSIDEGAP3METHODS`]
-    ///
-    /// Further reading: [ta-lib.org/functions/cdlmathold](https://ta-lib.org/functions/cdlmathold)
-    #[doc(alias = "MatHold")]
-    pub fn CDLMATHOLD(
+    /// C-shaped body behind [`Core::CDLMATHOLD`]: a `RetCode` plus two out-params,
+    /// which is what the transcribed body and its cross-indicator callers expect.
+    pub(crate) fn CDLMATHOLD_Internal(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -185,15 +110,15 @@ impl Core {
         outNBElement: &mut usize,
         outInteger: &mut [i32],
     ) -> RetCode {
-        if startIdx > MAX_INDEX {
+        if startIdx > Self::MAX_INDEX {
             return RetCode::OutOfRangeStartIndex;
         }
-        if endIdx > MAX_INDEX || endIdx < startIdx {
+        if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if optInPenetration == REAL_DEFAULT {
+        if optInPenetration == Self::REAL_DEFAULT {
             optInPenetration = 5e-1;
-        } else if !((optInPenetration >= 0e0) && (optInPenetration <= REAL_MAX)) {
+        } else if !((optInPenetration >= 0e0) && (optInPenetration <= Self::REAL_MAX)) {
             return RetCode::BadParam;
         }
         let _assertLb = self.CDLMATHOLD_Lookback(optInPenetration);
@@ -438,6 +363,118 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
+    /// A five-candle bullish continuation pattern: a long white candle, an upside real-body-gapped
+    /// small black candle, two more small falling candles that hold within the first body, and a
+    /// final white candle closing above the reaction days' highs. Signals continuation of the prior
+    /// uptrend. Hit = bullish continuation of the existing uptrend.
+    ///
+    /// # Notes
+    ///
+    /// * The colors of the third and fourth (reaction) candles are not checked, although they are
+    ///   classically black.
+    /// * The continuation reading assumes a prior uptrend, which is not verified.
+    /// * Bulkowski's own dataset contains only 52 Mat Hold occurrences out of 4.7 million candle
+    ///   lines; he explicitly warns the 78% continuation rate he measured "will likely be wrong or
+    ///   at least subject to large change as additional samples become available."
+    ///   ([thepatternsite.com](https://thepatternsite.com/MatHold.html))
+    ///
+    /// # Arguments
+    ///
+    /// * `startIdx` — Start index of the requested calculation range.
+    /// * `endIdx` — End index of the requested calculation range (inclusive).
+    /// * `inOpen` — Open price of each bar.
+    /// * `inHigh` — High price of each bar.
+    /// * `inLow` — Low price of each bar.
+    /// * `inClose` — Close price of each bar.
+    /// * `optInPenetration` — Max fraction of the 1st white body the reaction days (3rd, 4th) may
+    ///   penetrate (default 0.5, minimum 0)
+    /// * `outInteger` — +100 when the bullish Mat Hold is detected, 0 otherwise. Never emits
+    ///   -100.
+    ///
+    /// Real parameters accept [`Core::REAL_DEFAULT`] to select their default value.
+    ///
+    /// # Returns
+    ///
+    /// On success, an [`OutRange`]: `beg_idx` is the index of the first value written, in the input
+    /// series' coordinates, and `count` is how many were written. A range shorter than the lookback
+    /// succeeds with `count == 0`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Err`] carrying [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds
+    /// [`Core::MAX_INDEX`], [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below
+    /// `startIdx`, and [`RetCode::BadParam`] when an optional parameter is outside its documented
+    /// range. A range shorter than the lookback is not an error: it is [`Ok`] with a zero
+    /// [`OutRange::count`].
+    ///
+    /// # Panics
+    ///
+    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    ///
+    /// let open: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin())
+    ///     .collect();
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
+    ///     .collect();
+    ///
+    /// let core = Core::new();
+    /// let mut out = vec![0i32; 252];
+    ///
+    /// let out_range = core.CDLMATHOLD(
+    ///     0, open.len() - 1, &open, &high, &low, &close, 0.5,
+    ///     &mut out,
+    /// )?;
+    /// assert!(out_range.count > 0);
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// [`Core::CDLRISEFALL3METHODS`] · [`Core::CDLXSIDEGAP3METHODS`]
+    ///
+    /// Further reading: [ta-lib.org/functions/cdlmathold](https://ta-lib.org/functions/cdlmathold)
+    #[doc(alias = "MatHold")]
+    pub fn CDLMATHOLD(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inOpen: &[f64],
+        inHigh: &[f64],
+        inLow: &[f64],
+        inClose: &[f64],
+        optInPenetration: f64,
+        outInteger: &mut [i32],
+    ) -> Result<OutRange, RetCode> {
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let retCode = self.CDLMATHOLD_Internal(
+            startIdx,
+            endIdx,
+            inOpen,
+            inHigh,
+            inLow,
+            inClose,
+            optInPenetration,
+            &mut outBegIdx,
+            &mut outNBElement,
+            outInteger,
+        );
+        match retCode {
+            RetCode::Success => Ok(OutRange { beg_idx: outBegIdx, count: outNBElement }),
+            e => Err(e),
+        }
+    }
+
 }
 /**** Streaming API *****/
 
@@ -696,12 +733,12 @@ impl Core {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
-        if inOpen.len() > MAX_INDEX + 1 {
+        if inOpen.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if optInPenetration == REAL_DEFAULT {
+        if optInPenetration == Self::REAL_DEFAULT {
             optInPenetration = 5e-1;
-        } else if !((optInPenetration >= 0e0) && (optInPenetration <= REAL_MAX)) {
+        } else if !((optInPenetration >= 0e0) && (optInPenetration <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inOpen.len();

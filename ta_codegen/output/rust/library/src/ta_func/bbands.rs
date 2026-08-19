@@ -95,8 +95,9 @@ impl Core {
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
     ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`,
-    /// and real parameters `-4e37`, to select their default value.
+    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// [`Core::INTEGER_DEFAULT`], and real parameters [`Core::REAL_DEFAULT`], to select their
+    /// default value.
     #[inline]
     pub fn BBANDS_Lookback(&self, mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: MAType) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -104,14 +105,14 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return usize::MAX;
         }
-        if optInNbDevUp == REAL_DEFAULT {
+        if optInNbDevUp == Self::REAL_DEFAULT {
             optInNbDevUp = 2e0;
-        } else if !((optInNbDevUp >= REAL_MIN) && (optInNbDevUp <= REAL_MAX)) {
+        } else if !((optInNbDevUp >= Self::REAL_MIN) && (optInNbDevUp <= Self::REAL_MAX)) {
             return usize::MAX;
         }
-        if optInNbDevDn == REAL_DEFAULT {
+        if optInNbDevDn == Self::REAL_DEFAULT {
             optInNbDevDn = 2e0;
-        } else if !((optInNbDevDn >= REAL_MIN) && (optInNbDevDn <= REAL_MAX)) {
+        } else if !((optInNbDevDn >= Self::REAL_MIN) && (optInNbDevDn <= Self::REAL_MAX)) {
             return usize::MAX;
         }
         if optInMAType == MAType::DEFAULT {
@@ -134,100 +135,9 @@ impl Core {
         stddevLookback = self.STDDEV_Lookback(optInTimePeriod, 1.0);
         return ((if maLookback > stddevLookback { maLookback } else { stddevLookback })) as usize;
     }
-    /// Bollinger Bands: a moving-average middle band with upper and lower bands offset by a
-    /// multiple of the standard deviation. Used to gauge relative price volatility.
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// $$
-    /// \begin{aligned}
-    /// \text{middle}_t &= \operatorname{MA}(X, n, \text{matype})_t \\
-    /// \sigma_t &= \operatorname{STDDEV}(X, n)_t \\
-    /// \text{upper}_t &= \text{middle}_t + k_{\text{up}}\,\sigma_t \\
-    /// \text{lower}_t &= \text{middle}_t - k_{\text{dn}}\,\sigma_t
-    /// \end{aligned}
-    /// $$
-    /// ```
-    ///
-    /// where $X$ is the input series, $n$ the period, $\text{matype}$ the moving-average type, and
-    /// $k_{\text{up}}$, $k_{\text{dn}}$ the upper and lower deviation multipliers.
-    ///
-    /// # Notes
-    ///
-    /// * The defaults reproduce Bollinger's original definition: a 20-period SMA middle band with
-    ///   $k_{\text{up}} = k_{\text{dn}} = 2$. Any other $\text{matype}$ is a TA-Lib generalisation.
-    /// * $\text{matype}$ sets where the envelope is centred; $n$ and $k$ set how wide it is. The
-    ///   two are independent — $\sigma$ depends only on the price window, so changing the middle
-    ///   band re-centres the bands without resizing them.
-    ///
-    /// # Arguments
-    ///
-    /// * `startIdx` — Start index of the requested calculation range.
-    /// * `endIdx` — End index of the requested calculation range (inclusive).
-    /// * `inReal` — Input data series.
-    /// * `optInTimePeriod` — Periods for the MA and standard deviation (default 20, range
-    ///   2..=100000)
-    /// * `optInNbDevUp` — Standard-deviation multiplier for the upper band (default 2)
-    /// * `optInNbDevDn` — Standard-deviation multiplier for the lower band (default 2)
-    /// * `optInMAType` — Moving-average type for the middle band (default 0 = SMA, values: 0=SMA,
-    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
-    /// * `outBegIdx` — Set to the input index of the first output value.
-    /// * `outNBElement` — Set to the number of output values written.
-    /// * `outRealUpperBand` — Middle band plus nbDevUp standard deviations.
-    /// * `outRealMiddleBand` — The moving average.
-    /// * `outRealLowerBand` — Middle band minus nbDevDn standard deviations.
-    ///
-    /// Integer parameters accept `i32::MIN`, and real parameters `-4e37`, to select their default
-    /// value.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds [`MAX_INDEX`],
-    /// [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below `startIdx`, and
-    /// [`RetCode::BadParam`] when an optional parameter is outside its documented range.
-    ///
-    /// # Panics
-    ///
-    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
-    /// length is always sufficient.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use ta_lib::{Core, RetCode, MAType};
-    ///
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    ///
-    /// let core = Core::new();
-    /// let mut out_beg = 0;
-    /// let mut out_nb = 0;
-    /// let mut upper_band = vec![0.0; 252];
-    /// let mut middle_band = vec![0.0; 252];
-    /// let mut lower_band = vec![0.0; 252];
-    ///
-    /// let ret = core.BBANDS(
-    ///     0, data.len() - 1, &data, 20, 2.0, 2.0, MAType::SMA,
-    ///     &mut out_beg, &mut out_nb, &mut upper_band, &mut middle_band, &mut lower_band,
-    /// );
-    /// assert_eq!(ret, RetCode::Success);
-    /// assert!(out_nb > 0);
-    /// assert!(upper_band[..out_nb].iter().all(|v| v.is_finite()));
-    /// ```
-    ///
-    /// # See also
-    ///
-    /// [`Core::MA`] · [`Core::STDDEV`] · [`Core::SMA`]
-    ///
-    /// # References
-    ///
-    /// * John A. Bollinger, *Bollinger on Bollinger Bands*, McGraw-Hill Trade (ISBN 0071373683)
-    ///
-    /// Further reading: [ta-lib.org/functions/bbands](https://ta-lib.org/functions/bbands)
-    #[doc(alias = "BollingerBands")]
-    pub fn BBANDS(
+    /// C-shaped body behind [`Core::BBANDS`]: a `RetCode` plus two out-params,
+    /// which is what the transcribed body and its cross-indicator callers expect.
+    pub(crate) fn BBANDS_Internal(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -243,13 +153,13 @@ impl Core {
         outRealLowerBand: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, BBANDS_fma, BBANDS_impl, (startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand));
+        return ta_lib_dispatch::dispatch_fma!(self, BBANDS_Internal_fma, BBANDS_Internal_impl, (startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand));
         #[cfg(not(target_arch = "x86_64"))]
-        self.BBANDS_impl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand)
+        self.BBANDS_Internal_impl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn BBANDS_fma(
+    fn BBANDS_Internal_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -264,10 +174,10 @@ impl Core {
         outRealMiddleBand: &mut [f64],
         outRealLowerBand: &mut [f64],
     ) -> RetCode {
-        self.BBANDS_impl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand)
+        self.BBANDS_Internal_impl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand)
     }
     #[inline(always)]
-    fn BBANDS_impl(
+    fn BBANDS_Internal_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -282,10 +192,10 @@ impl Core {
         outRealMiddleBand: &mut [f64],
         outRealLowerBand: &mut [f64],
     ) -> RetCode {
-        if startIdx > MAX_INDEX {
+        if startIdx > Self::MAX_INDEX {
             return RetCode::OutOfRangeStartIndex;
         }
-        if endIdx > MAX_INDEX || endIdx < startIdx {
+        if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -293,14 +203,14 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if optInNbDevUp == REAL_DEFAULT {
+        if optInNbDevUp == Self::REAL_DEFAULT {
             optInNbDevUp = 2e0;
-        } else if !((optInNbDevUp >= REAL_MIN) && (optInNbDevUp <= REAL_MAX)) {
+        } else if !((optInNbDevUp >= Self::REAL_MIN) && (optInNbDevUp <= Self::REAL_MAX)) {
             return RetCode::BadParam;
         }
-        if optInNbDevDn == REAL_DEFAULT {
+        if optInNbDevDn == Self::REAL_DEFAULT {
             optInNbDevDn = 2e0;
-        } else if !((optInNbDevDn >= REAL_MIN) && (optInNbDevDn <= REAL_MAX)) {
+        } else if !((optInNbDevDn >= Self::REAL_MIN) && (optInNbDevDn <= Self::REAL_MAX)) {
             return RetCode::BadParam;
         }
         if optInMAType == MAType::DEFAULT {
@@ -471,7 +381,7 @@ impl Core {
         tempBuffer1 = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
         tempBuffer2 = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
         // Calculate the middle band moving average.
-        retCode = self.MA(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..]);
+        retCode = self.MA_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..]);
         if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
             (*outNBElement) = 0;
             return retCode;
@@ -479,7 +389,7 @@ impl Core {
         // Remember where the moving average begins, to realign it below.
         maBegIdx = ((*outBegIdx) as usize) as usize;
         // Calculate the Standard Deviation into tempBuffer2.
-        retCode = self.STDDEV(((*outBegIdx) as usize) as usize, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut tempBuffer2[..]);
+        retCode = self.STDDEV_Internal(((*outBegIdx) as usize) as usize, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut tempBuffer2[..]);
         if retCode != RetCode::Success {
             (*outNBElement) = 0;
             return retCode;
@@ -526,6 +436,138 @@ impl Core {
         }
         return RetCode::Success;
     }
+    /// Bollinger Bands: a moving-average middle band with upper and lower bands offset by a
+    /// multiple of the standard deviation. Used to gauge relative price volatility.
+    ///
+    /// # Formula
+    ///
+    /// ```text
+    /// $$
+    /// \begin{aligned}
+    /// \text{middle}_t &= \operatorname{MA}(X, n, \text{matype})_t \\
+    /// \sigma_t &= \operatorname{STDDEV}(X, n)_t \\
+    /// \text{upper}_t &= \text{middle}_t + k_{\text{up}}\,\sigma_t \\
+    /// \text{lower}_t &= \text{middle}_t - k_{\text{dn}}\,\sigma_t
+    /// \end{aligned}
+    /// $$
+    /// ```
+    ///
+    /// where $X$ is the input series, $n$ the period, $\text{matype}$ the moving-average type, and
+    /// $k_{\text{up}}$, $k_{\text{dn}}$ the upper and lower deviation multipliers.
+    ///
+    /// # Notes
+    ///
+    /// * The defaults reproduce Bollinger's original definition: a 20-period SMA middle band with
+    ///   $k_{\text{up}} = k_{\text{dn}} = 2$. Any other $\text{matype}$ is a TA-Lib generalisation.
+    /// * $\text{matype}$ sets where the envelope is centred; $n$ and $k$ set how wide it is. The
+    ///   two are independent — $\sigma$ depends only on the price window, so changing the middle
+    ///   band re-centres the bands without resizing them.
+    ///
+    /// # Arguments
+    ///
+    /// * `startIdx` — Start index of the requested calculation range.
+    /// * `endIdx` — End index of the requested calculation range (inclusive).
+    /// * `inReal` — Input data series.
+    /// * `optInTimePeriod` — Periods for the MA and standard deviation (default 20, range
+    ///   2..=100000)
+    /// * `optInNbDevUp` — Standard-deviation multiplier for the upper band (default 2)
+    /// * `optInNbDevDn` — Standard-deviation multiplier for the lower band (default 2)
+    /// * `optInMAType` — Moving-average type for the middle band (default 0 = SMA, values: 0=SMA,
+    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
+    /// * `outRealUpperBand` — Middle band plus nbDevUp standard deviations.
+    /// * `outRealMiddleBand` — The moving average.
+    /// * `outRealLowerBand` — Middle band minus nbDevDn standard deviations.
+    ///
+    /// Integer parameters accept [`Core::INTEGER_DEFAULT`], and real parameters
+    /// [`Core::REAL_DEFAULT`], to select their default value.
+    ///
+    /// # Returns
+    ///
+    /// On success, an [`OutRange`]: `beg_idx` is the index of the first value written, in the input
+    /// series' coordinates, and `count` is how many were written. A range shorter than the lookback
+    /// succeeds with `count == 0`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Err`] carrying [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds
+    /// [`Core::MAX_INDEX`], [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below
+    /// `startIdx`, and [`RetCode::BadParam`] when an optional parameter is outside its documented
+    /// range. A range shorter than the lookback is not an error: it is [`Ok`] with a zero
+    /// [`OutRange::count`].
+    ///
+    /// # Panics
+    ///
+    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::{Core, MAType};
+    ///
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let mut upper_band = vec![0.0; 252];
+    /// let mut middle_band = vec![0.0; 252];
+    /// let mut lower_band = vec![0.0; 252];
+    ///
+    /// let out_range = core.BBANDS(
+    ///     0, data.len() - 1, &data, 20, 2.0, 2.0, MAType::SMA,
+    ///     &mut upper_band, &mut middle_band, &mut lower_band,
+    /// )?;
+    /// assert!(out_range.count > 0);
+    /// assert!(upper_band[..out_range.count].iter().all(|v| v.is_finite()));
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// [`Core::MA`] · [`Core::STDDEV`] · [`Core::SMA`]
+    ///
+    /// # References
+    ///
+    /// * John A. Bollinger, *Bollinger on Bollinger Bands*, McGraw-Hill Trade (ISBN 0071373683)
+    ///
+    /// Further reading: [ta-lib.org/functions/bbands](https://ta-lib.org/functions/bbands)
+    #[doc(alias = "BollingerBands")]
+    pub fn BBANDS(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        optInTimePeriod: i32,
+        optInNbDevUp: f64,
+        optInNbDevDn: f64,
+        optInMAType: MAType,
+        outRealUpperBand: &mut [f64],
+        outRealMiddleBand: &mut [f64],
+        outRealLowerBand: &mut [f64],
+    ) -> Result<OutRange, RetCode> {
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let retCode = self.BBANDS_Internal(
+            startIdx,
+            endIdx,
+            inReal,
+            optInTimePeriod,
+            optInNbDevUp,
+            optInNbDevDn,
+            optInMAType,
+            &mut outBegIdx,
+            &mut outNBElement,
+            outRealUpperBand,
+            outRealMiddleBand,
+            outRealLowerBand,
+        );
+        match retCode {
+            RetCode::Success => Ok(OutRange { beg_idx: outBegIdx, count: outNBElement }),
+            e => Err(e),
+        }
+    }
+
 }
 /**** Streaming API *****/
 
@@ -618,7 +660,7 @@ impl Core {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
-        if inReal.len() > MAX_INDEX + 1 {
+        if inReal.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -626,14 +668,14 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if optInNbDevUp == REAL_DEFAULT {
+        if optInNbDevUp == Self::REAL_DEFAULT {
             optInNbDevUp = 2e0;
-        } else if !((optInNbDevUp >= REAL_MIN) && (optInNbDevUp <= REAL_MAX)) {
+        } else if !((optInNbDevUp >= Self::REAL_MIN) && (optInNbDevUp <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
-        if optInNbDevDn == REAL_DEFAULT {
+        if optInNbDevDn == Self::REAL_DEFAULT {
             optInNbDevDn = 2e0;
-        } else if !((optInNbDevDn >= REAL_MIN) && (optInNbDevDn <= REAL_MAX)) {
+        } else if !((optInNbDevDn >= Self::REAL_MIN) && (optInNbDevDn <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
         if optInMAType == MAType::DEFAULT {

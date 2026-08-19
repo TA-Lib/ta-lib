@@ -568,9 +568,10 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
     // inline or delegates to `_private`.
     out.push_str(&fma_dispatch_wrap(
         gen_guarded_func(func, &snake, enums, registry, helpers),
-        &snake,
-        "pub ",
+        &format!("{snake}_Internal"),
+        "pub(crate) ",
     ));
+    out.push_str(&gen_public_entry(func, &snake, enums, registry));
 
     // Build a temporary FuncDef with private_body for the `_private` variant
     let mut body_func = func.clone();
@@ -705,9 +706,93 @@ fn gen_lookback(
     out
 }
 
-/// Generate the guarded public function — the batch entry point. Validates params,
-/// then renders the algorithm inline (or delegates to `{snake}_Private` when the
-/// function declares one).
+/// The name a transcribed body calls a sibling indicator by.
+///
+/// C's `TA_MA(...)` is the guarded entry point, which in Rust is now
+/// `MA_Internal` — the C-shaped one. A `_Private` callee already names a
+/// distinct function and is left alone.
+fn internal_callee(name: &str) -> String {
+    if name.ends_with("_Private") {
+        name.to_string()
+    } else {
+        format!("{name}_Internal")
+    }
+}
+
+/// Generate the batch entry point the crate actually exposes: a thin wrapper over
+/// `{snake}_Internal` returning `Result<OutRange, RetCode>`.
+///
+/// This is the same two-tier shape Java and C# ship — their public `SMA` calls the
+/// code-returning one and turns a failure into an exception, returning `OutRange`
+/// otherwise. Here the exception is an `Err`, so the two values a caller wants
+/// (`begIdx`, `count`) come back by value and are unreachable on failure, which is
+/// exactly the guarantee C's "ignore the out-params unless TA_SUCCESS" rule states
+/// in prose and cannot enforce.
+fn gen_public_entry(
+    func: &FuncDef,
+    snake: &str,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+) -> String {
+    let mut out = String::new();
+
+    // Doc comments + #[doc(alias)] attributes from the canonical <name>.md.
+    out.push_str(&super::rust_doc::guarded_docs(func, snake, enums, registry));
+
+    out.push_str(&format!("    pub fn {snake}(\n"));
+    out.push_str("        &self,\n");
+    out.push_str("        startIdx: usize,\n");
+    out.push_str("        endIdx: usize,\n");
+    // Same parameters as the internal entry point, minus its `mut` bindings (this
+    // body only forwards) and minus the two out-params, which become the return.
+    for input in &func.inputs {
+        let ty = match input.param_type {
+            ParamType::Real => "&[f64]",
+            ParamType::Integer | ParamType::Enum(_) | ParamType::Price(_) => "&[i32]",
+        };
+        out.push_str(&format!("        {}: {},\n", input.name, ty));
+    }
+    for opt in &func.optional_inputs {
+        out.push_str(&format!("        {}: {},\n", opt.name, opt_param_type(&opt.param_type)));
+    }
+    out.push_str(&gen_generic_output_params(func));
+    out.push_str("    ) -> Result<OutRange, RetCode> {\n");
+
+    let mut args: Vec<String> = vec!["startIdx".to_string(), "endIdx".to_string()];
+    args.extend(func.inputs.iter().map(|i| i.name.clone()));
+    args.extend(func.optional_inputs.iter().map(|o| o.name.clone()));
+    args.push("&mut outBegIdx".to_string());
+    args.push("&mut outNBElement".to_string());
+    args.extend(func.outputs.iter().map(|o| o.name.clone()));
+
+    out.push_str("        let mut outBegIdx: usize = 0;\n");
+    out.push_str("        let mut outNBElement: usize = 0;\n");
+    // Always one argument per line: the shortest call in the corpus is already
+    // past a sensible width, so a single-line form would be dead code.
+    out.push_str(&format!("        let retCode = self.{snake}_Internal(\n"));
+    for a in &args {
+        out.push_str(&format!("            {a},\n"));
+    }
+    out.push_str("        );\n");
+    out.push_str("        match retCode {\n");
+    out.push_str("            RetCode::Success => Ok(OutRange { beg_idx: outBegIdx, count: outNBElement }),\n");
+    out.push_str("            e => Err(e),\n");
+    out.push_str("        }\n");
+    out.push_str("    }\n\n");
+    out
+}
+
+/// Generate the guarded entry point — `{snake}_Internal`, crate-private. Validates
+/// params, then renders the algorithm inline (or delegates to `{snake}_Private`
+/// when the function declares one).
+///
+/// This keeps C's shape — a `RetCode` plus `&mut outBegIdx` / `&mut outNBElement`
+/// — because that is what the transcribed bodies are written against: 19 of the 33
+/// cross-indicator call sites hand their own out-params straight to the callee and
+/// read them back, and four guards fold "success with zero output" into the same
+/// condition as the error, which `?` cannot express. Java (`SMA_Internal`) and C#
+/// (the `RetCode` overload) route cross-calls the same way. `gen_public_entry`
+/// wraps this into the `Result<OutRange, RetCode>` the crate actually exposes.
 #[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
 fn gen_guarded_func(
     func: &FuncDef,
@@ -718,11 +803,11 @@ fn gen_guarded_func(
 ) -> String {
     let mut out = String::new();
 
-    // Doc comments + #[doc(alias)] attributes from the canonical <name>.md
-    out.push_str(&super::rust_doc::guarded_docs(func, snake, enums, registry));
-
-    // Function signature
-    out.push_str(&format!("    pub fn {snake}(\n"));
+    // The public wrapper carries the documentation; this one gets a pointer to it.
+    out.push_str(&format!(
+        "    /// C-shaped body behind [`Core::{snake}`]: a `RetCode` plus two out-params,\n    /// which is what the transcribed body and its cross-indicator callers expect.\n"
+    ));
+    out.push_str(&format!("    pub(crate) fn {snake}_Internal(\n"));
     out.push_str("        &self,\n");
     out.push_str("        startIdx: usize,\n");
     out.push_str("        endIdx: usize,\n");
@@ -739,10 +824,10 @@ fn gen_guarded_func(
     // batch entry point used to answer OutOfRangeStartIndex for endIdx <
     // startIdx, which no gate could see: the JSON-RPC server re-implements
     // C's guard, so the crate's answer never reached the driver).
-    out.push_str("        if startIdx > MAX_INDEX {\n");
+    out.push_str("        if startIdx > Self::MAX_INDEX {\n");
     out.push_str("            return RetCode::OutOfRangeStartIndex;\n");
     out.push_str("        }\n");
-    out.push_str("        if endIdx > MAX_INDEX || endIdx < startIdx {\n");
+    out.push_str("        if endIdx > Self::MAX_INDEX || endIdx < startIdx {\n");
     out.push_str("            return RetCode::OutOfRangeEndIndex;\n");
     out.push_str("        }\n");
 
@@ -1477,7 +1562,7 @@ pub(crate) fn gen_opt_param_validation_with(
             if let Some(default) = opt.default {
                 // Bounds are emitted in exponent form so they are `f64` literals, not
                 // integers, on the comparison's right-hand side.
-                out.push_str(&format!("{pad}if {name} == REAL_DEFAULT {{\n"));
+                out.push_str(&format!("{pad}if {name} == Self::REAL_DEFAULT {{\n"));
                 out.push_str(&format!("{pad}    {name} = {default:e};\n"));
 
                 // Every declared bound is checked (see backends::c).
@@ -1486,8 +1571,8 @@ pub(crate) fn gen_opt_param_validation_with(
                         "{pad}}} else if {cond} {{\n",
                         cond = super::common::real_range_reject(
                             name,
-                            &super::common::real_bound_literal(lo, ""),
-                            &super::common::real_bound_literal(hi, ""),
+                            &super::common::real_bound_literal(lo, "Self::"),
+                            &super::common::real_bound_literal(hi, "Self::"),
                             true
                         )
                     ));
@@ -4733,11 +4818,11 @@ fn render_func_call(
         // Bare names (ema) → ema. Private names (ema_private) → ema_private.
         let resolved = registry.resolve_call(fname, crate::registry::Lang::Rust);
         let (rendered_args, aliased) = render_cross_indicator_args(args, ctx, opt_real_params, registry, helpers);
-        wrap_cross_indicator_call(format!("self.{}({})", resolved, rendered_args.join(", ")), &aliased)
+        wrap_cross_indicator_call(format!("self.{}({})", internal_callee(&resolved), rendered_args.join(", ")), &aliased)
     } else if is_ta_function(fname) {
         let rust_name = fname.to_uppercase();
         let (rendered_args, aliased) = render_cross_indicator_args(args, ctx, opt_real_params, registry, helpers);
-        wrap_cross_indicator_call(format!("self.{}({})", rust_name, rendered_args.join(", ")), &aliased)
+        wrap_cross_indicator_call(format!("self.{}({})", internal_callee(&rust_name), rendered_args.join(", ")), &aliased)
     } else {
         let rendered_args: Vec<String> = args
             .iter()

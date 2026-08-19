@@ -81,81 +81,9 @@ impl Core {
         let Near_factor: f64 = self.candle_settings.near.factor;
         return ((Near_avgPeriod).max(Equal_avgPeriod) + 2) as usize;
     }
-    /// A three-candle pattern: a first candle followed by two white candles of similar body size
-    /// that both gap the same direction (up or down) from the first candle's real body and open at
-    /// about the same level. It is a continuation signal whose sign reports the gap direction; the
-    /// code does not verify a prior trend.
-    ///
-    /// # Notes
-    ///
-    /// * Does not verify the prior trend the continuation signal classically assumes.
-    /// * Bulkowski's data shows the bullish form is rare (984 occurrences out of 4.7 million candle
-    ///   lines, frequency rank 73/103) but continues as labeled 66% of the time; the bearish form
-    ///   is rarer still (frequency rank 86/103) and its 56% continuation rate is "near random" —
-    ///   Bulkowski cautions the bearish sample is too thin to trust.
-    ///   ([thepatternsite.com](https://thepatternsite.com/SidebySideWhiteLinesBull.html))
-    ///
-    /// # Arguments
-    ///
-    /// * `startIdx` — Start index of the requested calculation range.
-    /// * `endIdx` — End index of the requested calculation range (inclusive).
-    /// * `inOpen` — Open price of each bar.
-    /// * `inHigh` — High price of each bar.
-    /// * `inLow` — Low price of each bar.
-    /// * `inClose` — Close price of each bar.
-    /// * `outBegIdx` — Set to the input index of the first output value.
-    /// * `outNBElement` — Set to the number of output values written.
-    /// * `outInteger` — +100 for an up-gap (bullish continuation), -100 for a down-gap (bearish
-    ///   continuation), 0 when no pattern. Sign is set solely by the C2-vs-C1 gap direction
-    ///   (realbodygapup ? 100 : -100)
-    ///
-    /// # Errors
-    ///
-    /// Returns [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds [`MAX_INDEX`], and
-    /// [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below `startIdx`.
-    ///
-    /// # Panics
-    ///
-    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
-    /// length is always sufficient.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use ta_lib::{Core, RetCode};
-    ///
-    /// let open: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin())
-    ///     .collect();
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let close: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
-    ///     .collect();
-    ///
-    /// let core = Core::new();
-    /// let mut out_beg = 0;
-    /// let mut out_nb = 0;
-    /// let mut out = vec![0i32; 252];
-    ///
-    /// let ret = core.CDLGAPSIDESIDEWHITE(
-    ///     0, open.len() - 1, &open, &high, &low, &close,
-    ///     &mut out_beg, &mut out_nb, &mut out,
-    /// );
-    /// assert_eq!(ret, RetCode::Success);
-    /// assert!(out_nb > 0);
-    /// ```
-    ///
-    /// # See also
-    ///
-    /// [`Core::CDLTASUKIGAP`] · [`Core::CDLXSIDEGAP3METHODS`]
-    ///
-    /// Further reading:
-    /// [ta-lib.org/functions/cdlgapsidesidewhite](https://ta-lib.org/functions/cdlgapsidesidewhite)
-    #[doc(alias = "UpDown-gapside-by-sidewhitelines")]
-    #[doc(alias = "Gappingside-by-sidewhitelines")]
-    pub fn CDLGAPSIDESIDEWHITE(
+    /// C-shaped body behind [`Core::CDLGAPSIDESIDEWHITE`]: a `RetCode` plus two out-params,
+    /// which is what the transcribed body and its cross-indicator callers expect.
+    pub(crate) fn CDLGAPSIDESIDEWHITE_Internal(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -167,10 +95,10 @@ impl Core {
         outNBElement: &mut usize,
         outInteger: &mut [i32],
     ) -> RetCode {
-        if startIdx > MAX_INDEX {
+        if startIdx > Self::MAX_INDEX {
             return RetCode::OutOfRangeStartIndex;
         }
-        if endIdx > MAX_INDEX || endIdx < startIdx {
+        if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
         let _assertLb = self.CDLGAPSIDESIDEWHITE_Lookback();
@@ -362,6 +290,113 @@ impl Core {
         (*outBegIdx) = startIdx;
         return RetCode::Success;
     }
+    /// A three-candle pattern: a first candle followed by two white candles of similar body size
+    /// that both gap the same direction (up or down) from the first candle's real body and open at
+    /// about the same level. It is a continuation signal whose sign reports the gap direction; the
+    /// code does not verify a prior trend.
+    ///
+    /// # Notes
+    ///
+    /// * Does not verify the prior trend the continuation signal classically assumes.
+    /// * Bulkowski's data shows the bullish form is rare (984 occurrences out of 4.7 million candle
+    ///   lines, frequency rank 73/103) but continues as labeled 66% of the time; the bearish form
+    ///   is rarer still (frequency rank 86/103) and its 56% continuation rate is "near random" —
+    ///   Bulkowski cautions the bearish sample is too thin to trust.
+    ///   ([thepatternsite.com](https://thepatternsite.com/SidebySideWhiteLinesBull.html))
+    ///
+    /// # Arguments
+    ///
+    /// * `startIdx` — Start index of the requested calculation range.
+    /// * `endIdx` — End index of the requested calculation range (inclusive).
+    /// * `inOpen` — Open price of each bar.
+    /// * `inHigh` — High price of each bar.
+    /// * `inLow` — Low price of each bar.
+    /// * `inClose` — Close price of each bar.
+    /// * `outInteger` — +100 for an up-gap (bullish continuation), -100 for a down-gap (bearish
+    ///   continuation), 0 when no pattern. Sign is set solely by the C2-vs-C1 gap direction
+    ///   (realbodygapup ? 100 : -100)
+    ///
+    /// # Returns
+    ///
+    /// On success, an [`OutRange`]: `beg_idx` is the index of the first value written, in the input
+    /// series' coordinates, and `count` is how many were written. A range shorter than the lookback
+    /// succeeds with `count == 0`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Err`] carrying [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds
+    /// [`Core::MAX_INDEX`], and [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is
+    /// below `startIdx`. A range shorter than the lookback is not an error: it is [`Ok`] with a
+    /// zero [`OutRange::count`].
+    ///
+    /// # Panics
+    ///
+    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    ///
+    /// let open: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin())
+    ///     .collect();
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
+    ///     .collect();
+    ///
+    /// let core = Core::new();
+    /// let mut out = vec![0i32; 252];
+    ///
+    /// let out_range = core.CDLGAPSIDESIDEWHITE(
+    ///     0, open.len() - 1, &open, &high, &low, &close,
+    ///     &mut out,
+    /// )?;
+    /// assert!(out_range.count > 0);
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// [`Core::CDLTASUKIGAP`] · [`Core::CDLXSIDEGAP3METHODS`]
+    ///
+    /// Further reading:
+    /// [ta-lib.org/functions/cdlgapsidesidewhite](https://ta-lib.org/functions/cdlgapsidesidewhite)
+    #[doc(alias = "UpDown-gapside-by-sidewhitelines")]
+    #[doc(alias = "Gappingside-by-sidewhitelines")]
+    pub fn CDLGAPSIDESIDEWHITE(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inOpen: &[f64],
+        inHigh: &[f64],
+        inLow: &[f64],
+        inClose: &[f64],
+        outInteger: &mut [i32],
+    ) -> Result<OutRange, RetCode> {
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let retCode = self.CDLGAPSIDESIDEWHITE_Internal(
+            startIdx,
+            endIdx,
+            inOpen,
+            inHigh,
+            inLow,
+            inClose,
+            &mut outBegIdx,
+            &mut outNBElement,
+            outInteger,
+        );
+        match retCode {
+            RetCode::Success => Ok(OutRange { beg_idx: outBegIdx, count: outNBElement }),
+            e => Err(e),
+        }
+    }
+
 }
 /**** Streaming API *****/
 
@@ -553,7 +588,7 @@ impl Core {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
-        if inOpen.len() > MAX_INDEX + 1 {
+        if inOpen.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
         let historyLen: usize = inOpen.len();

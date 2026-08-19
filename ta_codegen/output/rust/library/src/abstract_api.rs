@@ -2528,16 +2528,7 @@ pub const MAX_OPT_INPUTS: usize = 8;
 pub const MAX_OUTPUTS: usize = 3;
 
 
-use crate::{Core, RetCode, MAX_INDEX};
-
-/// Where a call's output starts and how much of it there is.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct OutRange {
-    /// Index of the first computed value, relative to the input series.
-    pub beg_idx: usize,
-    /// How many values were written.
-    pub nb_element: usize,
-}
+use crate::{Core, OutRange, RetCode};
 
 mod sealed {
     pub trait Sealed {}
@@ -2925,13 +2916,13 @@ impl<'a> ParamHolder<'a> {
     ///
     /// # Errors
     /// [`RetCode::OutOfRangeStartIndex`] if `start_idx` exceeds
-    /// [`MAX_INDEX`], [`RetCode::OutOfRangeEndIndex`] if `end_idx` exceeds
+    /// [`Core::MAX_INDEX`], [`RetCode::OutOfRangeEndIndex`] if `end_idx` exceeds
     /// it or is below `start_idx`, and [`RetCode::BadParam`] if a required
     /// input or output was never bound, if an output is too short for the
     /// range, or if the function rejects its parameters.
     pub fn call(&mut self, start_idx: usize, end_idx: usize) -> Result<OutRange, RetCode> {
-        if start_idx > MAX_INDEX { return Err(RetCode::OutOfRangeStartIndex); }
-        if end_idx > MAX_INDEX || end_idx < start_idx {
+        if start_idx > Core::MAX_INDEX { return Err(RetCode::OutOfRangeStartIndex); }
+        if end_idx > Core::MAX_INDEX || end_idx < start_idx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
         // C cannot do this: TA_SetOutputParamRealPtr takes a bare pointer, so
@@ -2946,7 +2937,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.AC(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.AC_Internal(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -2960,7 +2951,7 @@ impl<'a> ParamHolder<'a> {
                 if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
                 let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
                 if o2.len() < need { self.real_out[2] = Some(o2); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.ACCBANDS(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0, &mut *o1, &mut *o2);
+                let rc = self.core.ACCBANDS_Internal(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 self.real_out[2] = Some(o2);
@@ -2970,7 +2961,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.ACOS(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.ACOS_Internal(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -2981,7 +2972,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.AD(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.AD_Internal(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -2990,7 +2981,7 @@ impl<'a> ParamHolder<'a> {
                 let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.ADD(start_idx, end_idx, i0, i1, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.ADD_Internal(start_idx, end_idx, i0, i1, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3001,7 +2992,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.ADOSC(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, self.int_opt[0], self.int_opt[1], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.ADOSC_Internal(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, self.int_opt[0], self.int_opt[1], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3011,7 +3002,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.ADX(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.ADX_Internal(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3021,7 +3012,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.ADXR(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.ADXR_Internal(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3030,7 +3021,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.AO(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.AO_Internal(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3039,7 +3030,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.APO(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], e2, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.APO_Internal(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], e2, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3050,7 +3041,7 @@ impl<'a> ParamHolder<'a> {
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
                 if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.AROON(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut beg, &mut nb, &mut *o0, &mut *o1);
+                let rc = self.core.AROON_Internal(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut beg, &mut nb, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 rc
@@ -3060,7 +3051,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.AROONOSC(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.AROONOSC_Internal(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3068,7 +3059,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.ASIN(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.ASIN_Internal(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3076,7 +3067,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.ATAN(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.ATAN_Internal(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3086,7 +3077,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.ATR(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.ATR_Internal(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3094,7 +3085,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.AVGDEV(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.AVGDEV_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3105,7 +3096,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.AVGPRICE(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.AVGPRICE_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3118,7 +3109,7 @@ impl<'a> ParamHolder<'a> {
                 if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
                 let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
                 if o2.len() < need { self.real_out[2] = Some(o2); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.BBANDS(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], self.real_opt[2], e3, &mut beg, &mut nb, &mut *o0, &mut *o1, &mut *o2);
+                let rc = self.core.BBANDS_Internal(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], self.real_opt[2], e3, &mut beg, &mut nb, &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 self.real_out[2] = Some(o2);
@@ -3129,7 +3120,7 @@ impl<'a> ParamHolder<'a> {
                 let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.BETA(start_idx, end_idx, i0, i1, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.BETA_Internal(start_idx, end_idx, i0, i1, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3140,7 +3131,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.BOP(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.BOP_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3150,7 +3141,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.CCI(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CCI_Internal(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3161,7 +3152,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDL2CROWS(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDL2CROWS_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3172,7 +3163,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDL3BLACKCROWS(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDL3BLACKCROWS_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3183,7 +3174,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDL3INSIDE(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDL3INSIDE_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3194,7 +3185,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDL3LINESTRIKE(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDL3LINESTRIKE_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3205,7 +3196,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDL3OUTSIDE(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDL3OUTSIDE_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3216,7 +3207,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDL3STARSINSOUTH(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDL3STARSINSOUTH_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3227,7 +3218,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDL3WHITESOLDIERS(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDL3WHITESOLDIERS_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3238,7 +3229,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLABANDONEDBABY(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLABANDONEDBABY_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3249,7 +3240,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLADVANCEBLOCK(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLADVANCEBLOCK_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3260,7 +3251,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLBELTHOLD(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLBELTHOLD_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3271,7 +3262,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLBREAKAWAY(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLBREAKAWAY_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3282,7 +3273,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLCLOSINGMARUBOZU(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLCLOSINGMARUBOZU_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3293,7 +3284,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLCONCEALBABYSWALL(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLCONCEALBABYSWALL_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3304,7 +3295,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLCOUNTERATTACK(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLCOUNTERATTACK_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3315,7 +3306,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLDARKCLOUDCOVER(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLDARKCLOUDCOVER_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3326,7 +3317,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLDOJI(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLDOJI_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3337,7 +3328,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLDOJISTAR(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLDOJISTAR_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3348,7 +3339,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLDRAGONFLYDOJI(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLDRAGONFLYDOJI_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3359,7 +3350,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLENGULFING(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLENGULFING_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3370,7 +3361,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLEVENINGDOJISTAR(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLEVENINGDOJISTAR_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3381,7 +3372,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLEVENINGSTAR(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLEVENINGSTAR_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3392,7 +3383,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLGAPSIDESIDEWHITE(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLGAPSIDESIDEWHITE_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3403,7 +3394,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLGRAVESTONEDOJI(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLGRAVESTONEDOJI_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3414,7 +3405,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLHAMMER(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLHAMMER_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3425,7 +3416,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLHANGINGMAN(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLHANGINGMAN_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3436,7 +3427,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLHARAMI(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLHARAMI_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3447,7 +3438,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLHARAMICROSS(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLHARAMICROSS_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3458,7 +3449,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLHIGHWAVE(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLHIGHWAVE_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3469,7 +3460,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLHIKKAKE(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLHIKKAKE_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3480,7 +3471,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLHIKKAKEMOD(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLHIKKAKEMOD_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3491,7 +3482,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLHOMINGPIGEON(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLHOMINGPIGEON_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3502,7 +3493,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLIDENTICAL3CROWS(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLIDENTICAL3CROWS_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3513,7 +3504,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLINNECK(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLINNECK_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3524,7 +3515,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLINVERTEDHAMMER(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLINVERTEDHAMMER_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3535,7 +3526,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLKICKING(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLKICKING_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3546,7 +3537,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLKICKINGBYLENGTH(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLKICKINGBYLENGTH_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3557,7 +3548,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLLADDERBOTTOM(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLLADDERBOTTOM_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3568,7 +3559,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLLONGLEGGEDDOJI(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLLONGLEGGEDDOJI_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3579,7 +3570,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLLONGLINE(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLLONGLINE_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3590,7 +3581,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLMARUBOZU(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLMARUBOZU_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3601,7 +3592,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLMATCHINGLOW(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLMATCHINGLOW_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3612,7 +3603,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLMATHOLD(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLMATHOLD_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3623,7 +3614,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLMORNINGDOJISTAR(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLMORNINGDOJISTAR_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3634,7 +3625,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLMORNINGSTAR(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLMORNINGSTAR_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3645,7 +3636,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLONNECK(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLONNECK_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3656,7 +3647,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLPIERCING(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLPIERCING_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3667,7 +3658,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLRICKSHAWMAN(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLRICKSHAWMAN_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3678,7 +3669,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLRISEFALL3METHODS(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLRISEFALL3METHODS_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3689,7 +3680,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLSEPARATINGLINES(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLSEPARATINGLINES_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3700,7 +3691,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLSHOOTINGSTAR(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLSHOOTINGSTAR_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3711,7 +3702,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLSHORTLINE(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLSHORTLINE_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3722,7 +3713,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLSPINNINGTOP(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLSPINNINGTOP_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3733,7 +3724,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLSTALLEDPATTERN(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLSTALLEDPATTERN_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3744,7 +3735,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLSTICKSANDWICH(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLSTICKSANDWICH_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3755,7 +3746,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLTAKURI(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLTAKURI_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3766,7 +3757,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLTASUKIGAP(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLTASUKIGAP_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3777,7 +3768,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLTHRUSTING(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLTHRUSTING_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3788,7 +3779,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLTRISTAR(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLTRISTAR_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3799,7 +3790,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLUNIQUE3RIVER(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLUNIQUE3RIVER_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3810,7 +3801,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLUPSIDEGAP2CROWS(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLUPSIDEGAP2CROWS_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3821,7 +3812,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.CDLXSIDEGAP3METHODS(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLXSIDEGAP3METHODS_Internal(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -3829,7 +3820,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.CEIL(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CEIL_Internal(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3840,7 +3831,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.CMF(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CMF_Internal(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3848,7 +3839,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.CMO(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CMO_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3856,7 +3847,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.CMOU(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CMOU_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3865,7 +3856,7 @@ impl<'a> ParamHolder<'a> {
                 let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.CORREL(start_idx, end_idx, i0, i1, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CORREL_Internal(start_idx, end_idx, i0, i1, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3873,7 +3864,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.COS(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.COS_Internal(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3881,7 +3872,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.COSH(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.COSH_Internal(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3889,7 +3880,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.DEMA(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.DEMA_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3898,7 +3889,7 @@ impl<'a> ParamHolder<'a> {
                 let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.DIV(start_idx, end_idx, i0, i1, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.DIV_Internal(start_idx, end_idx, i0, i1, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3908,7 +3899,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.DX(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.DX_Internal(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3917,7 +3908,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.EFI(start_idx, end_idx, i0_3, i0_4, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.EFI_Internal(start_idx, end_idx, i0_3, i0_4, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3925,7 +3916,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.EMA(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.EMA_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3933,7 +3924,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.EXP(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.EXP_Internal(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3941,7 +3932,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.FLOOR(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.FLOOR_Internal(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3949,7 +3940,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.HMA(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.HMA_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3957,7 +3948,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.HT_DCPERIOD(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.HT_DCPERIOD_Internal(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3965,7 +3956,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.HT_DCPHASE(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.HT_DCPHASE_Internal(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3975,7 +3966,7 @@ impl<'a> ParamHolder<'a> {
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
                 if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.HT_PHASOR(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0, &mut *o1);
+                let rc = self.core.HT_PHASOR_Internal(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 rc
@@ -3986,7 +3977,7 @@ impl<'a> ParamHolder<'a> {
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
                 if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.HT_SINE(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0, &mut *o1);
+                let rc = self.core.HT_SINE_Internal(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 rc
@@ -3995,7 +3986,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.HT_TRENDLINE(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.HT_TRENDLINE_Internal(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4003,7 +3994,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.HT_TRENDMODE(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.HT_TRENDMODE_Internal(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -4012,7 +4003,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.IMI(start_idx, end_idx, i0_0, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.IMI_Internal(start_idx, end_idx, i0_0, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4020,7 +4011,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.KAMA(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.KAMA_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4028,7 +4019,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.LINEARREG(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.LINEARREG_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4036,7 +4027,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.LINEARREG_ANGLE(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.LINEARREG_ANGLE_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4044,7 +4035,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.LINEARREG_INTERCEPT(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.LINEARREG_INTERCEPT_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4052,7 +4043,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.LINEARREG_SLOPE(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.LINEARREG_SLOPE_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4060,7 +4051,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.LN(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.LN_Internal(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4068,7 +4059,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.LOG10(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.LOG10_Internal(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4077,7 +4068,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.MA(start_idx, end_idx, i0, self.int_opt[0], e1, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.MA_Internal(start_idx, end_idx, i0, self.int_opt[0], e1, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4089,7 +4080,7 @@ impl<'a> ParamHolder<'a> {
                 if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
                 let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
                 if o2.len() < need { self.real_out[2] = Some(o2); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.MACD(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0, &mut *o1, &mut *o2);
+                let rc = self.core.MACD_Internal(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 self.real_out[2] = Some(o2);
@@ -4106,7 +4097,7 @@ impl<'a> ParamHolder<'a> {
                 if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
                 let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
                 if o2.len() < need { self.real_out[2] = Some(o2); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.MACDEXT(start_idx, end_idx, i0, self.int_opt[0], e1, self.int_opt[2], e3, self.int_opt[4], e5, &mut beg, &mut nb, &mut *o0, &mut *o1, &mut *o2);
+                let rc = self.core.MACDEXT_Internal(start_idx, end_idx, i0, self.int_opt[0], e1, self.int_opt[2], e3, self.int_opt[4], e5, &mut beg, &mut nb, &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 self.real_out[2] = Some(o2);
@@ -4120,7 +4111,7 @@ impl<'a> ParamHolder<'a> {
                 if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
                 let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
                 if o2.len() < need { self.real_out[2] = Some(o2); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.MACDFIX(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0, &mut *o1, &mut *o2);
+                let rc = self.core.MACDFIX_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 self.real_out[2] = Some(o2);
@@ -4132,7 +4123,7 @@ impl<'a> ParamHolder<'a> {
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
                 if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.MAMA(start_idx, end_idx, i0, self.real_opt[0], self.real_opt[1], &mut beg, &mut nb, &mut *o0, &mut *o1);
+                let rc = self.core.MAMA_Internal(start_idx, end_idx, i0, self.real_opt[0], self.real_opt[1], &mut beg, &mut nb, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 rc
@@ -4143,7 +4134,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.MARKETFI(start_idx, end_idx, i0_1, i0_2, i0_4, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.MARKETFI_Internal(start_idx, end_idx, i0_1, i0_2, i0_4, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4153,7 +4144,7 @@ impl<'a> ParamHolder<'a> {
                 let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.MAVP(start_idx, end_idx, i0, i1, self.int_opt[0], self.int_opt[1], e2, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.MAVP_Internal(start_idx, end_idx, i0, i1, self.int_opt[0], self.int_opt[1], e2, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4161,7 +4152,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.MAX(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.MAX_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4169,7 +4160,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.MAXINDEX(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.MAXINDEX_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -4178,7 +4169,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.MEDPRICE(start_idx, end_idx, i0_1, i0_2, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.MEDPRICE_Internal(start_idx, end_idx, i0_1, i0_2, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4189,7 +4180,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.MFI(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.MFI_Internal(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4197,7 +4188,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.MIDPOINT(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.MIDPOINT_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4206,7 +4197,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.MIDPRICE(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.MIDPRICE_Internal(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4214,7 +4205,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.MIN(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.MIN_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4222,7 +4213,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.MININDEX(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.MININDEX_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
@@ -4232,7 +4223,7 @@ impl<'a> ParamHolder<'a> {
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
                 if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.MINMAX(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0, &mut *o1);
+                let rc = self.core.MINMAX_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 rc
@@ -4243,7 +4234,7 @@ impl<'a> ParamHolder<'a> {
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
                 let mut o1 = self.int_out[1].take().ok_or(RetCode::BadParam)?;
                 if o1.len() < need { self.int_out[1] = Some(o1); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.MINMAXINDEX(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0, &mut *o1);
+                let rc = self.core.MINMAXINDEX_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0, &mut *o1);
                 self.int_out[0] = Some(o0);
                 self.int_out[1] = Some(o1);
                 rc
@@ -4254,7 +4245,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.MINUS_DI(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.MINUS_DI_Internal(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4263,7 +4254,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.MINUS_DM(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.MINUS_DM_Internal(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4271,7 +4262,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.MOM(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.MOM_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4280,7 +4271,7 @@ impl<'a> ParamHolder<'a> {
                 let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.MULT(start_idx, end_idx, i0, i1, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.MULT_Internal(start_idx, end_idx, i0, i1, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4290,7 +4281,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.NATR(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.NATR_Internal(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4299,7 +4290,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.NVI(start_idx, end_idx, i0_3, i0_4, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.NVI_Internal(start_idx, end_idx, i0_3, i0_4, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4308,7 +4299,7 @@ impl<'a> ParamHolder<'a> {
                 let i1_4 = self.price[1][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.OBV(start_idx, end_idx, i0, i1_4, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.OBV_Internal(start_idx, end_idx, i0, i1_4, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4318,7 +4309,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.PLUS_DI(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.PLUS_DI_Internal(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4327,7 +4318,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.PLUS_DM(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.PLUS_DM_Internal(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4336,7 +4327,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.PPO(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], e2, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.PPO_Internal(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], e2, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4345,7 +4336,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.PVI(start_idx, end_idx, i0_3, i0_4, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.PVI_Internal(start_idx, end_idx, i0_3, i0_4, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4354,7 +4345,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.PVO(start_idx, end_idx, i0_4, self.int_opt[0], self.int_opt[1], e2, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.PVO_Internal(start_idx, end_idx, i0_4, self.int_opt[0], self.int_opt[1], e2, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4363,7 +4354,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.QSTICK(start_idx, end_idx, i0_0, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.QSTICK_Internal(start_idx, end_idx, i0_0, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4371,7 +4362,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.ROC(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.ROC_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4379,7 +4370,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.ROCP(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.ROCP_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4387,7 +4378,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.ROCR(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.ROCR_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4395,7 +4386,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.ROCR100(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.ROCR100_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4403,7 +4394,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.RSI(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.RSI_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4412,7 +4403,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.SAR(start_idx, end_idx, i0_1, i0_2, self.real_opt[0], self.real_opt[1], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.SAR_Internal(start_idx, end_idx, i0_1, i0_2, self.real_opt[0], self.real_opt[1], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4421,7 +4412,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.SAREXT(start_idx, end_idx, i0_1, i0_2, self.real_opt[0], self.real_opt[1], self.real_opt[2], self.real_opt[3], self.real_opt[4], self.real_opt[5], self.real_opt[6], self.real_opt[7], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.SAREXT_Internal(start_idx, end_idx, i0_1, i0_2, self.real_opt[0], self.real_opt[1], self.real_opt[2], self.real_opt[3], self.real_opt[4], self.real_opt[5], self.real_opt[6], self.real_opt[7], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4429,7 +4420,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.SIN(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.SIN_Internal(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4437,7 +4428,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.SINH(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.SINH_Internal(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4445,7 +4436,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.SMA(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.SMA_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4453,7 +4444,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.SQRT(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.SQRT_Internal(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4461,7 +4452,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.STDDEV(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.STDDEV_Internal(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4475,7 +4466,7 @@ impl<'a> ParamHolder<'a> {
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
                 if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.STOCH(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], e2, self.int_opt[3], e4, &mut beg, &mut nb, &mut *o0, &mut *o1);
+                let rc = self.core.STOCH_Internal(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], e2, self.int_opt[3], e4, &mut beg, &mut nb, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 rc
@@ -4489,7 +4480,7 @@ impl<'a> ParamHolder<'a> {
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
                 if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.STOCHF(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], e2, &mut beg, &mut nb, &mut *o0, &mut *o1);
+                let rc = self.core.STOCHF_Internal(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], e2, &mut beg, &mut nb, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 rc
@@ -4501,7 +4492,7 @@ impl<'a> ParamHolder<'a> {
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
                 if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.STOCHRSI(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], e3, &mut beg, &mut nb, &mut *o0, &mut *o1);
+                let rc = self.core.STOCHRSI_Internal(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], e3, &mut beg, &mut nb, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 rc
@@ -4511,7 +4502,7 @@ impl<'a> ParamHolder<'a> {
                 let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.SUB(start_idx, end_idx, i0, i1, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.SUB_Internal(start_idx, end_idx, i0, i1, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4519,7 +4510,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.SUM(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.SUM_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4527,7 +4518,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.T3(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.T3_Internal(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4535,7 +4526,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.TAN(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.TAN_Internal(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4543,7 +4534,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.TANH(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.TANH_Internal(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4551,7 +4542,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.TEMA(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.TEMA_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4561,7 +4552,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.TRANGE(start_idx, end_idx, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.TRANGE_Internal(start_idx, end_idx, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4569,7 +4560,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.TRIMA(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.TRIMA_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4577,7 +4568,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.TRIX(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.TRIX_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4585,7 +4576,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.TSF(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.TSF_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4595,7 +4586,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.TYPPRICE(start_idx, end_idx, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.TYPPRICE_Internal(start_idx, end_idx, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4605,7 +4596,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.ULTOSC(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.ULTOSC_Internal(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4613,7 +4604,7 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.VAR(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.VAR_Internal(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4622,7 +4613,7 @@ impl<'a> ParamHolder<'a> {
                 let i1_4 = self.price[1][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.VWMA(start_idx, end_idx, i0, i1_4, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.VWMA_Internal(start_idx, end_idx, i0, i1_4, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4632,7 +4623,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.WAD(start_idx, end_idx, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.WAD_Internal(start_idx, end_idx, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4642,7 +4633,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.WCLPRICE(start_idx, end_idx, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.WCLPRICE_Internal(start_idx, end_idx, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4652,7 +4643,7 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.WILLR(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.WILLR_Internal(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4660,12 +4651,12 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.WMA(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.WMA_Internal(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
         };
-        if rc == RetCode::Success { Ok(OutRange { beg_idx: beg, nb_element: nb }) } else { Err(rc) }
+        if rc == RetCode::Success { Ok(OutRange { beg_idx: beg, count: nb }) } else { Err(rc) }
     }
 }
 
@@ -4789,10 +4780,10 @@ mod binder_tests {
             if let Ok(r) = a {
                 for k in 0..f.outputs.len() {
                     if f.outputs[k].kind == OutputType::Real {
-                        assert_eq!(ru[k][..r.nb_element], re[k][..r.nb_element],
+                        assert_eq!(ru[k][..r.count], re[k][..r.count],
                                    "{} output {k}", f.name);
                     } else {
-                        assert_eq!(iu[k][..r.nb_element], ie[k][..r.nb_element],
+                        assert_eq!(iu[k][..r.count], ie[k][..r.count],
                                    "{} output {k}", f.name);
                     }
                 }

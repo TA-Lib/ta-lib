@@ -73,8 +73,8 @@ impl Core {
     ///
     /// * `optInTimePeriod` — Lookback window length (default 14, range 2..=100000)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
-    /// to select their default value.
+    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[inline]
     pub fn AROON_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -84,78 +84,9 @@ impl Core {
         }
         return (optInTimePeriod) as usize;
     }
-    /// Aroon reports how recently the highest high and lowest low occurred within a rolling window
-    /// of length optInTimePeriod, as two 0-100 oscillators. Indicates trend strength and direction.
-    /// Up near 100 = a very recent new high (strong uptrend); Down near 100 = a very recent new
-    /// low. Up/Down crossovers signal trend shifts.
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// Up = 100*(period-(today-highestIdx))/period; Down = 100*(period-(today-lowestIdx))/period, where highestIdx/lowestIdx index the highest high / lowest low over the window [today-period .. today].
-    /// ```
-    ///
-    /// # Arguments
-    ///
-    /// * `startIdx` — Start index of the requested calculation range.
-    /// * `endIdx` — End index of the requested calculation range (inclusive).
-    /// * `inHigh` — High price of each bar.
-    /// * `inLow` — Low price of each bar.
-    /// * `optInTimePeriod` — Lookback window length (default 14, range 2..=100000)
-    /// * `outBegIdx` — Set to the input index of the first output value.
-    /// * `outNBElement` — Set to the number of output values written.
-    /// * `outAroonDown` — Recency of the lowest low (100 = it is the current bar, decaying as it
-    ///   ages)
-    /// * `outAroonUp` — Recency of the highest high (100 = it is the current bar, decaying as it
-    ///   ages)
-    ///
-    /// Integer parameters accept `i32::MIN` to select their default value.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds [`MAX_INDEX`],
-    /// [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below `startIdx`, and
-    /// [`RetCode::BadParam`] when an optional parameter is outside its documented range.
-    ///
-    /// # Panics
-    ///
-    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
-    /// length is always sufficient.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use ta_lib::{Core, RetCode};
-    ///
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    ///
-    /// let core = Core::new();
-    /// let mut out_beg = 0;
-    /// let mut out_nb = 0;
-    /// let mut aroon_down = vec![0.0; 252];
-    /// let mut aroon_up = vec![0.0; 252];
-    ///
-    /// let ret = core.AROON(
-    ///     0, high.len() - 1, &high, &low, 14,
-    ///     &mut out_beg, &mut out_nb, &mut aroon_down, &mut aroon_up,
-    /// );
-    /// assert_eq!(ret, RetCode::Success);
-    /// assert!(out_nb > 0);
-    /// assert!(aroon_down[..out_nb].iter().all(|v| v.is_finite()));
-    /// ```
-    ///
-    /// # See also
-    ///
-    /// [`Core::AROONOSC`] · [`Core::MINMAXINDEX`] · [`Core::MIN`] · [`Core::MAX`]
-    ///
-    /// # References
-    ///
-    /// * Tushar S. Chande
-    ///
-    /// Further reading: [ta-lib.org/functions/aroon](https://ta-lib.org/functions/aroon)
-    pub fn AROON(
+    /// C-shaped body behind [`Core::AROON`]: a `RetCode` plus two out-params,
+    /// which is what the transcribed body and its cross-indicator callers expect.
+    pub(crate) fn AROON_Internal(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -167,10 +98,10 @@ impl Core {
         outAroonDown: &mut [f64],
         outAroonUp: &mut [f64],
     ) -> RetCode {
-        if startIdx > MAX_INDEX {
+        if startIdx > Self::MAX_INDEX {
             return RetCode::OutOfRangeStartIndex;
         }
-        if endIdx > MAX_INDEX || endIdx < startIdx {
+        if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -274,6 +205,110 @@ impl Core {
         (*outNBElement) = outIdx;
         return RetCode::Success;
     }
+    /// Aroon reports how recently the highest high and lowest low occurred within a rolling window
+    /// of length optInTimePeriod, as two 0-100 oscillators. Indicates trend strength and direction.
+    /// Up near 100 = a very recent new high (strong uptrend); Down near 100 = a very recent new
+    /// low. Up/Down crossovers signal trend shifts.
+    ///
+    /// # Formula
+    ///
+    /// ```text
+    /// Up = 100*(period-(today-highestIdx))/period; Down = 100*(period-(today-lowestIdx))/period, where highestIdx/lowestIdx index the highest high / lowest low over the window [today-period .. today].
+    /// ```
+    ///
+    /// # Arguments
+    ///
+    /// * `startIdx` — Start index of the requested calculation range.
+    /// * `endIdx` — End index of the requested calculation range (inclusive).
+    /// * `inHigh` — High price of each bar.
+    /// * `inLow` — Low price of each bar.
+    /// * `optInTimePeriod` — Lookback window length (default 14, range 2..=100000)
+    /// * `outAroonDown` — Recency of the lowest low (100 = it is the current bar, decaying as it
+    ///   ages)
+    /// * `outAroonUp` — Recency of the highest high (100 = it is the current bar, decaying as it
+    ///   ages)
+    ///
+    /// Integer parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
+    ///
+    /// # Returns
+    ///
+    /// On success, an [`OutRange`]: `beg_idx` is the index of the first value written, in the input
+    /// series' coordinates, and `count` is how many were written. A range shorter than the lookback
+    /// succeeds with `count == 0`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Err`] carrying [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds
+    /// [`Core::MAX_INDEX`], [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below
+    /// `startIdx`, and [`RetCode::BadParam`] when an optional parameter is outside its documented
+    /// range. A range shorter than the lookback is not an error: it is [`Ok`] with a zero
+    /// [`OutRange::count`].
+    ///
+    /// # Panics
+    ///
+    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    ///
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let mut aroon_down = vec![0.0; 252];
+    /// let mut aroon_up = vec![0.0; 252];
+    ///
+    /// let out_range = core.AROON(
+    ///     0, high.len() - 1, &high, &low, 14,
+    ///     &mut aroon_down, &mut aroon_up,
+    /// )?;
+    /// assert!(out_range.count > 0);
+    /// assert!(aroon_down[..out_range.count].iter().all(|v| v.is_finite()));
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// [`Core::AROONOSC`] · [`Core::MINMAXINDEX`] · [`Core::MIN`] · [`Core::MAX`]
+    ///
+    /// # References
+    ///
+    /// * Tushar S. Chande
+    ///
+    /// Further reading: [ta-lib.org/functions/aroon](https://ta-lib.org/functions/aroon)
+    pub fn AROON(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inHigh: &[f64],
+        inLow: &[f64],
+        optInTimePeriod: i32,
+        outAroonDown: &mut [f64],
+        outAroonUp: &mut [f64],
+    ) -> Result<OutRange, RetCode> {
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let retCode = self.AROON_Internal(
+            startIdx,
+            endIdx,
+            inHigh,
+            inLow,
+            optInTimePeriod,
+            &mut outBegIdx,
+            &mut outNBElement,
+            outAroonDown,
+            outAroonUp,
+        );
+        match retCode {
+            RetCode::Success => Ok(OutRange { beg_idx: outBegIdx, count: outNBElement }),
+            e => Err(e),
+        }
+    }
+
 }
 /**** Streaming API *****/
 
@@ -404,7 +439,7 @@ impl Core {
         if inHigh.is_empty() || inLow.is_empty() || inLow.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
-        if inHigh.len() > MAX_INDEX + 1 {
+        if inHigh.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {

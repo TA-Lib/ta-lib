@@ -81,8 +81,8 @@ impl Core {
     ///   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
     ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
-    /// to select their default value.
+    /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept
+    /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[inline]
     pub fn MA_Lookback(&self, mut optInTimePeriod: i32, mut optInMAType: MAType) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -134,81 +134,9 @@ impl Core {
         }
         return retValue;
     }
-    /// Generic moving-average dispatcher that forwards the job to the MA implementation selected by
-    /// optInMAType. Single uniform interface over all TA-Lib moving averages.
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// outReal = MA_of_type(optInMAType)(inReal, optInTimePeriod); default type = SMA
-    /// ```
-    ///
-    /// # Notes
-    ///
-    /// * A period of 1 performs no smoothing for every MAType: the output is a copy of the input.
-    /// * `TA_MAType_DISABLED` bypasses smoothing explicitly, for any period: the output is a copy
-    ///   of the input with a lookback of 0. Every function that takes an MAType parameter accepts
-    ///   it.
-    /// * `TA_MAType_DEFAULT` selects the documented default of the parameter it is passed to —
-    ///   SMA here, EMA for APO, PPO and PVO. Every function that takes an MAType parameter accepts
-    ///   it.
-    ///
-    /// # Arguments
-    ///
-    /// * `startIdx` — Start index of the requested calculation range.
-    /// * `endIdx` — End index of the requested calculation range (inclusive).
-    /// * `inReal` — Series to average.
-    /// * `optInTimePeriod` — Averaging window length (default 30, range 1..=100000)
-    /// * `optInMAType` — Which moving-average algorithm to dispatch to (default 0 = SMA, values:
-    ///   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
-    /// * `outBegIdx` — Set to the input index of the first output value.
-    /// * `outNBElement` — Set to the number of output values written.
-    /// * `outReal` — Selected moving average of the input.
-    ///
-    /// Integer parameters accept `i32::MIN` to select their default value.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds [`MAX_INDEX`],
-    /// [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below `startIdx`, and
-    /// [`RetCode::BadParam`] when an optional parameter is outside its documented range.
-    ///
-    /// # Panics
-    ///
-    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
-    /// length is always sufficient.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use ta_lib::{Core, RetCode, MAType};
-    ///
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    ///
-    /// let core = Core::new();
-    /// let mut out_beg = 0;
-    /// let mut out_nb = 0;
-    /// let mut out = vec![0.0; 252];
-    ///
-    /// let ret = core.MA(
-    ///     0, data.len() - 1, &data, 30, MAType::SMA,
-    ///     &mut out_beg, &mut out_nb, &mut out,
-    /// );
-    /// assert_eq!(ret, RetCode::Success);
-    /// assert!(out_nb > 0);
-    /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
-    /// ```
-    ///
-    /// # See also
-    ///
-    /// [`Core::SMA`] · [`Core::EMA`] · [`Core::WMA`] · [`Core::DEMA`] · [`Core::TEMA`] ·
-    /// [`Core::TRIMA`] · [`Core::KAMA`] · [`Core::MAMA`] · [`Core::T3`] · [`Core::HMA`]
-    ///
-    /// Further reading: [ta-lib.org/functions/ma](https://ta-lib.org/functions/ma)
-    #[doc(alias = "MovingAverage")]
-    pub fn MA(
+    /// C-shaped body behind [`Core::MA`]: a `RetCode` plus two out-params,
+    /// which is what the transcribed body and its cross-indicator callers expect.
+    pub(crate) fn MA_Internal(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -219,10 +147,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        if startIdx > MAX_INDEX {
+        if startIdx > Self::MAX_INDEX {
             return RetCode::OutOfRangeStartIndex;
         }
-        if endIdx > MAX_INDEX || endIdx < startIdx {
+        if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -261,36 +189,36 @@ impl Core {
         // Simply forward the job to the corresponding TA function.
         match optInMAType {
             MAType::SMA => {
-                retCode = self.SMA(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                retCode = self.SMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
             MAType::EMA => {
-                retCode = self.EMA(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                retCode = self.EMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
             MAType::WMA => {
-                retCode = self.WMA(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                retCode = self.WMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
             MAType::DEMA => {
-                retCode = self.DEMA(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                retCode = self.DEMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
             MAType::TEMA => {
-                retCode = self.TEMA(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                retCode = self.TEMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
             MAType::TRIMA => {
-                retCode = self.TRIMA(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                retCode = self.TRIMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
             MAType::KAMA => {
-                retCode = self.KAMA(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                retCode = self.KAMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
             MAType::MAMA => {
                 // The optInTimePeriod is ignored. FAMA is a nullable output
                 // (issue #125): pass NULL to compute only the MAMA line into outReal.
-                retCode = self.MAMA(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, &mut vec![0.0_f64; (endIdx - startIdx + 1) as usize][..]);
+                retCode = self.MAMA_Internal(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, &mut vec![0.0_f64; (endIdx - startIdx + 1) as usize][..]);
             }
             MAType::T3 => {
-                retCode = self.T3(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
+                retCode = self.T3_Internal(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
             }
             MAType::HMA => {
-                retCode = self.HMA(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                retCode = self.HMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
             _ => {
                 retCode = RetCode::BadParam;
@@ -298,6 +226,108 @@ impl Core {
         }
         return retCode;
     }
+    /// Generic moving-average dispatcher that forwards the job to the MA implementation selected by
+    /// optInMAType. Single uniform interface over all TA-Lib moving averages.
+    ///
+    /// # Formula
+    ///
+    /// ```text
+    /// outReal = MA_of_type(optInMAType)(inReal, optInTimePeriod); default type = SMA
+    /// ```
+    ///
+    /// # Notes
+    ///
+    /// * A period of 1 performs no smoothing for every MAType: the output is a copy of the input.
+    /// * `TA_MAType_DISABLED` bypasses smoothing explicitly, for any period: the output is a copy
+    ///   of the input with a lookback of 0. Every function that takes an MAType parameter accepts
+    ///   it.
+    /// * `TA_MAType_DEFAULT` selects the documented default of the parameter it is passed to —
+    ///   SMA here, EMA for APO, PPO and PVO. Every function that takes an MAType parameter accepts
+    ///   it.
+    ///
+    /// # Arguments
+    ///
+    /// * `startIdx` — Start index of the requested calculation range.
+    /// * `endIdx` — End index of the requested calculation range (inclusive).
+    /// * `inReal` — Series to average.
+    /// * `optInTimePeriod` — Averaging window length (default 30, range 1..=100000)
+    /// * `optInMAType` — Which moving-average algorithm to dispatch to (default 0 = SMA, values:
+    ///   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
+    /// * `outReal` — Selected moving average of the input.
+    ///
+    /// Integer parameters accept [`Core::INTEGER_DEFAULT`] to select their default value.
+    ///
+    /// # Returns
+    ///
+    /// On success, an [`OutRange`]: `beg_idx` is the index of the first value written, in the input
+    /// series' coordinates, and `count` is how many were written. A range shorter than the lookback
+    /// succeeds with `count == 0`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Err`] carrying [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds
+    /// [`Core::MAX_INDEX`], [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below
+    /// `startIdx`, and [`RetCode::BadParam`] when an optional parameter is outside its documented
+    /// range. A range shorter than the lookback is not an error: it is [`Ok`] with a zero
+    /// [`OutRange::count`].
+    ///
+    /// # Panics
+    ///
+    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::{Core, MAType};
+    ///
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let mut out = vec![0.0; 252];
+    ///
+    /// let out_range = core.MA(0, data.len() - 1, &data, 30, MAType::SMA, &mut out)?;
+    /// assert!(out_range.count > 0);
+    /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// [`Core::SMA`] · [`Core::EMA`] · [`Core::WMA`] · [`Core::DEMA`] · [`Core::TEMA`] ·
+    /// [`Core::TRIMA`] · [`Core::KAMA`] · [`Core::MAMA`] · [`Core::T3`] · [`Core::HMA`]
+    ///
+    /// Further reading: [ta-lib.org/functions/ma](https://ta-lib.org/functions/ma)
+    #[doc(alias = "MovingAverage")]
+    pub fn MA(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        optInTimePeriod: i32,
+        optInMAType: MAType,
+        outReal: &mut [f64],
+    ) -> Result<OutRange, RetCode> {
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let retCode = self.MA_Internal(
+            startIdx,
+            endIdx,
+            inReal,
+            optInTimePeriod,
+            optInMAType,
+            &mut outBegIdx,
+            &mut outNBElement,
+            outReal,
+        );
+        match retCode {
+            RetCode::Success => Ok(OutRange { beg_idx: outBegIdx, count: outNBElement }),
+            e => Err(e),
+        }
+    }
+
 }
 /**** Streaming API *****/
 
@@ -439,7 +469,7 @@ impl Core {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
-        if inReal.len() > MAX_INDEX + 1 {
+        if inReal.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {
@@ -541,7 +571,7 @@ impl Core {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
-        if inReal.len() > MAX_INDEX + 1 {
+        if inReal.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
         if inReal.iter().any(|v| !v.is_finite()) {
@@ -616,7 +646,7 @@ impl Core {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
-        if inReal.len() > MAX_INDEX + 1 {
+        if inReal.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {

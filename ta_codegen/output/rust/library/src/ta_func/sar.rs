@@ -75,100 +75,27 @@ impl Core {
     ///   (default 0.02, minimum 0)
     /// * `optInMaximum` — Ceiling on the acceleration factor (default 0.2, minimum 0)
     ///
-    /// Returns `usize::MAX` when a parameter is out of range. Real parameters accept `-4e37` to
-    /// select their default value.
+    /// Returns `usize::MAX` when a parameter is out of range. Real parameters accept
+    /// [`Core::REAL_DEFAULT`] to select their default value.
     #[inline]
     pub fn SAR_Lookback(&self, mut optInAcceleration: f64, mut optInMaximum: f64) -> usize {
-        if optInAcceleration == REAL_DEFAULT {
+        if optInAcceleration == Self::REAL_DEFAULT {
             optInAcceleration = 2e-2;
-        } else if !((optInAcceleration >= 0e0) && (optInAcceleration <= REAL_MAX)) {
+        } else if !((optInAcceleration >= 0e0) && (optInAcceleration <= Self::REAL_MAX)) {
             return usize::MAX;
         }
-        if optInMaximum == REAL_DEFAULT {
+        if optInMaximum == Self::REAL_DEFAULT {
             optInMaximum = 2e-1;
-        } else if !((optInMaximum >= 0e0) && (optInMaximum <= REAL_MAX)) {
+        } else if !((optInMaximum >= 0e0) && (optInMaximum <= Self::REAL_MAX)) {
             return usize::MAX;
         }
         // SAR always sacrify one price bar to establish the
         // initial extreme price.
         return (1) as usize;
     }
-    /// Wilder's Parabolic SAR (Stop And Reverse): a trailing stop/reverse level that accelerates
-    /// toward price via an acceleration factor. Signals trend direction and trailing exit points.
-    /// SAR below price = uptrend (long); SAR above price = downtrend (short). Price crossing SAR
-    /// flips direction.
-    ///
-    /// # Formula
-    ///
-    /// ```text
-    /// SAR_next = SAR + af * (EP - SAR)
-    /// EP = extreme point (highest high in long / lowest low in short); af starts at Acceleration, += Acceleration each new EP, capped at Maximum.
-    /// On penetration: reverse, SAR := prior EP, reset af = Acceleration. SAR clamped each bar so it does not penetrate the prior/current bar's range.
-    /// ```
-    ///
-    /// # Arguments
-    ///
-    /// * `startIdx` — Start index of the requested calculation range.
-    /// * `endIdx` — End index of the requested calculation range (inclusive).
-    /// * `inHigh` — High price of each bar.
-    /// * `inLow` — Low price of each bar.
-    /// * `optInAcceleration` — Step added to the acceleration factor on each new extreme point
-    ///   (default 0.02, minimum 0)
-    /// * `optInMaximum` — Ceiling on the acceleration factor (default 0.2, minimum 0)
-    /// * `outBegIdx` — Set to the input index of the first output value.
-    /// * `outNBElement` — Set to the number of output values written.
-    /// * `outReal` — Parabolic SAR stop/reverse level per bar.
-    ///
-    /// Real parameters accept `-4e37` to select their default value.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds [`MAX_INDEX`],
-    /// [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below `startIdx`, and
-    /// [`RetCode::BadParam`] when an optional parameter is outside its documented range.
-    ///
-    /// # Panics
-    ///
-    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
-    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
-    /// length is always sufficient.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use ta_lib::{Core, RetCode};
-    ///
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    ///
-    /// let core = Core::new();
-    /// let mut out_beg = 0;
-    /// let mut out_nb = 0;
-    /// let mut out = vec![0.0; 252];
-    ///
-    /// let ret = core.SAR(
-    ///     0, high.len() - 1, &high, &low, 0.02, 0.2,
-    ///     &mut out_beg, &mut out_nb, &mut out,
-    /// );
-    /// assert_eq!(ret, RetCode::Success);
-    /// assert!(out_nb > 0);
-    /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
-    /// ```
-    ///
-    /// # See also
-    ///
-    /// [`Core::SAREXT`] · [`Core::MINUS_DM`] · [`Core::PLUS_DM`]
-    ///
-    /// # References
-    ///
-    /// * J. Welles Wilder, *New Concepts in Technical Trading Systems*, Trend Research (ISBN
-    ///   0894590278)
-    ///
-    /// Further reading: [ta-lib.org/functions/sar](https://ta-lib.org/functions/sar)
-    #[doc(alias = "ParabolicSAR")]
-    #[doc(alias = "PSAR")]
-    #[doc(alias = "StopandReverse")]
-    pub fn SAR(
+    /// C-shaped body behind [`Core::SAR`]: a `RetCode` plus two out-params,
+    /// which is what the transcribed body and its cross-indicator callers expect.
+    pub(crate) fn SAR_Internal(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -181,13 +108,13 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, SAR_fma, SAR_impl, (startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, SAR_Internal_fma, SAR_Internal_impl, (startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.SAR_impl(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal)
+        self.SAR_Internal_impl(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn SAR_fma(
+    fn SAR_Internal_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -199,10 +126,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.SAR_impl(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal)
+        self.SAR_Internal_impl(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn SAR_impl(
+    fn SAR_Internal_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -214,20 +141,20 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        if startIdx > MAX_INDEX {
+        if startIdx > Self::MAX_INDEX {
             return RetCode::OutOfRangeStartIndex;
         }
-        if endIdx > MAX_INDEX || endIdx < startIdx {
+        if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        if optInAcceleration == REAL_DEFAULT {
+        if optInAcceleration == Self::REAL_DEFAULT {
             optInAcceleration = 2e-2;
-        } else if !((optInAcceleration >= 0e0) && (optInAcceleration <= REAL_MAX)) {
+        } else if !((optInAcceleration >= 0e0) && (optInAcceleration <= Self::REAL_MAX)) {
             return RetCode::BadParam;
         }
-        if optInMaximum == REAL_DEFAULT {
+        if optInMaximum == Self::REAL_DEFAULT {
             optInMaximum = 2e-1;
-        } else if !((optInMaximum >= 0e0) && (optInMaximum <= REAL_MAX)) {
+        } else if !((optInMaximum >= 0e0) && (optInMaximum <= Self::REAL_MAX)) {
             return RetCode::BadParam;
         }
         let _assertLb = self.SAR_Lookback(optInAcceleration, optInMaximum);
@@ -314,7 +241,7 @@ impl Core {
         // (ep is just used as a temp buffer here, the name
         //  of the parameter is not significant).
         let mut _dup_out: usize = 0_usize;
-        retCode = self.MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, &mut tempInt, &mut _dup_out, &mut ep_temp);
+        retCode = self.MINUS_DM_Internal(startIdx, startIdx, inHigh, inLow, 1, &mut tempInt, &mut _dup_out, &mut ep_temp);
         if ep_temp[0] > 0_f64 {
             isLong = 0;
         } else {
@@ -459,6 +386,111 @@ impl Core {
         (*outNBElement) = outIdx;
         return RetCode::Success;
     }
+    /// Wilder's Parabolic SAR (Stop And Reverse): a trailing stop/reverse level that accelerates
+    /// toward price via an acceleration factor. Signals trend direction and trailing exit points.
+    /// SAR below price = uptrend (long); SAR above price = downtrend (short). Price crossing SAR
+    /// flips direction.
+    ///
+    /// # Formula
+    ///
+    /// ```text
+    /// SAR_next = SAR + af * (EP - SAR)
+    /// EP = extreme point (highest high in long / lowest low in short); af starts at Acceleration, += Acceleration each new EP, capped at Maximum.
+    /// On penetration: reverse, SAR := prior EP, reset af = Acceleration. SAR clamped each bar so it does not penetrate the prior/current bar's range.
+    /// ```
+    ///
+    /// # Arguments
+    ///
+    /// * `startIdx` — Start index of the requested calculation range.
+    /// * `endIdx` — End index of the requested calculation range (inclusive).
+    /// * `inHigh` — High price of each bar.
+    /// * `inLow` — Low price of each bar.
+    /// * `optInAcceleration` — Step added to the acceleration factor on each new extreme point
+    ///   (default 0.02, minimum 0)
+    /// * `optInMaximum` — Ceiling on the acceleration factor (default 0.2, minimum 0)
+    /// * `outReal` — Parabolic SAR stop/reverse level per bar.
+    ///
+    /// Real parameters accept [`Core::REAL_DEFAULT`] to select their default value.
+    ///
+    /// # Returns
+    ///
+    /// On success, an [`OutRange`]: `beg_idx` is the index of the first value written, in the input
+    /// series' coordinates, and `count` is how many were written. A range shorter than the lookback
+    /// succeeds with `count == 0`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Err`] carrying [`RetCode::OutOfRangeStartIndex`] when `startIdx` exceeds
+    /// [`Core::MAX_INDEX`], [`RetCode::OutOfRangeEndIndex`] when `endIdx` exceeds it or is below
+    /// `startIdx`, and [`RetCode::BadParam`] when an optional parameter is outside its documented
+    /// range. A range shorter than the lookback is not an error: it is [`Ok`] with a zero
+    /// [`OutRange::count`].
+    ///
+    /// # Panics
+    ///
+    /// Input slices must cover `startIdx..=endIdx` and output slices must hold the number of values
+    /// produced for that range; an undersized slice panics. Sizing every output slice to the input
+    /// length is always sufficient.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    ///
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let mut out = vec![0.0; 252];
+    ///
+    /// let out_range = core.SAR(0, high.len() - 1, &high, &low, 0.02, 0.2, &mut out)?;
+    /// assert!(out_range.count > 0);
+    /// assert!(out[..out_range.count].iter().all(|v| v.is_finite()));
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
+    ///
+    /// # See also
+    ///
+    /// [`Core::SAREXT`] · [`Core::MINUS_DM`] · [`Core::PLUS_DM`]
+    ///
+    /// # References
+    ///
+    /// * J. Welles Wilder, *New Concepts in Technical Trading Systems*, Trend Research (ISBN
+    ///   0894590278)
+    ///
+    /// Further reading: [ta-lib.org/functions/sar](https://ta-lib.org/functions/sar)
+    #[doc(alias = "ParabolicSAR")]
+    #[doc(alias = "PSAR")]
+    #[doc(alias = "StopandReverse")]
+    pub fn SAR(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inHigh: &[f64],
+        inLow: &[f64],
+        optInAcceleration: f64,
+        optInMaximum: f64,
+        outReal: &mut [f64],
+    ) -> Result<OutRange, RetCode> {
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let retCode = self.SAR_Internal(
+            startIdx,
+            endIdx,
+            inHigh,
+            inLow,
+            optInAcceleration,
+            optInMaximum,
+            &mut outBegIdx,
+            &mut outNBElement,
+            outReal,
+        );
+        match retCode {
+            RetCode::Success => Ok(OutRange { beg_idx: outBegIdx, count: outNBElement }),
+            e => Err(e),
+        }
+    }
+
 }
 /**** Streaming API *****/
 
@@ -639,17 +671,17 @@ impl Core {
         if inHigh.is_empty() || inLow.is_empty() || inLow.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
-        if inHigh.len() > MAX_INDEX + 1 {
+        if inHigh.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        if optInAcceleration == REAL_DEFAULT {
+        if optInAcceleration == Self::REAL_DEFAULT {
             optInAcceleration = 2e-2;
-        } else if !((optInAcceleration >= 0e0) && (optInAcceleration <= REAL_MAX)) {
+        } else if !((optInAcceleration >= 0e0) && (optInAcceleration <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
-        if optInMaximum == REAL_DEFAULT {
+        if optInMaximum == Self::REAL_DEFAULT {
             optInMaximum = 2e-1;
-        } else if !((optInMaximum >= 0e0) && (optInMaximum <= REAL_MAX)) {
+        } else if !((optInMaximum >= 0e0) && (optInMaximum <= Self::REAL_MAX)) {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inHigh.len();
@@ -735,7 +767,7 @@ impl Core {
         // (ep is just used as a temp buffer here, the name
         //  of the parameter is not significant).
         let mut _dup_out: usize = 0_usize;
-        retCode = self.MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, &mut tempInt, &mut _dup_out, &mut ep_temp);
+        retCode = self.MINUS_DM_Internal(startIdx, startIdx, inHigh, inLow, 1, &mut tempInt, &mut _dup_out, &mut ep_temp);
         if ep_temp[0] > 0_f64 {
             isLong = 0;
         } else {
