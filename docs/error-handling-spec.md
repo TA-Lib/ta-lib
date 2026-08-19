@@ -183,6 +183,22 @@ lookback) + 1` — which on a range starting below the lookback is shorter than
 the requested range, and is `0` when the range is shorter than the lookback
 (rule N-1), at which point any output length will do, including none.
 
+*The body indexes* is doing work in that sentence. Four candlestick patterns
+declare an OHLC series their algorithm never reads — **CDL3OUTSIDE**,
+**CDLENGULFING** and **CDLXSIDEGAP3METHODS** (`inHigh`, `inLow`), and
+**CDLHIKKAKE** (`inOpen`): seven legs, eight public overloads per managed
+backend. Those legs are exempt from B-5 **and from B-3**, so a short or absent
+one is accepted. Measured: `CDLHIKKAKE(0, 99, null, high, low, close, out)`
+returns 95 values in Java, while the control — a short `inClose`, which the body
+does read — is rejected naming the buffer and both sizes.
+
+Deliberate, and shared: the exemption is computed once
+(`backends::common::indexed_input_names`) and consumed by the Rust assert
+preamble and the Java and C# checks alike, so all three agree on which legs are
+load-bearing. Checking them would refuse a call the algorithm can answer, and
+refuse it in the managed backends only. The cost is that "required" in B-3 means
+*required by this function's body*, not *declared in its signature*.
+
 [2] Negative indices are unrepresentable in Rust's unsigned index type; the
 ceiling half of each rule is verified.
 
@@ -198,7 +214,9 @@ written through pointers.
 
 [5] The presence check runs **before** B-1, B-2 and B-4, so an absent buffer
 pre-empts an out-of-range index or parameter — the opposite precedence from C.
-Measured: a negative `startIdx` with a null input reports the null.
+Measured: a negative `startIdx` with a null input reports the null. It does not
+cover the never-indexed legs described under **Capacity (B-5)** above,
+which are not checked at all.
 
 [6] A `Span<T>` cannot be absent. A null array converts to an empty span and is
 reported by B-5 instead, which names the buffer and both sizes.
@@ -387,10 +405,6 @@ rejection, which surfaces when the core is built. Verified that a later valid
 setter does not clear an earlier rejection.
 
 ---
-
-## Part 3 — Open items
-
-Every ❌ above, collected, plus the message-level deviations that sit
 alongside a passing rule (item 7). Each is measured, not inferred.
 
 | # | Backend | Rule | Defect |
