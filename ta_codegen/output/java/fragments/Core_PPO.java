@@ -676,11 +676,6 @@
     */
    public PPO_Stream PPO_Open( double inReal[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("PPO open: BadParam");
-      }
       return PPO_OpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType);
    }
    /**
@@ -694,11 +689,6 @@
     */
    public PPO_Stream PPO_OpenAndFill( double inReal[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, double outReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("PPO openAndFill: BadParam");
-      }
       PPO_Stream sp = new PPO_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

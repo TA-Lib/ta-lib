@@ -876,14 +876,6 @@ public partial class Core
       if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
-      foreach( double taFiniteV in inHigh )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("ADOSC", "open", RetCode.BadParam);
-      foreach( double taFiniteV in inLow )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("ADOSC", "open", RetCode.BadParam);
-      foreach( double taFiniteV in inClose )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("ADOSC", "open", RetCode.BadParam);
-      foreach( double taFiniteV in inVolume )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("ADOSC", "open", RetCode.BadParam);
       return ADOSC_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod);
    }
 
@@ -922,14 +914,6 @@ public partial class Core
       if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
-      foreach( double taFiniteV in inHigh )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("ADOSC", "openAndFill", RetCode.BadParam);
-      foreach( double taFiniteV in inLow )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("ADOSC", "openAndFill", RetCode.BadParam);
-      foreach( double taFiniteV in inClose )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("ADOSC", "openAndFill", RetCode.BadParam);
-      foreach( double taFiniteV in inVolume )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("ADOSC", "openAndFill", RetCode.BadParam);
       ADOSC_Stream sp = new ADOSC_Stream(this);
       RetCode retCode = ADOSC_OpenAndFillBody(sp, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

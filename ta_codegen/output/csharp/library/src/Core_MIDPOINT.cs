@@ -948,8 +948,6 @@ public partial class Core
    public MIDPOINT_Stream MIDPOINT_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MIDPOINT", "open", RetCode.BadParam);
       return MIDPOINT_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -981,8 +979,6 @@ public partial class Core
    public MIDPOINT_Stream MIDPOINT_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MIDPOINT", "openAndFill", RetCode.BadParam);
       MIDPOINT_Stream sp = new MIDPOINT_Stream(this);
       RetCode retCode = MIDPOINT_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

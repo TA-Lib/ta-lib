@@ -397,11 +397,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_MARKETFI_Open")]
     pub fn MARKETFI_Open(&self, inHigh: &[f64], inLow: &[f64], inVolume: &[f64], ) -> Result<(MARKETFI_Stream, f64), RetCode> {
-        if inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite())
-            || inVolume.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.MARKETFI_OpenInternal(inHigh, inLow, inVolume, 0)
     }
 
@@ -413,11 +408,6 @@ impl Core {
     pub fn MARKETFI_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], inVolume: &[f64], outReal: &mut [f64],
     ) -> Result<(MARKETFI_Stream, OutRange), RetCode> {
-        if inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite())
-            || inVolume.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.MARKETFI_OpenCore(inHigh, inLow, inVolume, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

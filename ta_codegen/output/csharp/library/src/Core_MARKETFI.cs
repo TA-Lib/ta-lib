@@ -553,12 +553,6 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
       if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
-      foreach( double taFiniteV in inHigh )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MARKETFI", "open", RetCode.BadParam);
-      foreach( double taFiniteV in inLow )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MARKETFI", "open", RetCode.BadParam);
-      foreach( double taFiniteV in inVolume )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MARKETFI", "open", RetCode.BadParam);
       return MARKETFI_OpenInternal(inHigh, inLow, inVolume, 0);
    }
 
@@ -591,12 +585,6 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
       if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
-      foreach( double taFiniteV in inHigh )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MARKETFI", "openAndFill", RetCode.BadParam);
-      foreach( double taFiniteV in inLow )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MARKETFI", "openAndFill", RetCode.BadParam);
-      foreach( double taFiniteV in inVolume )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MARKETFI", "openAndFill", RetCode.BadParam);
       MARKETFI_Stream sp = new MARKETFI_Stream(this);
       RetCode retCode = MARKETFI_OpenAndFillBody(sp, inHigh, inLow, inVolume, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

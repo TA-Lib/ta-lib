@@ -628,11 +628,6 @@
     */
    public MAXINDEX_Stream MAXINDEX_Open( double inReal[], int optInTimePeriod )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("MAXINDEX open: BadParam");
-      }
       return MAXINDEX_OpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
@@ -646,11 +641,6 @@
     */
    public MAXINDEX_Stream MAXINDEX_OpenAndFill( double inReal[], int optInTimePeriod, int outInteger[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("MAXINDEX openAndFill: BadParam");
-      }
       MAXINDEX_Stream sp = new MAXINDEX_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

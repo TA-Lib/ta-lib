@@ -690,9 +690,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_MINMAX_Open")]
     pub fn MINMAX_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(MINMAX_Stream, (f64, f64)), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.MINMAX_OpenInternal(inReal, 0, optInTimePeriod)
     }
 
@@ -705,9 +702,6 @@ impl Core {
         &self, inReal: &[f64], mut optInTimePeriod: i32, outMin: &mut [f64], outMax: &mut [f64],
     ) -> Result<(MINMAX_Stream, OutRange), RetCode> {
         if outMin.as_ptr() == outMax.as_ptr() {
-            return Err(RetCode::BadParam);
-        }
-        if inReal.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;

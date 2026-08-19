@@ -434,8 +434,6 @@ public partial class Core
    public ASIN_Stream ASIN_Open( ReadOnlySpan<double> inReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("ASIN", "open", RetCode.BadParam);
       return ASIN_OpenInternal(inReal, 0);
    }
 
@@ -465,8 +463,6 @@ public partial class Core
    public ASIN_Stream ASIN_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("ASIN", "openAndFill", RetCode.BadParam);
       ASIN_Stream sp = new ASIN_Stream(this);
       RetCode retCode = ASIN_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

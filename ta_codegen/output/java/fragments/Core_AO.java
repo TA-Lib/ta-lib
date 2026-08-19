@@ -826,14 +826,6 @@
     */
    public AO_Stream AO_Open( double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod )
    {
-      if( inHigh.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-            if( !Double.isFinite(inHigh[taFiniteIdx]) )
-               throw new IllegalArgumentException("AO open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-            if( !Double.isFinite(inLow[taFiniteIdx]) )
-               throw new IllegalArgumentException("AO open: BadParam");
-      }
       return AO_OpenInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod);
    }
    /**
@@ -847,14 +839,6 @@
     */
    public AO_Stream AO_OpenAndFill( double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod, double outReal[] )
    {
-      if( inHigh.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-            if( !Double.isFinite(inHigh[taFiniteIdx]) )
-               throw new IllegalArgumentException("AO openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-            if( !Double.isFinite(inLow[taFiniteIdx]) )
-               throw new IllegalArgumentException("AO openAndFill: BadParam");
-      }
       AO_Stream sp = new AO_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

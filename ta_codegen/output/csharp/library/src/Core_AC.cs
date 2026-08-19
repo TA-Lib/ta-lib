@@ -1109,10 +1109,6 @@ public partial class Core
    {
       if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
       if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      foreach( double taFiniteV in inHigh )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("AC", "open", RetCode.BadParam);
-      foreach( double taFiniteV in inLow )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("AC", "open", RetCode.BadParam);
       return AC_OpenInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
    }
 
@@ -1149,10 +1145,6 @@ public partial class Core
    {
       if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
       if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      foreach( double taFiniteV in inHigh )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("AC", "openAndFill", RetCode.BadParam);
-      foreach( double taFiniteV in inLow )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("AC", "openAndFill", RetCode.BadParam);
       AC_Stream sp = new AC_Stream(this);
       RetCode retCode = AC_OpenAndFillBody(sp, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

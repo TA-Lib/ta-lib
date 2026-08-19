@@ -743,11 +743,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_NATR_Open")]
     pub fn NATR_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32) -> Result<(NATR_Stream, f64), RetCode> {
-        if inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite())
-            || inClose.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.NATR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod)
     }
 
@@ -759,11 +754,6 @@ impl Core {
     pub fn NATR_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(NATR_Stream, OutRange), RetCode> {
-        if inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite())
-            || inClose.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.NATR_OpenCore(inHigh, inLow, inClose, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

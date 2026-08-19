@@ -713,20 +713,6 @@
     */
    public CDLHIGHWAVE_Stream CDLHIGHWAVE_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
-      if( inOpen.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-            if( !Double.isFinite(inOpen[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLHIGHWAVE open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-            if( !Double.isFinite(inHigh[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLHIGHWAVE open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-            if( !Double.isFinite(inLow[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLHIGHWAVE open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-            if( !Double.isFinite(inClose[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLHIGHWAVE open: BadParam");
-      }
       return CDLHIGHWAVE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -740,20 +726,6 @@
     */
    public CDLHIGHWAVE_Stream CDLHIGHWAVE_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      if( inOpen.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-            if( !Double.isFinite(inOpen[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLHIGHWAVE openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-            if( !Double.isFinite(inHigh[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLHIGHWAVE openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-            if( !Double.isFinite(inLow[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLHIGHWAVE openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-            if( !Double.isFinite(inClose[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLHIGHWAVE openAndFill: BadParam");
-      }
       CDLHIGHWAVE_Stream sp = new CDLHIGHWAVE_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

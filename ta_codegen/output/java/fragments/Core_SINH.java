@@ -362,11 +362,6 @@
     */
    public SINH_Stream SINH_Open( double inReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("SINH open: BadParam");
-      }
       return SINH_OpenInternal(inReal, 0);
    }
    /**
@@ -380,11 +375,6 @@
     */
    public SINH_Stream SINH_OpenAndFill( double inReal[], double outReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("SINH openAndFill: BadParam");
-      }
       SINH_Stream sp = new SINH_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

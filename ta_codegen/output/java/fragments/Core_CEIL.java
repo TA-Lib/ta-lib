@@ -360,11 +360,6 @@
     */
    public CEIL_Stream CEIL_Open( double inReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("CEIL open: BadParam");
-      }
       return CEIL_OpenInternal(inReal, 0);
    }
    /**
@@ -378,11 +373,6 @@
     */
    public CEIL_Stream CEIL_OpenAndFill( double inReal[], double outReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("CEIL openAndFill: BadParam");
-      }
       CEIL_Stream sp = new CEIL_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

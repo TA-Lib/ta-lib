@@ -1460,12 +1460,6 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
       if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
-      foreach( double taFiniteV in inHigh )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("ADX", "open", RetCode.BadParam);
-      foreach( double taFiniteV in inLow )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("ADX", "open", RetCode.BadParam);
-      foreach( double taFiniteV in inClose )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("ADX", "open", RetCode.BadParam);
       return ADX_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
 
@@ -1500,12 +1494,6 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
       if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
-      foreach( double taFiniteV in inHigh )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("ADX", "openAndFill", RetCode.BadParam);
-      foreach( double taFiniteV in inLow )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("ADX", "openAndFill", RetCode.BadParam);
-      foreach( double taFiniteV in inClose )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("ADX", "openAndFill", RetCode.BadParam);
       ADX_Stream sp = new ADX_Stream(this);
       RetCode retCode = ADX_OpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

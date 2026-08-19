@@ -655,10 +655,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_MAVP_Open")]
     pub fn MAVP_Open(&self, inReal: &[f64], inPeriods: &[f64], optInMinPeriod: i32, optInMaxPeriod: i32, optInMAType: MAType) -> Result<(MAVP_Stream, f64), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite())
-            || inPeriods.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.MAVP_OpenInternal(inReal, inPeriods, 0, optInMinPeriod, optInMaxPeriod, optInMAType)
     }
 
@@ -675,10 +671,6 @@ impl Core {
         }
         if inReal.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
-        }
-        if inReal.iter().any(|v| !v.is_finite())
-            || inPeriods.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
         }
         if ((optInMinPeriod) as i32) == (i32::MIN) {
             optInMinPeriod = 2;

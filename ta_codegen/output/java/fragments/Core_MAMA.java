@@ -1977,11 +1977,6 @@
     */
    public MAMA_Stream MAMA_Open( double inReal[], double optInFastLimit, double optInSlowLimit )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("MAMA open: BadParam");
-      }
       return MAMA_OpenInternal(inReal, 0, optInFastLimit, optInSlowLimit);
    }
    /**
@@ -1995,11 +1990,6 @@
     */
    public MAMA_Stream MAMA_OpenAndFill( double inReal[], double optInFastLimit, double optInSlowLimit, double outMAMA[], double outFAMA[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("MAMA openAndFill: BadParam");
-      }
       MAMA_Stream sp = new MAMA_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

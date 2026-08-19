@@ -832,8 +832,6 @@ public partial class Core
    public CMOU_Stream CMOU_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("CMOU", "open", RetCode.BadParam);
       return CMOU_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -864,8 +862,6 @@ public partial class Core
    public CMOU_Stream CMOU_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("CMOU", "openAndFill", RetCode.BadParam);
       CMOU_Stream sp = new CMOU_Stream(this);
       RetCode retCode = CMOU_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

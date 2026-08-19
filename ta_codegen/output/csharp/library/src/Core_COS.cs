@@ -428,8 +428,6 @@ public partial class Core
    public COS_Stream COS_Open( ReadOnlySpan<double> inReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("COS", "open", RetCode.BadParam);
       return COS_OpenInternal(inReal, 0);
    }
 
@@ -459,8 +457,6 @@ public partial class Core
    public COS_Stream COS_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("COS", "openAndFill", RetCode.BadParam);
       COS_Stream sp = new COS_Stream(this);
       RetCode retCode = COS_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

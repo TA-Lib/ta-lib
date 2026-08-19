@@ -682,8 +682,6 @@ public partial class Core
    public EMA_Stream EMA_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("EMA", "open", RetCode.BadParam);
       return EMA_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -714,8 +712,6 @@ public partial class Core
    public EMA_Stream EMA_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("EMA", "openAndFill", RetCode.BadParam);
       EMA_Stream sp = new EMA_Stream(this);
       RetCode retCode = EMA_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

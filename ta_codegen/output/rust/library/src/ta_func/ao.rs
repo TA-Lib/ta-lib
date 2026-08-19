@@ -654,10 +654,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_AO_Open")]
     pub fn AO_Open(&self, inHigh: &[f64], inLow: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32) -> Result<(AO_Stream, f64), RetCode> {
-        if inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.AO_OpenInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod)
     }
 
@@ -669,10 +665,6 @@ impl Core {
     pub fn AO_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, outReal: &mut [f64],
     ) -> Result<(AO_Stream, OutRange), RetCode> {
-        if inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.AO_OpenCore(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

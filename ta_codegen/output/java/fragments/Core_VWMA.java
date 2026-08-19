@@ -750,14 +750,6 @@
     */
    public VWMA_Stream VWMA_Open( double inReal[], double inVolume[], int optInTimePeriod )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("VWMA open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-            if( !Double.isFinite(inVolume[taFiniteIdx]) )
-               throw new IllegalArgumentException("VWMA open: BadParam");
-      }
       return VWMA_OpenInternal(inReal, inVolume, 0, optInTimePeriod);
    }
    /**
@@ -771,14 +763,6 @@
     */
    public VWMA_Stream VWMA_OpenAndFill( double inReal[], double inVolume[], int optInTimePeriod, double outReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("VWMA openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-            if( !Double.isFinite(inVolume[taFiniteIdx]) )
-               throw new IllegalArgumentException("VWMA openAndFill: BadParam");
-      }
       VWMA_Stream sp = new VWMA_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -484,17 +484,6 @@
     */
    public MARKETFI_Stream MARKETFI_Open( double inHigh[], double inLow[], double inVolume[] )
    {
-      if( inHigh.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-            if( !Double.isFinite(inHigh[taFiniteIdx]) )
-               throw new IllegalArgumentException("MARKETFI open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-            if( !Double.isFinite(inLow[taFiniteIdx]) )
-               throw new IllegalArgumentException("MARKETFI open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-            if( !Double.isFinite(inVolume[taFiniteIdx]) )
-               throw new IllegalArgumentException("MARKETFI open: BadParam");
-      }
       return MARKETFI_OpenInternal(inHigh, inLow, inVolume, 0);
    }
    /**
@@ -508,17 +497,6 @@
     */
    public MARKETFI_Stream MARKETFI_OpenAndFill( double inHigh[], double inLow[], double inVolume[], double outReal[] )
    {
-      if( inHigh.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-            if( !Double.isFinite(inHigh[taFiniteIdx]) )
-               throw new IllegalArgumentException("MARKETFI openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-            if( !Double.isFinite(inLow[taFiniteIdx]) )
-               throw new IllegalArgumentException("MARKETFI openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-            if( !Double.isFinite(inVolume[taFiniteIdx]) )
-               throw new IllegalArgumentException("MARKETFI openAndFill: BadParam");
-      }
       MARKETFI_Stream sp = new MARKETFI_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

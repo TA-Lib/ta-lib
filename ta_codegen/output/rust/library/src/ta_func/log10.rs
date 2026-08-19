@@ -303,9 +303,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_LOG10_Open")]
     pub fn LOG10_Open(&self, inReal: &[f64], ) -> Result<(LOG10_Stream, f64), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.LOG10_OpenInternal(inReal, 0)
     }
 
@@ -317,9 +314,6 @@ impl Core {
     pub fn LOG10_OpenAndFill(
         &self, inReal: &[f64], outReal: &mut [f64],
     ) -> Result<(LOG10_Stream, OutRange), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.LOG10_OpenCore(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

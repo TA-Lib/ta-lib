@@ -927,11 +927,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_STOCHF_Open")]
     pub fn STOCHF_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInFastK_Period: i32, optInFastD_Period: i32, optInFastD_MAType: MAType) -> Result<(STOCHF_Stream, (f64, f64)), RetCode> {
-        if inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite())
-            || inClose.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.STOCHF_OpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType)
     }
 
@@ -944,11 +939,6 @@ impl Core {
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType, outFastK: &mut [f64], outFastD: &mut [f64],
     ) -> Result<(STOCHF_Stream, OutRange), RetCode> {
         if outFastK.as_ptr() == outFastD.as_ptr() {
-            return Err(RetCode::BadParam);
-        }
-        if inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite())
-            || inClose.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;

@@ -174,34 +174,38 @@ Notes that make this precise:
   history — it only delays the first visible output: `open` requires
   `TA_XXX_Lookback() + 1` bars; values are unaffected. It is read once at
   `open`; changing it later affects only future opens, never a live stream.
-- **Non-finite input is REJECTED, not computed on.** NaN and ±Inf are
-  unsupported in inputs across the whole library, but the two tiers enforce
-  that differently, and this is the only place they disagree about what they
-  accept. Batch does not filter: it computes on whatever it is handed and
-  reports the NaN back out. Every **public** streaming entry point checks
-  instead — `Open`/`OpenAndFill` scan the warm-up history, `Update`/`Peek`
-  check each bar — and answers `TA_BAD_PARAM` (the language's equivalent)
-  without touching the handle.
+- **Non-finite input: single values are rejected, arrays are not checked.**
+  The line runs between **input arrays** and **single values**, not between the
+  batch and streaming tiers.
 
-  The asymmetry is the retained state. Batch is handed a series, computes and
-  forgets, so a NaN reaches the outputs depending on that bar and no others. A
-  handle carries recursive accumulators across calls, so one non-finite bar
-  poisons every value it will ever produce afterwards, long after the feed
-  recovers. Rejecting the bar and leaving the handle usable is strictly more
-  useful than accepting it and going permanently NaN.
+  An **input array** is never scanned, in either tier. Keeping an array free of
+  NaN and ±Inf is the caller's responsibility, and the effect of a non-finite
+  element on the output is **unspecified** — see `docs/error-handling-spec.md`
+  rule N-5. A scan is a whole extra pass over caller-owned memory: measured at
+  ≈0.3 ns per bar per array, which is a corpus median of **22% of `Open`** and up
+  to 76% of a candlestick `OpenAndFill`. Folding it into the main loop instead
+  would trade that for a worse contract — a rejection partway through a fill,
+  with the output already half written.
 
-  Two consequences worth stating explicitly. The rejection is at the boundary
-  between the caller and the API **only**: the internal `OpenInternal` /
-  `OpenAndFillInternal` seams are handed slices of an already-validated buffer
-  and do not re-scan. And a real optional parameter that is NaN is rejected too,
-  which the batch range check does not do: `x < min` and `x > max` are both
-  false for NaN, so the streaming tier spells the same two comparisons inverted,
-  `!(x >= min && x <= max)`.
+  A **single value** is always checked, in both tiers, because it is one
+  comparison and costs nothing measurable:
+
+  - every bar handed to `Update` / `Peek`, in every input slot;
+  - every real optional parameter, which the range test would otherwise admit —
+    `x < min` and `x > max` are both false for NaN, so the check is spelled
+    inverted, `!(x >= min && x <= max)`, in **both** tiers.
+
+  The per-bar rejection earns its cost from the retained state. Batch is handed
+  a series, computes and forgets, so a NaN reaches the outputs depending on that
+  bar and no others. A handle carries recursive accumulators across calls, so one
+  non-finite bar poisons every value it will ever produce afterwards, long after
+  the feed recovers. Rejecting the bar and leaving the handle usable is strictly
+  more useful than accepting it and going permanently NaN.
 
   **What "the handle is unchanged" does and does not cover.** For the rejection
-  a caller can actually provoke — a non-finite bar or history handed to a public
-  entry point — the check runs before anything is written, so the guarantee is
-  unconditional and that is what the generated docs promise.
+  a caller can actually provoke — a non-finite bar handed to `Update` or `Peek` —
+  the check runs before anything is written, so the guarantee is unconditional
+  and that is what the generated docs promise.
 
   There is one path where it does not hold, and it is worth being precise rather
   than silent about it. A composed function drives its sub-streams through their
@@ -287,9 +291,10 @@ TA_LIB_API TA_RetCode TA_SMA_Peek( const TA_SMA_Stream *stream,
 TA_LIB_API TA_RetCode TA_SMA_Close( TA_SMA_Stream *stream );
 ```
 
-**Error model.** `Open` returns `TA_BAD_PARAM` (param out of range, a
-non-finite value anywhere in the history, or `historyLen < min_history` so no
-value exists yet) or `TA_ALLOC_ERR`; `*stream` is NULL on any failure.
+**Error model.** `Open` returns `TA_BAD_PARAM` (param out of range, or
+`historyLen < min_history` so no value exists yet) or `TA_ALLOC_ERR`; `*stream`
+is NULL on any failure. The history itself is an input array and is not
+scanned — see the non-finite bullet above.
 `Update`/`Peek` return `TA_BAD_PARAM` on NULL arguments and on a non-finite bar
 value, leaving the handle untouched in the latter case. `Close(NULL)` is a
 no-op returning `TA_SUCCESS`.

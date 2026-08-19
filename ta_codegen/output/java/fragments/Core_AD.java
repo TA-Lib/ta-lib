@@ -496,20 +496,6 @@
     */
    public AD_Stream AD_Open( double inHigh[], double inLow[], double inClose[], double inVolume[] )
    {
-      if( inHigh.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-            if( !Double.isFinite(inHigh[taFiniteIdx]) )
-               throw new IllegalArgumentException("AD open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-            if( !Double.isFinite(inLow[taFiniteIdx]) )
-               throw new IllegalArgumentException("AD open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-            if( !Double.isFinite(inClose[taFiniteIdx]) )
-               throw new IllegalArgumentException("AD open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-            if( !Double.isFinite(inVolume[taFiniteIdx]) )
-               throw new IllegalArgumentException("AD open: BadParam");
-      }
       return AD_OpenInternal(inHigh, inLow, inClose, inVolume, 0);
    }
    /**
@@ -523,20 +509,6 @@
     */
    public AD_Stream AD_OpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] )
    {
-      if( inHigh.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-            if( !Double.isFinite(inHigh[taFiniteIdx]) )
-               throw new IllegalArgumentException("AD openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-            if( !Double.isFinite(inLow[taFiniteIdx]) )
-               throw new IllegalArgumentException("AD openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-            if( !Double.isFinite(inClose[taFiniteIdx]) )
-               throw new IllegalArgumentException("AD openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-            if( !Double.isFinite(inVolume[taFiniteIdx]) )
-               throw new IllegalArgumentException("AD openAndFill: BadParam");
-      }
       AD_Stream sp = new AD_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

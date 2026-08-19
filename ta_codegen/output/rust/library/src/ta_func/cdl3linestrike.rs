@@ -782,12 +782,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_CDL3LINESTRIKE_Open")]
     pub fn CDL3LINESTRIKE_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDL3LINESTRIKE_Stream, i32), RetCode> {
-        if inOpen.iter().any(|v| !v.is_finite())
-            || inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite())
-            || inClose.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.CDL3LINESTRIKE_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
@@ -799,12 +793,6 @@ impl Core {
     pub fn CDL3LINESTRIKE_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outInteger: &mut [i32],
     ) -> Result<(CDL3LINESTRIKE_Stream, OutRange), RetCode> {
-        if inOpen.iter().any(|v| !v.is_finite())
-            || inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite())
-            || inClose.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.CDL3LINESTRIKE_OpenCore(inOpen, inHigh, inLow, inClose, 0, &mut outBegIdx, &mut outNBElement, outInteger, 1)?;

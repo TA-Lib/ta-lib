@@ -636,10 +636,6 @@ public partial class Core
    {
       if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
       if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
-      foreach( double taFiniteV in inOpen )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("IMI", "open", RetCode.BadParam);
-      foreach( double taFiniteV in inClose )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("IMI", "open", RetCode.BadParam);
       return IMI_OpenInternal(inOpen, inClose, 0, optInTimePeriod);
    }
 
@@ -672,10 +668,6 @@ public partial class Core
    {
       if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
       if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
-      foreach( double taFiniteV in inOpen )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("IMI", "openAndFill", RetCode.BadParam);
-      foreach( double taFiniteV in inClose )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("IMI", "openAndFill", RetCode.BadParam);
       IMI_Stream sp = new IMI_Stream(this);
       RetCode retCode = IMI_OpenAndFillBody(sp, inOpen, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

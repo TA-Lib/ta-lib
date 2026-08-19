@@ -687,8 +687,6 @@ public partial class Core
    public MININDEX_Stream MININDEX_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MININDEX", "open", RetCode.BadParam);
       return MININDEX_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -719,8 +717,6 @@ public partial class Core
    public MININDEX_Stream MININDEX_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<int> outInteger )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MININDEX", "openAndFill", RetCode.BadParam);
       MININDEX_Stream sp = new MININDEX_Stream(this);
       RetCode retCode = MININDEX_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

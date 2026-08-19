@@ -1244,17 +1244,6 @@
     */
    public DX_Stream DX_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
    {
-      if( inHigh.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-            if( !Double.isFinite(inHigh[taFiniteIdx]) )
-               throw new IllegalArgumentException("DX open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-            if( !Double.isFinite(inLow[taFiniteIdx]) )
-               throw new IllegalArgumentException("DX open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-            if( !Double.isFinite(inClose[taFiniteIdx]) )
-               throw new IllegalArgumentException("DX open: BadParam");
-      }
       return DX_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**
@@ -1268,17 +1257,6 @@
     */
    public DX_Stream DX_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
    {
-      if( inHigh.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-            if( !Double.isFinite(inHigh[taFiniteIdx]) )
-               throw new IllegalArgumentException("DX openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-            if( !Double.isFinite(inLow[taFiniteIdx]) )
-               throw new IllegalArgumentException("DX openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-            if( !Double.isFinite(inClose[taFiniteIdx]) )
-               throw new IllegalArgumentException("DX openAndFill: BadParam");
-      }
       DX_Stream sp = new DX_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -364,11 +364,6 @@
     */
    public COSH_Stream COSH_Open( double inReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("COSH open: BadParam");
-      }
       return COSH_OpenInternal(inReal, 0);
    }
    /**
@@ -382,11 +377,6 @@
     */
    public COSH_Stream COSH_OpenAndFill( double inReal[], double outReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("COSH openAndFill: BadParam");
-      }
       COSH_Stream sp = new COSH_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

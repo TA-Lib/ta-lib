@@ -1140,11 +1140,6 @@
     */
    public BBANDS_Stream BBANDS_Open( double inReal[], int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("BBANDS open: BadParam");
-      }
       return BBANDS_OpenInternal(inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
    }
    /**
@@ -1158,11 +1153,6 @@
     */
    public BBANDS_Stream BBANDS_OpenAndFill( double inReal[], int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("BBANDS openAndFill: BadParam");
-      }
       BBANDS_Stream sp = new BBANDS_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -1447,17 +1447,6 @@
     */
    public PLUS_DI_Stream PLUS_DI_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
    {
-      if( inHigh.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-            if( !Double.isFinite(inHigh[taFiniteIdx]) )
-               throw new IllegalArgumentException("PLUS_DI open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-            if( !Double.isFinite(inLow[taFiniteIdx]) )
-               throw new IllegalArgumentException("PLUS_DI open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-            if( !Double.isFinite(inClose[taFiniteIdx]) )
-               throw new IllegalArgumentException("PLUS_DI open: BadParam");
-      }
       return PLUS_DI_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**
@@ -1471,17 +1460,6 @@
     */
    public PLUS_DI_Stream PLUS_DI_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
    {
-      if( inHigh.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-            if( !Double.isFinite(inHigh[taFiniteIdx]) )
-               throw new IllegalArgumentException("PLUS_DI openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-            if( !Double.isFinite(inLow[taFiniteIdx]) )
-               throw new IllegalArgumentException("PLUS_DI openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-            if( !Double.isFinite(inClose[taFiniteIdx]) )
-               throw new IllegalArgumentException("PLUS_DI openAndFill: BadParam");
-      }
       PLUS_DI_Stream sp = new PLUS_DI_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

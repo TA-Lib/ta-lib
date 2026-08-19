@@ -940,8 +940,6 @@ public partial class Core
    public RSI_Stream RSI_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("RSI", "open", RetCode.BadParam);
       return RSI_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -972,8 +970,6 @@ public partial class Core
    public RSI_Stream RSI_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("RSI", "openAndFill", RetCode.BadParam);
       RSI_Stream sp = new RSI_Stream(this);
       RetCode retCode = RSI_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

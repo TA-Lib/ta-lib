@@ -362,11 +362,6 @@
     */
    public EXP_Stream EXP_Open( double inReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("EXP open: BadParam");
-      }
       return EXP_OpenInternal(inReal, 0);
    }
    /**
@@ -380,11 +375,6 @@
     */
    public EXP_Stream EXP_OpenAndFill( double inReal[], double outReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("EXP openAndFill: BadParam");
-      }
       EXP_Stream sp = new EXP_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

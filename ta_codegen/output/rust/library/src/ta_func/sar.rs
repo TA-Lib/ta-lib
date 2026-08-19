@@ -953,10 +953,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_SAR_Open")]
     pub fn SAR_Open(&self, inHigh: &[f64], inLow: &[f64], optInAcceleration: f64, optInMaximum: f64) -> Result<(SAR_Stream, f64), RetCode> {
-        if inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.SAR_OpenInternal(inHigh, inLow, 0, optInAcceleration, optInMaximum)
     }
 
@@ -968,10 +964,6 @@ impl Core {
     pub fn SAR_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], mut optInAcceleration: f64, mut optInMaximum: f64, outReal: &mut [f64],
     ) -> Result<(SAR_Stream, OutRange), RetCode> {
-        if inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.SAR_OpenCore(inHigh, inLow, 0, optInAcceleration, optInMaximum, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

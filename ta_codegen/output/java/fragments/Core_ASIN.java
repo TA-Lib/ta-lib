@@ -374,11 +374,6 @@
     */
    public ASIN_Stream ASIN_Open( double inReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("ASIN open: BadParam");
-      }
       return ASIN_OpenInternal(inReal, 0);
    }
    /**
@@ -392,11 +387,6 @@
     */
    public ASIN_Stream ASIN_OpenAndFill( double inReal[], double outReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("ASIN openAndFill: BadParam");
-      }
       ASIN_Stream sp = new ASIN_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

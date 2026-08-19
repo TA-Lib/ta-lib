@@ -2349,11 +2349,6 @@
     */
    public HT_TRENDMODE_Stream HT_TRENDMODE_Open( double inReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("HT_TRENDMODE open: BadParam");
-      }
       return HT_TRENDMODE_OpenInternal(inReal, 0);
    }
    /**
@@ -2367,11 +2362,6 @@
     */
    public HT_TRENDMODE_Stream HT_TRENDMODE_OpenAndFill( double inReal[], int outInteger[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("HT_TRENDMODE openAndFill: BadParam");
-      }
       HT_TRENDMODE_Stream sp = new HT_TRENDMODE_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

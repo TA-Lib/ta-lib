@@ -2097,8 +2097,6 @@ public partial class Core
    public HT_SINE_Stream HT_SINE_Open( ReadOnlySpan<double> inReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("HT_SINE", "open", RetCode.BadParam);
       return HT_SINE_OpenInternal(inReal, 0);
    }
 
@@ -2129,8 +2127,6 @@ public partial class Core
    public HT_SINE_Stream HT_SINE_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outSine, Span<double> outLeadSine )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("HT_SINE", "openAndFill", RetCode.BadParam);
       HT_SINE_Stream sp = new HT_SINE_Stream(this);
       RetCode retCode = HT_SINE_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outSine, outLeadSine);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

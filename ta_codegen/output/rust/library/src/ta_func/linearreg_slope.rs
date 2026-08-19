@@ -522,9 +522,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_LINEARREG_SLOPE_Open")]
     pub fn LINEARREG_SLOPE_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(LINEARREG_SLOPE_Stream, f64), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.LINEARREG_SLOPE_OpenInternal(inReal, 0, optInTimePeriod)
     }
 
@@ -536,9 +533,6 @@ impl Core {
     pub fn LINEARREG_SLOPE_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(LINEARREG_SLOPE_Stream, OutRange), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.LINEARREG_SLOPE_OpenCore(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

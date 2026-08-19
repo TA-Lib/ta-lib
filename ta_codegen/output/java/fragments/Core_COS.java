@@ -366,11 +366,6 @@
     */
    public COS_Stream COS_Open( double inReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("COS open: BadParam");
-      }
       return COS_OpenInternal(inReal, 0);
    }
    /**
@@ -384,11 +379,6 @@
     */
    public COS_Stream COS_OpenAndFill( double inReal[], double outReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("COS openAndFill: BadParam");
-      }
       COS_Stream sp = new COS_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

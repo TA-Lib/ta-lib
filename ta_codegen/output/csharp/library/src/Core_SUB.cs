@@ -441,10 +441,6 @@ public partial class Core
    {
       if( inReal0.IsEmpty ) throw new ArgumentException("inReal0 is empty", nameof(inReal0));
       if( inReal1.IsEmpty ) throw new ArgumentException("inReal1 is empty", nameof(inReal1));
-      foreach( double taFiniteV in inReal0 )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("SUB", "open", RetCode.BadParam);
-      foreach( double taFiniteV in inReal1 )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("SUB", "open", RetCode.BadParam);
       return SUB_OpenInternal(inReal0, inReal1, 0);
    }
 
@@ -475,10 +471,6 @@ public partial class Core
    {
       if( inReal0.IsEmpty ) throw new ArgumentException("inReal0 is empty", nameof(inReal0));
       if( inReal1.IsEmpty ) throw new ArgumentException("inReal1 is empty", nameof(inReal1));
-      foreach( double taFiniteV in inReal0 )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("SUB", "openAndFill", RetCode.BadParam);
-      foreach( double taFiniteV in inReal1 )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("SUB", "openAndFill", RetCode.BadParam);
       SUB_Stream sp = new SUB_Stream(this);
       RetCode retCode = SUB_OpenAndFillBody(sp, inReal0, inReal1, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

@@ -96,7 +96,7 @@ that needs one carries **[A]** or **[B]** in its Signal column:
   cannot separate the two. Java and C# borrow `TA_OUT_OF_RANGE_END_INDEX` as an
   in-band marker and re-type it at the wrapper — distinguishable, but on a
   borrowed code that is wrong on its face, since a stream open has no `endIdx`.
-  The fix is additive: append a member. Part 3, item 9.
+  The fix is additive: append a member. Part 3, item 8.
 - **[B] — a buffer is too short.** C cannot detect it at all — it is handed bare
   pointers and has no sizes — so there is nothing for a code to report and the
   backends that *can* detect it raise instead. Not a defect in `TA_RetCode`; a
@@ -112,12 +112,30 @@ backends.
 
 The conditions most often mistaken for failures. None of them is reported as one.
 N-5 is the only row that is *unspecified* rather than defined: the library
-neither detects it nor promises anything about the result.
+neither detects it nor promises anything about the behaviour that follows.
 
 **The finite/non-finite line runs between arrays and single values**, not between
-tiers. An **array** is never scanned — checking one costs a pass over the data
-the caller already owns, on every call, so N-5 declines to promise anything about
-its contents. A **single value** is always verified: every bar handed to
+tiers.
+
+An **array** is never scanned, and the reasoning is worth keeping because it is
+what makes N-5 a position rather than an omission. Scanning one before the main
+loop is a whole extra pass over memory that loop is about to walk again —
+measured at ≈0.3 ns per bar per array, a corpus median of 22% of a stream `Open`
+and up to 76% of a candlestick `OpenAndFill`. Scanning *inside* the main loop
+would be cheaper but buys a worse contract: a rejection partway through, with the
+output already half written. Neither price is worth paying to characterise an
+input the caller is better placed to keep clean, so the library does not, and
+says so.
+
+**"Unspecified" is stronger than "you get NaN out".** For most functions a
+non-finite element does propagate to the output and nothing worse happens. But
+MAVP reads its period series through `(int)inPeriods[...]`, and a float-to-int
+conversion of a value outside the integer range is *undefined* in C — the
+sanitizer build aborts on it. That is true of the batch call and has been all
+along; it is simply no longer hidden in the streaming tier. So the rule promises
+nothing about behaviour, not just nothing about values.
+
+A **single value** is always verified: every bar handed to
 `Update` or `Peek` (rule U-3), and every real optional parameter, in both tiers
 (rule B-4). Verified: 174 of 174 `Update` and `Peek` entry points check their
 bar, and 96 of 96 real-parameter range checks are spelled `!(x >= min && x <=
@@ -131,7 +149,7 @@ tree.
 | N-2 | Anywhere outside the reported output range | Not written. The library never pads, and never emits a fill value. |
 | N-3 | An optional parameter set to its **default sentinel** | The documented default is substituted, then validated like any other value. |
 | N-4 | An output buffer that **is** an input buffer (whole-buffer, in place) | Allowed, in the batch tier. Several bodies are written for it. |
-| N-5 | A **non-finite value in an input array** | **Unspecified.** Not detected, not rejected, and nothing is promised about the result. Do not rely on any particular output. |
+| N-5 | A **non-finite value in an input array** | **Unspecified behaviour** — not merely an unspecified value. Not detected, not rejected, and nothing is promised. See the note below before assuming "it just returns NaN". |
 | N-6 | A **negative** candlestick `factor` | Legal. It does not "never match" — it makes the comparison unconditionally true. |
 | N-7 | The set-all / restore-all **wildcards**, where a setter documents one | Legal on those setters, and rejected on the ones that name a single target (rule G-1). |
 | N-8 | **Peeking** a forming bar, any number of times | Never advances the stream and never writes the handle. It can still be *rejected* (U-3), and a rejected peek changes nothing either. |
@@ -264,7 +282,7 @@ express — so reference equality is complete for this rule.
 | S-1 | A required argument (handle, history, output) was not supplied | `TA_BAD_PARAM` | ✅ | — | ❌ [14] | — |
 | S-2 | The history is empty | `TA_BAD_PARAM` | ✅ | ✅ | ✅ | ✅ [15] |
 | S-3 | The history is longer than `MAX_INDEX + 1` | `TA_OUT_OF_RANGE_END_INDEX` | ✅ | [16] | [16] | [16] |
-| S-4 | Any history bar is non-finite | `TA_BAD_PARAM` | [17] | [17] | [17] | [17] |
+| S-4 | *(withdrawn — the warm-up history is an input array, so N-5 applies)* [17] | — | — | — | — | — |
 | S-5 | An optional parameter is outside its documented domain | `TA_BAD_PARAM` | ✅ | ✅ | ✅ | ✅ |
 | S-6 | The history holds fewer than `lookback + 1` bars | [A] | ❌ [18] | ❌ [18] | ⚠️ [18] | ⚠️ [18] |
 | S-7 | (`OpenAndFill`) an output aliases an input, or another output | `TA_BAD_PARAM` | ✅ | — | ✅ | ✅ |
@@ -287,27 +305,25 @@ right, the message is not.
 
 [16] Not probed — the condition needs a >100 000 001-element allocation.
 
-[17] **This rule contradicts N-5 and needs a decision; no backend is marked
-either way until it is made.** The history handed to `Open` / `OpenAndFill` is an
-input *array*, which N-5 leaves unspecified — yet all four backends scan it, at
-174 of 174 `Open` and 174 of 174 `OpenAndFill` entry points, and reject a
-non-finite bar. It is the only array in the library that is checked.
+[17] **Withdrawn.** The warm-up history is an input *array*, and N-5 says the
+library does not scan those. Until this was removed it was the only array in the
+library that was checked — 174 of 174 `Open` and 174 of 174 `OpenAndFill` entry
+points, in all four backends — which made "arrays are never scanned" a rule with
+one exception rather than a rule.
 
-The case for keeping it is in `docs/streaming-api-design.md`: a handle carries
-recursive accumulators, so one non-finite bar in the warm-up poisons every value
-that handle will ever produce, long after the bad bar has left the window — which
-is not true of batch, where a bad bar reaches only the outputs depending on it.
-The case for removing it is N-5 itself: it is a full pass over caller-owned data
-on every open, for a class of input the library otherwise declines to
-characterise, and it makes "arrays are never scanned" a rule with one exception
-instead of a rule.
+The scan cost ≈0.3 ns per bar per input array: a corpus median of **22% of
+`Open`**, up to 76% of a candlestick `OpenAndFill`, and ~0% only for the
+indicators expensive enough per bar to hide it. Measured two independent ways
+(a direct A/B of two library builds, and `ta_bench --mode=open`), with a control
+compiled into both arms reading 1.0%.
 
-Two smaller facts either way. The scan is ordered above S-2 and S-3 in Rust and
-Java: unobservable against S-2 (an empty history has no bar to be non-finite),
-but against S-3 an over-long history containing a non-finite bar reports
-`TA_BAD_PARAM` where C reports `TA_OUT_OF_RANGE_END_INDEX`. And removing the scan
-would not touch U-3 — the per-bar check on `Update` and `Peek` is a single value,
-which N-5 does not cover.
+Cost was not the whole of it. A whole-array pre-pass walks caller memory the main
+loop is about to walk again; folding the check into the main loop instead would
+trade that for a worse contract — a rejection partway through a fill, with the
+output already half written. Neither shape is worth it for a condition the
+library declines to characterise anywhere else.
+
+U-3 is untouched: a per-bar check is a single value, which N-5 does not cover.
 
 [18] Nobody fully conforms, because the signal does not exist (see [A]). C and
 Rust return the **same** code for "history too short" and "parameter out of
@@ -344,8 +360,8 @@ rule only two backends could carry, and it has no error surface in either: Java'
 the value arrives through the out-parameter of `Open`/`Update`/`Peek`, and in
 Rust through their return values — a caller who wants it later keeps it.
 
-N-5 covers only arrays. The per-bar check here is a **single value**, so it
-stands regardless of how S-4 is decided.
+N-5 covers only arrays. The per-bar check here is a **single value**, which is
+why it stands where the withdrawn S-4 did not.
 
 **One documented hole.** A composed function drives its sub-streams through their
 *public* entry points, so a sub-stream re-checks a value the library itself
@@ -405,6 +421,10 @@ rejection, which surfaces when the core is built. Verified that a later valid
 setter does not clear an earlier rejection.
 
 ---
+
+## Part 3 — Open items
+
+Every ❌ above, collected, plus the message-level deviations that sit
 alongside a passing rule (item 7). Each is measured, not inferred.
 
 | # | Backend | Rule | Defect |
@@ -416,14 +436,13 @@ alongside a passing rule (item 7). Each is measured, not inferred.
 | 5 | C | B-6 | Partial output↔input overlap is undetected: success, wrong values. Issue #225. |
 | 6 | Java | S-1 | A null history, or a null `OpenAndFill` output, yields a raw JVM exception from inside the algorithm. |
 | 7 | C# | S-2 | Rule passes; the empty-history *message* omits the cross-language `<NAME> open: ` prefix. |
-| 8 | all | S-4 | The stream-open history scan is the **only** array the library checks, which contradicts N-5. Needs a decision: keep it (retained state poisons, per `docs/streaming-api-design.md`) or drop it (arrays are never scanned, and it is a full pass on every open). Sub-issue: Rust and Java order the scan above the index-ceiling check. |
-| 9 | all | S-6 | `TA_RetCode` has **no member** for "history shorter than the lookback". C and Rust fall back to the catch-all, so the library's only recoverable condition is indistinguishable from a programming error; Java and C# borrow `TA_OUT_OF_RANGE_END_INDEX` and re-type it. The fix is additive — append a member — and would let all four converge. |
-| 10 | Rust, Java, C# | S-8 | `OpenAndFill` validates no output capacity, unlike the batch tier which does; an undersized output faults inside the fill. (C cannot — no sizes.) |
-| 11 | C | G-7 | The compatibility setter accepts any value and the getter echoes it back. |
-| 12 | C | G-3 | The unstable-period getter cannot report a bad target. ABI-locked. |
+| 8 | all | S-6 | `TA_RetCode` has **no member** for "history shorter than the lookback". C and Rust fall back to the catch-all, so the library's only recoverable condition is indistinguishable from a programming error; Java and C# borrow `TA_OUT_OF_RANGE_END_INDEX` and re-type it. The fix is additive — append a member — and would let all four converge. |
+| 9 | Rust, Java, C# | S-8 | `OpenAndFill` validates no output capacity, unlike the batch tier which does; an undersized output faults inside the fill. (C cannot — no sizes.) |
+| 10 | C | G-7 | The compatibility setter accepts any value and the getter echoes it back. |
+| 11 | C | G-3 | The unstable-period getter cannot report a bad target. ABI-locked. |
 
-Items 9 and 10 are the two that change what a *correct* caller can do: 9 denies
-them the ability to retry, and 10 turns a sizing mistake into a partly-written
+Items 8 and 9 are the two that change what a *correct* caller can do: 8 denies
+them the ability to retry, and 9 turns a sizing mistake into a partly-written
 buffer.
 
 ---

@@ -759,9 +759,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_MACDEXT_Open")]
     pub fn MACDEXT_Open(&self, inReal: &[f64], optInFastPeriod: i32, optInFastMAType: MAType, optInSlowPeriod: i32, optInSlowMAType: MAType, optInSignalPeriod: i32, optInSignalMAType: MAType) -> Result<(MACDEXT_Stream, (f64, f64, f64)), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.MACDEXT_OpenInternal(inReal, 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType)
     }
 
@@ -780,9 +777,6 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         if outMACDSignal.as_ptr() == outMACDHist.as_ptr() {
-            return Err(RetCode::BadParam);
-        }
-        if inReal.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;

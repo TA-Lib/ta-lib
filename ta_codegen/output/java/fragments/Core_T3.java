@@ -921,11 +921,6 @@
     */
    public T3_Stream T3_Open( double inReal[], int optInTimePeriod, double optInVFactor )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("T3 open: BadParam");
-      }
       return T3_OpenInternal(inReal, 0, optInTimePeriod, optInVFactor);
    }
    /**
@@ -939,11 +934,6 @@
     */
    public T3_Stream T3_OpenAndFill( double inReal[], int optInTimePeriod, double optInVFactor, double outReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("T3 openAndFill: BadParam");
-      }
       T3_Stream sp = new T3_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

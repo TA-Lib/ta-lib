@@ -843,20 +843,6 @@
     */
    public CDLSEPARATINGLINES_Stream CDLSEPARATINGLINES_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
-      if( inOpen.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-            if( !Double.isFinite(inOpen[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLSEPARATINGLINES open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-            if( !Double.isFinite(inHigh[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLSEPARATINGLINES open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-            if( !Double.isFinite(inLow[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLSEPARATINGLINES open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-            if( !Double.isFinite(inClose[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLSEPARATINGLINES open: BadParam");
-      }
       return CDLSEPARATINGLINES_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -870,20 +856,6 @@
     */
    public CDLSEPARATINGLINES_Stream CDLSEPARATINGLINES_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      if( inOpen.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-            if( !Double.isFinite(inOpen[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLSEPARATINGLINES openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-            if( !Double.isFinite(inHigh[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLSEPARATINGLINES openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-            if( !Double.isFinite(inLow[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLSEPARATINGLINES openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-            if( !Double.isFinite(inClose[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLSEPARATINGLINES openAndFill: BadParam");
-      }
       CDLSEPARATINGLINES_Stream sp = new CDLSEPARATINGLINES_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

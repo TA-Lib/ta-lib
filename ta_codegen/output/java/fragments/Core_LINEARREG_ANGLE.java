@@ -660,11 +660,6 @@
     */
    public LINEARREG_ANGLE_Stream LINEARREG_ANGLE_Open( double inReal[], int optInTimePeriod )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("LINEARREG_ANGLE open: BadParam");
-      }
       return LINEARREG_ANGLE_OpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
@@ -678,11 +673,6 @@
     */
    public LINEARREG_ANGLE_Stream LINEARREG_ANGLE_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("LINEARREG_ANGLE openAndFill: BadParam");
-      }
       LINEARREG_ANGLE_Stream sp = new LINEARREG_ANGLE_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

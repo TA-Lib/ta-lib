@@ -899,8 +899,6 @@ public partial class Core
    public CMO_Stream CMO_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("CMO", "open", RetCode.BadParam);
       return CMO_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -931,8 +929,6 @@ public partial class Core
    public CMO_Stream CMO_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("CMO", "openAndFill", RetCode.BadParam);
       CMO_Stream sp = new CMO_Stream(this);
       RetCode retCode = CMO_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

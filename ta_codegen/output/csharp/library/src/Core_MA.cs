@@ -1115,8 +1115,6 @@ public partial class Core
    public MA_Stream MA_Open( ReadOnlySpan<double> inReal, int optInTimePeriod, MAType optInMAType )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MA", "open", RetCode.BadParam);
       return MA_OpenInternal(inReal, 0, optInTimePeriod, optInMAType);
    }
 
@@ -1149,8 +1147,6 @@ public partial class Core
    public MA_Stream MA_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, MAType optInMAType, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MA", "openAndFill", RetCode.BadParam);
       MA_Stream sp = new MA_Stream(this);
       RetCode retCode = MA_OpenAndFillBody(sp, inReal, optInTimePeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

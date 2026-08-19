@@ -954,8 +954,6 @@ public partial class Core
    public MACDFIX_Stream MACDFIX_Open( ReadOnlySpan<double> inReal, int optInSignalPeriod )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MACDFIX", "open", RetCode.BadParam);
       return MACDFIX_OpenInternal(inReal, 0, optInSignalPeriod);
    }
 
@@ -990,8 +988,6 @@ public partial class Core
    public MACDFIX_Stream MACDFIX_OpenAndFill( ReadOnlySpan<double> inReal, int optInSignalPeriod, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MACDFIX", "openAndFill", RetCode.BadParam);
       MACDFIX_Stream sp = new MACDFIX_Stream(this);
       RetCode retCode = MACDFIX_OpenAndFillBody(sp, inReal, optInSignalPeriod, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

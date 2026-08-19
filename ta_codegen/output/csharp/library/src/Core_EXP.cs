@@ -427,8 +427,6 @@ public partial class Core
    public EXP_Stream EXP_Open( ReadOnlySpan<double> inReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("EXP", "open", RetCode.BadParam);
       return EXP_OpenInternal(inReal, 0);
    }
 
@@ -457,8 +455,6 @@ public partial class Core
    public EXP_Stream EXP_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("EXP", "openAndFill", RetCode.BadParam);
       EXP_Stream sp = new EXP_Stream(this);
       RetCode retCode = EXP_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

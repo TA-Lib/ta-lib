@@ -756,20 +756,6 @@
     */
    public CDLINNECK_Stream CDLINNECK_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
-      if( inOpen.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-            if( !Double.isFinite(inOpen[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLINNECK open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-            if( !Double.isFinite(inHigh[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLINNECK open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-            if( !Double.isFinite(inLow[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLINNECK open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-            if( !Double.isFinite(inClose[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLINNECK open: BadParam");
-      }
       return CDLINNECK_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -783,20 +769,6 @@
     */
    public CDLINNECK_Stream CDLINNECK_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      if( inOpen.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-            if( !Double.isFinite(inOpen[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLINNECK openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-            if( !Double.isFinite(inHigh[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLINNECK openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-            if( !Double.isFinite(inLow[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLINNECK openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-            if( !Double.isFinite(inClose[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLINNECK openAndFill: BadParam");
-      }
       CDLINNECK_Stream sp = new CDLINNECK_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

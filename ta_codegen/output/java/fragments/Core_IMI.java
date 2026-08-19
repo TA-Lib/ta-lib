@@ -568,14 +568,6 @@
     */
    public IMI_Stream IMI_Open( double inOpen[], double inClose[], int optInTimePeriod )
    {
-      if( inOpen.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-            if( !Double.isFinite(inOpen[taFiniteIdx]) )
-               throw new IllegalArgumentException("IMI open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-            if( !Double.isFinite(inClose[taFiniteIdx]) )
-               throw new IllegalArgumentException("IMI open: BadParam");
-      }
       return IMI_OpenInternal(inOpen, inClose, 0, optInTimePeriod);
    }
    /**
@@ -589,14 +581,6 @@
     */
    public IMI_Stream IMI_OpenAndFill( double inOpen[], double inClose[], int optInTimePeriod, double outReal[] )
    {
-      if( inOpen.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-            if( !Double.isFinite(inOpen[taFiniteIdx]) )
-               throw new IllegalArgumentException("IMI openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-            if( !Double.isFinite(inClose[taFiniteIdx]) )
-               throw new IllegalArgumentException("IMI openAndFill: BadParam");
-      }
       IMI_Stream sp = new IMI_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

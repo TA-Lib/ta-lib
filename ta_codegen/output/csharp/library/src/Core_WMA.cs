@@ -798,8 +798,6 @@ public partial class Core
    public WMA_Stream WMA_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("WMA", "open", RetCode.BadParam);
       return WMA_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -830,8 +828,6 @@ public partial class Core
    public WMA_Stream WMA_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("WMA", "openAndFill", RetCode.BadParam);
       WMA_Stream sp = new WMA_Stream(this);
       RetCode retCode = WMA_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

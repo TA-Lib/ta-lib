@@ -925,12 +925,6 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
       if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
-      foreach( double taFiniteV in inHigh )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("ACCBANDS", "open", RetCode.BadParam);
-      foreach( double taFiniteV in inLow )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("ACCBANDS", "open", RetCode.BadParam);
-      foreach( double taFiniteV in inClose )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("ACCBANDS", "open", RetCode.BadParam);
       return ACCBANDS_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
 
@@ -969,12 +963,6 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
       if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
-      foreach( double taFiniteV in inHigh )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("ACCBANDS", "openAndFill", RetCode.BadParam);
-      foreach( double taFiniteV in inLow )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("ACCBANDS", "openAndFill", RetCode.BadParam);
-      foreach( double taFiniteV in inClose )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("ACCBANDS", "openAndFill", RetCode.BadParam);
       ACCBANDS_Stream sp = new ACCBANDS_Stream(this);
       RetCode retCode = ACCBANDS_OpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

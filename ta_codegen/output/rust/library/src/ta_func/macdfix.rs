@@ -738,9 +738,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_MACDFIX_Open")]
     pub fn MACDFIX_Open(&self, inReal: &[f64], optInSignalPeriod: i32) -> Result<(MACDFIX_Stream, (f64, f64, f64)), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.MACDFIX_OpenInternal(inReal, 0, optInSignalPeriod)
     }
 
@@ -759,9 +756,6 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         if outMACDSignal.as_ptr() == outMACDHist.as_ptr() {
-            return Err(RetCode::BadParam);
-        }
-        if inReal.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;

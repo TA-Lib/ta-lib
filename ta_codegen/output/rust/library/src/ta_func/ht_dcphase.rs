@@ -1496,9 +1496,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_HT_DCPHASE_Open")]
     pub fn HT_DCPHASE_Open(&self, inReal: &[f64], ) -> Result<(HT_DCPHASE_Stream, f64), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.HT_DCPHASE_OpenInternal(inReal, 0)
     }
 
@@ -1510,9 +1507,6 @@ impl Core {
     pub fn HT_DCPHASE_OpenAndFill(
         &self, inReal: &[f64], outReal: &mut [f64],
     ) -> Result<(HT_DCPHASE_Stream, OutRange), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.HT_DCPHASE_OpenCore(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

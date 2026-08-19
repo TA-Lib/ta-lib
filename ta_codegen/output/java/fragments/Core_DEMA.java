@@ -741,11 +741,6 @@
     */
    public DEMA_Stream DEMA_Open( double inReal[], int optInTimePeriod )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("DEMA open: BadParam");
-      }
       return DEMA_OpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
@@ -759,11 +754,6 @@
     */
    public DEMA_Stream DEMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("DEMA openAndFill: BadParam");
-      }
       DEMA_Stream sp = new DEMA_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -1015,10 +1015,6 @@ public partial class Core
    {
       if( inReal0.IsEmpty ) throw new ArgumentException("inReal0 is empty", nameof(inReal0));
       if( inReal1.IsEmpty ) throw new ArgumentException("inReal1 is empty", nameof(inReal1));
-      foreach( double taFiniteV in inReal0 )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("BETA", "open", RetCode.BadParam);
-      foreach( double taFiniteV in inReal1 )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("BETA", "open", RetCode.BadParam);
       return BETA_OpenInternal(inReal0, inReal1, 0, optInTimePeriod);
    }
 
@@ -1053,10 +1049,6 @@ public partial class Core
    {
       if( inReal0.IsEmpty ) throw new ArgumentException("inReal0 is empty", nameof(inReal0));
       if( inReal1.IsEmpty ) throw new ArgumentException("inReal1 is empty", nameof(inReal1));
-      foreach( double taFiniteV in inReal0 )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("BETA", "openAndFill", RetCode.BadParam);
-      foreach( double taFiniteV in inReal1 )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("BETA", "openAndFill", RetCode.BadParam);
       BETA_Stream sp = new BETA_Stream(this);
       RetCode retCode = BETA_OpenAndFillBody(sp, inReal0, inReal1, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

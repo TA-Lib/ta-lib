@@ -405,12 +405,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_AD_Open")]
     pub fn AD_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], ) -> Result<(AD_Stream, f64), RetCode> {
-        if inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite())
-            || inClose.iter().any(|v| !v.is_finite())
-            || inVolume.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.AD_OpenInternal(inHigh, inLow, inClose, inVolume, 0)
     }
 
@@ -422,12 +416,6 @@ impl Core {
     pub fn AD_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], outReal: &mut [f64],
     ) -> Result<(AD_Stream, OutRange), RetCode> {
-        if inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite())
-            || inClose.iter().any(|v| !v.is_finite())
-            || inVolume.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.AD_OpenCore(inHigh, inLow, inClose, inVolume, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

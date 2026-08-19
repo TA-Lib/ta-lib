@@ -593,14 +593,6 @@ TA_LIB_API TA_RetCode TA_ADOSC_Open( TA_ADOSC_Stream **stream, const double inHi
    if( !inHigh || !inLow || !inClose || !inVolume || !outReal ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   {
-      int taFiniteIdx;
-      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
-         if( !TA_IS_FINITE( inHigh[taFiniteIdx] ) ||
-             !TA_IS_FINITE( inLow[taFiniteIdx] ) ||
-             !TA_IS_FINITE( inClose[taFiniteIdx] ) ||
-             !TA_IS_FINITE( inVolume[taFiniteIdx] ) ) return TA_BAD_PARAM;
-   }
    return TA_ADOSC_OpenInternal( stream, inHigh, inLow, inClose, inVolume, 0, historyLen, optInFastPeriod, optInSlowPeriod, outReal );
 }
 
@@ -613,14 +605,6 @@ TA_LIB_API TA_RetCode TA_ADOSC_OpenAndFill( TA_ADOSC_Stream **stream, const doub
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inClose || (const void *)outReal == (const void *)inVolume ) return TA_BAD_PARAM;
-   {
-      int taFiniteIdx;
-      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
-         if( !TA_IS_FINITE( inHigh[taFiniteIdx] ) ||
-             !TA_IS_FINITE( inLow[taFiniteIdx] ) ||
-             !TA_IS_FINITE( inClose[taFiniteIdx] ) ||
-             !TA_IS_FINITE( inVolume[taFiniteIdx] ) ) return TA_BAD_PARAM;
-   }
    return TA_ADOSC_OpenCore( stream, inHigh, inLow, inClose, inVolume, 0, historyLen, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 

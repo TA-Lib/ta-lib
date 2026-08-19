@@ -501,10 +501,6 @@ public partial class Core
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("OBV", "open", RetCode.BadParam);
-      foreach( double taFiniteV in inVolume )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("OBV", "open", RetCode.BadParam);
       return OBV_OpenInternal(inReal, inVolume, 0);
    }
 
@@ -535,10 +531,6 @@ public partial class Core
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("OBV", "openAndFill", RetCode.BadParam);
-      foreach( double taFiniteV in inVolume )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("OBV", "openAndFill", RetCode.BadParam);
       OBV_Stream sp = new OBV_Stream(this);
       RetCode retCode = OBV_OpenAndFillBody(sp, inReal, inVolume, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

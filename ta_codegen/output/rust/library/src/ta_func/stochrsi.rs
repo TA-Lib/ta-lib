@@ -575,9 +575,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_STOCHRSI_Open")]
     pub fn STOCHRSI_Open(&self, inReal: &[f64], optInTimePeriod: i32, optInFastK_Period: i32, optInFastD_Period: i32, optInFastD_MAType: MAType) -> Result<(STOCHRSI_Stream, (f64, f64)), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.STOCHRSI_OpenInternal(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType)
     }
 
@@ -590,9 +587,6 @@ impl Core {
         &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType, outFastK: &mut [f64], outFastD: &mut [f64],
     ) -> Result<(STOCHRSI_Stream, OutRange), RetCode> {
         if outFastK.as_ptr() == outFastD.as_ptr() {
-            return Err(RetCode::BadParam);
-        }
-        if inReal.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;

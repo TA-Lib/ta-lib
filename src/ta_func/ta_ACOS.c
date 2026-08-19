@@ -190,11 +190,6 @@ TA_LIB_API TA_RetCode TA_ACOS_Open( TA_ACOS_Stream **stream, const double inReal
    if( !inReal || !outReal ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   {
-      int taFiniteIdx;
-      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
-         if( !TA_IS_FINITE( inReal[taFiniteIdx] ) ) return TA_BAD_PARAM;
-   }
    return TA_ACOS_OpenInternal( stream, inReal, 0, historyLen, outReal );
 }
 
@@ -207,11 +202,6 @@ TA_LIB_API TA_RetCode TA_ACOS_OpenAndFill( TA_ACOS_Stream **stream, const double
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
-   {
-      int taFiniteIdx;
-      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
-         if( !TA_IS_FINITE( inReal[taFiniteIdx] ) ) return TA_BAD_PARAM;
-   }
    return TA_ACOS_OpenCore( stream, inReal, 0, historyLen, outBegIdx, outNBElement, outReal, 1 );
 }
 

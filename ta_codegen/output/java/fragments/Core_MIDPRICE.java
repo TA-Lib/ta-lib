@@ -910,14 +910,6 @@
     */
    public MIDPRICE_Stream MIDPRICE_Open( double inHigh[], double inLow[], int optInTimePeriod )
    {
-      if( inHigh.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-            if( !Double.isFinite(inHigh[taFiniteIdx]) )
-               throw new IllegalArgumentException("MIDPRICE open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-            if( !Double.isFinite(inLow[taFiniteIdx]) )
-               throw new IllegalArgumentException("MIDPRICE open: BadParam");
-      }
       return MIDPRICE_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
    /**
@@ -931,14 +923,6 @@
     */
    public MIDPRICE_Stream MIDPRICE_OpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outReal[] )
    {
-      if( inHigh.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-            if( !Double.isFinite(inHigh[taFiniteIdx]) )
-               throw new IllegalArgumentException("MIDPRICE openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-            if( !Double.isFinite(inLow[taFiniteIdx]) )
-               throw new IllegalArgumentException("MIDPRICE openAndFill: BadParam");
-      }
       MIDPRICE_Stream sp = new MIDPRICE_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

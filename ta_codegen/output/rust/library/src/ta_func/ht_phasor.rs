@@ -1282,9 +1282,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_HT_PHASOR_Open")]
     pub fn HT_PHASOR_Open(&self, inReal: &[f64], ) -> Result<(HT_PHASOR_Stream, (f64, f64)), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.HT_PHASOR_OpenInternal(inReal, 0)
     }
 
@@ -1297,9 +1294,6 @@ impl Core {
         &self, inReal: &[f64], outInPhase: &mut [f64], outQuadrature: &mut [f64],
     ) -> Result<(HT_PHASOR_Stream, OutRange), RetCode> {
         if outInPhase.as_ptr() == outQuadrature.as_ptr() {
-            return Err(RetCode::BadParam);
-        }
-        if inReal.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;

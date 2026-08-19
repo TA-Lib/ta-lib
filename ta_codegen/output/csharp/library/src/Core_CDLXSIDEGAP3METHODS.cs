@@ -611,14 +611,6 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
       if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
-      foreach( double taFiniteV in inOpen )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("CDLXSIDEGAP3METHODS", "open", RetCode.BadParam);
-      foreach( double taFiniteV in inHigh )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("CDLXSIDEGAP3METHODS", "open", RetCode.BadParam);
-      foreach( double taFiniteV in inLow )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("CDLXSIDEGAP3METHODS", "open", RetCode.BadParam);
-      foreach( double taFiniteV in inClose )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("CDLXSIDEGAP3METHODS", "open", RetCode.BadParam);
       return CDLXSIDEGAP3METHODS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
@@ -658,14 +650,6 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
       if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
-      foreach( double taFiniteV in inOpen )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("CDLXSIDEGAP3METHODS", "openAndFill", RetCode.BadParam);
-      foreach( double taFiniteV in inHigh )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("CDLXSIDEGAP3METHODS", "openAndFill", RetCode.BadParam);
-      foreach( double taFiniteV in inLow )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("CDLXSIDEGAP3METHODS", "openAndFill", RetCode.BadParam);
-      foreach( double taFiniteV in inClose )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("CDLXSIDEGAP3METHODS", "openAndFill", RetCode.BadParam);
       CDLXSIDEGAP3METHODS_Stream sp = new CDLXSIDEGAP3METHODS_Stream(this);
       RetCode retCode = CDLXSIDEGAP3METHODS_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

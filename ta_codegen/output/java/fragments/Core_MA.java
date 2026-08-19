@@ -1048,11 +1048,6 @@
     */
    public MA_Stream MA_Open( double inReal[], int optInTimePeriod, MAType optInMAType )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("MA open: BadParam");
-      }
       return MA_OpenInternal(inReal, 0, optInTimePeriod, optInMAType);
    }
    /**
@@ -1066,11 +1061,6 @@
     */
    public MA_Stream MA_OpenAndFill( double inReal[], int optInTimePeriod, MAType optInMAType, double outReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("MA openAndFill: BadParam");
-      }
       MA_Stream sp = new MA_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

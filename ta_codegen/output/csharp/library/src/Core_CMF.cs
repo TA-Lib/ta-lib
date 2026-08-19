@@ -922,14 +922,6 @@ public partial class Core
       if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
-      foreach( double taFiniteV in inHigh )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("CMF", "open", RetCode.BadParam);
-      foreach( double taFiniteV in inLow )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("CMF", "open", RetCode.BadParam);
-      foreach( double taFiniteV in inClose )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("CMF", "open", RetCode.BadParam);
-      foreach( double taFiniteV in inVolume )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("CMF", "open", RetCode.BadParam);
       return CMF_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod);
    }
 
@@ -966,14 +958,6 @@ public partial class Core
       if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
-      foreach( double taFiniteV in inHigh )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("CMF", "openAndFill", RetCode.BadParam);
-      foreach( double taFiniteV in inLow )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("CMF", "openAndFill", RetCode.BadParam);
-      foreach( double taFiniteV in inClose )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("CMF", "openAndFill", RetCode.BadParam);
-      foreach( double taFiniteV in inVolume )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("CMF", "openAndFill", RetCode.BadParam);
       CMF_Stream sp = new CMF_Stream(this);
       RetCode retCode = CMF_OpenAndFillBody(sp, inHigh, inLow, inClose, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

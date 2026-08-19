@@ -634,10 +634,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_AROONOSC_Open")]
     pub fn AROONOSC_Open(&self, inHigh: &[f64], inLow: &[f64], optInTimePeriod: i32) -> Result<(AROONOSC_Stream, f64), RetCode> {
-        if inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.AROONOSC_OpenInternal(inHigh, inLow, 0, optInTimePeriod)
     }
 
@@ -649,10 +645,6 @@ impl Core {
     pub fn AROONOSC_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(AROONOSC_Stream, OutRange), RetCode> {
-        if inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.AROONOSC_OpenCore(inHigh, inLow, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

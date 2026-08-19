@@ -304,9 +304,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_ASIN_Open")]
     pub fn ASIN_Open(&self, inReal: &[f64], ) -> Result<(ASIN_Stream, f64), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.ASIN_OpenInternal(inReal, 0)
     }
 
@@ -318,9 +315,6 @@ impl Core {
     pub fn ASIN_OpenAndFill(
         &self, inReal: &[f64], outReal: &mut [f64],
     ) -> Result<(ASIN_Stream, OutRange), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.ASIN_OpenCore(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

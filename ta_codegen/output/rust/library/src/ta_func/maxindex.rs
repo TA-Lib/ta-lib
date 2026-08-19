@@ -492,9 +492,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_MAXINDEX_Open")]
     pub fn MAXINDEX_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(MAXINDEX_Stream, i32), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.MAXINDEX_OpenInternal(inReal, 0, optInTimePeriod)
     }
 
@@ -506,9 +503,6 @@ impl Core {
     pub fn MAXINDEX_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outInteger: &mut [i32],
     ) -> Result<(MAXINDEX_Stream, OutRange), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.MAXINDEX_OpenCore(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outInteger, 1)?;

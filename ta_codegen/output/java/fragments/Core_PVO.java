@@ -674,11 +674,6 @@
     */
    public PVO_Stream PVO_Open( double inVolume[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
-      if( inVolume.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-            if( !Double.isFinite(inVolume[taFiniteIdx]) )
-               throw new IllegalArgumentException("PVO open: BadParam");
-      }
       return PVO_OpenInternal(inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType);
    }
    /**
@@ -692,11 +687,6 @@
     */
    public PVO_Stream PVO_OpenAndFill( double inVolume[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, double outReal[] )
    {
-      if( inVolume.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-            if( !Double.isFinite(inVolume[taFiniteIdx]) )
-               throw new IllegalArgumentException("PVO openAndFill: BadParam");
-      }
       PVO_Stream sp = new PVO_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

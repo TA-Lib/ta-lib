@@ -751,9 +751,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_KAMA_Open")]
     pub fn KAMA_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(KAMA_Stream, f64), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.KAMA_OpenInternal(inReal, 0, optInTimePeriod)
     }
 
@@ -765,9 +762,6 @@ impl Core {
     pub fn KAMA_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(KAMA_Stream, OutRange), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.KAMA_OpenCore(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

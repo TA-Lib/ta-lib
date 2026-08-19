@@ -372,14 +372,6 @@
     */
    public ADD_Stream ADD_Open( double inReal0[], double inReal1[] )
    {
-      if( inReal0.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal0.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal0[taFiniteIdx]) )
-               throw new IllegalArgumentException("ADD open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal1.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal1[taFiniteIdx]) )
-               throw new IllegalArgumentException("ADD open: BadParam");
-      }
       return ADD_OpenInternal(inReal0, inReal1, 0);
    }
    /**
@@ -393,14 +385,6 @@
     */
    public ADD_Stream ADD_OpenAndFill( double inReal0[], double inReal1[], double outReal[] )
    {
-      if( inReal0.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal0.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal0[taFiniteIdx]) )
-               throw new IllegalArgumentException("ADD openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal1.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal1[taFiniteIdx]) )
-               throw new IllegalArgumentException("ADD openAndFill: BadParam");
-      }
       ADD_Stream sp = new ADD_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

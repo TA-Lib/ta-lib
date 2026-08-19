@@ -1475,9 +1475,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_MAMA_Open")]
     pub fn MAMA_Open(&self, inReal: &[f64], optInFastLimit: f64, optInSlowLimit: f64) -> Result<(MAMA_Stream, (f64, f64)), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.MAMA_OpenInternal(inReal, 0, optInFastLimit, optInSlowLimit)
     }
 
@@ -1490,9 +1487,6 @@ impl Core {
         &self, inReal: &[f64], mut optInFastLimit: f64, mut optInSlowLimit: f64, outMAMA: &mut [f64], outFAMA: &mut [f64],
     ) -> Result<(MAMA_Stream, OutRange), RetCode> {
         if outMAMA.as_ptr() == outFAMA.as_ptr() {
-            return Err(RetCode::BadParam);
-        }
-        if inReal.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;

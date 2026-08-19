@@ -970,12 +970,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_CDLKICKINGBYLENGTH_Open")]
     pub fn CDLKICKINGBYLENGTH_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLKICKINGBYLENGTH_Stream, i32), RetCode> {
-        if inOpen.iter().any(|v| !v.is_finite())
-            || inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite())
-            || inClose.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.CDLKICKINGBYLENGTH_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
@@ -987,12 +981,6 @@ impl Core {
     pub fn CDLKICKINGBYLENGTH_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outInteger: &mut [i32],
     ) -> Result<(CDLKICKINGBYLENGTH_Stream, OutRange), RetCode> {
-        if inOpen.iter().any(|v| !v.is_finite())
-            || inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite())
-            || inClose.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.CDLKICKINGBYLENGTH_OpenCore(inOpen, inHigh, inLow, inClose, 0, &mut outBegIdx, &mut outNBElement, outInteger, 1)?;

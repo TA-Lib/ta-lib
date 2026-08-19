@@ -1748,8 +1748,6 @@ public partial class Core
    public HT_DCPERIOD_Stream HT_DCPERIOD_Open( ReadOnlySpan<double> inReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("HT_DCPERIOD", "open", RetCode.BadParam);
       return HT_DCPERIOD_OpenInternal(inReal, 0);
    }
 
@@ -1779,8 +1777,6 @@ public partial class Core
    public HT_DCPERIOD_Stream HT_DCPERIOD_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("HT_DCPERIOD", "openAndFill", RetCode.BadParam);
       HT_DCPERIOD_Stream sp = new HT_DCPERIOD_Stream(this);
       RetCode retCode = HT_DCPERIOD_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

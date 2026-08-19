@@ -609,10 +609,6 @@ public partial class Core
    {
       if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
-      foreach( double taFiniteV in inClose )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("NVI", "open", RetCode.BadParam);
-      foreach( double taFiniteV in inVolume )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("NVI", "open", RetCode.BadParam);
       return NVI_OpenInternal(inClose, inVolume, 0);
    }
 
@@ -643,10 +639,6 @@ public partial class Core
    {
       if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
-      foreach( double taFiniteV in inClose )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("NVI", "openAndFill", RetCode.BadParam);
-      foreach( double taFiniteV in inVolume )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("NVI", "openAndFill", RetCode.BadParam);
       NVI_Stream sp = new NVI_Stream(this);
       RetCode retCode = NVI_OpenAndFillBody(sp, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

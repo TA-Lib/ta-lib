@@ -360,11 +360,6 @@
     */
    public FLOOR_Stream FLOOR_Open( double inReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("FLOOR open: BadParam");
-      }
       return FLOOR_OpenInternal(inReal, 0);
    }
    /**
@@ -378,11 +373,6 @@
     */
    public FLOOR_Stream FLOOR_OpenAndFill( double inReal[], double outReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("FLOOR openAndFill: BadParam");
-      }
       FLOOR_Stream sp = new FLOOR_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

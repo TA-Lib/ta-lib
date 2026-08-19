@@ -460,10 +460,6 @@ public partial class Core
    {
       if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
       if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      foreach( double taFiniteV in inHigh )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MEDPRICE", "open", RetCode.BadParam);
-      foreach( double taFiniteV in inLow )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MEDPRICE", "open", RetCode.BadParam);
       return MEDPRICE_OpenInternal(inHigh, inLow, 0);
    }
 
@@ -494,10 +490,6 @@ public partial class Core
    {
       if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
       if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      foreach( double taFiniteV in inHigh )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MEDPRICE", "openAndFill", RetCode.BadParam);
-      foreach( double taFiniteV in inLow )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MEDPRICE", "openAndFill", RetCode.BadParam);
       MEDPRICE_Stream sp = new MEDPRICE_Stream(this);
       RetCode retCode = MEDPRICE_OpenAndFillBody(sp, inHigh, inLow, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

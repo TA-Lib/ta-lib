@@ -1171,14 +1171,6 @@ class Core {
         */
        public AC_Stream AC_Open( double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AC open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AC open: BadParam");
-          }
           return AC_OpenInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
        }
        /**
@@ -1192,14 +1184,6 @@ class Core {
         */
        public AC_Stream AC_OpenAndFill( double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, double outReal[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AC openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AC openAndFill: BadParam");
-          }
           AC_Stream sp = new AC_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -2075,17 +2059,6 @@ class Core {
         */
        public ACCBANDS_Stream ACCBANDS_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ACCBANDS open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ACCBANDS open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ACCBANDS open: BadParam");
-          }
           return ACCBANDS_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
        }
        /**
@@ -2099,17 +2072,6 @@ class Core {
         */
        public ACCBANDS_Stream ACCBANDS_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ACCBANDS openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ACCBANDS openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ACCBANDS openAndFill: BadParam");
-          }
           ACCBANDS_Stream sp = new ACCBANDS_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -2500,11 +2462,6 @@ class Core {
         */
        public ACOS_Stream ACOS_Open( double inReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ACOS open: BadParam");
-          }
           return ACOS_OpenInternal(inReal, 0);
        }
        /**
@@ -2518,11 +2475,6 @@ class Core {
         */
        public ACOS_Stream ACOS_OpenAndFill( double inReal[], double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ACOS openAndFill: BadParam");
-          }
           ACOS_Stream sp = new ACOS_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -3037,20 +2989,6 @@ class Core {
         */
        public AD_Stream AD_Open( double inHigh[], double inLow[], double inClose[], double inVolume[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AD open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AD open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AD open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-                if( !Double.isFinite(inVolume[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AD open: BadParam");
-          }
           return AD_OpenInternal(inHigh, inLow, inClose, inVolume, 0);
        }
        /**
@@ -3064,20 +3002,6 @@ class Core {
         */
        public AD_Stream AD_OpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AD openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AD openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AD openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-                if( !Double.isFinite(inVolume[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AD openAndFill: BadParam");
-          }
           AD_Stream sp = new AD_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -3468,14 +3392,6 @@ class Core {
         */
        public ADD_Stream ADD_Open( double inReal0[], double inReal1[] )
        {
-          if( inReal0.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal0.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal0[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ADD open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal1.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal1[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ADD open: BadParam");
-          }
           return ADD_OpenInternal(inReal0, inReal1, 0);
        }
        /**
@@ -3489,14 +3405,6 @@ class Core {
         */
        public ADD_Stream ADD_OpenAndFill( double inReal0[], double inReal1[], double outReal[] )
        {
-          if( inReal0.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal0.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal0[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ADD openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal1.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal1[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ADD openAndFill: BadParam");
-          }
           ADD_Stream sp = new ADD_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -4310,20 +4218,6 @@ class Core {
         */
        public ADOSC_Stream ADOSC_Open( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInFastPeriod, int optInSlowPeriod )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ADOSC open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ADOSC open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ADOSC open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-                if( !Double.isFinite(inVolume[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ADOSC open: BadParam");
-          }
           return ADOSC_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod);
        }
        /**
@@ -4337,20 +4231,6 @@ class Core {
         */
        public ADOSC_Stream ADOSC_OpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInFastPeriod, int optInSlowPeriod, double outReal[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ADOSC openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ADOSC openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ADOSC openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-                if( !Double.isFinite(inVolume[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ADOSC openAndFill: BadParam");
-          }
           ADOSC_Stream sp = new ADOSC_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -5768,17 +5648,6 @@ class Core {
         */
        public ADX_Stream ADX_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ADX open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ADX open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ADX open: BadParam");
-          }
           return ADX_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
        }
        /**
@@ -5792,17 +5661,6 @@ class Core {
         */
        public ADX_Stream ADX_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ADX openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ADX openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ADX openAndFill: BadParam");
-          }
           ADX_Stream sp = new ADX_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -6413,17 +6271,6 @@ class Core {
         */
        public ADXR_Stream ADXR_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ADXR open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ADXR open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ADXR open: BadParam");
-          }
           return ADXR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
        }
        /**
@@ -6437,17 +6284,6 @@ class Core {
         */
        public ADXR_Stream ADXR_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ADXR openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ADXR openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ADXR openAndFill: BadParam");
-          }
           ADXR_Stream sp = new ADXR_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -7292,14 +7128,6 @@ class Core {
         */
        public AO_Stream AO_Open( double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AO open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AO open: BadParam");
-          }
           return AO_OpenInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod);
        }
        /**
@@ -7313,14 +7141,6 @@ class Core {
         */
        public AO_Stream AO_OpenAndFill( double inHigh[], double inLow[], int optInFastPeriod, int optInSlowPeriod, double outReal[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AO openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AO openAndFill: BadParam");
-          }
           AO_Stream sp = new AO_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -7994,11 +7814,6 @@ class Core {
         */
        public APO_Stream APO_Open( double inReal[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("APO open: BadParam");
-          }
           return APO_OpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType);
        }
        /**
@@ -8012,11 +7827,6 @@ class Core {
         */
        public APO_Stream APO_OpenAndFill( double inReal[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("APO openAndFill: BadParam");
-          }
           APO_Stream sp = new APO_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -8847,14 +8657,6 @@ class Core {
         */
        public AROON_Stream AROON_Open( double inHigh[], double inLow[], int optInTimePeriod )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AROON open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AROON open: BadParam");
-          }
           return AROON_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
        }
        /**
@@ -8868,14 +8670,6 @@ class Core {
         */
        public AROON_Stream AROON_OpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outAroonDown[], double outAroonUp[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AROON openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AROON openAndFill: BadParam");
-          }
           AROON_Stream sp = new AROON_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -9712,14 +9506,6 @@ class Core {
         */
        public AROONOSC_Stream AROONOSC_Open( double inHigh[], double inLow[], int optInTimePeriod )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AROONOSC open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AROONOSC open: BadParam");
-          }
           return AROONOSC_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
        }
        /**
@@ -9733,14 +9519,6 @@ class Core {
         */
        public AROONOSC_Stream AROONOSC_OpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outReal[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AROONOSC openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AROONOSC openAndFill: BadParam");
-          }
           AROONOSC_Stream sp = new AROONOSC_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -10133,11 +9911,6 @@ class Core {
         */
        public ASIN_Stream ASIN_Open( double inReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ASIN open: BadParam");
-          }
           return ASIN_OpenInternal(inReal, 0);
        }
        /**
@@ -10151,11 +9924,6 @@ class Core {
         */
        public ASIN_Stream ASIN_OpenAndFill( double inReal[], double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ASIN openAndFill: BadParam");
-          }
           ASIN_Stream sp = new ASIN_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -10540,11 +10308,6 @@ class Core {
         */
        public ATAN_Stream ATAN_Open( double inReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ATAN open: BadParam");
-          }
           return ATAN_OpenInternal(inReal, 0);
        }
        /**
@@ -10558,11 +10321,6 @@ class Core {
         */
        public ATAN_Stream ATAN_OpenAndFill( double inReal[], double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ATAN openAndFill: BadParam");
-          }
           ATAN_Stream sp = new ATAN_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -11403,17 +11161,6 @@ class Core {
         */
        public ATR_Stream ATR_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ATR open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ATR open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ATR open: BadParam");
-          }
           return ATR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
        }
        /**
@@ -11427,17 +11174,6 @@ class Core {
         */
        public ATR_Stream ATR_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ATR openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ATR openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ATR openAndFill: BadParam");
-          }
           ATR_Stream sp = new ATR_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -11975,11 +11711,6 @@ class Core {
         */
        public AVGDEV_Stream AVGDEV_Open( double inReal[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AVGDEV open: BadParam");
-          }
           return AVGDEV_OpenInternal(inReal, 0, optInTimePeriod);
        }
        /**
@@ -11993,11 +11724,6 @@ class Core {
         */
        public AVGDEV_Stream AVGDEV_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AVGDEV openAndFill: BadParam");
-          }
           AVGDEV_Stream sp = new AVGDEV_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -12415,20 +12141,6 @@ class Core {
         */
        public AVGPRICE_Stream AVGPRICE_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AVGPRICE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AVGPRICE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AVGPRICE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AVGPRICE open: BadParam");
-          }
           return AVGPRICE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -12442,20 +12154,6 @@ class Core {
         */
        public AVGPRICE_Stream AVGPRICE_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double outReal[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AVGPRICE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AVGPRICE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AVGPRICE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("AVGPRICE openAndFill: BadParam");
-          }
           AVGPRICE_Stream sp = new AVGPRICE_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -13614,11 +13312,6 @@ class Core {
         */
        public BBANDS_Stream BBANDS_Open( double inReal[], int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("BBANDS open: BadParam");
-          }
           return BBANDS_OpenInternal(inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
        }
        /**
@@ -13632,11 +13325,6 @@ class Core {
         */
        public BBANDS_Stream BBANDS_OpenAndFill( double inReal[], int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("BBANDS openAndFill: BadParam");
-          }
           BBANDS_Stream sp = new BBANDS_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -14606,14 +14294,6 @@ class Core {
         */
        public BETA_Stream BETA_Open( double inReal0[], double inReal1[], int optInTimePeriod )
        {
-          if( inReal0.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal0.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal0[taFiniteIdx]) )
-                   throw new IllegalArgumentException("BETA open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal1.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal1[taFiniteIdx]) )
-                   throw new IllegalArgumentException("BETA open: BadParam");
-          }
           return BETA_OpenInternal(inReal0, inReal1, 0, optInTimePeriod);
        }
        /**
@@ -14627,14 +14307,6 @@ class Core {
         */
        public BETA_Stream BETA_OpenAndFill( double inReal0[], double inReal1[], int optInTimePeriod, double outReal[] )
        {
-          if( inReal0.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal0.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal0[taFiniteIdx]) )
-                   throw new IllegalArgumentException("BETA openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal1.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal1[taFiniteIdx]) )
-                   throw new IllegalArgumentException("BETA openAndFill: BadParam");
-          }
           BETA_Stream sp = new BETA_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -15067,20 +14739,6 @@ class Core {
         */
        public BOP_Stream BOP_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("BOP open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("BOP open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("BOP open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("BOP open: BadParam");
-          }
           return BOP_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -15094,20 +14752,6 @@ class Core {
         */
        public BOP_Stream BOP_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double outReal[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("BOP openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("BOP openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("BOP openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("BOP openAndFill: BadParam");
-          }
           BOP_Stream sp = new BOP_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -15840,17 +15484,6 @@ class Core {
         */
        public CCI_Stream CCI_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CCI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CCI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CCI open: BadParam");
-          }
           return CCI_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
        }
        /**
@@ -15864,17 +15497,6 @@ class Core {
         */
        public CCI_Stream CCI_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CCI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CCI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CCI openAndFill: BadParam");
-          }
           CCI_Stream sp = new CCI_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -16561,20 +16183,6 @@ class Core {
         */
        public CDL2CROWS_Stream CDL2CROWS_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL2CROWS open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL2CROWS open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL2CROWS open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL2CROWS open: BadParam");
-          }
           return CDL2CROWS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -16588,20 +16196,6 @@ class Core {
         */
        public CDL2CROWS_Stream CDL2CROWS_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL2CROWS openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL2CROWS openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL2CROWS openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL2CROWS openAndFill: BadParam");
-          }
           CDL2CROWS_Stream sp = new CDL2CROWS_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -17418,20 +17012,6 @@ class Core {
         */
        public CDL3BLACKCROWS_Stream CDL3BLACKCROWS_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3BLACKCROWS open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3BLACKCROWS open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3BLACKCROWS open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3BLACKCROWS open: BadParam");
-          }
           return CDL3BLACKCROWS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -17445,20 +17025,6 @@ class Core {
         */
        public CDL3BLACKCROWS_Stream CDL3BLACKCROWS_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3BLACKCROWS openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3BLACKCROWS openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3BLACKCROWS openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3BLACKCROWS openAndFill: BadParam");
-          }
           CDL3BLACKCROWS_Stream sp = new CDL3BLACKCROWS_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -18244,20 +17810,6 @@ class Core {
         */
        public CDL3INSIDE_Stream CDL3INSIDE_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3INSIDE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3INSIDE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3INSIDE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3INSIDE open: BadParam");
-          }
           return CDL3INSIDE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -18271,20 +17823,6 @@ class Core {
         */
        public CDL3INSIDE_Stream CDL3INSIDE_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3INSIDE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3INSIDE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3INSIDE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3INSIDE openAndFill: BadParam");
-          }
           CDL3INSIDE_Stream sp = new CDL3INSIDE_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -19090,20 +18628,6 @@ class Core {
         */
        public CDL3LINESTRIKE_Stream CDL3LINESTRIKE_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3LINESTRIKE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3LINESTRIKE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3LINESTRIKE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3LINESTRIKE open: BadParam");
-          }
           return CDL3LINESTRIKE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -19117,20 +18641,6 @@ class Core {
         */
        public CDL3LINESTRIKE_Stream CDL3LINESTRIKE_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3LINESTRIKE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3LINESTRIKE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3LINESTRIKE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3LINESTRIKE openAndFill: BadParam");
-          }
           CDL3LINESTRIKE_Stream sp = new CDL3LINESTRIKE_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -19669,20 +19179,6 @@ class Core {
         */
        public CDL3OUTSIDE_Stream CDL3OUTSIDE_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3OUTSIDE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3OUTSIDE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3OUTSIDE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3OUTSIDE open: BadParam");
-          }
           return CDL3OUTSIDE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -19696,20 +19192,6 @@ class Core {
         */
        public CDL3OUTSIDE_Stream CDL3OUTSIDE_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3OUTSIDE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3OUTSIDE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3OUTSIDE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3OUTSIDE openAndFill: BadParam");
-          }
           CDL3OUTSIDE_Stream sp = new CDL3OUTSIDE_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -20817,20 +20299,6 @@ class Core {
         */
        public CDL3STARSINSOUTH_Stream CDL3STARSINSOUTH_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3STARSINSOUTH open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3STARSINSOUTH open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3STARSINSOUTH open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3STARSINSOUTH open: BadParam");
-          }
           return CDL3STARSINSOUTH_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -20844,20 +20312,6 @@ class Core {
         */
        public CDL3STARSINSOUTH_Stream CDL3STARSINSOUTH_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3STARSINSOUTH openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3STARSINSOUTH openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3STARSINSOUTH openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3STARSINSOUTH openAndFill: BadParam");
-          }
           CDL3STARSINSOUTH_Stream sp = new CDL3STARSINSOUTH_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -22002,20 +21456,6 @@ class Core {
         */
        public CDL3WHITESOLDIERS_Stream CDL3WHITESOLDIERS_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3WHITESOLDIERS open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3WHITESOLDIERS open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3WHITESOLDIERS open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3WHITESOLDIERS open: BadParam");
-          }
           return CDL3WHITESOLDIERS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -22029,20 +21469,6 @@ class Core {
         */
        public CDL3WHITESOLDIERS_Stream CDL3WHITESOLDIERS_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3WHITESOLDIERS openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3WHITESOLDIERS openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3WHITESOLDIERS openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDL3WHITESOLDIERS openAndFill: BadParam");
-          }
           CDL3WHITESOLDIERS_Stream sp = new CDL3WHITESOLDIERS_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -22968,20 +22394,6 @@ class Core {
         */
        public CDLABANDONEDBABY_Stream CDLABANDONEDBABY_Open( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLABANDONEDBABY open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLABANDONEDBABY open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLABANDONEDBABY open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLABANDONEDBABY open: BadParam");
-          }
           return CDLABANDONEDBABY_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
        }
        /**
@@ -22995,20 +22407,6 @@ class Core {
         */
        public CDLABANDONEDBABY_Stream CDLABANDONEDBABY_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLABANDONEDBABY openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLABANDONEDBABY openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLABANDONEDBABY openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLABANDONEDBABY openAndFill: BadParam");
-          }
           CDLABANDONEDBABY_Stream sp = new CDLABANDONEDBABY_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -24262,20 +23660,6 @@ class Core {
         */
        public CDLADVANCEBLOCK_Stream CDLADVANCEBLOCK_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLADVANCEBLOCK open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLADVANCEBLOCK open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLADVANCEBLOCK open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLADVANCEBLOCK open: BadParam");
-          }
           return CDLADVANCEBLOCK_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -24289,20 +23673,6 @@ class Core {
         */
        public CDLADVANCEBLOCK_Stream CDLADVANCEBLOCK_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLADVANCEBLOCK openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLADVANCEBLOCK openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLADVANCEBLOCK openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLADVANCEBLOCK openAndFill: BadParam");
-          }
           CDLADVANCEBLOCK_Stream sp = new CDLADVANCEBLOCK_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -25036,20 +24406,6 @@ class Core {
         */
        public CDLBELTHOLD_Stream CDLBELTHOLD_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLBELTHOLD open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLBELTHOLD open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLBELTHOLD open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLBELTHOLD open: BadParam");
-          }
           return CDLBELTHOLD_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -25063,20 +24419,6 @@ class Core {
         */
        public CDLBELTHOLD_Stream CDLBELTHOLD_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLBELTHOLD openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLBELTHOLD openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLBELTHOLD openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLBELTHOLD openAndFill: BadParam");
-          }
           CDLBELTHOLD_Stream sp = new CDLBELTHOLD_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -25797,20 +25139,6 @@ class Core {
         */
        public CDLBREAKAWAY_Stream CDLBREAKAWAY_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLBREAKAWAY open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLBREAKAWAY open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLBREAKAWAY open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLBREAKAWAY open: BadParam");
-          }
           return CDLBREAKAWAY_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -25824,20 +25152,6 @@ class Core {
         */
        public CDLBREAKAWAY_Stream CDLBREAKAWAY_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLBREAKAWAY openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLBREAKAWAY openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLBREAKAWAY openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLBREAKAWAY openAndFill: BadParam");
-          }
           CDLBREAKAWAY_Stream sp = new CDLBREAKAWAY_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -26567,20 +25881,6 @@ class Core {
         */
        public CDLCLOSINGMARUBOZU_Stream CDLCLOSINGMARUBOZU_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLCLOSINGMARUBOZU open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLCLOSINGMARUBOZU open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLCLOSINGMARUBOZU open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLCLOSINGMARUBOZU open: BadParam");
-          }
           return CDLCLOSINGMARUBOZU_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -26594,20 +25894,6 @@ class Core {
         */
        public CDLCLOSINGMARUBOZU_Stream CDLCLOSINGMARUBOZU_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLCLOSINGMARUBOZU openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLCLOSINGMARUBOZU openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLCLOSINGMARUBOZU openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLCLOSINGMARUBOZU openAndFill: BadParam");
-          }
           CDLCLOSINGMARUBOZU_Stream sp = new CDLCLOSINGMARUBOZU_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -27426,20 +26712,6 @@ class Core {
         */
        public CDLCONCEALBABYSWALL_Stream CDLCONCEALBABYSWALL_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLCONCEALBABYSWALL open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLCONCEALBABYSWALL open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLCONCEALBABYSWALL open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLCONCEALBABYSWALL open: BadParam");
-          }
           return CDLCONCEALBABYSWALL_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -27453,20 +26725,6 @@ class Core {
         */
        public CDLCONCEALBABYSWALL_Stream CDLCONCEALBABYSWALL_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLCONCEALBABYSWALL openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLCONCEALBABYSWALL openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLCONCEALBABYSWALL openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLCONCEALBABYSWALL openAndFill: BadParam");
-          }
           CDLCONCEALBABYSWALL_Stream sp = new CDLCONCEALBABYSWALL_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -28313,20 +27571,6 @@ class Core {
         */
        public CDLCOUNTERATTACK_Stream CDLCOUNTERATTACK_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLCOUNTERATTACK open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLCOUNTERATTACK open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLCOUNTERATTACK open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLCOUNTERATTACK open: BadParam");
-          }
           return CDLCOUNTERATTACK_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -28340,20 +27584,6 @@ class Core {
         */
        public CDLCOUNTERATTACK_Stream CDLCOUNTERATTACK_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLCOUNTERATTACK openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLCOUNTERATTACK openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLCOUNTERATTACK openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLCOUNTERATTACK openAndFill: BadParam");
-          }
           CDLCOUNTERATTACK_Stream sp = new CDLCOUNTERATTACK_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -29048,20 +28278,6 @@ class Core {
         */
        public CDLDARKCLOUDCOVER_Stream CDLDARKCLOUDCOVER_Open( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDARKCLOUDCOVER open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDARKCLOUDCOVER open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDARKCLOUDCOVER open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDARKCLOUDCOVER open: BadParam");
-          }
           return CDLDARKCLOUDCOVER_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
        }
        /**
@@ -29075,20 +28291,6 @@ class Core {
         */
        public CDLDARKCLOUDCOVER_Stream CDLDARKCLOUDCOVER_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDARKCLOUDCOVER openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDARKCLOUDCOVER openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDARKCLOUDCOVER openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDARKCLOUDCOVER openAndFill: BadParam");
-          }
           CDLDARKCLOUDCOVER_Stream sp = new CDLDARKCLOUDCOVER_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -29695,20 +28897,6 @@ class Core {
         */
        public CDLDOJI_Stream CDLDOJI_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDOJI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDOJI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDOJI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDOJI open: BadParam");
-          }
           return CDLDOJI_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -29722,20 +28910,6 @@ class Core {
         */
        public CDLDOJI_Stream CDLDOJI_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDOJI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDOJI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDOJI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDOJI openAndFill: BadParam");
-          }
           CDLDOJI_Stream sp = new CDLDOJI_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -30508,20 +29682,6 @@ class Core {
         */
        public CDLDOJISTAR_Stream CDLDOJISTAR_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDOJISTAR open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDOJISTAR open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDOJISTAR open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDOJISTAR open: BadParam");
-          }
           return CDLDOJISTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -30535,20 +29695,6 @@ class Core {
         */
        public CDLDOJISTAR_Stream CDLDOJISTAR_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDOJISTAR openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDOJISTAR openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDOJISTAR openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDOJISTAR openAndFill: BadParam");
-          }
           CDLDOJISTAR_Stream sp = new CDLDOJISTAR_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -31286,20 +30432,6 @@ class Core {
         */
        public CDLDRAGONFLYDOJI_Stream CDLDRAGONFLYDOJI_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDRAGONFLYDOJI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDRAGONFLYDOJI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDRAGONFLYDOJI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDRAGONFLYDOJI open: BadParam");
-          }
           return CDLDRAGONFLYDOJI_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -31313,20 +30445,6 @@ class Core {
         */
        public CDLDRAGONFLYDOJI_Stream CDLDRAGONFLYDOJI_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDRAGONFLYDOJI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDRAGONFLYDOJI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDRAGONFLYDOJI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLDRAGONFLYDOJI openAndFill: BadParam");
-          }
           CDLDRAGONFLYDOJI_Stream sp = new CDLDRAGONFLYDOJI_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -31873,20 +30991,6 @@ class Core {
         */
        public CDLENGULFING_Stream CDLENGULFING_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLENGULFING open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLENGULFING open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLENGULFING open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLENGULFING open: BadParam");
-          }
           return CDLENGULFING_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -31900,20 +31004,6 @@ class Core {
         */
        public CDLENGULFING_Stream CDLENGULFING_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLENGULFING openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLENGULFING openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLENGULFING openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLENGULFING openAndFill: BadParam");
-          }
           CDLENGULFING_Stream sp = new CDLENGULFING_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -32842,20 +31932,6 @@ class Core {
         */
        public CDLEVENINGDOJISTAR_Stream CDLEVENINGDOJISTAR_Open( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLEVENINGDOJISTAR open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLEVENINGDOJISTAR open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLEVENINGDOJISTAR open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLEVENINGDOJISTAR open: BadParam");
-          }
           return CDLEVENINGDOJISTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
        }
        /**
@@ -32869,20 +31945,6 @@ class Core {
         */
        public CDLEVENINGDOJISTAR_Stream CDLEVENINGDOJISTAR_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLEVENINGDOJISTAR openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLEVENINGDOJISTAR openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLEVENINGDOJISTAR openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLEVENINGDOJISTAR openAndFill: BadParam");
-          }
           CDLEVENINGDOJISTAR_Stream sp = new CDLEVENINGDOJISTAR_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -33730,20 +32792,6 @@ class Core {
         */
        public CDLEVENINGSTAR_Stream CDLEVENINGSTAR_Open( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLEVENINGSTAR open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLEVENINGSTAR open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLEVENINGSTAR open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLEVENINGSTAR open: BadParam");
-          }
           return CDLEVENINGSTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
        }
        /**
@@ -33757,20 +32805,6 @@ class Core {
         */
        public CDLEVENINGSTAR_Stream CDLEVENINGSTAR_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLEVENINGSTAR openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLEVENINGSTAR openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLEVENINGSTAR openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLEVENINGSTAR openAndFill: BadParam");
-          }
           CDLEVENINGSTAR_Stream sp = new CDLEVENINGSTAR_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -34558,20 +33592,6 @@ class Core {
         */
        public CDLGAPSIDESIDEWHITE_Stream CDLGAPSIDESIDEWHITE_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLGAPSIDESIDEWHITE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLGAPSIDESIDEWHITE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLGAPSIDESIDEWHITE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLGAPSIDESIDEWHITE open: BadParam");
-          }
           return CDLGAPSIDESIDEWHITE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -34585,20 +33605,6 @@ class Core {
         */
        public CDLGAPSIDESIDEWHITE_Stream CDLGAPSIDESIDEWHITE_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLGAPSIDESIDEWHITE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLGAPSIDESIDEWHITE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLGAPSIDESIDEWHITE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLGAPSIDESIDEWHITE openAndFill: BadParam");
-          }
           CDLGAPSIDESIDEWHITE_Stream sp = new CDLGAPSIDESIDEWHITE_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -35336,20 +34342,6 @@ class Core {
         */
        public CDLGRAVESTONEDOJI_Stream CDLGRAVESTONEDOJI_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLGRAVESTONEDOJI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLGRAVESTONEDOJI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLGRAVESTONEDOJI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLGRAVESTONEDOJI open: BadParam");
-          }
           return CDLGRAVESTONEDOJI_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -35363,20 +34355,6 @@ class Core {
         */
        public CDLGRAVESTONEDOJI_Stream CDLGRAVESTONEDOJI_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLGRAVESTONEDOJI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLGRAVESTONEDOJI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLGRAVESTONEDOJI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLGRAVESTONEDOJI openAndFill: BadParam");
-          }
           CDLGRAVESTONEDOJI_Stream sp = new CDLGRAVESTONEDOJI_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -36329,20 +35307,6 @@ class Core {
         */
        public CDLHAMMER_Stream CDLHAMMER_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHAMMER open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHAMMER open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHAMMER open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHAMMER open: BadParam");
-          }
           return CDLHAMMER_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -36356,20 +35320,6 @@ class Core {
         */
        public CDLHAMMER_Stream CDLHAMMER_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHAMMER openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHAMMER openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHAMMER openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHAMMER openAndFill: BadParam");
-          }
           CDLHAMMER_Stream sp = new CDLHAMMER_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -37324,20 +36274,6 @@ class Core {
         */
        public CDLHANGINGMAN_Stream CDLHANGINGMAN_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHANGINGMAN open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHANGINGMAN open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHANGINGMAN open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHANGINGMAN open: BadParam");
-          }
           return CDLHANGINGMAN_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -37351,20 +36287,6 @@ class Core {
         */
        public CDLHANGINGMAN_Stream CDLHANGINGMAN_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHANGINGMAN openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHANGINGMAN openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHANGINGMAN openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHANGINGMAN openAndFill: BadParam");
-          }
           CDLHANGINGMAN_Stream sp = new CDLHANGINGMAN_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -38176,20 +37098,6 @@ class Core {
         */
        public CDLHARAMI_Stream CDLHARAMI_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHARAMI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHARAMI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHARAMI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHARAMI open: BadParam");
-          }
           return CDLHARAMI_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -38203,20 +37111,6 @@ class Core {
         */
        public CDLHARAMI_Stream CDLHARAMI_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHARAMI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHARAMI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHARAMI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHARAMI openAndFill: BadParam");
-          }
           CDLHARAMI_Stream sp = new CDLHARAMI_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -39024,20 +37918,6 @@ class Core {
         */
        public CDLHARAMICROSS_Stream CDLHARAMICROSS_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHARAMICROSS open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHARAMICROSS open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHARAMICROSS open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHARAMICROSS open: BadParam");
-          }
           return CDLHARAMICROSS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -39051,20 +37931,6 @@ class Core {
         */
        public CDLHARAMICROSS_Stream CDLHARAMICROSS_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHARAMICROSS openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHARAMICROSS openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHARAMICROSS openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHARAMICROSS openAndFill: BadParam");
-          }
           CDLHARAMICROSS_Stream sp = new CDLHARAMICROSS_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -39796,20 +38662,6 @@ class Core {
         */
        public CDLHIGHWAVE_Stream CDLHIGHWAVE_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHIGHWAVE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHIGHWAVE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHIGHWAVE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHIGHWAVE open: BadParam");
-          }
           return CDLHIGHWAVE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -39823,20 +38675,6 @@ class Core {
         */
        public CDLHIGHWAVE_Stream CDLHIGHWAVE_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHIGHWAVE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHIGHWAVE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHIGHWAVE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHIGHWAVE openAndFill: BadParam");
-          }
           CDLHIGHWAVE_Stream sp = new CDLHIGHWAVE_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -40523,20 +39361,6 @@ class Core {
         */
        public CDLHIKKAKE_Stream CDLHIKKAKE_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHIKKAKE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHIKKAKE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHIKKAKE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHIKKAKE open: BadParam");
-          }
           return CDLHIKKAKE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -40550,20 +39374,6 @@ class Core {
         */
        public CDLHIKKAKE_Stream CDLHIKKAKE_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHIKKAKE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHIKKAKE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHIKKAKE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHIKKAKE openAndFill: BadParam");
-          }
           CDLHIKKAKE_Stream sp = new CDLHIKKAKE_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -41414,20 +40224,6 @@ class Core {
         */
        public CDLHIKKAKEMOD_Stream CDLHIKKAKEMOD_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHIKKAKEMOD open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHIKKAKEMOD open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHIKKAKEMOD open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHIKKAKEMOD open: BadParam");
-          }
           return CDLHIKKAKEMOD_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -41441,20 +40237,6 @@ class Core {
         */
        public CDLHIKKAKEMOD_Stream CDLHIKKAKEMOD_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHIKKAKEMOD openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHIKKAKEMOD openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHIKKAKEMOD openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHIKKAKEMOD openAndFill: BadParam");
-          }
           CDLHIKKAKEMOD_Stream sp = new CDLHIKKAKEMOD_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -42223,20 +41005,6 @@ class Core {
         */
        public CDLHOMINGPIGEON_Stream CDLHOMINGPIGEON_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHOMINGPIGEON open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHOMINGPIGEON open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHOMINGPIGEON open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHOMINGPIGEON open: BadParam");
-          }
           return CDLHOMINGPIGEON_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -42250,20 +41018,6 @@ class Core {
         */
        public CDLHOMINGPIGEON_Stream CDLHOMINGPIGEON_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHOMINGPIGEON openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHOMINGPIGEON openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHOMINGPIGEON openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLHOMINGPIGEON openAndFill: BadParam");
-          }
           CDLHOMINGPIGEON_Stream sp = new CDLHOMINGPIGEON_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -43182,20 +41936,6 @@ class Core {
         */
        public CDLIDENTICAL3CROWS_Stream CDLIDENTICAL3CROWS_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLIDENTICAL3CROWS open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLIDENTICAL3CROWS open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLIDENTICAL3CROWS open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLIDENTICAL3CROWS open: BadParam");
-          }
           return CDLIDENTICAL3CROWS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -43209,20 +41949,6 @@ class Core {
         */
        public CDLIDENTICAL3CROWS_Stream CDLIDENTICAL3CROWS_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLIDENTICAL3CROWS openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLIDENTICAL3CROWS openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLIDENTICAL3CROWS openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLIDENTICAL3CROWS openAndFill: BadParam");
-          }
           CDLIDENTICAL3CROWS_Stream sp = new CDLIDENTICAL3CROWS_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -43997,20 +42723,6 @@ class Core {
         */
        public CDLINNECK_Stream CDLINNECK_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLINNECK open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLINNECK open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLINNECK open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLINNECK open: BadParam");
-          }
           return CDLINNECK_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -44024,20 +42736,6 @@ class Core {
         */
        public CDLINNECK_Stream CDLINNECK_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLINNECK openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLINNECK openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLINNECK openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLINNECK openAndFill: BadParam");
-          }
           CDLINNECK_Stream sp = new CDLINNECK_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -44882,20 +43580,6 @@ class Core {
         */
        public CDLINVERTEDHAMMER_Stream CDLINVERTEDHAMMER_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLINVERTEDHAMMER open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLINVERTEDHAMMER open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLINVERTEDHAMMER open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLINVERTEDHAMMER open: BadParam");
-          }
           return CDLINVERTEDHAMMER_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -44909,20 +43593,6 @@ class Core {
         */
        public CDLINVERTEDHAMMER_Stream CDLINVERTEDHAMMER_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLINVERTEDHAMMER openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLINVERTEDHAMMER openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLINVERTEDHAMMER openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLINVERTEDHAMMER openAndFill: BadParam");
-          }
           CDLINVERTEDHAMMER_Stream sp = new CDLINVERTEDHAMMER_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -45784,20 +44454,6 @@ class Core {
         */
        public CDLKICKING_Stream CDLKICKING_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLKICKING open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLKICKING open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLKICKING open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLKICKING open: BadParam");
-          }
           return CDLKICKING_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -45811,20 +44467,6 @@ class Core {
         */
        public CDLKICKING_Stream CDLKICKING_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLKICKING openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLKICKING openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLKICKING openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLKICKING openAndFill: BadParam");
-          }
           CDLKICKING_Stream sp = new CDLKICKING_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -46682,20 +45324,6 @@ class Core {
         */
        public CDLKICKINGBYLENGTH_Stream CDLKICKINGBYLENGTH_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLKICKINGBYLENGTH open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLKICKINGBYLENGTH open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLKICKINGBYLENGTH open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLKICKINGBYLENGTH open: BadParam");
-          }
           return CDLKICKINGBYLENGTH_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -46709,20 +45337,6 @@ class Core {
         */
        public CDLKICKINGBYLENGTH_Stream CDLKICKINGBYLENGTH_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLKICKINGBYLENGTH openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLKICKINGBYLENGTH openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLKICKINGBYLENGTH openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLKICKINGBYLENGTH openAndFill: BadParam");
-          }
           CDLKICKINGBYLENGTH_Stream sp = new CDLKICKINGBYLENGTH_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -47431,20 +46045,6 @@ class Core {
         */
        public CDLLADDERBOTTOM_Stream CDLLADDERBOTTOM_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLLADDERBOTTOM open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLLADDERBOTTOM open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLLADDERBOTTOM open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLLADDERBOTTOM open: BadParam");
-          }
           return CDLLADDERBOTTOM_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -47458,20 +46058,6 @@ class Core {
         */
        public CDLLADDERBOTTOM_Stream CDLLADDERBOTTOM_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLLADDERBOTTOM openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLLADDERBOTTOM openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLLADDERBOTTOM openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLLADDERBOTTOM openAndFill: BadParam");
-          }
           CDLLADDERBOTTOM_Stream sp = new CDLLADDERBOTTOM_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -48199,20 +46785,6 @@ class Core {
         */
        public CDLLONGLEGGEDDOJI_Stream CDLLONGLEGGEDDOJI_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLLONGLEGGEDDOJI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLLONGLEGGEDDOJI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLLONGLEGGEDDOJI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLLONGLEGGEDDOJI open: BadParam");
-          }
           return CDLLONGLEGGEDDOJI_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -48226,20 +46798,6 @@ class Core {
         */
        public CDLLONGLEGGEDDOJI_Stream CDLLONGLEGGEDDOJI_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLLONGLEGGEDDOJI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLLONGLEGGEDDOJI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLLONGLEGGEDDOJI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLLONGLEGGEDDOJI openAndFill: BadParam");
-          }
           CDLLONGLEGGEDDOJI_Stream sp = new CDLLONGLEGGEDDOJI_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -48949,20 +47507,6 @@ class Core {
         */
        public CDLLONGLINE_Stream CDLLONGLINE_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLLONGLINE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLLONGLINE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLLONGLINE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLLONGLINE open: BadParam");
-          }
           return CDLLONGLINE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -48976,20 +47520,6 @@ class Core {
         */
        public CDLLONGLINE_Stream CDLLONGLINE_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLLONGLINE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLLONGLINE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLLONGLINE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLLONGLINE openAndFill: BadParam");
-          }
           CDLLONGLINE_Stream sp = new CDLLONGLINE_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -49711,20 +48241,6 @@ class Core {
         */
        public CDLMARUBOZU_Stream CDLMARUBOZU_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMARUBOZU open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMARUBOZU open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMARUBOZU open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMARUBOZU open: BadParam");
-          }
           return CDLMARUBOZU_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -49738,20 +48254,6 @@ class Core {
         */
        public CDLMARUBOZU_Stream CDLMARUBOZU_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMARUBOZU openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMARUBOZU openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMARUBOZU openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMARUBOZU openAndFill: BadParam");
-          }
           CDLMARUBOZU_Stream sp = new CDLMARUBOZU_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -50401,20 +48903,6 @@ class Core {
         */
        public CDLMATCHINGLOW_Stream CDLMATCHINGLOW_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMATCHINGLOW open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMATCHINGLOW open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMATCHINGLOW open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMATCHINGLOW open: BadParam");
-          }
           return CDLMATCHINGLOW_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -50428,20 +48916,6 @@ class Core {
         */
        public CDLMATCHINGLOW_Stream CDLMATCHINGLOW_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMATCHINGLOW openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMATCHINGLOW openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMATCHINGLOW openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMATCHINGLOW openAndFill: BadParam");
-          }
           CDLMATCHINGLOW_Stream sp = new CDLMATCHINGLOW_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -51434,20 +49908,6 @@ class Core {
         */
        public CDLMATHOLD_Stream CDLMATHOLD_Open( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMATHOLD open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMATHOLD open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMATHOLD open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMATHOLD open: BadParam");
-          }
           return CDLMATHOLD_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
        }
        /**
@@ -51461,20 +49921,6 @@ class Core {
         */
        public CDLMATHOLD_Stream CDLMATHOLD_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMATHOLD openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMATHOLD openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMATHOLD openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMATHOLD openAndFill: BadParam");
-          }
           CDLMATHOLD_Stream sp = new CDLMATHOLD_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -52410,20 +50856,6 @@ class Core {
         */
        public CDLMORNINGDOJISTAR_Stream CDLMORNINGDOJISTAR_Open( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMORNINGDOJISTAR open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMORNINGDOJISTAR open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMORNINGDOJISTAR open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMORNINGDOJISTAR open: BadParam");
-          }
           return CDLMORNINGDOJISTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
        }
        /**
@@ -52437,20 +50869,6 @@ class Core {
         */
        public CDLMORNINGDOJISTAR_Stream CDLMORNINGDOJISTAR_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMORNINGDOJISTAR openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMORNINGDOJISTAR openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMORNINGDOJISTAR openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMORNINGDOJISTAR openAndFill: BadParam");
-          }
           CDLMORNINGDOJISTAR_Stream sp = new CDLMORNINGDOJISTAR_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -53306,20 +51724,6 @@ class Core {
         */
        public CDLMORNINGSTAR_Stream CDLMORNINGSTAR_Open( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMORNINGSTAR open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMORNINGSTAR open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMORNINGSTAR open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMORNINGSTAR open: BadParam");
-          }
           return CDLMORNINGSTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
        }
        /**
@@ -53333,20 +51737,6 @@ class Core {
         */
        public CDLMORNINGSTAR_Stream CDLMORNINGSTAR_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMORNINGSTAR openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMORNINGSTAR openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMORNINGSTAR openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLMORNINGSTAR openAndFill: BadParam");
-          }
           CDLMORNINGSTAR_Stream sp = new CDLMORNINGSTAR_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -54119,20 +52509,6 @@ class Core {
         */
        public CDLONNECK_Stream CDLONNECK_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLONNECK open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLONNECK open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLONNECK open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLONNECK open: BadParam");
-          }
           return CDLONNECK_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -54146,20 +52522,6 @@ class Core {
         */
        public CDLONNECK_Stream CDLONNECK_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLONNECK openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLONNECK openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLONNECK openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLONNECK openAndFill: BadParam");
-          }
           CDLONNECK_Stream sp = new CDLONNECK_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -54914,20 +53276,6 @@ class Core {
         */
        public CDLPIERCING_Stream CDLPIERCING_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLPIERCING open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLPIERCING open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLPIERCING open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLPIERCING open: BadParam");
-          }
           return CDLPIERCING_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -54941,20 +53289,6 @@ class Core {
         */
        public CDLPIERCING_Stream CDLPIERCING_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLPIERCING openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLPIERCING openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLPIERCING openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLPIERCING openAndFill: BadParam");
-          }
           CDLPIERCING_Stream sp = new CDLPIERCING_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -55784,20 +54118,6 @@ class Core {
         */
        public CDLRICKSHAWMAN_Stream CDLRICKSHAWMAN_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLRICKSHAWMAN open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLRICKSHAWMAN open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLRICKSHAWMAN open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLRICKSHAWMAN open: BadParam");
-          }
           return CDLRICKSHAWMAN_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -55811,20 +54131,6 @@ class Core {
         */
        public CDLRICKSHAWMAN_Stream CDLRICKSHAWMAN_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLRICKSHAWMAN openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLRICKSHAWMAN openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLRICKSHAWMAN openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLRICKSHAWMAN openAndFill: BadParam");
-          }
           CDLRICKSHAWMAN_Stream sp = new CDLRICKSHAWMAN_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -56794,20 +55100,6 @@ class Core {
         */
        public CDLRISEFALL3METHODS_Stream CDLRISEFALL3METHODS_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLRISEFALL3METHODS open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLRISEFALL3METHODS open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLRISEFALL3METHODS open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLRISEFALL3METHODS open: BadParam");
-          }
           return CDLRISEFALL3METHODS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -56821,20 +55113,6 @@ class Core {
         */
        public CDLRISEFALL3METHODS_Stream CDLRISEFALL3METHODS_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLRISEFALL3METHODS openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLRISEFALL3METHODS openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLRISEFALL3METHODS openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLRISEFALL3METHODS openAndFill: BadParam");
-          }
           CDLRISEFALL3METHODS_Stream sp = new CDLRISEFALL3METHODS_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -57696,20 +55974,6 @@ class Core {
         */
        public CDLSEPARATINGLINES_Stream CDLSEPARATINGLINES_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSEPARATINGLINES open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSEPARATINGLINES open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSEPARATINGLINES open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSEPARATINGLINES open: BadParam");
-          }
           return CDLSEPARATINGLINES_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -57723,20 +55987,6 @@ class Core {
         */
        public CDLSEPARATINGLINES_Stream CDLSEPARATINGLINES_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSEPARATINGLINES openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSEPARATINGLINES openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSEPARATINGLINES openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSEPARATINGLINES openAndFill: BadParam");
-          }
           CDLSEPARATINGLINES_Stream sp = new CDLSEPARATINGLINES_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -58585,20 +56835,6 @@ class Core {
         */
        public CDLSHOOTINGSTAR_Stream CDLSHOOTINGSTAR_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSHOOTINGSTAR open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSHOOTINGSTAR open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSHOOTINGSTAR open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSHOOTINGSTAR open: BadParam");
-          }
           return CDLSHOOTINGSTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -58612,20 +56848,6 @@ class Core {
         */
        public CDLSHOOTINGSTAR_Stream CDLSHOOTINGSTAR_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSHOOTINGSTAR openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSHOOTINGSTAR openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSHOOTINGSTAR openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSHOOTINGSTAR openAndFill: BadParam");
-          }
           CDLSHOOTINGSTAR_Stream sp = new CDLSHOOTINGSTAR_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -59351,20 +57573,6 @@ class Core {
         */
        public CDLSHORTLINE_Stream CDLSHORTLINE_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSHORTLINE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSHORTLINE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSHORTLINE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSHORTLINE open: BadParam");
-          }
           return CDLSHORTLINE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -59378,20 +57586,6 @@ class Core {
         */
        public CDLSHORTLINE_Stream CDLSHORTLINE_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSHORTLINE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSHORTLINE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSHORTLINE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSHORTLINE openAndFill: BadParam");
-          }
           CDLSHORTLINE_Stream sp = new CDLSHORTLINE_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -59998,20 +58192,6 @@ class Core {
         */
        public CDLSPINNINGTOP_Stream CDLSPINNINGTOP_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSPINNINGTOP open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSPINNINGTOP open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSPINNINGTOP open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSPINNINGTOP open: BadParam");
-          }
           return CDLSPINNINGTOP_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -60025,20 +58205,6 @@ class Core {
         */
        public CDLSPINNINGTOP_Stream CDLSPINNINGTOP_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSPINNINGTOP openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSPINNINGTOP openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSPINNINGTOP openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSPINNINGTOP openAndFill: BadParam");
-          }
           CDLSPINNINGTOP_Stream sp = new CDLSPINNINGTOP_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -61150,20 +59316,6 @@ class Core {
         */
        public CDLSTALLEDPATTERN_Stream CDLSTALLEDPATTERN_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSTALLEDPATTERN open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSTALLEDPATTERN open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSTALLEDPATTERN open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSTALLEDPATTERN open: BadParam");
-          }
           return CDLSTALLEDPATTERN_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -61177,20 +59329,6 @@ class Core {
         */
        public CDLSTALLEDPATTERN_Stream CDLSTALLEDPATTERN_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSTALLEDPATTERN openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSTALLEDPATTERN openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSTALLEDPATTERN openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSTALLEDPATTERN openAndFill: BadParam");
-          }
           CDLSTALLEDPATTERN_Stream sp = new CDLSTALLEDPATTERN_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -61866,20 +60004,6 @@ class Core {
         */
        public CDLSTICKSANDWICH_Stream CDLSTICKSANDWICH_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSTICKSANDWICH open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSTICKSANDWICH open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSTICKSANDWICH open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSTICKSANDWICH open: BadParam");
-          }
           return CDLSTICKSANDWICH_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -61893,20 +60017,6 @@ class Core {
         */
        public CDLSTICKSANDWICH_Stream CDLSTICKSANDWICH_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSTICKSANDWICH openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSTICKSANDWICH openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSTICKSANDWICH openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLSTICKSANDWICH openAndFill: BadParam");
-          }
           CDLSTICKSANDWICH_Stream sp = new CDLSTICKSANDWICH_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -62730,20 +60840,6 @@ class Core {
         */
        public CDLTAKURI_Stream CDLTAKURI_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTAKURI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTAKURI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTAKURI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTAKURI open: BadParam");
-          }
           return CDLTAKURI_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -62757,20 +60853,6 @@ class Core {
         */
        public CDLTAKURI_Stream CDLTAKURI_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTAKURI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTAKURI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTAKURI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTAKURI openAndFill: BadParam");
-          }
           CDLTAKURI_Stream sp = new CDLTAKURI_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -63466,20 +61548,6 @@ class Core {
         */
        public CDLTASUKIGAP_Stream CDLTASUKIGAP_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTASUKIGAP open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTASUKIGAP open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTASUKIGAP open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTASUKIGAP open: BadParam");
-          }
           return CDLTASUKIGAP_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -63493,20 +61561,6 @@ class Core {
         */
        public CDLTASUKIGAP_Stream CDLTASUKIGAP_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTASUKIGAP openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTASUKIGAP openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTASUKIGAP openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTASUKIGAP openAndFill: BadParam");
-          }
           CDLTASUKIGAP_Stream sp = new CDLTASUKIGAP_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -64281,20 +62335,6 @@ class Core {
         */
        public CDLTHRUSTING_Stream CDLTHRUSTING_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTHRUSTING open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTHRUSTING open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTHRUSTING open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTHRUSTING open: BadParam");
-          }
           return CDLTHRUSTING_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -64308,20 +62348,6 @@ class Core {
         */
        public CDLTHRUSTING_Stream CDLTHRUSTING_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTHRUSTING openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTHRUSTING openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTHRUSTING openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTHRUSTING openAndFill: BadParam");
-          }
           CDLTHRUSTING_Stream sp = new CDLTHRUSTING_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -65025,20 +63051,6 @@ class Core {
         */
        public CDLTRISTAR_Stream CDLTRISTAR_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTRISTAR open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTRISTAR open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTRISTAR open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTRISTAR open: BadParam");
-          }
           return CDLTRISTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -65052,20 +63064,6 @@ class Core {
         */
        public CDLTRISTAR_Stream CDLTRISTAR_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTRISTAR openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTRISTAR openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTRISTAR openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLTRISTAR openAndFill: BadParam");
-          }
           CDLTRISTAR_Stream sp = new CDLTRISTAR_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -65859,20 +63857,6 @@ class Core {
         */
        public CDLUNIQUE3RIVER_Stream CDLUNIQUE3RIVER_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLUNIQUE3RIVER open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLUNIQUE3RIVER open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLUNIQUE3RIVER open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLUNIQUE3RIVER open: BadParam");
-          }
           return CDLUNIQUE3RIVER_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -65886,20 +63870,6 @@ class Core {
         */
        public CDLUNIQUE3RIVER_Stream CDLUNIQUE3RIVER_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLUNIQUE3RIVER openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLUNIQUE3RIVER openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLUNIQUE3RIVER openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLUNIQUE3RIVER openAndFill: BadParam");
-          }
           CDLUNIQUE3RIVER_Stream sp = new CDLUNIQUE3RIVER_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -66697,20 +64667,6 @@ class Core {
         */
        public CDLUPSIDEGAP2CROWS_Stream CDLUPSIDEGAP2CROWS_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLUPSIDEGAP2CROWS open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLUPSIDEGAP2CROWS open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLUPSIDEGAP2CROWS open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLUPSIDEGAP2CROWS open: BadParam");
-          }
           return CDLUPSIDEGAP2CROWS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -66724,20 +64680,6 @@ class Core {
         */
        public CDLUPSIDEGAP2CROWS_Stream CDLUPSIDEGAP2CROWS_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLUPSIDEGAP2CROWS openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLUPSIDEGAP2CROWS openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLUPSIDEGAP2CROWS openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLUPSIDEGAP2CROWS openAndFill: BadParam");
-          }
           CDLUPSIDEGAP2CROWS_Stream sp = new CDLUPSIDEGAP2CROWS_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -67296,20 +65238,6 @@ class Core {
         */
        public CDLXSIDEGAP3METHODS_Stream CDLXSIDEGAP3METHODS_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLXSIDEGAP3METHODS open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLXSIDEGAP3METHODS open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLXSIDEGAP3METHODS open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLXSIDEGAP3METHODS open: BadParam");
-          }
           return CDLXSIDEGAP3METHODS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
        }
        /**
@@ -67323,20 +65251,6 @@ class Core {
         */
        public CDLXSIDEGAP3METHODS_Stream CDLXSIDEGAP3METHODS_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLXSIDEGAP3METHODS openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLXSIDEGAP3METHODS openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLXSIDEGAP3METHODS openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CDLXSIDEGAP3METHODS openAndFill: BadParam");
-          }
           CDLXSIDEGAP3METHODS_Stream sp = new CDLXSIDEGAP3METHODS_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -67715,11 +65629,6 @@ class Core {
         */
        public CEIL_Stream CEIL_Open( double inReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CEIL open: BadParam");
-          }
           return CEIL_OpenInternal(inReal, 0);
        }
        /**
@@ -67733,11 +65642,6 @@ class Core {
         */
        public CEIL_Stream CEIL_OpenAndFill( double inReal[], double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CEIL openAndFill: BadParam");
-          }
           CEIL_Stream sp = new CEIL_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -68607,20 +66511,6 @@ class Core {
         */
        public CMF_Stream CMF_Open( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CMF open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CMF open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CMF open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-                if( !Double.isFinite(inVolume[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CMF open: BadParam");
-          }
           return CMF_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod);
        }
        /**
@@ -68634,20 +66524,6 @@ class Core {
         */
        public CMF_Stream CMF_OpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod, double outReal[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CMF openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CMF openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CMF openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-                if( !Double.isFinite(inVolume[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CMF openAndFill: BadParam");
-          }
           CMF_Stream sp = new CMF_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -69497,11 +67373,6 @@ class Core {
         */
        public CMO_Stream CMO_Open( double inReal[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CMO open: BadParam");
-          }
           return CMO_OpenInternal(inReal, 0, optInTimePeriod);
        }
        /**
@@ -69515,11 +67386,6 @@ class Core {
         */
        public CMO_Stream CMO_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CMO openAndFill: BadParam");
-          }
           CMO_Stream sp = new CMO_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -70303,11 +68169,6 @@ class Core {
         */
        public CMOU_Stream CMOU_Open( double inReal[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CMOU open: BadParam");
-          }
           return CMOU_OpenInternal(inReal, 0, optInTimePeriod);
        }
        /**
@@ -70321,11 +68182,6 @@ class Core {
         */
        public CMOU_Stream CMOU_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CMOU openAndFill: BadParam");
-          }
           CMOU_Stream sp = new CMOU_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -71108,14 +68964,6 @@ class Core {
         */
        public CORREL_Stream CORREL_Open( double inReal0[], double inReal1[], int optInTimePeriod )
        {
-          if( inReal0.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal0.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal0[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CORREL open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal1.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal1[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CORREL open: BadParam");
-          }
           return CORREL_OpenInternal(inReal0, inReal1, 0, optInTimePeriod);
        }
        /**
@@ -71129,14 +68977,6 @@ class Core {
         */
        public CORREL_Stream CORREL_OpenAndFill( double inReal0[], double inReal1[], int optInTimePeriod, double outReal[] )
        {
-          if( inReal0.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal0.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal0[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CORREL openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal1.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal1[taFiniteIdx]) )
-                   throw new IllegalArgumentException("CORREL openAndFill: BadParam");
-          }
           CORREL_Stream sp = new CORREL_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -71521,11 +69361,6 @@ class Core {
         */
        public COS_Stream COS_Open( double inReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("COS open: BadParam");
-          }
           return COS_OpenInternal(inReal, 0);
        }
        /**
@@ -71539,11 +69374,6 @@ class Core {
         */
        public COS_Stream COS_OpenAndFill( double inReal[], double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("COS openAndFill: BadParam");
-          }
           COS_Stream sp = new COS_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -71926,11 +69756,6 @@ class Core {
         */
        public COSH_Stream COSH_Open( double inReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("COSH open: BadParam");
-          }
           return COSH_OpenInternal(inReal, 0);
        }
        /**
@@ -71944,11 +69769,6 @@ class Core {
         */
        public COSH_Stream COSH_OpenAndFill( double inReal[], double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("COSH openAndFill: BadParam");
-          }
           COSH_Stream sp = new COSH_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -72708,11 +70528,6 @@ class Core {
         */
        public DEMA_Stream DEMA_Open( double inReal[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("DEMA open: BadParam");
-          }
           return DEMA_OpenInternal(inReal, 0, optInTimePeriod);
        }
        /**
@@ -72726,11 +70541,6 @@ class Core {
         */
        public DEMA_Stream DEMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("DEMA openAndFill: BadParam");
-          }
           DEMA_Stream sp = new DEMA_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -73129,14 +70939,6 @@ class Core {
         */
        public DIV_Stream DIV_Open( double inReal0[], double inReal1[] )
        {
-          if( inReal0.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal0.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal0[taFiniteIdx]) )
-                   throw new IllegalArgumentException("DIV open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal1.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal1[taFiniteIdx]) )
-                   throw new IllegalArgumentException("DIV open: BadParam");
-          }
           return DIV_OpenInternal(inReal0, inReal1, 0);
        }
        /**
@@ -73150,14 +70952,6 @@ class Core {
         */
        public DIV_Stream DIV_OpenAndFill( double inReal0[], double inReal1[], double outReal[] )
        {
-          if( inReal0.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal0.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal0[taFiniteIdx]) )
-                   throw new IllegalArgumentException("DIV openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal1.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal1[taFiniteIdx]) )
-                   throw new IllegalArgumentException("DIV openAndFill: BadParam");
-          }
           DIV_Stream sp = new DIV_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -74420,17 +72214,6 @@ class Core {
         */
        public DX_Stream DX_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("DX open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("DX open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("DX open: BadParam");
-          }
           return DX_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
        }
        /**
@@ -74444,17 +72227,6 @@ class Core {
         */
        public DX_Stream DX_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("DX openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("DX openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("DX openAndFill: BadParam");
-          }
           DX_Stream sp = new DX_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -75273,14 +73045,6 @@ class Core {
         */
        public EFI_Stream EFI_Open( double inClose[], double inVolume[], int optInTimePeriod )
        {
-          if( inClose.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("EFI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-                if( !Double.isFinite(inVolume[taFiniteIdx]) )
-                   throw new IllegalArgumentException("EFI open: BadParam");
-          }
           return EFI_OpenInternal(inClose, inVolume, 0, optInTimePeriod);
        }
        /**
@@ -75294,14 +73058,6 @@ class Core {
         */
        public EFI_Stream EFI_OpenAndFill( double inClose[], double inVolume[], int optInTimePeriod, double outReal[] )
        {
-          if( inClose.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("EFI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-                if( !Double.isFinite(inVolume[taFiniteIdx]) )
-                   throw new IllegalArgumentException("EFI openAndFill: BadParam");
-          }
           EFI_Stream sp = new EFI_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -75947,11 +73703,6 @@ class Core {
         */
        public EMA_Stream EMA_Open( double inReal[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("EMA open: BadParam");
-          }
           return EMA_OpenInternal(inReal, 0, optInTimePeriod);
        }
        /**
@@ -75965,11 +73716,6 @@ class Core {
         */
        public EMA_Stream EMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("EMA openAndFill: BadParam");
-          }
           EMA_Stream sp = new EMA_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -76350,11 +74096,6 @@ class Core {
         */
        public EXP_Stream EXP_Open( double inReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("EXP open: BadParam");
-          }
           return EXP_OpenInternal(inReal, 0);
        }
        /**
@@ -76368,11 +74109,6 @@ class Core {
         */
        public EXP_Stream EXP_OpenAndFill( double inReal[], double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("EXP openAndFill: BadParam");
-          }
           EXP_Stream sp = new EXP_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -76751,11 +74487,6 @@ class Core {
         */
        public FLOOR_Stream FLOOR_Open( double inReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("FLOOR open: BadParam");
-          }
           return FLOOR_OpenInternal(inReal, 0);
        }
        /**
@@ -76769,11 +74500,6 @@ class Core {
         */
        public FLOOR_Stream FLOOR_OpenAndFill( double inReal[], double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("FLOOR openAndFill: BadParam");
-          }
           FLOOR_Stream sp = new FLOOR_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -78170,11 +75896,6 @@ class Core {
         */
        public HMA_Stream HMA_Open( double inReal[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("HMA open: BadParam");
-          }
           return HMA_OpenInternal(inReal, 0, optInTimePeriod);
        }
        /**
@@ -78188,11 +75909,6 @@ class Core {
         */
        public HMA_Stream HMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("HMA openAndFill: BadParam");
-          }
           HMA_Stream sp = new HMA_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -79901,11 +77617,6 @@ class Core {
         */
        public HT_DCPERIOD_Stream HT_DCPERIOD_Open( double inReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("HT_DCPERIOD open: BadParam");
-          }
           return HT_DCPERIOD_OpenInternal(inReal, 0);
        }
        /**
@@ -79919,11 +77630,6 @@ class Core {
         */
        public HT_DCPERIOD_Stream HT_DCPERIOD_OpenAndFill( double inReal[], double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("HT_DCPERIOD openAndFill: BadParam");
-          }
           HT_DCPERIOD_Stream sp = new HT_DCPERIOD_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -81938,11 +79644,6 @@ class Core {
         */
        public HT_DCPHASE_Stream HT_DCPHASE_Open( double inReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("HT_DCPHASE open: BadParam");
-          }
           return HT_DCPHASE_OpenInternal(inReal, 0);
        }
        /**
@@ -81956,11 +79657,6 @@ class Core {
         */
        public HT_DCPHASE_Stream HT_DCPHASE_OpenAndFill( double inReal[], double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("HT_DCPHASE openAndFill: BadParam");
-          }
           HT_DCPHASE_Stream sp = new HT_DCPHASE_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -83722,11 +81418,6 @@ class Core {
         */
        public HT_PHASOR_Stream HT_PHASOR_Open( double inReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("HT_PHASOR open: BadParam");
-          }
           return HT_PHASOR_OpenInternal(inReal, 0);
        }
        /**
@@ -83740,11 +81431,6 @@ class Core {
         */
        public HT_PHASOR_Stream HT_PHASOR_OpenAndFill( double inReal[], double outInPhase[], double outQuadrature[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("HT_PHASOR openAndFill: BadParam");
-          }
           HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -85806,11 +83492,6 @@ class Core {
         */
        public HT_SINE_Stream HT_SINE_Open( double inReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("HT_SINE open: BadParam");
-          }
           return HT_SINE_OpenInternal(inReal, 0);
        }
        /**
@@ -85824,11 +83505,6 @@ class Core {
         */
        public HT_SINE_Stream HT_SINE_OpenAndFill( double inReal[], double outSine[], double outLeadSine[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("HT_SINE openAndFill: BadParam");
-          }
           HT_SINE_Stream sp = new HT_SINE_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -87734,11 +85410,6 @@ class Core {
         */
        public HT_TRENDLINE_Stream HT_TRENDLINE_Open( double inReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("HT_TRENDLINE open: BadParam");
-          }
           return HT_TRENDLINE_OpenInternal(inReal, 0);
        }
        /**
@@ -87752,11 +85423,6 @@ class Core {
         */
        public HT_TRENDLINE_Stream HT_TRENDLINE_OpenAndFill( double inReal[], double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("HT_TRENDLINE openAndFill: BadParam");
-          }
           HT_TRENDLINE_Stream sp = new HT_TRENDLINE_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -90124,11 +87790,6 @@ class Core {
         */
        public HT_TRENDMODE_Stream HT_TRENDMODE_Open( double inReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("HT_TRENDMODE open: BadParam");
-          }
           return HT_TRENDMODE_OpenInternal(inReal, 0);
        }
        /**
@@ -90142,11 +87803,6 @@ class Core {
         */
        public HT_TRENDMODE_Stream HT_TRENDMODE_OpenAndFill( double inReal[], int outInteger[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("HT_TRENDMODE openAndFill: BadParam");
-          }
           HT_TRENDMODE_Stream sp = new HT_TRENDMODE_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -90733,14 +88389,6 @@ class Core {
         */
        public IMI_Stream IMI_Open( double inOpen[], double inClose[], int optInTimePeriod )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("IMI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("IMI open: BadParam");
-          }
           return IMI_OpenInternal(inOpen, inClose, 0, optInTimePeriod);
        }
        /**
@@ -90754,14 +88402,6 @@ class Core {
         */
        public IMI_Stream IMI_OpenAndFill( double inOpen[], double inClose[], int optInTimePeriod, double outReal[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("IMI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("IMI openAndFill: BadParam");
-          }
           IMI_Stream sp = new IMI_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -91714,11 +89354,6 @@ class Core {
         */
        public KAMA_Stream KAMA_Open( double inReal[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("KAMA open: BadParam");
-          }
           return KAMA_OpenInternal(inReal, 0, optInTimePeriod);
        }
        /**
@@ -91732,11 +89367,6 @@ class Core {
         */
        public KAMA_Stream KAMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("KAMA openAndFill: BadParam");
-          }
           KAMA_Stream sp = new KAMA_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -92413,11 +90043,6 @@ class Core {
         */
        public LINEARREG_Stream LINEARREG_Open( double inReal[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("LINEARREG open: BadParam");
-          }
           return LINEARREG_OpenInternal(inReal, 0, optInTimePeriod);
        }
        /**
@@ -92431,11 +90056,6 @@ class Core {
         */
        public LINEARREG_Stream LINEARREG_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("LINEARREG openAndFill: BadParam");
-          }
           LINEARREG_Stream sp = new LINEARREG_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -93114,11 +90734,6 @@ class Core {
         */
        public LINEARREG_ANGLE_Stream LINEARREG_ANGLE_Open( double inReal[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("LINEARREG_ANGLE open: BadParam");
-          }
           return LINEARREG_ANGLE_OpenInternal(inReal, 0, optInTimePeriod);
        }
        /**
@@ -93132,11 +90747,6 @@ class Core {
         */
        public LINEARREG_ANGLE_Stream LINEARREG_ANGLE_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("LINEARREG_ANGLE openAndFill: BadParam");
-          }
           LINEARREG_ANGLE_Stream sp = new LINEARREG_ANGLE_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -93814,11 +91424,6 @@ class Core {
         */
        public LINEARREG_INTERCEPT_Stream LINEARREG_INTERCEPT_Open( double inReal[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("LINEARREG_INTERCEPT open: BadParam");
-          }
           return LINEARREG_INTERCEPT_OpenInternal(inReal, 0, optInTimePeriod);
        }
        /**
@@ -93832,11 +91437,6 @@ class Core {
         */
        public LINEARREG_INTERCEPT_Stream LINEARREG_INTERCEPT_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("LINEARREG_INTERCEPT openAndFill: BadParam");
-          }
           LINEARREG_INTERCEPT_Stream sp = new LINEARREG_INTERCEPT_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -94505,11 +92105,6 @@ class Core {
         */
        public LINEARREG_SLOPE_Stream LINEARREG_SLOPE_Open( double inReal[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("LINEARREG_SLOPE open: BadParam");
-          }
           return LINEARREG_SLOPE_OpenInternal(inReal, 0, optInTimePeriod);
        }
        /**
@@ -94523,11 +92118,6 @@ class Core {
         */
        public LINEARREG_SLOPE_Stream LINEARREG_SLOPE_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("LINEARREG_SLOPE openAndFill: BadParam");
-          }
           LINEARREG_SLOPE_Stream sp = new LINEARREG_SLOPE_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -94918,11 +92508,6 @@ class Core {
         */
        public LN_Stream LN_Open( double inReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("LN open: BadParam");
-          }
           return LN_OpenInternal(inReal, 0);
        }
        /**
@@ -94936,11 +92521,6 @@ class Core {
         */
        public LN_Stream LN_OpenAndFill( double inReal[], double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("LN openAndFill: BadParam");
-          }
           LN_Stream sp = new LN_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -95329,11 +92909,6 @@ class Core {
         */
        public LOG10_Stream LOG10_Open( double inReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("LOG10 open: BadParam");
-          }
           return LOG10_OpenInternal(inReal, 0);
        }
        /**
@@ -95347,11 +92922,6 @@ class Core {
         */
        public LOG10_Stream LOG10_OpenAndFill( double inReal[], double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("LOG10 openAndFill: BadParam");
-          }
           LOG10_Stream sp = new LOG10_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -96418,11 +93988,6 @@ class Core {
         */
        public MA_Stream MA_Open( double inReal[], int optInTimePeriod, MAType optInMAType )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MA open: BadParam");
-          }
           return MA_OpenInternal(inReal, 0, optInTimePeriod, optInMAType);
        }
        /**
@@ -96436,11 +94001,6 @@ class Core {
         */
        public MA_Stream MA_OpenAndFill( double inReal[], int optInTimePeriod, MAType optInMAType, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MA openAndFill: BadParam");
-          }
           MA_Stream sp = new MA_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -97493,11 +95053,6 @@ class Core {
         */
        public MACD_Stream MACD_Open( double inReal[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MACD open: BadParam");
-          }
           return MACD_OpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
        }
        /**
@@ -97511,11 +95066,6 @@ class Core {
         */
        public MACD_Stream MACD_OpenAndFill( double inReal[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, double outMACD[], double outMACDSignal[], double outMACDHist[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MACD openAndFill: BadParam");
-          }
           MACD_Stream sp = new MACD_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -98524,11 +96074,6 @@ class Core {
         */
        public MACDEXT_Stream MACDEXT_Open( double inReal[], int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MACDEXT open: BadParam");
-          }
           return MACDEXT_OpenInternal(inReal, 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
        }
        /**
@@ -98542,11 +96087,6 @@ class Core {
         */
        public MACDEXT_Stream MACDEXT_OpenAndFill( double inReal[], int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, double outMACD[], double outMACDSignal[], double outMACDHist[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MACDEXT openAndFill: BadParam");
-          }
           MACDEXT_Stream sp = new MACDEXT_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -99464,11 +97004,6 @@ class Core {
         */
        public MACDFIX_Stream MACDFIX_Open( double inReal[], int optInSignalPeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MACDFIX open: BadParam");
-          }
           return MACDFIX_OpenInternal(inReal, 0, optInSignalPeriod);
        }
        /**
@@ -99482,11 +97017,6 @@ class Core {
         */
        public MACDFIX_Stream MACDFIX_OpenAndFill( double inReal[], int optInSignalPeriod, double outMACD[], double outMACDSignal[], double outMACDHist[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MACDFIX openAndFill: BadParam");
-          }
           MACDFIX_Stream sp = new MACDFIX_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -101482,11 +99012,6 @@ class Core {
         */
        public MAMA_Stream MAMA_Open( double inReal[], double optInFastLimit, double optInSlowLimit )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MAMA open: BadParam");
-          }
           return MAMA_OpenInternal(inReal, 0, optInFastLimit, optInSlowLimit);
        }
        /**
@@ -101500,11 +99025,6 @@ class Core {
         */
        public MAMA_Stream MAMA_OpenAndFill( double inReal[], double optInFastLimit, double optInSlowLimit, double outMAMA[], double outFAMA[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MAMA openAndFill: BadParam");
-          }
           MAMA_Stream sp = new MAMA_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -102007,17 +99527,6 @@ class Core {
         */
        public MARKETFI_Stream MARKETFI_Open( double inHigh[], double inLow[], double inVolume[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MARKETFI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MARKETFI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-                if( !Double.isFinite(inVolume[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MARKETFI open: BadParam");
-          }
           return MARKETFI_OpenInternal(inHigh, inLow, inVolume, 0);
        }
        /**
@@ -102031,17 +99540,6 @@ class Core {
         */
        public MARKETFI_Stream MARKETFI_OpenAndFill( double inHigh[], double inLow[], double inVolume[], double outReal[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MARKETFI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MARKETFI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-                if( !Double.isFinite(inVolume[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MARKETFI openAndFill: BadParam");
-          }
           MARKETFI_Stream sp = new MARKETFI_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -103016,14 +100514,6 @@ class Core {
         */
        public MAVP_Stream MAVP_Open( double inReal[], double inPeriods[], int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MAVP open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inPeriods.length; taFiniteIdx++ )
-                if( !Double.isFinite(inPeriods[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MAVP open: BadParam");
-          }
           return MAVP_OpenInternal(inReal, inPeriods, 0, optInMinPeriod, optInMaxPeriod, optInMAType);
        }
        /**
@@ -103037,14 +100527,6 @@ class Core {
         */
        public MAVP_Stream MAVP_OpenAndFill( double inReal[], double inPeriods[], int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MAVP openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inPeriods.length; taFiniteIdx++ )
-                if( !Double.isFinite(inPeriods[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MAVP openAndFill: BadParam");
-          }
           MAVP_Stream sp = new MAVP_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -103801,11 +101283,6 @@ class Core {
         */
        public MAX_Stream MAX_Open( double inReal[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MAX open: BadParam");
-          }
           return MAX_OpenInternal(inReal, 0, optInTimePeriod);
        }
        /**
@@ -103819,11 +101296,6 @@ class Core {
         */
        public MAX_Stream MAX_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MAX openAndFill: BadParam");
-          }
           MAX_Stream sp = new MAX_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -104470,11 +101942,6 @@ class Core {
         */
        public MAXINDEX_Stream MAXINDEX_Open( double inReal[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MAXINDEX open: BadParam");
-          }
           return MAXINDEX_OpenInternal(inReal, 0, optInTimePeriod);
        }
        /**
@@ -104488,11 +101955,6 @@ class Core {
         */
        public MAXINDEX_Stream MAXINDEX_OpenAndFill( double inReal[], int optInTimePeriod, int outInteger[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MAXINDEX openAndFill: BadParam");
-          }
           MAXINDEX_Stream sp = new MAXINDEX_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -104904,14 +102366,6 @@ class Core {
         */
        public MEDPRICE_Stream MEDPRICE_Open( double inHigh[], double inLow[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MEDPRICE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MEDPRICE open: BadParam");
-          }
           return MEDPRICE_OpenInternal(inHigh, inLow, 0);
        }
        /**
@@ -104925,14 +102379,6 @@ class Core {
         */
        public MEDPRICE_Stream MEDPRICE_OpenAndFill( double inHigh[], double inLow[], double outReal[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MEDPRICE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MEDPRICE openAndFill: BadParam");
-          }
           MEDPRICE_Stream sp = new MEDPRICE_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -105793,20 +103239,6 @@ class Core {
         */
        public MFI_Stream MFI_Open( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MFI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MFI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MFI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-                if( !Double.isFinite(inVolume[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MFI open: BadParam");
-          }
           return MFI_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod);
        }
        /**
@@ -105820,20 +103252,6 @@ class Core {
         */
        public MFI_Stream MFI_OpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod, double outReal[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MFI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MFI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MFI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-                if( !Double.isFinite(inVolume[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MFI openAndFill: BadParam");
-          }
           MFI_Stream sp = new MFI_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -106732,11 +104150,6 @@ class Core {
         */
        public MIDPOINT_Stream MIDPOINT_Open( double inReal[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MIDPOINT open: BadParam");
-          }
           return MIDPOINT_OpenInternal(inReal, 0, optInTimePeriod);
        }
        /**
@@ -106750,11 +104163,6 @@ class Core {
         */
        public MIDPOINT_Stream MIDPOINT_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MIDPOINT openAndFill: BadParam");
-          }
           MIDPOINT_Stream sp = new MIDPOINT_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -107683,14 +105091,6 @@ class Core {
         */
        public MIDPRICE_Stream MIDPRICE_Open( double inHigh[], double inLow[], int optInTimePeriod )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MIDPRICE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MIDPRICE open: BadParam");
-          }
           return MIDPRICE_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
        }
        /**
@@ -107704,14 +105104,6 @@ class Core {
         */
        public MIDPRICE_Stream MIDPRICE_OpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outReal[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MIDPRICE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MIDPRICE openAndFill: BadParam");
-          }
           MIDPRICE_Stream sp = new MIDPRICE_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -108463,11 +105855,6 @@ class Core {
         */
        public MIN_Stream MIN_Open( double inReal[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MIN open: BadParam");
-          }
           return MIN_OpenInternal(inReal, 0, optInTimePeriod);
        }
        /**
@@ -108481,11 +105868,6 @@ class Core {
         */
        public MIN_Stream MIN_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MIN openAndFill: BadParam");
-          }
           MIN_Stream sp = new MIN_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -109132,11 +106514,6 @@ class Core {
         */
        public MININDEX_Stream MININDEX_Open( double inReal[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MININDEX open: BadParam");
-          }
           return MININDEX_OpenInternal(inReal, 0, optInTimePeriod);
        }
        /**
@@ -109150,11 +106527,6 @@ class Core {
         */
        public MININDEX_Stream MININDEX_OpenAndFill( double inReal[], int optInTimePeriod, int outInteger[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MININDEX openAndFill: BadParam");
-          }
           MININDEX_Stream sp = new MININDEX_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -110080,11 +107452,6 @@ class Core {
         */
        public MINMAX_Stream MINMAX_Open( double inReal[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MINMAX open: BadParam");
-          }
           return MINMAX_OpenInternal(inReal, 0, optInTimePeriod);
        }
        /**
@@ -110098,11 +107465,6 @@ class Core {
         */
        public MINMAX_Stream MINMAX_OpenAndFill( double inReal[], int optInTimePeriod, double outMin[], double outMax[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MINMAX openAndFill: BadParam");
-          }
           MINMAX_Stream sp = new MINMAX_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -110887,11 +108249,6 @@ class Core {
         */
        public MINMAXINDEX_Stream MINMAXINDEX_Open( double inReal[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MINMAXINDEX open: BadParam");
-          }
           return MINMAXINDEX_OpenInternal(inReal, 0, optInTimePeriod);
        }
        /**
@@ -110905,11 +108262,6 @@ class Core {
         */
        public MINMAXINDEX_Stream MINMAXINDEX_OpenAndFill( double inReal[], int optInTimePeriod, int outMinIdx[], int outMaxIdx[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MINMAXINDEX openAndFill: BadParam");
-          }
           MINMAXINDEX_Stream sp = new MINMAXINDEX_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -112367,17 +109719,6 @@ class Core {
         */
        public MINUS_DI_Stream MINUS_DI_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MINUS_DI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MINUS_DI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MINUS_DI open: BadParam");
-          }
           return MINUS_DI_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
        }
        /**
@@ -112391,17 +109732,6 @@ class Core {
         */
        public MINUS_DI_Stream MINUS_DI_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MINUS_DI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MINUS_DI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MINUS_DI openAndFill: BadParam");
-          }
           MINUS_DI_Stream sp = new MINUS_DI_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -113470,14 +110800,6 @@ class Core {
         */
        public MINUS_DM_Stream MINUS_DM_Open( double inHigh[], double inLow[], int optInTimePeriod )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MINUS_DM open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MINUS_DM open: BadParam");
-          }
           return MINUS_DM_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
        }
        /**
@@ -113491,14 +110813,6 @@ class Core {
         */
        public MINUS_DM_Stream MINUS_DM_OpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outReal[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MINUS_DM openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MINUS_DM openAndFill: BadParam");
-          }
           MINUS_DM_Stream sp = new MINUS_DM_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -114068,11 +111382,6 @@ class Core {
         */
        public MOM_Stream MOM_Open( double inReal[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MOM open: BadParam");
-          }
           return MOM_OpenInternal(inReal, 0, optInTimePeriod);
        }
        /**
@@ -114086,11 +111395,6 @@ class Core {
         */
        public MOM_Stream MOM_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MOM openAndFill: BadParam");
-          }
           MOM_Stream sp = new MOM_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -114493,14 +111797,6 @@ class Core {
         */
        public MULT_Stream MULT_Open( double inReal0[], double inReal1[] )
        {
-          if( inReal0.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal0.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal0[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MULT open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal1.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal1[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MULT open: BadParam");
-          }
           return MULT_OpenInternal(inReal0, inReal1, 0);
        }
        /**
@@ -114514,14 +111810,6 @@ class Core {
         */
        public MULT_Stream MULT_OpenAndFill( double inReal0[], double inReal1[], double outReal[] )
        {
-          if( inReal0.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal0.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal0[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MULT openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal1.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal1[taFiniteIdx]) )
-                   throw new IllegalArgumentException("MULT openAndFill: BadParam");
-          }
           MULT_Stream sp = new MULT_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -115482,17 +112770,6 @@ class Core {
         */
        public NATR_Stream NATR_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("NATR open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("NATR open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("NATR open: BadParam");
-          }
           return NATR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
        }
        /**
@@ -115506,17 +112783,6 @@ class Core {
         */
        public NATR_Stream NATR_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("NATR openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("NATR openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("NATR openAndFill: BadParam");
-          }
           NATR_Stream sp = new NATR_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -116071,14 +113337,6 @@ class Core {
         */
        public NVI_Stream NVI_Open( double inClose[], double inVolume[] )
        {
-          if( inClose.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("NVI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-                if( !Double.isFinite(inVolume[taFiniteIdx]) )
-                   throw new IllegalArgumentException("NVI open: BadParam");
-          }
           return NVI_OpenInternal(inClose, inVolume, 0);
        }
        /**
@@ -116092,14 +113350,6 @@ class Core {
         */
        public NVI_Stream NVI_OpenAndFill( double inClose[], double inVolume[], double outReal[] )
        {
-          if( inClose.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("NVI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-                if( !Double.isFinite(inVolume[taFiniteIdx]) )
-                   throw new IllegalArgumentException("NVI openAndFill: BadParam");
-          }
           NVI_Stream sp = new NVI_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -116544,14 +113794,6 @@ class Core {
         */
        public OBV_Stream OBV_Open( double inReal[], double inVolume[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("OBV open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-                if( !Double.isFinite(inVolume[taFiniteIdx]) )
-                   throw new IllegalArgumentException("OBV open: BadParam");
-          }
           return OBV_OpenInternal(inReal, inVolume, 0);
        }
        /**
@@ -116565,14 +113807,6 @@ class Core {
         */
        public OBV_Stream OBV_OpenAndFill( double inReal[], double inVolume[], double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("OBV openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-                if( !Double.isFinite(inVolume[taFiniteIdx]) )
-                   throw new IllegalArgumentException("OBV openAndFill: BadParam");
-          }
           OBV_Stream sp = new OBV_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -118038,17 +115272,6 @@ class Core {
         */
        public PLUS_DI_Stream PLUS_DI_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("PLUS_DI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("PLUS_DI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("PLUS_DI open: BadParam");
-          }
           return PLUS_DI_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
        }
        /**
@@ -118062,17 +115285,6 @@ class Core {
         */
        public PLUS_DI_Stream PLUS_DI_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("PLUS_DI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("PLUS_DI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("PLUS_DI openAndFill: BadParam");
-          }
           PLUS_DI_Stream sp = new PLUS_DI_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -119140,14 +116352,6 @@ class Core {
         */
        public PLUS_DM_Stream PLUS_DM_Open( double inHigh[], double inLow[], int optInTimePeriod )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("PLUS_DM open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("PLUS_DM open: BadParam");
-          }
           return PLUS_DM_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
        }
        /**
@@ -119161,14 +116365,6 @@ class Core {
         */
        public PLUS_DM_Stream PLUS_DM_OpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outReal[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("PLUS_DM openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("PLUS_DM openAndFill: BadParam");
-          }
           PLUS_DM_Stream sp = new PLUS_DM_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -119863,11 +117059,6 @@ class Core {
         */
        public PPO_Stream PPO_Open( double inReal[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("PPO open: BadParam");
-          }
           return PPO_OpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType);
        }
        /**
@@ -119881,11 +117072,6 @@ class Core {
         */
        public PPO_Stream PPO_OpenAndFill( double inReal[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("PPO openAndFill: BadParam");
-          }
           PPO_Stream sp = new PPO_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -120440,14 +117626,6 @@ class Core {
         */
        public PVI_Stream PVI_Open( double inClose[], double inVolume[] )
        {
-          if( inClose.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("PVI open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-                if( !Double.isFinite(inVolume[taFiniteIdx]) )
-                   throw new IllegalArgumentException("PVI open: BadParam");
-          }
           return PVI_OpenInternal(inClose, inVolume, 0);
        }
        /**
@@ -120461,14 +117639,6 @@ class Core {
         */
        public PVI_Stream PVI_OpenAndFill( double inClose[], double inVolume[], double outReal[] )
        {
-          if( inClose.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("PVI openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-                if( !Double.isFinite(inVolume[taFiniteIdx]) )
-                   throw new IllegalArgumentException("PVI openAndFill: BadParam");
-          }
           PVI_Stream sp = new PVI_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -121161,11 +118331,6 @@ class Core {
         */
        public PVO_Stream PVO_Open( double inVolume[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
        {
-          if( inVolume.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-                if( !Double.isFinite(inVolume[taFiniteIdx]) )
-                   throw new IllegalArgumentException("PVO open: BadParam");
-          }
           return PVO_OpenInternal(inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType);
        }
        /**
@@ -121179,11 +118344,6 @@ class Core {
         */
        public PVO_Stream PVO_OpenAndFill( double inVolume[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, double outReal[] )
        {
-          if( inVolume.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-                if( !Double.isFinite(inVolume[taFiniteIdx]) )
-                   throw new IllegalArgumentException("PVO openAndFill: BadParam");
-          }
           PVO_Stream sp = new PVO_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -121819,14 +118979,6 @@ class Core {
         */
        public QSTICK_Stream QSTICK_Open( double inOpen[], double inClose[], int optInTimePeriod )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("QSTICK open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("QSTICK open: BadParam");
-          }
           return QSTICK_OpenInternal(inOpen, inClose, 0, optInTimePeriod);
        }
        /**
@@ -121840,14 +118992,6 @@ class Core {
         */
        public QSTICK_Stream QSTICK_OpenAndFill( double inOpen[], double inClose[], int optInTimePeriod, double outReal[] )
        {
-          if( inOpen.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-                if( !Double.isFinite(inOpen[taFiniteIdx]) )
-                   throw new IllegalArgumentException("QSTICK openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("QSTICK openAndFill: BadParam");
-          }
           QSTICK_Stream sp = new QSTICK_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -122440,11 +119584,6 @@ class Core {
         */
        public ROC_Stream ROC_Open( double inReal[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ROC open: BadParam");
-          }
           return ROC_OpenInternal(inReal, 0, optInTimePeriod);
        }
        /**
@@ -122458,11 +119597,6 @@ class Core {
         */
        public ROC_Stream ROC_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ROC openAndFill: BadParam");
-          }
           ROC_Stream sp = new ROC_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -123053,11 +120187,6 @@ class Core {
         */
        public ROCP_Stream ROCP_Open( double inReal[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ROCP open: BadParam");
-          }
           return ROCP_OpenInternal(inReal, 0, optInTimePeriod);
        }
        /**
@@ -123071,11 +120200,6 @@ class Core {
         */
        public ROCP_Stream ROCP_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ROCP openAndFill: BadParam");
-          }
           ROCP_Stream sp = new ROCP_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -123669,11 +120793,6 @@ class Core {
         */
        public ROCR_Stream ROCR_Open( double inReal[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ROCR open: BadParam");
-          }
           return ROCR_OpenInternal(inReal, 0, optInTimePeriod);
        }
        /**
@@ -123687,11 +120806,6 @@ class Core {
         */
        public ROCR_Stream ROCR_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ROCR openAndFill: BadParam");
-          }
           ROCR_Stream sp = new ROCR_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -124287,11 +121401,6 @@ class Core {
         */
        public ROCR100_Stream ROCR100_Open( double inReal[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ROCR100 open: BadParam");
-          }
           return ROCR100_OpenInternal(inReal, 0, optInTimePeriod);
        }
        /**
@@ -124305,11 +121414,6 @@ class Core {
         */
        public ROCR100_Stream ROCR100_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ROCR100 openAndFill: BadParam");
-          }
           ROCR100_Stream sp = new ROCR100_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -125202,11 +122306,6 @@ class Core {
         */
        public RSI_Stream RSI_Open( double inReal[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("RSI open: BadParam");
-          }
           return RSI_OpenInternal(inReal, 0, optInTimePeriod);
        }
        /**
@@ -125220,11 +122319,6 @@ class Core {
         */
        public RSI_Stream RSI_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("RSI openAndFill: BadParam");
-          }
           RSI_Stream sp = new RSI_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -126403,14 +123497,6 @@ class Core {
         */
        public SAR_Stream SAR_Open( double inHigh[], double inLow[], double optInAcceleration, double optInMaximum )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("SAR open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("SAR open: BadParam");
-          }
           return SAR_OpenInternal(inHigh, inLow, 0, optInAcceleration, optInMaximum);
        }
        /**
@@ -126424,14 +123510,6 @@ class Core {
         */
        public SAR_Stream SAR_OpenAndFill( double inHigh[], double inLow[], double optInAcceleration, double optInMaximum, double outReal[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("SAR openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("SAR openAndFill: BadParam");
-          }
           SAR_Stream sp = new SAR_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -127971,14 +125049,6 @@ class Core {
         */
        public SAREXT_Stream SAREXT_Open( double inHigh[], double inLow[], double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("SAREXT open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("SAREXT open: BadParam");
-          }
           return SAREXT_OpenInternal(inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
        }
        /**
@@ -127992,14 +125062,6 @@ class Core {
         */
        public SAREXT_Stream SAREXT_OpenAndFill( double inHigh[], double inLow[], double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, double outReal[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("SAREXT openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("SAREXT openAndFill: BadParam");
-          }
           SAREXT_Stream sp = new SAREXT_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -128382,11 +125444,6 @@ class Core {
         */
        public SIN_Stream SIN_Open( double inReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("SIN open: BadParam");
-          }
           return SIN_OpenInternal(inReal, 0);
        }
        /**
@@ -128400,11 +125457,6 @@ class Core {
         */
        public SIN_Stream SIN_OpenAndFill( double inReal[], double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("SIN openAndFill: BadParam");
-          }
           SIN_Stream sp = new SIN_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -128785,11 +125837,6 @@ class Core {
         */
        public SINH_Stream SINH_Open( double inReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("SINH open: BadParam");
-          }
           return SINH_OpenInternal(inReal, 0);
        }
        /**
@@ -128803,11 +125850,6 @@ class Core {
         */
        public SINH_Stream SINH_OpenAndFill( double inReal[], double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("SINH openAndFill: BadParam");
-          }
           SINH_Stream sp = new SINH_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -129395,11 +126437,6 @@ class Core {
         */
        public SMA_Stream SMA_Open( double inReal[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("SMA open: BadParam");
-          }
           return SMA_OpenInternal(inReal, 0, optInTimePeriod);
        }
        /**
@@ -129413,11 +126450,6 @@ class Core {
         */
        public SMA_Stream SMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("SMA openAndFill: BadParam");
-          }
           SMA_Stream sp = new SMA_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -129800,11 +126832,6 @@ class Core {
         */
        public SQRT_Stream SQRT_Open( double inReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("SQRT open: BadParam");
-          }
           return SQRT_OpenInternal(inReal, 0);
        }
        /**
@@ -129818,11 +126845,6 @@ class Core {
         */
        public SQRT_Stream SQRT_OpenAndFill( double inReal[], double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("SQRT openAndFill: BadParam");
-          }
           SQRT_Stream sp = new SQRT_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -130393,11 +127415,6 @@ class Core {
         */
        public STDDEV_Stream STDDEV_Open( double inReal[], int optInTimePeriod, double optInNbDev )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("STDDEV open: BadParam");
-          }
           return STDDEV_OpenInternal(inReal, 0, optInTimePeriod, optInNbDev);
        }
        /**
@@ -130411,11 +127428,6 @@ class Core {
         */
        public STDDEV_Stream STDDEV_OpenAndFill( double inReal[], int optInTimePeriod, double optInNbDev, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("STDDEV openAndFill: BadParam");
-          }
           STDDEV_Stream sp = new STDDEV_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -131725,17 +128737,6 @@ class Core {
         */
        public STOCH_Stream STOCH_Open( double inHigh[], double inLow[], double inClose[], int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("STOCH open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("STOCH open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("STOCH open: BadParam");
-          }
           return STOCH_OpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
        }
        /**
@@ -131749,17 +128750,6 @@ class Core {
         */
        public STOCH_Stream STOCH_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, double outSlowK[], double outSlowD[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("STOCH openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("STOCH openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("STOCH openAndFill: BadParam");
-          }
           STOCH_Stream sp = new STOCH_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -132964,17 +129954,6 @@ class Core {
         */
        public STOCHF_Stream STOCHF_Open( double inHigh[], double inLow[], double inClose[], int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("STOCHF open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("STOCHF open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("STOCHF open: BadParam");
-          }
           return STOCHF_OpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
        }
        /**
@@ -132988,17 +129967,6 @@ class Core {
         */
        public STOCHF_Stream STOCHF_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, double outFastK[], double outFastD[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("STOCHF openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("STOCHF openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("STOCHF openAndFill: BadParam");
-          }
           STOCHF_Stream sp = new STOCHF_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -133772,11 +130740,6 @@ class Core {
         */
        public STOCHRSI_Stream STOCHRSI_Open( double inReal[], int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("STOCHRSI open: BadParam");
-          }
           return STOCHRSI_OpenInternal(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
        }
        /**
@@ -133790,11 +130753,6 @@ class Core {
         */
        public STOCHRSI_Stream STOCHRSI_OpenAndFill( double inReal[], int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, double outFastK[], double outFastD[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("STOCHRSI openAndFill: BadParam");
-          }
           STOCHRSI_Stream sp = new STOCHRSI_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -134187,14 +131145,6 @@ class Core {
         */
        public SUB_Stream SUB_Open( double inReal0[], double inReal1[] )
        {
-          if( inReal0.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal0.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal0[taFiniteIdx]) )
-                   throw new IllegalArgumentException("SUB open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal1.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal1[taFiniteIdx]) )
-                   throw new IllegalArgumentException("SUB open: BadParam");
-          }
           return SUB_OpenInternal(inReal0, inReal1, 0);
        }
        /**
@@ -134208,14 +131158,6 @@ class Core {
         */
        public SUB_Stream SUB_OpenAndFill( double inReal0[], double inReal1[], double outReal[] )
        {
-          if( inReal0.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal0.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal0[taFiniteIdx]) )
-                   throw new IllegalArgumentException("SUB openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal1.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal1[taFiniteIdx]) )
-                   throw new IllegalArgumentException("SUB openAndFill: BadParam");
-          }
           SUB_Stream sp = new SUB_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -134774,11 +131716,6 @@ class Core {
         */
        public SUM_Stream SUM_Open( double inReal[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("SUM open: BadParam");
-          }
           return SUM_OpenInternal(inReal, 0, optInTimePeriod);
        }
        /**
@@ -134792,11 +131729,6 @@ class Core {
         */
        public SUM_Stream SUM_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("SUM openAndFill: BadParam");
-          }
           SUM_Stream sp = new SUM_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -135736,11 +132668,6 @@ class Core {
         */
        public T3_Stream T3_Open( double inReal[], int optInTimePeriod, double optInVFactor )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("T3 open: BadParam");
-          }
           return T3_OpenInternal(inReal, 0, optInTimePeriod, optInVFactor);
        }
        /**
@@ -135754,11 +132681,6 @@ class Core {
         */
        public T3_Stream T3_OpenAndFill( double inReal[], int optInTimePeriod, double optInVFactor, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("T3 openAndFill: BadParam");
-          }
           T3_Stream sp = new T3_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -136143,11 +133065,6 @@ class Core {
         */
        public TAN_Stream TAN_Open( double inReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("TAN open: BadParam");
-          }
           return TAN_OpenInternal(inReal, 0);
        }
        /**
@@ -136161,11 +133078,6 @@ class Core {
         */
        public TAN_Stream TAN_OpenAndFill( double inReal[], double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("TAN openAndFill: BadParam");
-          }
           TAN_Stream sp = new TAN_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -136546,11 +133458,6 @@ class Core {
         */
        public TANH_Stream TANH_Open( double inReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("TANH open: BadParam");
-          }
           return TANH_OpenInternal(inReal, 0);
        }
        /**
@@ -136564,11 +133471,6 @@ class Core {
         */
        public TANH_Stream TANH_OpenAndFill( double inReal[], double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("TANH openAndFill: BadParam");
-          }
           TANH_Stream sp = new TANH_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -137399,11 +134301,6 @@ class Core {
         */
        public TEMA_Stream TEMA_Open( double inReal[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("TEMA open: BadParam");
-          }
           return TEMA_OpenInternal(inReal, 0, optInTimePeriod);
        }
        /**
@@ -137417,11 +134314,6 @@ class Core {
         */
        public TEMA_Stream TEMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("TEMA openAndFill: BadParam");
-          }
           TEMA_Stream sp = new TEMA_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -137985,17 +134877,6 @@ class Core {
         */
        public TRANGE_Stream TRANGE_Open( double inHigh[], double inLow[], double inClose[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("TRANGE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("TRANGE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("TRANGE open: BadParam");
-          }
           return TRANGE_OpenInternal(inHigh, inLow, inClose, 0);
        }
        /**
@@ -138009,17 +134890,6 @@ class Core {
         */
        public TRANGE_Stream TRANGE_OpenAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("TRANGE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("TRANGE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("TRANGE openAndFill: BadParam");
-          }
           TRANGE_Stream sp = new TRANGE_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -139343,11 +136213,6 @@ class Core {
         */
        public TRIMA_Stream TRIMA_Open( double inReal[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("TRIMA open: BadParam");
-          }
           return TRIMA_OpenInternal(inReal, 0, optInTimePeriod);
        }
        /**
@@ -139361,11 +136226,6 @@ class Core {
         */
        public TRIMA_Stream TRIMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("TRIMA openAndFill: BadParam");
-          }
           TRIMA_Stream sp = new TRIMA_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -140097,11 +136957,6 @@ class Core {
         */
        public TRIX_Stream TRIX_Open( double inReal[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("TRIX open: BadParam");
-          }
           return TRIX_OpenInternal(inReal, 0, optInTimePeriod);
        }
        /**
@@ -140115,11 +136970,6 @@ class Core {
         */
        public TRIX_Stream TRIX_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("TRIX openAndFill: BadParam");
-          }
           TRIX_Stream sp = new TRIX_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -140804,11 +137654,6 @@ class Core {
         */
        public TSF_Stream TSF_Open( double inReal[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("TSF open: BadParam");
-          }
           return TSF_OpenInternal(inReal, 0, optInTimePeriod);
        }
        /**
@@ -140822,11 +137667,6 @@ class Core {
         */
        public TSF_Stream TSF_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("TSF openAndFill: BadParam");
-          }
           TSF_Stream sp = new TSF_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -141234,17 +138074,6 @@ class Core {
         */
        public TYPPRICE_Stream TYPPRICE_Open( double inHigh[], double inLow[], double inClose[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("TYPPRICE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("TYPPRICE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("TYPPRICE open: BadParam");
-          }
           return TYPPRICE_OpenInternal(inHigh, inLow, inClose, 0);
        }
        /**
@@ -141258,17 +138087,6 @@ class Core {
         */
        public TYPPRICE_Stream TYPPRICE_OpenAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("TYPPRICE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("TYPPRICE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("TYPPRICE openAndFill: BadParam");
-          }
           TYPPRICE_Stream sp = new TYPPRICE_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -142504,17 +139322,6 @@ class Core {
         */
        public ULTOSC_Stream ULTOSC_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ULTOSC open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ULTOSC open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ULTOSC open: BadParam");
-          }
           return ULTOSC_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
        }
        /**
@@ -142528,17 +139335,6 @@ class Core {
         */
        public ULTOSC_Stream ULTOSC_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, double outReal[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ULTOSC openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ULTOSC openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("ULTOSC openAndFill: BadParam");
-          }
           ULTOSC_Stream sp = new ULTOSC_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -143476,11 +140272,6 @@ class Core {
         */
        public VAR_Stream VAR_Open( double inReal[], int optInTimePeriod, double optInNbDev )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("VAR open: BadParam");
-          }
           return VAR_OpenInternal(inReal, 0, optInTimePeriod, optInNbDev);
        }
        /**
@@ -143494,11 +140285,6 @@ class Core {
         */
        public VAR_Stream VAR_OpenAndFill( double inReal[], int optInTimePeriod, double optInNbDev, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("VAR openAndFill: BadParam");
-          }
           VAR_Stream sp = new VAR_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -144267,14 +141053,6 @@ class Core {
         */
        public VWMA_Stream VWMA_Open( double inReal[], double inVolume[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("VWMA open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-                if( !Double.isFinite(inVolume[taFiniteIdx]) )
-                   throw new IllegalArgumentException("VWMA open: BadParam");
-          }
           return VWMA_OpenInternal(inReal, inVolume, 0, optInTimePeriod);
        }
        /**
@@ -144288,14 +141066,6 @@ class Core {
         */
        public VWMA_Stream VWMA_OpenAndFill( double inReal[], double inVolume[], int optInTimePeriod, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("VWMA openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-                if( !Double.isFinite(inVolume[taFiniteIdx]) )
-                   throw new IllegalArgumentException("VWMA openAndFill: BadParam");
-          }
           VWMA_Stream sp = new VWMA_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -144889,17 +141659,6 @@ class Core {
         */
        public WAD_Stream WAD_Open( double inHigh[], double inLow[], double inClose[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("WAD open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("WAD open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("WAD open: BadParam");
-          }
           return WAD_OpenInternal(inHigh, inLow, inClose, 0);
        }
        /**
@@ -144913,17 +141672,6 @@ class Core {
         */
        public WAD_Stream WAD_OpenAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("WAD openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("WAD openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("WAD openAndFill: BadParam");
-          }
           WAD_Stream sp = new WAD_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -145331,17 +142079,6 @@ class Core {
         */
        public WCLPRICE_Stream WCLPRICE_Open( double inHigh[], double inLow[], double inClose[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("WCLPRICE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("WCLPRICE open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("WCLPRICE open: BadParam");
-          }
           return WCLPRICE_OpenInternal(inHigh, inLow, inClose, 0);
        }
        /**
@@ -145355,17 +142092,6 @@ class Core {
         */
        public WCLPRICE_Stream WCLPRICE_OpenAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("WCLPRICE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("WCLPRICE openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("WCLPRICE openAndFill: BadParam");
-          }
           WCLPRICE_Stream sp = new WCLPRICE_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -146353,17 +143079,6 @@ class Core {
         */
        public WILLR_Stream WILLR_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("WILLR open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("WILLR open: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("WILLR open: BadParam");
-          }
           return WILLR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
        }
        /**
@@ -146377,17 +143092,6 @@ class Core {
         */
        public WILLR_Stream WILLR_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
        {
-          if( inHigh.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-                if( !Double.isFinite(inHigh[taFiniteIdx]) )
-                   throw new IllegalArgumentException("WILLR openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-                if( !Double.isFinite(inLow[taFiniteIdx]) )
-                   throw new IllegalArgumentException("WILLR openAndFill: BadParam");
-             for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-                if( !Double.isFinite(inClose[taFiniteIdx]) )
-                   throw new IllegalArgumentException("WILLR openAndFill: BadParam");
-          }
           WILLR_Stream sp = new WILLR_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
@@ -147145,11 +143849,6 @@ class Core {
         */
        public WMA_Stream WMA_Open( double inReal[], int optInTimePeriod )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("WMA open: BadParam");
-          }
           return WMA_OpenInternal(inReal, 0, optInTimePeriod);
        }
        /**
@@ -147163,11 +143862,6 @@ class Core {
         */
        public WMA_Stream WMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
        {
-          if( inReal.length >= 1 ) {
-             for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-                if( !Double.isFinite(inReal[taFiniteIdx]) )
-                   throw new IllegalArgumentException("WMA openAndFill: BadParam");
-          }
           WMA_Stream sp = new WMA_Stream(this);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();

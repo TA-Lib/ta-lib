@@ -729,10 +729,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_BETA_Open")]
     pub fn BETA_Open(&self, inReal0: &[f64], inReal1: &[f64], optInTimePeriod: i32) -> Result<(BETA_Stream, f64), RetCode> {
-        if inReal0.iter().any(|v| !v.is_finite())
-            || inReal1.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.BETA_OpenInternal(inReal0, inReal1, 0, optInTimePeriod)
     }
 
@@ -744,10 +740,6 @@ impl Core {
     pub fn BETA_OpenAndFill(
         &self, inReal0: &[f64], inReal1: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(BETA_Stream, OutRange), RetCode> {
-        if inReal0.iter().any(|v| !v.is_finite())
-            || inReal1.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.BETA_OpenCore(inReal0, inReal1, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

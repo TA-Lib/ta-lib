@@ -802,8 +802,6 @@ public partial class Core
    public DEMA_Stream DEMA_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("DEMA", "open", RetCode.BadParam);
       return DEMA_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -834,8 +832,6 @@ public partial class Core
    public DEMA_Stream DEMA_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("DEMA", "openAndFill", RetCode.BadParam);
       DEMA_Stream sp = new DEMA_Stream(this);
       RetCode retCode = DEMA_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

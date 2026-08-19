@@ -749,9 +749,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_VAR_Open")]
     pub fn VAR_Open(&self, inReal: &[f64], optInTimePeriod: i32, optInNbDev: f64) -> Result<(VAR_Stream, f64), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.VAR_OpenInternal(inReal, 0, optInTimePeriod, optInNbDev)
     }
 
@@ -763,9 +760,6 @@ impl Core {
     pub fn VAR_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInNbDev: f64, outReal: &mut [f64],
     ) -> Result<(VAR_Stream, OutRange), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.VAR_OpenCore(inReal, 0, optInTimePeriod, optInNbDev, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

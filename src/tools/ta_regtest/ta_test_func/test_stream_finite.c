@@ -46,32 +46,36 @@
 
 /* Description:
  *
- * The streaming API rejects a non-finite input where the batch API computes
- * on it. That difference is deliberate and it is the only place the two tiers
- * disagree about what they accept.
+ * Non-finite rejection is a property of SINGLE VALUES, never of input arrays.
  *
- * The reason is that a stream handle RETAINS state. Batch is handed a series,
- * computes, and forgets; a NaN in the input reaches the outputs that depend on
- * that bar and no others. A handle carries recursive accumulators across calls,
- * so one non-finite bar poisons every value it will ever produce afterwards --
- * long after the feed recovers. Rejecting the bar and leaving the handle
- * untouched is strictly more useful than accepting it and going permanently
- * NaN.
+ * An input ARRAY is never scanned, in either tier: keeping one free of NaN and
+ * +/-Inf is the caller's responsibility and the effect on the output is
+ * unspecified (docs/error-handling-spec.md, rule N-5). A scan is a whole extra
+ * pass over caller memory the main loop is about to walk again -- measured at a
+ * corpus median of 22% of Open -- and folding it into that loop instead would
+ * buy a worse contract: a rejection partway through a fill, output half
+ * written.
+ *
+ * A SINGLE VALUE is always checked, because it is one comparison. For the
+ * streaming tier that matters more than for batch, because a handle RETAINS
+ * state: batch is handed a series, computes, and forgets, so a NaN reaches the
+ * outputs that depend on that bar and no others, while a handle carries
+ * recursive accumulators across calls and one non-finite bar poisons every
+ * value it will ever produce afterwards -- long after the feed recovers.
+ * Rejecting the bar and leaving the handle untouched is strictly more useful
+ * than accepting it and going permanently NaN.
  *
  * What this pins, per function:
  *
- *   (a) Open and OpenAndFill reject a warm-up history holding NaN, +Inf or
- *       -Inf, in ANY input series, at the first or the last bar, with
- *       TA_BAD_PARAM and a NULL handle.
- *   (b) Update and Peek reject a non-finite bar value in ANY input slot with
+ *   (a) Update and Peek reject a non-finite bar value in ANY input slot with
  *       TA_BAD_PARAM.
- *   (c) The handle is UNCHANGED by a rejected call -- the property that makes
+ *   (b) The handle is UNCHANGED by a rejected call -- the property that makes
  *       the rejection useful rather than merely safe. Verified against a
  *       control handle: two streams opened on the same history, one of them
  *       offered the bad bar first, must agree BIT FOR BIT on the next good
- *       bar. A rejection that half-advanced the state would pass (b) and fail
+ *       bar. A rejection that half-advanced the state would pass (a) and fail
  *       here.
- *   (d) A real optional parameter that is NaN is rejected too. This one is not
+ *   (c) A real optional parameter that is NaN is rejected too. This one is not
  *       redundant with the batch range check: `NaN < min` and `NaN > max` are
  *       BOTH false, so a plain range test admits NaN -- which is why the
  *       streaming tier spells the same two comparisons inverted,
@@ -87,11 +91,10 @@
  *   MA        dispatch tier         (its own Update/Peek loop, and the
  *                                    identity arm that never reaches a
  *                                    sub-stream at all)
- *   MAVP      period-bank tier      (its own Update/Peek; also the one place a
- *                                    non-finite input would reach `(int)`,
- *                                    which is undefined behaviour)
+ *   MAVP      period-bank tier      (its own Update/Peek. Its period ARRAY is
+ *                                    not covered here -- see the note below)
  *   BBANDS    composed tier         (its own inline Peek; also the real
- *                                    optional parameters for (d))
+ *                                    optional parameters for (c))
  *   STOCH     composed, multi-output, sub-feeding-sub
  *   CDLDOJI   integer output, four price inputs
  *
@@ -110,15 +113,13 @@
 
 #define SF_BARS 120        /* history; comfortably past every lookback here */
 #define SF_NBAD 3          /* NaN, +Inf, -Inf */
-#define SF_MAX_IN 4        /* the widest input arity below (CDLDOJI: OHLC) */
 
 /* Counters. Incremented AT each assertion, never derived from a loop bound:
  * a count computed from the trip count stays healthy while the assertions
  * inside are deleted. */
-static int sfOpenRejects;   /* (a) */
-static int sfBarRejects;    /* (b) */
-static int sfStateHolds;    /* (c) */
-static int sfParamRejects;  /* (d) */
+static int sfBarRejects;    /* (a) */
+static int sfStateHolds;    /* (b) */
+static int sfParamRejects;  /* (c) */
 
 static double sfOpen[SF_BARS], sfHigh[SF_BARS], sfLow[SF_BARS], sfClose[SF_BARS];
 
@@ -141,24 +142,6 @@ static void sf_build_series( void )
       if( sfLow[i]  > sfClose[i] ) sfLow[i]  = sfClose[i];
    }
 }
-
-/* Poison one element of one input, run `expr`, restore. `expr` must evaluate
- * to 1 when the call rejected correctly (TA_BAD_PARAM and a NULL handle). */
-#define SF_OPEN_MUST_REJECT( fname, arr, idx, badIdx, expr )                  \
-   do {                                                                       \
-      double sfSaved = (arr)[idx];                                            \
-      int sfOk;                                                               \
-      (arr)[idx] = sfBad[badIdx];                                             \
-      sfOk = (expr);                                                          \
-      (arr)[idx] = sfSaved;                                                   \
-      if( !sfOk )                                                             \
-      {                                                                       \
-         printf( "  %s: open accepted %s at bar %d of %s\n",                  \
-                 fname, sfBadName[badIdx], (int)(idx), #arr );                \
-         return TA_STREAM_FINITE_OPEN_ACCEPTED;                               \
-      }                                                                       \
-      sfOpenRejects++;                                                        \
-   } while( 0 )
 
 #define SF_BAR_MUST_REJECT( fname, what, rc )                                 \
    do {                                                                       \
@@ -197,21 +180,9 @@ static void sf_build_series( void )
 static ErrorNumber sf_sma( void )
 {
    int b, warm = 40;
-   double dummy = 0.0, fb[SF_BARS];
-   int fBeg = 0, fNb = 0;
 
    for( b = 0; b < SF_NBAD; b++ )
    {
-      TA_SMA_Stream *st = NULL;
-      SF_OPEN_MUST_REJECT( "SMA", sfClose, SF_BARS - 1, b,
-         ( TA_SMA_Open( &st, sfClose, SF_BARS, 10, &dummy ) == TA_BAD_PARAM && !st ) );
-      st = NULL;
-      SF_OPEN_MUST_REJECT( "SMA", sfClose, 0, b,
-         ( TA_SMA_Open( &st, sfClose, SF_BARS, 10, &dummy ) == TA_BAD_PARAM && !st ) );
-      st = NULL;
-      SF_OPEN_MUST_REJECT( "SMA", sfClose, SF_BARS / 2, b,
-         ( TA_SMA_OpenAndFill( &st, sfClose, SF_BARS, 10, &fBeg, &fNb, fb ) == TA_BAD_PARAM && !st ) );
-
       {
          TA_SMA_Stream *sa = NULL, *sb = NULL;
          double va = 0.0, vb = 0.0;
@@ -235,20 +206,9 @@ static ErrorNumber sf_sma( void )
 static ErrorNumber sf_minus_di( void )
 {
    int b, warm = 40;
-   double dummy = 0.0;
-   double *series[3];
-   int s;
-
-   series[0] = sfHigh; series[1] = sfLow; series[2] = sfClose;
 
    for( b = 0; b < SF_NBAD; b++ )
    {
-      for( s = 0; s < 3; s++ )
-      {
-         TA_MINUS_DI_Stream *st = NULL;
-         SF_OPEN_MUST_REJECT( "MINUS_DI", series[s], SF_BARS - 1, b,
-            ( TA_MINUS_DI_Open( &st, sfHigh, sfLow, sfClose, SF_BARS, 14, &dummy ) == TA_BAD_PARAM && !st ) );
-      }
       {
          TA_MINUS_DI_Stream *sa = NULL, *sb = NULL;
          double va = 0.0, vb = 0.0;
@@ -279,26 +239,10 @@ static ErrorNumber sf_minus_di( void )
 static ErrorNumber sf_ma( void )
 {
    int b, warm = 40;
-   double dummy = 0.0;
 
    for( b = 0; b < SF_NBAD; b++ )
    {
-      TA_MA_Stream *st = NULL;
-      SF_OPEN_MUST_REJECT( "MA", sfClose, SF_BARS - 1, b,
-         ( TA_MA_Open( &st, sfClose, SF_BARS, 10, TA_MAType_EMA, &dummy ) == TA_BAD_PARAM && !st ) );
 
-      {
-         /* OpenAndFill on the DISPATCH tier, at period 1 -- the identity arm,
-          * which copies the bar straight into the caller's array without
-          * touching a sub-stream. No sub-stream's own scan can cover it, and
-          * this tier hand-rolls its own fill entry point rather than sharing
-          * the one every loop-tier function uses. */
-         TA_MA_Stream *sf = NULL;
-         int fb2 = 0, fn2 = 0;
-         static double mfill[SF_BARS];
-         SF_OPEN_MUST_REJECT( "MA.openAndFill(identity)", sfClose, SF_BARS - 1, b,
-            ( TA_MA_OpenAndFill( &sf, sfClose, SF_BARS, 1, TA_MAType_SMA, &fb2, &fn2, mfill ) == TA_BAD_PARAM && !sf ) );
-      }
       {
          TA_MA_Stream *sa = NULL, *sb = NULL;
          double va = 0.0, vb = 0.0;
@@ -333,7 +277,6 @@ static ErrorNumber sf_ma( void )
 static ErrorNumber sf_mavp( void )
 {
    int b, i, warm = 40;
-   double dummy = 0.0;
    static double periods[SF_BARS];
 
    for( i = 0; i < SF_BARS; i++ )
@@ -341,21 +284,7 @@ static ErrorNumber sf_mavp( void )
 
    for( b = 0; b < SF_NBAD; b++ )
    {
-      TA_MAVP_Stream *st = NULL;
-      SF_OPEN_MUST_REJECT( "MAVP", sfClose, SF_BARS - 1, b,
-         ( TA_MAVP_Open( &st, sfClose, periods, SF_BARS, 2, 30, TA_MAType_SMA, &dummy ) == TA_BAD_PARAM && !st ) );
-      st = NULL;
-      SF_OPEN_MUST_REJECT( "MAVP", periods, SF_BARS - 1, b,
-         ( TA_MAVP_Open( &st, sfClose, periods, SF_BARS, 2, 30, TA_MAType_SMA, &dummy ) == TA_BAD_PARAM && !st ) );
 
-      {
-         /* OpenAndFill on the PERIOD-BANK tier -- likewise hand-rolled. */
-         TA_MAVP_Stream *sf = NULL;
-         int fb2 = 0, fn2 = 0;
-         static double vfill[SF_BARS];
-         SF_OPEN_MUST_REJECT( "MAVP.openAndFill", periods, SF_BARS - 1, b,
-            ( TA_MAVP_OpenAndFill( &sf, sfClose, periods, SF_BARS, 2, 30, TA_MAType_SMA, &fb2, &fn2, vfill ) == TA_BAD_PARAM && !sf ) );
-      }
       {
          TA_MAVP_Stream *sa = NULL, *sb = NULL;
          double va = 0.0, vb = 0.0;
@@ -389,10 +318,6 @@ static ErrorNumber sf_bbands( void )
 
    for( b = 0; b < SF_NBAD; b++ )
    {
-      TA_BBANDS_Stream *st = NULL;
-      SF_OPEN_MUST_REJECT( "BBANDS", sfClose, SF_BARS - 1, b,
-         ( TA_BBANDS_Open( &st, sfClose, SF_BARS, 20, 2.0, 2.0, TA_MAType_SMA, &d0, &d1, &d2 )
-           == TA_BAD_PARAM && !st ) );
 
       {
          TA_BBANDS_Stream *sa = NULL, *sb = NULL;
@@ -412,7 +337,7 @@ static ErrorNumber sf_bbands( void )
       }
    }
 
-   /* (d) A NaN real parameter. The batch tier's `x < min || x > max` admits it
+   /* (c) A NaN real parameter. The batch tier's `x < min || x > max` admits it
     * -- both comparisons are false for NaN -- so this is a genuine difference,
     * not a restatement of the range check. Only NaN is tested: an infinity is
     * already outside every declared bound and both spellings reject it. */
@@ -432,14 +357,9 @@ static ErrorNumber sf_bbands( void )
 static ErrorNumber sf_stoch( void )
 {
    int b, warm = 60;
-   double d0 = 0.0, d1 = 0.0;
 
    for( b = 0; b < SF_NBAD; b++ )
    {
-      TA_STOCH_Stream *st = NULL;
-      SF_OPEN_MUST_REJECT( "STOCH", sfHigh, SF_BARS - 1, b,
-         ( TA_STOCH_Open( &st, sfHigh, sfLow, sfClose, SF_BARS, 5, 3, TA_MAType_SMA, 3, TA_MAType_SMA, &d0, &d1 )
-           == TA_BAD_PARAM && !st ) );
 
       {
          TA_STOCH_Stream *sa = NULL, *sb = NULL;
@@ -466,20 +386,9 @@ static ErrorNumber sf_stoch( void )
 static ErrorNumber sf_cdldoji( void )
 {
    int b, warm = 40;
-   int di = 0;
-   double *series[SF_MAX_IN];
-   int s;
-
-   series[0] = sfOpen; series[1] = sfHigh; series[2] = sfLow; series[3] = sfClose;
 
    for( b = 0; b < SF_NBAD; b++ )
    {
-      for( s = 0; s < SF_MAX_IN; s++ )
-      {
-         TA_CDLDOJI_Stream *st = NULL;
-         SF_OPEN_MUST_REJECT( "CDLDOJI", series[s], SF_BARS - 1, b,
-            ( TA_CDLDOJI_Open( &st, sfOpen, sfHigh, sfLow, sfClose, SF_BARS, &di ) == TA_BAD_PARAM && !st ) );
-      }
       {
          TA_CDLDOJI_Stream *sa = NULL, *sb = NULL;
          int ia = 0, ib = 0;
@@ -516,7 +425,7 @@ ErrorNumber test_func_stream_finite( TA_History *history )
    printf( "Testing streaming non-finite input rejection\n" );
 
    sf_build_series();
-   sfOpenRejects = sfBarRejects = sfStateHolds = sfParamRejects = 0;
+   sfBarRejects = sfStateHolds = sfParamRejects = 0;
 
    if( ( errNb = sf_sma()       ) != TA_TEST_PASS ) return errNb;
    if( ( errNb = sf_minus_di()  ) != TA_TEST_PASS ) return errNb;
@@ -526,14 +435,14 @@ ErrorNumber test_func_stream_finite( TA_History *history )
    if( ( errNb = sf_stoch()     ) != TA_TEST_PASS ) return errNb;
    if( ( errNb = sf_cdldoji()   ) != TA_TEST_PASS ) return errNb;
 
-   printf( "  Streaming finite-input gate: %d open rejection(s), %d bar rejection(s), "
+   printf( "  Streaming finite-input gate: %d bar rejection(s), "
            "%d state-unchanged compare(s), %d NaN-parameter rejection(s)\n",
-           sfOpenRejects, sfBarRejects, sfStateHolds, sfParamRejects );
+           sfBarRejects, sfStateHolds, sfParamRejects );
 
    /* Non-vacuity. The floors are literal, not derived from the loops above: a
     * count computed from the trip count moves with it, and would let half the
     * assertions be deleted while still "passing its floor". */
-   if( sfOpenRejects < 51 || sfBarRejects < 57 || sfStateHolds < 30 || sfParamRejects < 2 )
+   if( sfBarRejects < 57 || sfStateHolds < 30 || sfParamRejects < 2 )
    {
       printf( "  Failed: the gate ran fewer checks than it was written with\n" );
       return TA_STREAM_FINITE_VACUOUS;

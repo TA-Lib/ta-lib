@@ -2043,11 +2043,6 @@
     */
    public HT_SINE_Stream HT_SINE_Open( double inReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("HT_SINE open: BadParam");
-      }
       return HT_SINE_OpenInternal(inReal, 0);
    }
    /**
@@ -2061,11 +2056,6 @@
     */
    public HT_SINE_Stream HT_SINE_OpenAndFill( double inReal[], double outSine[], double outLeadSine[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("HT_SINE openAndFill: BadParam");
-      }
       HT_SINE_Stream sp = new HT_SINE_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

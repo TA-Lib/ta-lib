@@ -571,11 +571,6 @@ TA_LIB_API TA_RetCode TA_MINMAXINDEX_Open( TA_MINMAXINDEX_Stream **stream, const
    if( !inReal || !outMinIdx || !outMaxIdx ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   {
-      int taFiniteIdx;
-      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
-         if( !TA_IS_FINITE( inReal[taFiniteIdx] ) ) return TA_BAD_PARAM;
-   }
    return TA_MINMAXINDEX_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, outMinIdx, outMaxIdx );
 }
 
@@ -588,11 +583,6 @@ TA_LIB_API TA_RetCode TA_MINMAXINDEX_OpenAndFill( TA_MINMAXINDEX_Stream **stream
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outMinIdx == (const void *)inReal || (const void *)outMaxIdx == (const void *)inReal || (const void *)outMinIdx == (const void *)outMaxIdx ) return TA_BAD_PARAM;
-   {
-      int taFiniteIdx;
-      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
-         if( !TA_IS_FINITE( inReal[taFiniteIdx] ) ) return TA_BAD_PARAM;
-   }
    return TA_MINMAXINDEX_OpenCore( stream, inReal, 0, historyLen, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx, 1 );
 }
 

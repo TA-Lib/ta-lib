@@ -831,11 +831,6 @@
     */
    public CMO_Stream CMO_Open( double inReal[], int optInTimePeriod )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("CMO open: BadParam");
-      }
       return CMO_OpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
@@ -849,11 +844,6 @@
     */
    public CMO_Stream CMO_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("CMO openAndFill: BadParam");
-      }
       CMO_Stream sp = new CMO_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

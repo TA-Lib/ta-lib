@@ -935,11 +935,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_ULTOSC_Open")]
     pub fn ULTOSC_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod1: i32, optInTimePeriod2: i32, optInTimePeriod3: i32) -> Result<(ULTOSC_Stream, f64), RetCode> {
-        if inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite())
-            || inClose.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.ULTOSC_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3)
     }
 
@@ -951,11 +946,6 @@ impl Core {
     pub fn ULTOSC_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod1: i32, mut optInTimePeriod2: i32, mut optInTimePeriod3: i32, outReal: &mut [f64],
     ) -> Result<(ULTOSC_Stream, OutRange), RetCode> {
-        if inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite())
-            || inClose.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.ULTOSC_OpenCore(inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

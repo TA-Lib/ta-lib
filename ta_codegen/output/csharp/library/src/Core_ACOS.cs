@@ -433,8 +433,6 @@ public partial class Core
    public ACOS_Stream ACOS_Open( ReadOnlySpan<double> inReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("ACOS", "open", RetCode.BadParam);
       return ACOS_OpenInternal(inReal, 0);
    }
 
@@ -463,8 +461,6 @@ public partial class Core
    public ACOS_Stream ACOS_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("ACOS", "openAndFill", RetCode.BadParam);
       ACOS_Stream sp = new ACOS_Stream(this);
       RetCode retCode = ACOS_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

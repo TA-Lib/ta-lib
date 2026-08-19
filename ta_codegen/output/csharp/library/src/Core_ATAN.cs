@@ -429,8 +429,6 @@ public partial class Core
    public ATAN_Stream ATAN_Open( ReadOnlySpan<double> inReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("ATAN", "open", RetCode.BadParam);
       return ATAN_OpenInternal(inReal, 0);
    }
 
@@ -459,8 +457,6 @@ public partial class Core
    public ATAN_Stream ATAN_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("ATAN", "openAndFill", RetCode.BadParam);
       ATAN_Stream sp = new ATAN_Stream(this);
       RetCode retCode = ATAN_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

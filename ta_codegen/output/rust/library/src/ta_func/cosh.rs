@@ -298,9 +298,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_COSH_Open")]
     pub fn COSH_Open(&self, inReal: &[f64], ) -> Result<(COSH_Stream, f64), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.COSH_OpenInternal(inReal, 0)
     }
 
@@ -312,9 +309,6 @@ impl Core {
     pub fn COSH_OpenAndFill(
         &self, inReal: &[f64], outReal: &mut [f64],
     ) -> Result<(COSH_Stream, OutRange), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.COSH_OpenCore(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

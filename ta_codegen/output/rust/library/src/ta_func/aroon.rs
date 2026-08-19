@@ -607,10 +607,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_AROON_Open")]
     pub fn AROON_Open(&self, inHigh: &[f64], inLow: &[f64], optInTimePeriod: i32) -> Result<(AROON_Stream, (f64, f64)), RetCode> {
-        if inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.AROON_OpenInternal(inHigh, inLow, 0, optInTimePeriod)
     }
 
@@ -623,10 +619,6 @@ impl Core {
         &self, inHigh: &[f64], inLow: &[f64], mut optInTimePeriod: i32, outAroonDown: &mut [f64], outAroonUp: &mut [f64],
     ) -> Result<(AROON_Stream, OutRange), RetCode> {
         if outAroonDown.as_ptr() == outAroonUp.as_ptr() {
-            return Err(RetCode::BadParam);
-        }
-        if inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;

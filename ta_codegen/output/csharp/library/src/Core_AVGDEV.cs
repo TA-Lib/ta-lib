@@ -585,8 +585,6 @@ public partial class Core
    public AVGDEV_Stream AVGDEV_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("AVGDEV", "open", RetCode.BadParam);
       return AVGDEV_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -617,8 +615,6 @@ public partial class Core
    public AVGDEV_Stream AVGDEV_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("AVGDEV", "openAndFill", RetCode.BadParam);
       AVGDEV_Stream sp = new AVGDEV_Stream(this);
       RetCode retCode = AVGDEV_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

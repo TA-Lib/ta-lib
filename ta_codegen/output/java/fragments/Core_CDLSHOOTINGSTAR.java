@@ -830,20 +830,6 @@
     */
    public CDLSHOOTINGSTAR_Stream CDLSHOOTINGSTAR_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
-      if( inOpen.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-            if( !Double.isFinite(inOpen[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLSHOOTINGSTAR open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-            if( !Double.isFinite(inHigh[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLSHOOTINGSTAR open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-            if( !Double.isFinite(inLow[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLSHOOTINGSTAR open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-            if( !Double.isFinite(inClose[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLSHOOTINGSTAR open: BadParam");
-      }
       return CDLSHOOTINGSTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
@@ -857,20 +843,6 @@
     */
    public CDLSHOOTINGSTAR_Stream CDLSHOOTINGSTAR_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      if( inOpen.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-            if( !Double.isFinite(inOpen[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLSHOOTINGSTAR openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-            if( !Double.isFinite(inHigh[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLSHOOTINGSTAR openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-            if( !Double.isFinite(inLow[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLSHOOTINGSTAR openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-            if( !Double.isFinite(inClose[taFiniteIdx]) )
-               throw new IllegalArgumentException("CDLSHOOTINGSTAR openAndFill: BadParam");
-      }
       CDLSHOOTINGSTAR_Stream sp = new CDLSHOOTINGSTAR_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

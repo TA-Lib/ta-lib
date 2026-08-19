@@ -1078,8 +1078,6 @@ public partial class Core
    public MACD_Stream MACD_Open( ReadOnlySpan<double> inReal, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MACD", "open", RetCode.BadParam);
       return MACD_OpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
    }
 
@@ -1118,8 +1116,6 @@ public partial class Core
    public MACD_Stream MACD_OpenAndFill( ReadOnlySpan<double> inReal, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MACD", "openAndFill", RetCode.BadParam);
       MACD_Stream sp = new MACD_Stream(this);
       RetCode retCode = MACD_OpenAndFillBody(sp, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

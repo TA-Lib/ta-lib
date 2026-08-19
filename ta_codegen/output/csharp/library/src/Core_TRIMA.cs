@@ -1366,8 +1366,6 @@ public partial class Core
    public TRIMA_Stream TRIMA_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("TRIMA", "open", RetCode.BadParam);
       return TRIMA_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -1398,8 +1396,6 @@ public partial class Core
    public TRIMA_Stream TRIMA_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("TRIMA", "openAndFill", RetCode.BadParam);
       TRIMA_Stream sp = new TRIMA_Stream(this);
       RetCode retCode = TRIMA_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

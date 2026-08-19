@@ -1661,11 +1661,6 @@ TA_LIB_API TA_RetCode TA_MAMA_Open( TA_MAMA_Stream **stream, const double inReal
    if( !inReal || !outMAMA ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   {
-      int taFiniteIdx;
-      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
-         if( !TA_IS_FINITE( inReal[taFiniteIdx] ) ) return TA_BAD_PARAM;
-   }
    return TA_MAMA_OpenInternal( stream, inReal, 0, historyLen, optInFastLimit, optInSlowLimit, outMAMA, outFAMA );
 }
 
@@ -1678,11 +1673,6 @@ TA_LIB_API TA_RetCode TA_MAMA_OpenAndFill( TA_MAMA_Stream **stream, const double
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outMAMA == (const void *)inReal || (const void *)outFAMA == (const void *)inReal || (const void *)outMAMA == (const void *)outFAMA ) return TA_BAD_PARAM;
-   {
-      int taFiniteIdx;
-      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
-         if( !TA_IS_FINITE( inReal[taFiniteIdx] ) ) return TA_BAD_PARAM;
-   }
    return TA_MAMA_OpenCore( stream, inReal, 0, historyLen, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1 );
 }
 

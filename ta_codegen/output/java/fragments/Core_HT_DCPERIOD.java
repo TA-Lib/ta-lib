@@ -1690,11 +1690,6 @@
     */
    public HT_DCPERIOD_Stream HT_DCPERIOD_Open( double inReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("HT_DCPERIOD open: BadParam");
-      }
       return HT_DCPERIOD_OpenInternal(inReal, 0);
    }
    /**
@@ -1708,11 +1703,6 @@
     */
    public HT_DCPERIOD_Stream HT_DCPERIOD_OpenAndFill( double inReal[], double outReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("HT_DCPERIOD openAndFill: BadParam");
-      }
       HT_DCPERIOD_Stream sp = new HT_DCPERIOD_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

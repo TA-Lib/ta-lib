@@ -988,8 +988,6 @@ public partial class Core
    public VAR_Stream VAR_Open( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDev )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("VAR", "open", RetCode.BadParam);
       return VAR_OpenInternal(inReal, 0, optInTimePeriod, optInNbDev);
    }
 
@@ -1022,8 +1020,6 @@ public partial class Core
    public VAR_Stream VAR_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDev, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("VAR", "openAndFill", RetCode.BadParam);
       VAR_Stream sp = new VAR_Stream(this);
       RetCode retCode = VAR_OpenAndFillBody(sp, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

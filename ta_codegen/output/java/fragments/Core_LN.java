@@ -372,11 +372,6 @@
     */
    public LN_Stream LN_Open( double inReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("LN open: BadParam");
-      }
       return LN_OpenInternal(inReal, 0);
    }
    /**
@@ -390,11 +385,6 @@
     */
    public LN_Stream LN_OpenAndFill( double inReal[], double outReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("LN openAndFill: BadParam");
-      }
       LN_Stream sp = new LN_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

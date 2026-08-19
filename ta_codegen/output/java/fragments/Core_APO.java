@@ -655,11 +655,6 @@
     */
    public APO_Stream APO_Open( double inReal[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("APO open: BadParam");
-      }
       return APO_OpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType);
    }
    /**
@@ -673,11 +668,6 @@
     */
    public APO_Stream APO_OpenAndFill( double inReal[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, double outReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("APO openAndFill: BadParam");
-      }
       APO_Stream sp = new APO_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

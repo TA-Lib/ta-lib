@@ -425,8 +425,6 @@ public partial class Core
    public TANH_Stream TANH_Open( ReadOnlySpan<double> inReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("TANH", "open", RetCode.BadParam);
       return TANH_OpenInternal(inReal, 0);
    }
 
@@ -455,8 +453,6 @@ public partial class Core
    public TANH_Stream TANH_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("TANH", "openAndFill", RetCode.BadParam);
       TANH_Stream sp = new TANH_Stream(this);
       RetCode retCode = TANH_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

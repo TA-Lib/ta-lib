@@ -540,11 +540,6 @@
     */
    public SUM_Stream SUM_Open( double inReal[], int optInTimePeriod )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("SUM open: BadParam");
-      }
       return SUM_OpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
@@ -558,11 +553,6 @@
     */
    public SUM_Stream SUM_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("SUM openAndFill: BadParam");
-      }
       SUM_Stream sp = new SUM_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

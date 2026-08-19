@@ -998,8 +998,6 @@ public partial class Core
    public KAMA_Stream KAMA_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("KAMA", "open", RetCode.BadParam);
       return KAMA_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -1030,8 +1028,6 @@ public partial class Core
    public KAMA_Stream KAMA_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("KAMA", "openAndFill", RetCode.BadParam);
       KAMA_Stream sp = new KAMA_Stream(this);
       RetCode retCode = KAMA_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

@@ -919,11 +919,6 @@
     */
    public VAR_Stream VAR_Open( double inReal[], int optInTimePeriod, double optInNbDev )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("VAR open: BadParam");
-      }
       return VAR_OpenInternal(inReal, 0, optInTimePeriod, optInNbDev);
    }
    /**
@@ -937,11 +932,6 @@
     */
    public VAR_Stream VAR_OpenAndFill( double inReal[], int optInTimePeriod, double optInNbDev, double outReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("VAR openAndFill: BadParam");
-      }
       VAR_Stream sp = new VAR_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

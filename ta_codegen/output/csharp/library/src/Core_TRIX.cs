@@ -771,8 +771,6 @@ public partial class Core
    public TRIX_Stream TRIX_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("TRIX", "open", RetCode.BadParam);
       return TRIX_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -803,8 +801,6 @@ public partial class Core
    public TRIX_Stream TRIX_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("TRIX", "openAndFill", RetCode.BadParam);
       TRIX_Stream sp = new TRIX_Stream(this);
       RetCode retCode = TRIX_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

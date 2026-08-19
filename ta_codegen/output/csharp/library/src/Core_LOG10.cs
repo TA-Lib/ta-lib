@@ -433,8 +433,6 @@ public partial class Core
    public LOG10_Stream LOG10_Open( ReadOnlySpan<double> inReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("LOG10", "open", RetCode.BadParam);
       return LOG10_OpenInternal(inReal, 0);
    }
 
@@ -463,8 +461,6 @@ public partial class Core
    public LOG10_Stream LOG10_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("LOG10", "openAndFill", RetCode.BadParam);
       LOG10_Stream sp = new LOG10_Stream(this);
       RetCode retCode = LOG10_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

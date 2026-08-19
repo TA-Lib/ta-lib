@@ -1114,10 +1114,6 @@ public partial class Core
    {
       if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
       if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      foreach( double taFiniteV in inHigh )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("PLUS_DM", "open", RetCode.BadParam);
-      foreach( double taFiniteV in inLow )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("PLUS_DM", "open", RetCode.BadParam);
       return PLUS_DM_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
 
@@ -1150,10 +1146,6 @@ public partial class Core
    {
       if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
       if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      foreach( double taFiniteV in inHigh )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("PLUS_DM", "openAndFill", RetCode.BadParam);
-      foreach( double taFiniteV in inLow )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("PLUS_DM", "openAndFill", RetCode.BadParam);
       PLUS_DM_Stream sp = new PLUS_DM_Stream(this);
       RetCode retCode = PLUS_DM_OpenAndFillBody(sp, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

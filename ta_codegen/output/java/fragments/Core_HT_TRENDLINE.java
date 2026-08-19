@@ -1887,11 +1887,6 @@
     */
    public HT_TRENDLINE_Stream HT_TRENDLINE_Open( double inReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("HT_TRENDLINE open: BadParam");
-      }
       return HT_TRENDLINE_OpenInternal(inReal, 0);
    }
    /**
@@ -1905,11 +1900,6 @@
     */
    public HT_TRENDLINE_Stream HT_TRENDLINE_OpenAndFill( double inReal[], double outReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("HT_TRENDLINE openAndFill: BadParam");
-      }
       HT_TRENDLINE_Stream sp = new HT_TRENDLINE_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

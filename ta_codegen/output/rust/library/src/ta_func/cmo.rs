@@ -755,9 +755,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_CMO_Open")]
     pub fn CMO_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(CMO_Stream, f64), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.CMO_OpenInternal(inReal, 0, optInTimePeriod)
     }
 
@@ -769,9 +766,6 @@ impl Core {
     pub fn CMO_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(CMO_Stream, OutRange), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.CMO_OpenCore(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

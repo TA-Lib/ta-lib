@@ -628,11 +628,6 @@
     */
    public MININDEX_Stream MININDEX_Open( double inReal[], int optInTimePeriod )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("MININDEX open: BadParam");
-      }
       return MININDEX_OpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
@@ -646,11 +641,6 @@
     */
    public MININDEX_Stream MININDEX_OpenAndFill( double inReal[], int optInTimePeriod, int outInteger[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("MININDEX openAndFill: BadParam");
-      }
       MININDEX_Stream sp = new MININDEX_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

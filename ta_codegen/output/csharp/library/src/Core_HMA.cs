@@ -1438,8 +1438,6 @@ public partial class Core
    public HMA_Stream HMA_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("HMA", "open", RetCode.BadParam);
       return HMA_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -1471,8 +1469,6 @@ public partial class Core
    public HMA_Stream HMA_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("HMA", "openAndFill", RetCode.BadParam);
       HMA_Stream sp = new HMA_Stream(this);
       RetCode retCode = HMA_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

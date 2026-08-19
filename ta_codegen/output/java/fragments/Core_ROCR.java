@@ -575,11 +575,6 @@
     */
    public ROCR_Stream ROCR_Open( double inReal[], int optInTimePeriod )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("ROCR open: BadParam");
-      }
       return ROCR_OpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
@@ -593,11 +588,6 @@
     */
    public ROCR_Stream ROCR_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("ROCR openAndFill: BadParam");
-      }
       ROCR_Stream sp = new ROCR_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

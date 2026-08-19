@@ -628,8 +628,6 @@ public partial class Core
    public SMA_Stream SMA_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("SMA", "open", RetCode.BadParam);
       return SMA_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -660,8 +658,6 @@ public partial class Core
    public SMA_Stream SMA_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("SMA", "openAndFill", RetCode.BadParam);
       SMA_Stream sp = new SMA_Stream(this);
       RetCode retCode = SMA_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

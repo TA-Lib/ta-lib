@@ -427,8 +427,6 @@ public partial class Core
    public FLOOR_Stream FLOOR_Open( ReadOnlySpan<double> inReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("FLOOR", "open", RetCode.BadParam);
       return FLOOR_OpenInternal(inReal, 0);
    }
 
@@ -457,8 +455,6 @@ public partial class Core
    public FLOOR_Stream FLOOR_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("FLOOR", "openAndFill", RetCode.BadParam);
       FLOOR_Stream sp = new FLOOR_Stream(this);
       RetCode retCode = FLOOR_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

@@ -437,10 +437,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_NVI_Open")]
     pub fn NVI_Open(&self, inClose: &[f64], inVolume: &[f64], ) -> Result<(NVI_Stream, f64), RetCode> {
-        if inClose.iter().any(|v| !v.is_finite())
-            || inVolume.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.NVI_OpenInternal(inClose, inVolume, 0)
     }
 
@@ -452,10 +448,6 @@ impl Core {
     pub fn NVI_OpenAndFill(
         &self, inClose: &[f64], inVolume: &[f64], outReal: &mut [f64],
     ) -> Result<(NVI_Stream, OutRange), RetCode> {
-        if inClose.iter().any(|v| !v.is_finite())
-            || inVolume.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.NVI_OpenCore(inClose, inVolume, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

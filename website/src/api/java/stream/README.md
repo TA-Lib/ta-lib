@@ -101,7 +101,9 @@ One narrow exception to "the handle is unchanged": a *composed* indicator drives
 
 The difference is the retained state. Batch computes and forgets, so a NaN reaches the outputs depending on that bar and no others; a stream handle carries state forward, so a single non-finite bar would poison every value it produces afterwards, long after the feed recovers. Rejecting the bar and leaving the handle usable is more useful than accepting it and going permanently NaN.
 
-This covers the warm-up history at open, every bar value at update/peek, and a real optional parameter that is NaN — which the batch range check lets through, since `x < min` and `x > max` are both false for NaN.
+This covers every bar value at update/peek, and a real optional parameter that is NaN — which a plain range check lets through, since `x < min` and `x > max` are both false for NaN.
+
+It does **not** cover the warm-up history, or any other input **array**. Arrays are never scanned: keeping one free of NaN and infinities is the caller's responsibility, and the effect of a non-finite element on the output is unspecified.
 
 
 ## Discovering streamable functions

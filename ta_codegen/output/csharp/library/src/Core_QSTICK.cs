@@ -685,10 +685,6 @@ public partial class Core
    {
       if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
       if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
-      foreach( double taFiniteV in inOpen )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("QSTICK", "open", RetCode.BadParam);
-      foreach( double taFiniteV in inClose )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("QSTICK", "open", RetCode.BadParam);
       return QSTICK_OpenInternal(inOpen, inClose, 0, optInTimePeriod);
    }
 
@@ -721,10 +717,6 @@ public partial class Core
    {
       if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
       if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
-      foreach( double taFiniteV in inOpen )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("QSTICK", "openAndFill", RetCode.BadParam);
-      foreach( double taFiniteV in inClose )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("QSTICK", "openAndFill", RetCode.BadParam);
       QSTICK_Stream sp = new QSTICK_Stream(this);
       RetCode retCode = QSTICK_OpenAndFillBody(sp, inOpen, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

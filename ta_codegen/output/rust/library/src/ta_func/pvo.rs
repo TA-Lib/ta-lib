@@ -536,9 +536,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_PVO_Open")]
     pub fn PVO_Open(&self, inVolume: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, optInMAType: MAType) -> Result<(PVO_Stream, f64), RetCode> {
-        if inVolume.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.PVO_OpenInternal(inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType)
     }
 
@@ -550,9 +547,6 @@ impl Core {
     pub fn PVO_OpenAndFill(
         &self, inVolume: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType, outReal: &mut [f64],
     ) -> Result<(PVO_Stream, OutRange), RetCode> {
-        if inVolume.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.PVO_OpenCore(inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

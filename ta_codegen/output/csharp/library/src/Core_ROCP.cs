@@ -635,8 +635,6 @@ public partial class Core
    public ROCP_Stream ROCP_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("ROCP", "open", RetCode.BadParam);
       return ROCP_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -667,8 +665,6 @@ public partial class Core
    public ROCP_Stream ROCP_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("ROCP", "openAndFill", RetCode.BadParam);
       ROCP_Stream sp = new ROCP_Stream(this);
       RetCode retCode = ROCP_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

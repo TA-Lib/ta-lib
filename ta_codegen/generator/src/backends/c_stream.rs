@@ -352,42 +352,29 @@ fn finite_bar_check(func: &FuncDef, indent: &str, fail: &str) -> String {
     format!("{indent}if( {} ) return {fail};\n", conds.join(" || "))
 }
 
-/// The warm-up-history finite-input rejection for the PUBLIC `Open` /
-/// `OpenAndFill`: one pass over the caller's arrays, all inputs at each bar so
-/// the series are walked together rather than once each.
+/// The null + range guards at the PUBLIC `Open` / `OpenAndFill` entry.
 ///
-/// Emitted at the public entry points ONLY, never in `OpenInternal` /
-/// `OpenAndFillInternal`. Those are the composition seams: a composed open hands
-/// its sub-streams slices of the very buffer that was validated here, so a scan
-/// there would re-walk validated data once per sub-call — on the one tier #192
-/// just made single-pass — and, worse, would apply the caller-boundary contract
-/// to library-computed intermediates, which is not what it means.
-fn finite_history_check(func: &FuncDef, fail: &str) -> String {
+/// `OpenCore` repeats them, so this reads like a duplicate. It is not, and the
+/// reason differs between the two entry points:
+///
+/// - `Open` delegates through `OpenInternal`, which hands `OpenCore` a private
+///   `sink_outReal` and copies it out afterwards. `OpenCore`'s `!outReal` test
+///   therefore never sees the CALLER's pointer, and without the check here
+///   `TA_<N>_Open( &s, data, n, p, NULL )` would run to completion and then
+///   dereference NULL on the copy-out. This wrapper is the only place that
+///   pointer is checkable.
+/// - `OpenAndFill` calls `OpenCore` directly, so the null checks are genuinely
+///   repeated — but the alias guard emitted after these runs BEFORE `OpenCore`
+///   sees anything, so dropping them would let an output aliasing its input on
+///   an over-long history report `TA_BAD_PARAM` where it reports
+///   `TA_OUT_OF_RANGE_END_INDEX` today.
+fn public_open_guards(func: &FuncDef, fail: &str) -> String {
     let inputs = streaming::input_array_names(func);
     if inputs.is_empty() {
         return String::new();
     }
-    let conds: Vec<String> = inputs
-        .iter()
-        .map(|i| format!("!TA_IS_FINITE( {i}[taFiniteIdx] )"))
-        .collect();
-    format!(
-        "   {{\n      int taFiniteIdx;\n      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )\n         if( {} ) return {fail};\n   }}\n",
-        conds.join(" ||\n             ")
-    )
-}
-
-/// The null + range guards the history scan needs before it can dereference
-/// anything. `OpenCore` repeats them; that duplication is deliberate, because the
-/// scan has to run at the public entry and `OpenCore` is still reachable through
-/// the internal entry points.
-fn finite_history_guards(func: &FuncDef, fail: &str) -> String {
-    let inputs = streaming::input_array_names(func);
-    if inputs.is_empty() {
-        return String::new();
-    }
-    // The OUTPUT pointers are checked here too, even though the scan does not
-    // touch them: `OpenCore` rejects a NULL output BEFORE it range-checks
+    // The OUTPUT pointers are checked here too, even though this wrapper does
+    // not touch them: `OpenCore` rejects a NULL output BEFORE it range-checks
     // `historyLen`, so leaving them out would make a >TA_MAX_INDEX history with
     // a NULL output report TA_OUT_OF_RANGE_END_INDEX where it used to report
     // TA_BAD_PARAM. Same set, same order, same answer.
@@ -433,8 +420,7 @@ fn emit_open_wrapper(o: &mut String, func: &FuncDef) {
     // OpenCore, which normally does it, is not reached.
     let _ = writeln!(o, "   if( !stream ) return TA_BAD_PARAM;");
     let _ = writeln!(o, "   *stream = NULL;");
-    o.push_str(&finite_history_guards(func, "TA_BAD_PARAM"));
-    o.push_str(&finite_history_check(func, "TA_BAD_PARAM"));
+    o.push_str(&public_open_guards(func, "TA_BAD_PARAM"));
     let _ = writeln!(o, "   return TA_{n}_OpenInternal( stream, {hist}0, historyLen, {opts}{outputs} );");
     let _ = writeln!(o, "}}\n");
 }
@@ -508,7 +494,7 @@ fn emit_open_and_fill_wrapper(o: &mut String, func: &FuncDef) {
             .map(|x| format!("!{x}")),
     );
     let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", null_checks.join(" || "));
-    o.push_str(&finite_history_guards(func, "TA_BAD_PARAM"));
+    o.push_str(&public_open_guards(func, "TA_BAD_PARAM"));
     // Cast to `const void *` so the comparison is well-typed for any output
     // element type (an integer output vs double inputs would otherwise warn
     // "comparison of distinct pointer types lacks a cast").
@@ -526,7 +512,6 @@ fn emit_open_and_fill_wrapper(o: &mut String, func: &FuncDef) {
     if !alias.is_empty() {
         let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", alias.join(" || "));
     }
-    o.push_str(&finite_history_check(func, "TA_BAD_PARAM"));
     let _ = writeln!(
         o,
         "   return TA_{n}_OpenCore( {}outBegIdx, outNBElement, {}, 1 );",
@@ -1990,11 +1975,6 @@ fn emit_dispatch_open(
         if !alias.is_empty() {
             let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", alias.join(" || "));
         }
-        // Public entry point: the caller's history is scanned here. The Scalar
-        // mode is OpenInternal (private) and the FillInternal mode is the
-        // composition seam — both reach the caller's data only through the public
-        // Open wrapper, which scans it there.
-        o.push_str(&finite_history_check(func, "TA_BAD_PARAM"));
     }
     o.push_str(&emit_opt_param_validation(func, "TA_BAD_PARAM", enums));
     let _ = writeln!(o, "\n   sp = (struct TA_{n}_Stream *)TA_Malloc( sizeof(*sp) );");
@@ -3157,7 +3137,6 @@ fn emit_period_bank(
     if !alias.is_empty() {
         let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", alias.join(" || "));
     }
-    o.push_str(&finite_history_check(func, "TA_BAD_PARAM"));
     o.push_str(&emit_opt_param_validation(func, "TA_BAD_PARAM", enums));
     let _ = writeln!(o, "   if( {min} > {max} ) return TA_BAD_PARAM;");
     let _ = writeln!(

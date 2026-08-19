@@ -366,11 +366,6 @@
     */
    public TAN_Stream TAN_Open( double inReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("TAN open: BadParam");
-      }
       return TAN_OpenInternal(inReal, 0);
    }
    /**
@@ -384,11 +379,6 @@
     */
    public TAN_Stream TAN_OpenAndFill( double inReal[], double outReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("TAN openAndFill: BadParam");
-      }
       TAN_Stream sp = new TAN_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

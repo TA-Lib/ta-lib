@@ -965,8 +965,6 @@ public partial class Core
    public MINMAX_Stream MINMAX_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MINMAX", "open", RetCode.BadParam);
       return MINMAX_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -1000,8 +998,6 @@ public partial class Core
    public MINMAX_Stream MINMAX_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outMin, Span<double> outMax )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MINMAX", "openAndFill", RetCode.BadParam);
       MINMAX_Stream sp = new MINMAX_Stream(this);
       RetCode retCode = MINMAX_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outMin, outMax);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

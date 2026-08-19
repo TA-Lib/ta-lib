@@ -983,8 +983,6 @@ public partial class Core
    public T3_Stream T3_Open( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInVFactor )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("T3", "open", RetCode.BadParam);
       return T3_OpenInternal(inReal, 0, optInTimePeriod, optInVFactor);
    }
 
@@ -1017,8 +1015,6 @@ public partial class Core
    public T3_Stream T3_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInVFactor, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("T3", "openAndFill", RetCode.BadParam);
       T3_Stream sp = new T3_Stream(this);
       RetCode retCode = T3_OpenAndFillBody(sp, inReal, optInTimePeriod, optInVFactor, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

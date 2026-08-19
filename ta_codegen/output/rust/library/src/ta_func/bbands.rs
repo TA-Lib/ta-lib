@@ -873,9 +873,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_BBANDS_Open")]
     pub fn BBANDS_Open(&self, inReal: &[f64], optInTimePeriod: i32, optInNbDevUp: f64, optInNbDevDn: f64, optInMAType: MAType) -> Result<(BBANDS_Stream, (f64, f64, f64)), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.BBANDS_OpenInternal(inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType)
     }
 
@@ -894,9 +891,6 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         if outRealMiddleBand.as_ptr() == outRealLowerBand.as_ptr() {
-            return Err(RetCode::BadParam);
-        }
-        if inReal.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;

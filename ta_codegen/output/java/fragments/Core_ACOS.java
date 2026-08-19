@@ -372,11 +372,6 @@
     */
    public ACOS_Stream ACOS_Open( double inReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("ACOS open: BadParam");
-      }
       return ACOS_OpenInternal(inReal, 0);
    }
    /**
@@ -390,11 +385,6 @@
     */
    public ACOS_Stream ACOS_OpenAndFill( double inReal[], double outReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("ACOS openAndFill: BadParam");
-      }
       ACOS_Stream sp = new ACOS_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

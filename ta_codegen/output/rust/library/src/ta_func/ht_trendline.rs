@@ -1423,9 +1423,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_HT_TRENDLINE_Open")]
     pub fn HT_TRENDLINE_Open(&self, inReal: &[f64], ) -> Result<(HT_TRENDLINE_Stream, f64), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.HT_TRENDLINE_OpenInternal(inReal, 0)
     }
 
@@ -1437,9 +1434,6 @@ impl Core {
     pub fn HT_TRENDLINE_OpenAndFill(
         &self, inReal: &[f64], outReal: &mut [f64],
     ) -> Result<(HT_TRENDLINE_Stream, OutRange), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.HT_TRENDLINE_OpenCore(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

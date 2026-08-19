@@ -510,11 +510,6 @@ TA_LIB_API TA_RetCode TA_PVO_Open( TA_PVO_Stream **stream, const double inVolume
    if( !inVolume || !outReal ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   {
-      int taFiniteIdx;
-      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
-         if( !TA_IS_FINITE( inVolume[taFiniteIdx] ) ) return TA_BAD_PARAM;
-   }
    return TA_PVO_OpenInternal( stream, inVolume, 0, historyLen, optInFastPeriod, optInSlowPeriod, optInMAType, outReal );
 }
 
@@ -527,11 +522,6 @@ TA_LIB_API TA_RetCode TA_PVO_OpenAndFill( TA_PVO_Stream **stream, const double i
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inVolume ) return TA_BAD_PARAM;
-   {
-      int taFiniteIdx;
-      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
-         if( !TA_IS_FINITE( inVolume[taFiniteIdx] ) ) return TA_BAD_PARAM;
-   }
    return TA_PVO_OpenCore( stream, inVolume, 0, historyLen, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1 );
 }
 

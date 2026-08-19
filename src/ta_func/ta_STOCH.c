@@ -1107,13 +1107,6 @@ TA_LIB_API TA_RetCode TA_STOCH_Open( TA_STOCH_Stream **stream, const double inHi
    if( !inHigh || !inLow || !inClose || !outSlowK || !outSlowD ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   {
-      int taFiniteIdx;
-      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
-         if( !TA_IS_FINITE( inHigh[taFiniteIdx] ) ||
-             !TA_IS_FINITE( inLow[taFiniteIdx] ) ||
-             !TA_IS_FINITE( inClose[taFiniteIdx] ) ) return TA_BAD_PARAM;
-   }
    return TA_STOCH_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outSlowK, outSlowD );
 }
 
@@ -1126,13 +1119,6 @@ TA_LIB_API TA_RetCode TA_STOCH_OpenAndFill( TA_STOCH_Stream **stream, const doub
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outSlowK == (const void *)inHigh || (const void *)outSlowK == (const void *)inLow || (const void *)outSlowK == (const void *)inClose || (const void *)outSlowD == (const void *)inHigh || (const void *)outSlowD == (const void *)inLow || (const void *)outSlowD == (const void *)inClose || (const void *)outSlowK == (const void *)outSlowD ) return TA_BAD_PARAM;
-   {
-      int taFiniteIdx;
-      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
-         if( !TA_IS_FINITE( inHigh[taFiniteIdx] ) ||
-             !TA_IS_FINITE( inLow[taFiniteIdx] ) ||
-             !TA_IS_FINITE( inClose[taFiniteIdx] ) ) return TA_BAD_PARAM;
-   }
    return TA_STOCH_OpenCore( stream, inHigh, inLow, inClose, 0, historyLen, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD, 1 );
 }
 

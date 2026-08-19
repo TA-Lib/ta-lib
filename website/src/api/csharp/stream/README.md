@@ -98,7 +98,7 @@ These are record structs, so `==` is .NET's `double` equality: `NaN` equals `NaN
 | Fewer than `lookback + 1` history bars | `InsufficientHistoryException` |
 | An optional parameter outside its documented range | `ArgumentException` |
 | An output array aliasing an input or another output | `ArgumentException` |
-| A non-finite value in the history, a bar, or a real parameter | `ArgumentException` |
+| A non-finite bar, or a non-finite real parameter | `ArgumentException` |
 
 One narrow exception to "the handle is unchanged": a *composed* indicator drives its sub-stages through their own public update, so a value the library computed internally is re-checked there. If such an intermediate overflowed to an infinity, the rejection would surface after earlier sub-stages had advanced, and would name the sub-stage. It needs input magnitudes around 1e306 and up — the overflow class TA-Lib already treats as out of scope — but the guarantee is stated for the caller-supplied case, which is the one you can provoke.
 
@@ -107,7 +107,9 @@ One narrow exception to "the handle is unchanged": a *composed* indicator drives
 
 The difference is the retained state. Batch computes and forgets, so a NaN reaches the outputs depending on that bar and no others; a stream handle carries state forward, so a single non-finite bar would poison every value it produces afterwards, long after the feed recovers. Rejecting the bar and leaving the handle usable is more useful than accepting it and going permanently NaN.
 
-This covers the warm-up history at open, every bar value at update/peek, and a real optional parameter that is NaN — which the batch range check lets through, since `x < min` and `x > max` are both false for NaN.
+This covers every bar value at update/peek, and a real optional parameter that is NaN — which a plain range check lets through, since `x < min` and `x > max` are both false for NaN.
+
+It does **not** cover the warm-up history, or any other input **array**. Arrays are never scanned: keeping one free of NaN and infinities is the caller's responsibility, and the effect of a non-finite element on the output is unspecified.
 
 
 `InsufficientHistoryException` derives from `ArgumentException`, so you can catch it specifically — it is the one routine, data-dependent rejection — or catch every open failure uniformly. Messages carry a stable `"<NAME> open: "` prefix, and it is always the *called* function's name: `core.MA_Open(...)` rejecting reports `MA open:`, never the name of whatever moving average it delegates to.

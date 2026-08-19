@@ -730,8 +730,6 @@ public partial class Core
    public TSF_Stream TSF_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("TSF", "open", RetCode.BadParam);
       return TSF_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -763,8 +761,6 @@ public partial class Core
    public TSF_Stream TSF_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("TSF", "openAndFill", RetCode.BadParam);
       TSF_Stream sp = new TSF_Stream(this);
       RetCode retCode = TSF_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

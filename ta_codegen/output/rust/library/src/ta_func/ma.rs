@@ -555,9 +555,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_MA_Open")]
     pub fn MA_Open(&self, inReal: &[f64], optInTimePeriod: i32, optInMAType: MAType) -> Result<(MA_Stream, f64), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.MA_OpenInternal(inReal, 0, optInTimePeriod, optInMAType)
     }
 
@@ -574,9 +571,6 @@ impl Core {
         }
         if inReal.len() > Self::MAX_INDEX + 1 {
             return Err(RetCode::OutOfRangeEndIndex);
-        }
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
         }
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;

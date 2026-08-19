@@ -192,7 +192,7 @@ public class StreamSmokeTest {
     }
 
     private static void openMustReject(String what, Call r) {
-        check(rejects(r), what + ": open must reject a non-finite history");
+        check(rejects(r), what + ": open must reject a non-finite parameter");
         nfOpenRejects++;
     }
 
@@ -207,16 +207,18 @@ public class StreamSmokeTest {
     }
 
     /**
-     * The streaming tier rejects a non-finite input where the batch API computes
-     * on it — the one place the two disagree about what they accept, because a
-     * handle RETAINS state and a single NaN bar would poison every later value
-     * it produces.
+     * Non-finite rejection is a property of SINGLE VALUES, never of arrays.
      *
-     * <p>What is pinned: {@code Open}/{@code OpenAndFill} reject a history
-     * holding NaN or an infinity in any input series; {@code update}/{@code peek}
-     * reject a non-finite bar in any input slot; and — the property that makes
-     * the rejection useful rather than merely safe — the handle is UNCHANGED by a
-     * rejected call, verified against a control stream rather than by inspection.
+     * <p>What is pinned: {@code update}/{@code peek} reject a non-finite bar in
+     * any input slot; a real optional parameter that is NaN is rejected; and —
+     * the property that makes the rejection useful rather than merely safe — the
+     * handle is UNCHANGED by a rejected call, verified against a control stream
+     * rather than by inspection.
+     *
+     * <p>What is deliberately NOT pinned: the warm-up history handed to
+     * {@code Open}/{@code OpenAndFill}. It is an input array, and the library
+     * does not scan input arrays — see {@code docs/error-handling-spec.md} rule
+     * N-5. Its effect on the output is unspecified.
      *
      * <p>Coverage is by stream TIER, not by function count: the check is emitted
      * from one place, but into the entry points of five different tiers. SMA is
@@ -231,61 +233,6 @@ public class StreamSmokeTest {
         final int warm = 60;
 
         for (final double v : bad) {
-            /* --- Open: poison one bar of one series, restore afterwards. --- */
-            final double[] c = java.util.Arrays.copyOf(close, warm);
-            final double[] h = java.util.Arrays.copyOf(high, warm);
-            final double[] l = java.util.Arrays.copyOf(low, warm);
-            final double[] o = java.util.Arrays.copyOf(open, warm);
-            final double[] periods = new double[warm];
-            for (int i = 0; i < warm; i++) {
-                periods[i] = 5.0 + (i % 11);
-            }
-
-            double savedC = c[warm - 1];
-            c[warm - 1] = v;
-            openMustReject("SMA", () -> core.SMA_Open(c, 14));
-            openMustReject("SMA.openAndFill", () -> core.SMA_OpenAndFill(c, 14, new double[warm]));
-            openMustReject("MA", () -> core.MA_Open(c, 14, MAType.EMA));
-            openMustReject("BBANDS", () -> core.BBANDS_Open(c, 20, 2.0, 2.0, MAType.SMA));
-            openMustReject("MAVP", () -> core.MAVP_Open(c, periods, 2, 30, MAType.SMA));
-            c[warm - 1] = savedC;
-
-            /* The period series is an input like any other, and the one that
-             * reaches an int conversion. */
-            double savedP = periods[0];
-            periods[0] = v;
-            openMustReject("MAVP.periods", () -> core.MAVP_Open(c, periods, 2, 30, MAType.SMA));
-            /* OpenAndFill on the DISPATCH and PERIOD-BANK tiers. Both hand-roll
-             * their own fill entry point rather than sharing the one every
-             * loop-tier function uses, so a probe covering only SMA cannot see
-             * them. MA at period 1 is the dispatch IDENTITY arm, which copies
-             * the bar straight into the caller's array without touching a
-             * sub-stream -- the one fill path no sub-stream's scan can cover. */
-            openMustReject("MAVP.openAndFill",
-                () -> core.MAVP_OpenAndFill(c, periods, 2, 30, MAType.SMA, new double[warm]));
-            periods[0] = savedP;
-
-            double savedC2 = c[warm - 1];
-            c[warm - 1] = v;
-            openMustReject("MA.openAndFill(identity)",
-                () -> core.MA_OpenAndFill(c, 1, MAType.SMA, new double[warm]));
-            c[warm - 1] = savedC2;
-
-            /* One price series at a time, so a check reading only the first
-             * input cannot pass. */
-            double savedH = h[warm - 1];
-            h[warm - 1] = v;
-            openMustReject("MINUS_DI.high", () -> core.MINUS_DI_Open(h, l, c, 14));
-            openMustReject("STOCH.high",
-                () -> core.STOCH_Open(h, l, c, 5, 3, MAType.SMA, 3, MAType.SMA));
-            openMustReject("CDLDOJI.high", () -> core.CDLDOJI_Open(o, h, l, c));
-            h[warm - 1] = savedH;
-
-            double savedL = l[0];
-            l[0] = v;
-            openMustReject("MINUS_DI.low", () -> core.MINUS_DI_Open(h, l, c, 14));
-            l[0] = savedL;
-
             /* --- update / peek, and the handle-unchanged property. --------- */
             final double[] cw = java.util.Arrays.copyOf(close, warm);
             final double[] hw = java.util.Arrays.copyOf(high, warm);
@@ -376,7 +323,7 @@ public class StreamSmokeTest {
 
         /* Non-vacuity. Literal floors: a count derived from the loop above moves
          * with it and would let the assertions inside be deleted. */
-        check(nfOpenRejects >= 38 && nfBarRejects >= 57 && nfStateHolds >= 27,
+        check(nfOpenRejects >= 2 && nfBarRejects >= 57 && nfStateHolds >= 27,
               "the non-finite gate ran fewer checks than it was written with ("
               + nfOpenRejects + "/" + nfBarRejects + "/" + nfStateHolds + ")");
     }

@@ -2038,8 +2038,6 @@ public partial class Core
    public MAMA_Stream MAMA_Open( ReadOnlySpan<double> inReal, double optInFastLimit, double optInSlowLimit )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MAMA", "open", RetCode.BadParam);
       return MAMA_OpenInternal(inReal, 0, optInFastLimit, optInSlowLimit);
    }
 
@@ -2074,8 +2072,6 @@ public partial class Core
    public MAMA_Stream MAMA_OpenAndFill( ReadOnlySpan<double> inReal, double optInFastLimit, double optInSlowLimit, Span<double> outMAMA, Span<double> outFAMA )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MAMA", "openAndFill", RetCode.BadParam);
       MAMA_Stream sp = new MAMA_Stream(this);
       RetCode retCode = MAMA_OpenAndFillBody(sp, inReal, optInFastLimit, optInSlowLimit, out int outBegIdx, out int outNBElement, outMAMA, outFAMA);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

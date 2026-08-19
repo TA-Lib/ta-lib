@@ -870,10 +870,6 @@ public partial class Core
    {
       if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
       if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      foreach( double taFiniteV in inHigh )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("AROON", "open", RetCode.BadParam);
-      foreach( double taFiniteV in inLow )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("AROON", "open", RetCode.BadParam);
       return AROON_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
 
@@ -908,10 +904,6 @@ public partial class Core
    {
       if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
       if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      foreach( double taFiniteV in inHigh )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("AROON", "openAndFill", RetCode.BadParam);
-      foreach( double taFiniteV in inLow )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("AROON", "openAndFill", RetCode.BadParam);
       AROON_Stream sp = new AROON_Stream(this);
       RetCode retCode = AROON_OpenAndFillBody(sp, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outAroonDown, outAroonUp);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

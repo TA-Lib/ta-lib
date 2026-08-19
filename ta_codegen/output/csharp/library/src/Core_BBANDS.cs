@@ -1197,8 +1197,6 @@ public partial class Core
    public BBANDS_Stream BBANDS_Open( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("BBANDS", "open", RetCode.BadParam);
       return BBANDS_OpenInternal(inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
    }
 
@@ -1239,8 +1237,6 @@ public partial class Core
    public BBANDS_Stream BBANDS_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, Span<double> outRealUpperBand, Span<double> outRealMiddleBand, Span<double> outRealLowerBand )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("BBANDS", "openAndFill", RetCode.BadParam);
       BBANDS_Stream sp = new BBANDS_Stream(this);
       RetCode retCode = BBANDS_OpenAndFillBody(sp, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out int outBegIdx, out int outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

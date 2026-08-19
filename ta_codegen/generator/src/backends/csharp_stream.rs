@@ -1112,29 +1112,6 @@ fn finite_bar_check(func: &FuncDef, indent: &str, what: &str) -> String {
     )
 }
 
-/// The warm-up-history finite-input rejection for the PUBLIC `Open` /
-/// `OpenAndFill`, emitted at those entry points ONLY.
-///
-/// `OpenInternal` / `OpenAndFillInternal` are the composition seams: a composed
-/// open hands its sub-streams slices of the very span validated here, so a scan
-/// there would re-walk validated data once per sub-call, and would apply the
-/// caller-boundary contract to library-computed intermediates.
-fn finite_history_check(func: &FuncDef, indent: &str, what: &str) -> String {
-    let inputs = streaming::input_array_names(func);
-    if inputs.is_empty() {
-        return String::new();
-    }
-    let n = base_name(func);
-    let mut out = String::new();
-    for i in &inputs {
-        let _ = writeln!(
-            out,
-            "{indent}foreach( double taFiniteV in {i} )\n\
-             {indent}   if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure(\"{n}\", \"{what}\", RetCode.BadParam);"
-        );
-    }
-    out
-}
 
 fn emit_update_peek_value_clone(o: &mut String, func: &FuncDef, reuse: bool) {
     let class = stream_class_name(func);
@@ -2420,7 +2397,6 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef) {
             "      if( {input}.IsEmpty ) throw new ArgumentException(\"{input} is empty\", nameof({input}));"
         );
     }
-    o.push_str(&finite_history_check(func, "      ", "open"));
     let _ = writeln!(
         o,
         "      return {base}_OpenInternal({}, 0{opt_fwd_str});",
@@ -2517,7 +2493,6 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef) {
             "      if( {input}.IsEmpty ) throw new ArgumentException(\"{input} is empty\", nameof({input}));"
         );
     }
-    o.push_str(&finite_history_check(func, "      ", "openAndFill"));
     let _ = writeln!(o, "      {class} sp = new {class}(this);");
     let _ = writeln!(
         o,

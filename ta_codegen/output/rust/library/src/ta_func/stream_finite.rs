@@ -7,19 +7,23 @@
 //! nothing here ships in a release build. Run it with
 //! `cargo test --lib -p ta-lib`.
 //!
-//! The streaming API rejects a non-finite input where the batch API computes on
-//! it. That is the only place the two tiers disagree about what they accept, and
-//! it is deliberate: batch is handed a series, computes and forgets, so a NaN
-//! reaches the outputs depending on that bar and no others. A handle RETAINS
-//! state, so one non-finite bar poisons every value it will ever produce
-//! afterwards — long after the feed recovers. Rejecting the bar and leaving the
-//! handle untouched is strictly more useful than accepting it and going
-//! permanently NaN.
+//! Non-finite rejection is a property of SINGLE VALUES, never of input arrays.
 //!
-//! Three properties, per function:
+//! An input ARRAY is never scanned, in either tier — including the warm-up
+//! history handed to `_Open` / `_OpenAndFill`. Keeping one free of NaN and
+//! infinities is the caller's responsibility and the effect is unspecified; see
+//! `docs/error-handling-spec.md`, rule N-5.
 //!
-//! 1. `_Open` / `_OpenAndFill` reject a warm-up history holding NaN, `+INFINITY`
-//!    or `-INFINITY`, in ANY input series, at the first or last bar.
+//! A SINGLE VALUE is always checked, because it is one comparison, and for the
+//! streaming tier it earns that cost twice over: batch is handed a series,
+//! computes and forgets, so a NaN reaches the outputs depending on that bar and
+//! no others, while a handle RETAINS state and one non-finite bar poisons every
+//! value it will ever produce afterwards — long after the feed recovers.
+//! Rejecting the bar and leaving the handle untouched is strictly more useful
+//! than accepting it and going permanently NaN.
+//!
+//! Two properties, per function:
+//!
 //! 2. `update` / `peek` reject a non-finite bar in ANY input slot.
 //! 3. The handle is UNCHANGED by a rejected call. This is the property that
 //!    makes the rejection useful rather than merely safe, and it is checked
@@ -27,6 +31,8 @@
 //!    the same history, one of them offered the bad bar first, must agree BIT
 //!    FOR BIT on the next good bar. A rejection that half-advanced the state
 //!    would satisfy (2) and fail only here.
+//!
+//! (The numbering keeps 2 and 3: property 1 was the history scan, withdrawn.)
 //!
 //! Coverage is by stream TIER, not by function count. The check is emitted from
 //! one place in `rust_stream.rs`, but into the entry points of five different
@@ -68,23 +74,6 @@ fn series(n: usize) -> (Vec<f64>, Vec<f64>, Vec<f64>, Vec<f64>, Vec<f64>) {
 /// The three values the tier refuses.
 const BAD: [f64; 3] = [f64::NAN, f64::INFINITY, f64::NEG_INFINITY];
 
-/// Poison `arr[idx]`, run `f`, restore. `f` must return the open's `Result`.
-fn with_poison<T>(arr: &mut [f64], idx: usize, bad: f64, f: impl FnOnce(&[f64]) -> T) -> T {
-    let saved = arr[idx];
-    arr[idx] = bad;
-    let out = f(arr);
-    arr[idx] = saved;
-    out
-}
-
-/// Count a probe and hand its verdict straight to the `assert!` that wraps it.
-///
-/// Counting has to be INSIDE the assertion, not next to it: a counter bumped
-/// once per loop iteration -- or on its own line after the assert -- stays
-/// healthy while the assertion it was meant to witness is deleted, which is the
-/// exact failure a non-vacuity floor exists to catch. Written this way the two
-/// are one expression and cannot be separated. (The C test does the same by
-/// putting the increment inside its assertion macro.)
 fn probed(n: &mut usize, ok: bool) -> bool {
     *n += 1;
     ok
@@ -92,119 +81,6 @@ fn probed(n: &mut usize, ok: bool) -> bool {
 
 fn is_bad_param<T>(r: &Result<T, RetCode>) -> bool {
     matches!(r, Err(RetCode::BadParam))
-}
-
-#[test]
-fn open_rejects_a_non_finite_history() {
-    let core = Core::new();
-    let (open, high, low, close, periods) = series(WARM + 2);
-    let mut checked = 0usize;
-
-    for &bad in &BAD {
-        for &idx in &[0usize, WARM - 1] {
-            let mut c = close[..WARM].to_vec();
-            assert!(
-                probed(&mut checked, with_poison(&mut c, idx, bad, |c| is_bad_param(&core.SMA_Open(c, 14)))),
-                "SMA_Open accepted {bad} at bar {idx}"
-            );
-            let mut fill = vec![0.0_f64; WARM];
-            let mut c2 = close[..WARM].to_vec();
-            let saved = c2[idx];
-            c2[idx] = bad;
-            assert!(
-                probed(&mut checked, is_bad_param(&core.SMA_OpenAndFill(&c2, 14, &mut fill))),
-                "SMA_OpenAndFill accepted {bad} at bar {idx}"
-            );
-            c2[idx] = saved;
-
-            let mut m = close[..WARM].to_vec();
-            assert!(
-                probed(&mut checked, with_poison(&mut m, idx, bad, |c| is_bad_param(&core.MA_Open(c, 14, MAType::EMA)))),
-                "MA_Open accepted {bad} at bar {idx}"
-            );
-            let mut b = close[..WARM].to_vec();
-            assert!(
-                probed(&mut checked, with_poison(&mut b, idx, bad, |c| is_bad_param(
-                    &core.BBANDS_Open(c, 20, 2.0, 2.0, MAType::SMA)
-                ))),
-                "BBANDS_Open accepted {bad} at bar {idx}"
-            );
-
-            // One price series at a time, so a check that read only the first
-            // input cannot pass.
-            let mut h = high[..WARM].to_vec();
-            let l = low[..WARM].to_vec();
-            let cc = close[..WARM].to_vec();
-            assert!(
-                probed(&mut checked, with_poison(&mut h, idx, bad, |h| is_bad_param(
-                    &core.MINUS_DI_Open(h, &l, &cc, 14)
-                ))),
-                "MINUS_DI_Open accepted {bad} in inHigh at bar {idx}"
-            );
-            let mut l2 = low[..WARM].to_vec();
-            let hh = high[..WARM].to_vec();
-            assert!(
-                probed(&mut checked, with_poison(&mut l2, idx, bad, |l| is_bad_param(
-                    &core.MINUS_DI_Open(&hh, l, &cc, 14)
-                ))),
-                "MINUS_DI_Open accepted {bad} in inLow at bar {idx}"
-            );
-            assert!(
-                probed(&mut checked, with_poison(&mut l2, idx, bad, |l| is_bad_param(
-                    &core.STOCH_Open(&hh, l, &cc, 5, 3, MAType::SMA, 3, MAType::SMA)
-                ))),
-                "STOCH_Open accepted {bad} in inLow at bar {idx}"
-            );
-            let oo = open[..WARM].to_vec();
-            let mut c3 = close[..WARM].to_vec();
-            assert!(
-                probed(&mut checked, with_poison(&mut c3, idx, bad, |c| is_bad_param(
-                    &core.CDLDOJI_Open(&oo, &hh, &l2[..], c)
-                ))),
-                "CDLDOJI_Open accepted {bad} in inClose at bar {idx}"
-            );
-
-            // The period series is an input like any other — and the one that
-            // reaches an `as i32`.
-            let mut p = periods[..WARM].to_vec();
-            assert!(
-                probed(&mut checked, with_poison(&mut p, idx, bad, |p| is_bad_param(
-                    &core.MAVP_Open(&cc, p, 2, 30, MAType::SMA)
-                ))),
-                "MAVP_Open accepted {bad} in inPeriods at bar {idx}"
-            );
-
-            // OpenAndFill on the DISPATCH and PERIOD-BANK tiers. Both hand-roll
-            // their own fill entry point instead of going through the shared
-            // wrapper, so they are the two that a probe covering only SMA (a
-            // loop-tier function) cannot see — and they were both unchecked in
-            // Rust while C, Java and C# rejected the identical call.
-            // MA at period 1 is the dispatch IDENTITY arm, which copies the bar
-            // straight into the caller's buffer without touching a sub-stream:
-            // the one fill path that no sub-stream's own scan can cover.
-            let mut fill = vec![0.0_f64; WARM];
-            let mut mf = close[..WARM].to_vec();
-            let savedm = mf[idx];
-            mf[idx] = bad;
-            assert!(
-                probed(&mut checked, is_bad_param(&core.MA_OpenAndFill(&mf, 1, MAType::SMA, &mut fill))),
-                "MA_OpenAndFill (identity arm) accepted {bad} at bar {idx}"
-            );
-            mf[idx] = savedm;
-
-            let mut vp = periods[..WARM].to_vec();
-            let savedv = vp[idx];
-            vp[idx] = bad;
-            assert!(
-                probed(&mut checked, is_bad_param(&core.MAVP_OpenAndFill(&cc, &vp, 2, 30, MAType::SMA, &mut fill))),
-                "MAVP_OpenAndFill accepted {bad} in inPeriods at bar {idx}"
-            );
-            vp[idx] = savedv;
-        }
-    }
-    // Literal floor, and `checked` is incremented AT each assertion (see
-    // `rejected`), so deleting one trips it.
-    assert!(checked >= 66, "the open sweep ran {checked} probes");
 }
 
 #[test]

@@ -366,11 +366,6 @@
     */
    public ATAN_Stream ATAN_Open( double inReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("ATAN open: BadParam");
-      }
       return ATAN_OpenInternal(inReal, 0);
    }
    /**
@@ -384,11 +379,6 @@
     */
    public ATAN_Stream ATAN_OpenAndFill( double inReal[], double outReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("ATAN openAndFill: BadParam");
-      }
       ATAN_Stream sp = new ATAN_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

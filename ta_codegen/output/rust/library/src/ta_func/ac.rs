@@ -815,10 +815,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_AC_Open")]
     pub fn AC_Open(&self, inHigh: &[f64], inLow: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, optInSignalPeriod: i32) -> Result<(AC_Stream, f64), RetCode> {
-        if inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.AC_OpenInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod)
     }
 
@@ -830,10 +826,6 @@ impl Core {
     pub fn AC_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32, outReal: &mut [f64],
     ) -> Result<(AC_Stream, OutRange), RetCode> {
-        if inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.AC_OpenCore(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

@@ -427,8 +427,6 @@ public partial class Core
    public SIN_Stream SIN_Open( ReadOnlySpan<double> inReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("SIN", "open", RetCode.BadParam);
       return SIN_OpenInternal(inReal, 0);
    }
 
@@ -457,8 +455,6 @@ public partial class Core
    public SIN_Stream SIN_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("SIN", "openAndFill", RetCode.BadParam);
       SIN_Stream sp = new SIN_Stream(this);
       RetCode retCode = SIN_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

@@ -606,12 +606,6 @@ TA_LIB_API TA_RetCode TA_AROON_Open( TA_AROON_Stream **stream, const double inHi
    if( !inHigh || !inLow || !outAroonDown || !outAroonUp ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   {
-      int taFiniteIdx;
-      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
-         if( !TA_IS_FINITE( inHigh[taFiniteIdx] ) ||
-             !TA_IS_FINITE( inLow[taFiniteIdx] ) ) return TA_BAD_PARAM;
-   }
    return TA_AROON_OpenInternal( stream, inHigh, inLow, 0, historyLen, optInTimePeriod, outAroonDown, outAroonUp );
 }
 
@@ -624,12 +618,6 @@ TA_LIB_API TA_RetCode TA_AROON_OpenAndFill( TA_AROON_Stream **stream, const doub
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outAroonDown == (const void *)inHigh || (const void *)outAroonDown == (const void *)inLow || (const void *)outAroonUp == (const void *)inHigh || (const void *)outAroonUp == (const void *)inLow || (const void *)outAroonDown == (const void *)outAroonUp ) return TA_BAD_PARAM;
-   {
-      int taFiniteIdx;
-      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
-         if( !TA_IS_FINITE( inHigh[taFiniteIdx] ) ||
-             !TA_IS_FINITE( inLow[taFiniteIdx] ) ) return TA_BAD_PARAM;
-   }
    return TA_AROON_OpenCore( stream, inHigh, inLow, 0, historyLen, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp, 1 );
 }
 

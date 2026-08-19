@@ -536,14 +536,6 @@
     */
    public NVI_Stream NVI_Open( double inClose[], double inVolume[] )
    {
-      if( inClose.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-            if( !Double.isFinite(inClose[taFiniteIdx]) )
-               throw new IllegalArgumentException("NVI open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-            if( !Double.isFinite(inVolume[taFiniteIdx]) )
-               throw new IllegalArgumentException("NVI open: BadParam");
-      }
       return NVI_OpenInternal(inClose, inVolume, 0);
    }
    /**
@@ -557,14 +549,6 @@
     */
    public NVI_Stream NVI_OpenAndFill( double inClose[], double inVolume[], double outReal[] )
    {
-      if( inClose.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-            if( !Double.isFinite(inClose[taFiniteIdx]) )
-               throw new IllegalArgumentException("NVI openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-            if( !Double.isFinite(inVolume[taFiniteIdx]) )
-               throw new IllegalArgumentException("NVI openAndFill: BadParam");
-      }
       NVI_Stream sp = new NVI_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

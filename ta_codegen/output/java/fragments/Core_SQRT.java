@@ -364,11 +364,6 @@
     */
    public SQRT_Stream SQRT_Open( double inReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("SQRT open: BadParam");
-      }
       return SQRT_OpenInternal(inReal, 0);
    }
    /**
@@ -382,11 +377,6 @@
     */
    public SQRT_Stream SQRT_OpenAndFill( double inReal[], double outReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("SQRT openAndFill: BadParam");
-      }
       SQRT_Stream sp = new SQRT_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -1434,11 +1434,6 @@ TA_LIB_API TA_RetCode TA_HT_PHASOR_Open( TA_HT_PHASOR_Stream **stream, const dou
    if( !inReal || !outInPhase || !outQuadrature ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   {
-      int taFiniteIdx;
-      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
-         if( !TA_IS_FINITE( inReal[taFiniteIdx] ) ) return TA_BAD_PARAM;
-   }
    return TA_HT_PHASOR_OpenInternal( stream, inReal, 0, historyLen, outInPhase, outQuadrature );
 }
 
@@ -1451,11 +1446,6 @@ TA_LIB_API TA_RetCode TA_HT_PHASOR_OpenAndFill( TA_HT_PHASOR_Stream **stream, co
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outInPhase == (const void *)inReal || (const void *)outQuadrature == (const void *)inReal || (const void *)outInPhase == (const void *)outQuadrature ) return TA_BAD_PARAM;
-   {
-      int taFiniteIdx;
-      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
-         if( !TA_IS_FINITE( inReal[taFiniteIdx] ) ) return TA_BAD_PARAM;
-   }
    return TA_HT_PHASOR_OpenCore( stream, inReal, 0, historyLen, outBegIdx, outNBElement, outInPhase, outQuadrature, 1 );
 }
 

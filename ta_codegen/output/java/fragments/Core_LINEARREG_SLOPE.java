@@ -650,11 +650,6 @@
     */
    public LINEARREG_SLOPE_Stream LINEARREG_SLOPE_Open( double inReal[], int optInTimePeriod )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("LINEARREG_SLOPE open: BadParam");
-      }
       return LINEARREG_SLOPE_OpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
@@ -668,11 +663,6 @@
     */
    public LINEARREG_SLOPE_Stream LINEARREG_SLOPE_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("LINEARREG_SLOPE openAndFill: BadParam");
-      }
       LINEARREG_SLOPE_Stream sp = new LINEARREG_SLOPE_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

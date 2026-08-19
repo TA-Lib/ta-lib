@@ -636,14 +636,6 @@ TA_LIB_API TA_RetCode TA_CDLMORNINGDOJISTAR_Open( TA_CDLMORNINGDOJISTAR_Stream *
    if( !inOpen || !inHigh || !inLow || !inClose || !outInteger ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   {
-      int taFiniteIdx;
-      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
-         if( !TA_IS_FINITE( inOpen[taFiniteIdx] ) ||
-             !TA_IS_FINITE( inHigh[taFiniteIdx] ) ||
-             !TA_IS_FINITE( inLow[taFiniteIdx] ) ||
-             !TA_IS_FINITE( inClose[taFiniteIdx] ) ) return TA_BAD_PARAM;
-   }
    return TA_CDLMORNINGDOJISTAR_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, optInPenetration, outInteger );
 }
 
@@ -656,14 +648,6 @@ TA_LIB_API TA_RetCode TA_CDLMORNINGDOJISTAR_OpenAndFill( TA_CDLMORNINGDOJISTAR_S
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
-   {
-      int taFiniteIdx;
-      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
-         if( !TA_IS_FINITE( inOpen[taFiniteIdx] ) ||
-             !TA_IS_FINITE( inHigh[taFiniteIdx] ) ||
-             !TA_IS_FINITE( inLow[taFiniteIdx] ) ||
-             !TA_IS_FINITE( inClose[taFiniteIdx] ) ) return TA_BAD_PARAM;
-   }
    return TA_CDLMORNINGDOJISTAR_OpenCore( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, optInPenetration, outBegIdx, outNBElement, outInteger, 1 );
 }
 

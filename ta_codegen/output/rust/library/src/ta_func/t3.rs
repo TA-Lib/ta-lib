@@ -783,9 +783,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_T3_Open")]
     pub fn T3_Open(&self, inReal: &[f64], optInTimePeriod: i32, optInVFactor: f64) -> Result<(T3_Stream, f64), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.T3_OpenInternal(inReal, 0, optInTimePeriod, optInVFactor)
     }
 
@@ -797,9 +794,6 @@ impl Core {
     pub fn T3_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInVFactor: f64, outReal: &mut [f64],
     ) -> Result<(T3_Stream, OutRange), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.T3_OpenCore(inReal, 0, optInTimePeriod, optInVFactor, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

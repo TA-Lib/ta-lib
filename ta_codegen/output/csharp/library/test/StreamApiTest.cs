@@ -594,7 +594,7 @@ public static class StreamApiTest
 
     private static void OpenMustReject(string what, Action body)
     {
-        ThrowsBadParam(what + ": open must reject a non-finite history", body);
+        ThrowsBadParam(what + ": open must reject a non-finite parameter", body);
         _nfOpen++;
     }
 
@@ -610,13 +610,18 @@ public static class StreamApiTest
         _nfState++;
     }
 
-    /// <summary>The streaming tier rejects a non-finite input where the batch API
-    /// computes on it.</summary>
+    /// <summary>Non-finite rejection is a property of SINGLE VALUES, never of
+    /// arrays.</summary>
     /// <remarks>
-    /// <para>The one place the two tiers disagree about what they accept, and it is
-    /// deliberate: a handle RETAINS state, so a single NaN bar would poison every
-    /// later value it produces, long after the feed recovers. Rejecting it and
-    /// leaving the handle untouched is strictly more useful.</para>
+    /// <para>A bar handed to <c>Update</c>/<c>Peek</c> is checked, and so is a real
+    /// optional parameter: both are one comparison, and a handle RETAINS state, so
+    /// a single NaN bar would poison every later value it produces long after the
+    /// feed recovers. Rejecting it and leaving the handle untouched is strictly
+    /// more useful.</para>
+    /// <para>The warm-up history handed to <c>Open</c>/<c>OpenAndFill</c> is
+    /// deliberately NOT checked: it is an input array, and the library does not
+    /// scan input arrays. Its effect on the output is unspecified — see
+    /// <c>docs/error-handling-spec.md</c> rule N-5.</para>
     /// <para>Coverage is by stream TIER, not by function count. The check is emitted
     /// from one place, but into the entry points of five different tiers: SMA is
     /// the loop tier, MINUS_DI dual-mode, MA the dispatch tier (including its
@@ -648,59 +653,16 @@ public static class StreamApiTest
 
         foreach (double v in bad)
         {
-            /* --- Open / OpenAndFill: one poisoned bar in one series. ------- */
+            /* --- Update / Peek, and the handle-unchanged property. --------- */
+            /* Clean warm-up series: nothing here poisons an input ARRAY, which
+               the library does not scan (rule N-5). Only the per-bar values
+               below carry a non-finite value. */
             var c = closes[..warm].ToArray();
             var h = highs[..warm].ToArray();
             var l = lows[..warm].ToArray();
             var o = opens[..warm].ToArray();
             var p = periods[..warm].ToArray();
 
-            double savedC = c[warm - 1];
-            c[warm - 1] = v;
-            OpenMustReject("SMA", () => core.SMA_Open(c, 14));
-            OpenMustReject("SMA.OpenAndFill", () => core.SMA_OpenAndFill(c, 14, new double[warm]));
-            OpenMustReject("MA", () => core.MA_Open(c, 14, MAType.EMA));
-            OpenMustReject("BBANDS", () => core.BBANDS_Open(c, 20, 2.0, 2.0, MAType.SMA));
-            OpenMustReject("MAVP", () => core.MAVP_Open(c, p, 2, 30, MAType.SMA));
-            c[warm - 1] = savedC;
-
-            /* The period series is an input like any other, and the one that
-               reaches an int conversion. */
-            double savedP = p[0];
-            p[0] = v;
-            OpenMustReject("MAVP.periods", () => core.MAVP_Open(c, p, 2, 30, MAType.SMA));
-            /* OpenAndFill on the DISPATCH and PERIOD-BANK tiers. Both hand-roll
-               their own fill entry point rather than sharing the one every
-               loop-tier function uses, so a probe covering only SMA cannot see
-               them. MA at period 1 is the dispatch IDENTITY arm, which copies the
-               bar straight into the caller's span without touching a sub-stream
-               -- the one fill path no sub-stream's own scan can cover. */
-            OpenMustReject("MAVP.OpenAndFill",
-                () => core.MAVP_OpenAndFill(c, p, 2, 30, MAType.SMA, new double[warm]));
-            p[0] = savedP;
-
-            double savedC2 = c[warm - 1];
-            c[warm - 1] = v;
-            OpenMustReject("MA.OpenAndFill(identity)",
-                () => core.MA_OpenAndFill(c, 1, MAType.SMA, new double[warm]));
-            c[warm - 1] = savedC2;
-
-            /* One price series at a time, so a check reading only the first
-               input cannot pass. */
-            double savedH = h[warm - 1];
-            h[warm - 1] = v;
-            OpenMustReject("MINUS_DI.high", () => core.MINUS_DI_Open(h, l, c, 14));
-            OpenMustReject("STOCH.high",
-                () => core.STOCH_Open(h, l, c, 5, 3, MAType.SMA, 3, MAType.SMA));
-            OpenMustReject("CDLDOJI.high", () => core.CDLDOJI_Open(o, h, l, c));
-            h[warm - 1] = savedH;
-
-            double savedL = l[0];
-            l[0] = v;
-            OpenMustReject("MINUS_DI.low", () => core.MINUS_DI_Open(h, l, c, 14));
-            l[0] = savedL;
-
-            /* --- Update / Peek, and the handle-unchanged property. --------- */
             var sa = core.SMA_Open(c, 14);
             var sb = core.SMA_Open(c, 14);
             BarMustReject("SMA.Update", () => sa.Update(v));
@@ -779,7 +741,7 @@ public static class StreamApiTest
 
         /* Non-vacuity. Literal floors: one derived from the loop above moves with
            it and would let the assertions inside be deleted. */
-        Check(_nfOpen >= 38 && _nfBar >= 57 && _nfState >= 27,
+        Check(_nfOpen >= 2 && _nfBar >= 57 && _nfState >= 27,
               $"the non-finite gate ran fewer checks than it was written with "
               + $"({_nfOpen}/{_nfBar}/{_nfState})");
     }

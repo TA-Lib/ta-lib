@@ -552,11 +552,6 @@
     */
    public STDDEV_Stream STDDEV_Open( double inReal[], int optInTimePeriod, double optInNbDev )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("STDDEV open: BadParam");
-      }
       return STDDEV_OpenInternal(inReal, 0, optInTimePeriod, optInNbDev);
    }
    /**
@@ -570,11 +565,6 @@
     */
    public STDDEV_Stream STDDEV_OpenAndFill( double inReal[], int optInTimePeriod, double optInNbDev, double outReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("STDDEV openAndFill: BadParam");
-      }
       STDDEV_Stream sp = new STDDEV_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

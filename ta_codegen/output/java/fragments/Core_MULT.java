@@ -384,14 +384,6 @@
     */
    public MULT_Stream MULT_Open( double inReal0[], double inReal1[] )
    {
-      if( inReal0.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal0.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal0[taFiniteIdx]) )
-               throw new IllegalArgumentException("MULT open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal1.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal1[taFiniteIdx]) )
-               throw new IllegalArgumentException("MULT open: BadParam");
-      }
       return MULT_OpenInternal(inReal0, inReal1, 0);
    }
    /**
@@ -405,14 +397,6 @@
     */
    public MULT_Stream MULT_OpenAndFill( double inReal0[], double inReal1[], double outReal[] )
    {
-      if( inReal0.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal0.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal0[taFiniteIdx]) )
-               throw new IllegalArgumentException("MULT openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal1.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal1[taFiniteIdx]) )
-               throw new IllegalArgumentException("MULT openAndFill: BadParam");
-      }
       MULT_Stream sp = new MULT_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

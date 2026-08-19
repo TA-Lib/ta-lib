@@ -370,11 +370,6 @@
     */
    public LOG10_Stream LOG10_Open( double inReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("LOG10 open: BadParam");
-      }
       return LOG10_OpenInternal(inReal, 0);
    }
    /**
@@ -388,11 +383,6 @@
     */
    public LOG10_Stream LOG10_OpenAndFill( double inReal[], double outReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("LOG10 openAndFill: BadParam");
-      }
       LOG10_Stream sp = new LOG10_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

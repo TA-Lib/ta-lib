@@ -951,14 +951,6 @@
     */
    public BETA_Stream BETA_Open( double inReal0[], double inReal1[], int optInTimePeriod )
    {
-      if( inReal0.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal0.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal0[taFiniteIdx]) )
-               throw new IllegalArgumentException("BETA open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal1.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal1[taFiniteIdx]) )
-               throw new IllegalArgumentException("BETA open: BadParam");
-      }
       return BETA_OpenInternal(inReal0, inReal1, 0, optInTimePeriod);
    }
    /**
@@ -972,14 +964,6 @@
     */
    public BETA_Stream BETA_OpenAndFill( double inReal0[], double inReal1[], int optInTimePeriod, double outReal[] )
    {
-      if( inReal0.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal0.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal0[taFiniteIdx]) )
-               throw new IllegalArgumentException("BETA openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal1.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal1[taFiniteIdx]) )
-               throw new IllegalArgumentException("BETA openAndFill: BadParam");
-      }
       BETA_Stream sp = new BETA_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

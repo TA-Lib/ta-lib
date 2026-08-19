@@ -427,8 +427,6 @@ public partial class Core
    public CEIL_Stream CEIL_Open( ReadOnlySpan<double> inReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("CEIL", "open", RetCode.BadParam);
       return CEIL_OpenInternal(inReal, 0);
    }
 
@@ -457,8 +455,6 @@ public partial class Core
    public CEIL_Stream CEIL_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("CEIL", "openAndFill", RetCode.BadParam);
       CEIL_Stream sp = new CEIL_Stream(this);
       RetCode retCode = CEIL_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

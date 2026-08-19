@@ -577,7 +577,6 @@ fn emit_open_and_fill_wrapper(
         }
     }
     let _ = enums;
-    o.push_str(&finite_history_check(func, "        "));
     let ins: Vec<String> = streaming::input_array_names(func);
     let opt_names: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
     let mut args = ins.join(", ");
@@ -979,28 +978,6 @@ fn finite_bar_check(func: &FuncDef, indent: &str) -> String {
     )
 }
 
-/// The warm-up-history finite-input rejection for the PUBLIC `Open` /
-/// `OpenAndFill`, emitted at those entry points ONLY.
-///
-/// `OpenInternal` / `OpenAndFillInternal` are the composition seams: a composed
-/// open hands its sub-streams slices of the very buffer validated here, so a scan
-/// there would re-walk validated data once per sub-call — on the tier #192 just
-/// made single-pass — and would apply the caller-boundary contract to
-/// library-computed intermediates, which is not what it means.
-fn finite_history_check(func: &FuncDef, indent: &str) -> String {
-    let inputs = streaming::input_array_names(func);
-    if inputs.is_empty() {
-        return String::new();
-    }
-    let conds: Vec<String> = inputs
-        .iter()
-        .map(|i| format!("{i}.iter().any(|v| !v.is_finite())"))
-        .collect();
-    format!(
-        "{indent}if {} {{\n{indent}    return Err(RetCode::BadParam);\n{indent}}}\n",
-        conds.join(&format!("\n{indent}    || "))
-    )
-}
 
 /// `fn <NAME>_step_internal(&self, sp: &mut State, <bars>, <&mut outs>)`.
 #[allow(clippy::too_many_arguments)]
@@ -1441,13 +1418,6 @@ fn emit_open_validation_head(o: &mut String, func: &FuncDef, mode: OutMode, enum
         "        if {first}.len() > Self::MAX_INDEX + 1 {{\n            return Err(RetCode::OutOfRangeEndIndex);\n        }}"
     );
     if mode == OutMode::Fill {
-        // `Fill` is a PUBLIC entry point, so the caller's history is scanned
-        // here. This is the only scan site the two hand-rolled tiers (dispatch
-        // and period-bank) reach — they build their own `OpenAndFill` instead of
-        // going through `emit_open_and_fill_wrapper`, so leaving it to that
-        // wrapper alone left `MA_OpenAndFill` and `MAVP_OpenAndFill` unchecked
-        // in Rust while C, Java and C# rejected the identical call.
-        o.push_str(&finite_history_check(func, "        "));
         // Output mutual-distinctness (#108) — same guard the batch emits. FILL
         // ONLY: the scalar path's sinks are its own locals, so it has no hazard.
         let outs: Vec<&str> = func.outputs.iter().map(|out| out.name.as_str()).collect();
@@ -2026,7 +1996,6 @@ fn emit_open_wrapper(o: &mut String, func: &FuncDef, enums: &HashMap<String, Enu
         "    pub fn {sn}_Open(&self, {sig_inputs}{}) -> Result<({handle}, {vt}), RetCode> {{",
         sig_opts.trim_start_matches(", ")
     );
-    o.push_str(&finite_history_check(func, "        "));
     let _ = writeln!(
         o,
         "        self.{sn}_OpenInternal({fwd_inputs}0{fwd_opts})"

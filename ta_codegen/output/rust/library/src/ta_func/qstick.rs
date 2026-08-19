@@ -509,10 +509,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_QSTICK_Open")]
     pub fn QSTICK_Open(&self, inOpen: &[f64], inClose: &[f64], optInTimePeriod: i32) -> Result<(QSTICK_Stream, f64), RetCode> {
-        if inOpen.iter().any(|v| !v.is_finite())
-            || inClose.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.QSTICK_OpenInternal(inOpen, inClose, 0, optInTimePeriod)
     }
 
@@ -524,10 +520,6 @@ impl Core {
     pub fn QSTICK_OpenAndFill(
         &self, inOpen: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(QSTICK_Stream, OutRange), RetCode> {
-        if inOpen.iter().any(|v| !v.is_finite())
-            || inClose.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.QSTICK_OpenCore(inOpen, inClose, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

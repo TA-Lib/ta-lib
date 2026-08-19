@@ -297,9 +297,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_FLOOR_Open")]
     pub fn FLOOR_Open(&self, inReal: &[f64], ) -> Result<(FLOOR_Stream, f64), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.FLOOR_OpenInternal(inReal, 0)
     }
 
@@ -311,9 +308,6 @@ impl Core {
     pub fn FLOOR_OpenAndFill(
         &self, inReal: &[f64], outReal: &mut [f64],
     ) -> Result<(FLOOR_Stream, OutRange), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.FLOOR_OpenCore(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

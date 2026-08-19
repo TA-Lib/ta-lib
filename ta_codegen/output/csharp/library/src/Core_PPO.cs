@@ -749,8 +749,6 @@ public partial class Core
    public PPO_Stream PPO_Open( ReadOnlySpan<double> inReal, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("PPO", "open", RetCode.BadParam);
       return PPO_OpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType);
    }
 
@@ -785,8 +783,6 @@ public partial class Core
    public PPO_Stream PPO_OpenAndFill( ReadOnlySpan<double> inReal, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("PPO", "openAndFill", RetCode.BadParam);
       PPO_Stream sp = new PPO_Stream(this);
       RetCode retCode = PPO_OpenAndFillBody(sp, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

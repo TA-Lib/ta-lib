@@ -536,14 +536,6 @@
     */
    public PVI_Stream PVI_Open( double inClose[], double inVolume[] )
    {
-      if( inClose.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-            if( !Double.isFinite(inClose[taFiniteIdx]) )
-               throw new IllegalArgumentException("PVI open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-            if( !Double.isFinite(inVolume[taFiniteIdx]) )
-               throw new IllegalArgumentException("PVI open: BadParam");
-      }
       return PVI_OpenInternal(inClose, inVolume, 0);
    }
    /**
@@ -557,14 +549,6 @@
     */
    public PVI_Stream PVI_OpenAndFill( double inClose[], double inVolume[], double outReal[] )
    {
-      if( inClose.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-            if( !Double.isFinite(inClose[taFiniteIdx]) )
-               throw new IllegalArgumentException("PVI openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-            if( !Double.isFinite(inVolume[taFiniteIdx]) )
-               throw new IllegalArgumentException("PVI openAndFill: BadParam");
-      }
       PVI_Stream sp = new PVI_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

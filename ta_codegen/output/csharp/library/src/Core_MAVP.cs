@@ -1036,10 +1036,6 @@ public partial class Core
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       if( inPeriods.IsEmpty ) throw new ArgumentException("inPeriods is empty", nameof(inPeriods));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MAVP", "open", RetCode.BadParam);
-      foreach( double taFiniteV in inPeriods )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MAVP", "open", RetCode.BadParam);
       return MAVP_OpenInternal(inReal, inPeriods, 0, optInMinPeriod, optInMaxPeriod, optInMAType);
    }
 
@@ -1076,10 +1072,6 @@ public partial class Core
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       if( inPeriods.IsEmpty ) throw new ArgumentException("inPeriods is empty", nameof(inPeriods));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MAVP", "openAndFill", RetCode.BadParam);
-      foreach( double taFiniteV in inPeriods )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MAVP", "openAndFill", RetCode.BadParam);
       MAVP_Stream sp = new MAVP_Stream(this);
       RetCode retCode = MAVP_OpenAndFillBody(sp, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

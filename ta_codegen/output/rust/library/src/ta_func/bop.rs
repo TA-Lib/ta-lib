@@ -341,12 +341,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_BOP_Open")]
     pub fn BOP_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(BOP_Stream, f64), RetCode> {
-        if inOpen.iter().any(|v| !v.is_finite())
-            || inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite())
-            || inClose.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.BOP_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
@@ -358,12 +352,6 @@ impl Core {
     pub fn BOP_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outReal: &mut [f64],
     ) -> Result<(BOP_Stream, OutRange), RetCode> {
-        if inOpen.iter().any(|v| !v.is_finite())
-            || inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite())
-            || inClose.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.BOP_OpenCore(inOpen, inHigh, inLow, inClose, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

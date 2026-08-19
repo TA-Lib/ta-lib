@@ -1050,14 +1050,6 @@
     */
    public MINUS_DM_Stream MINUS_DM_Open( double inHigh[], double inLow[], int optInTimePeriod )
    {
-      if( inHigh.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-            if( !Double.isFinite(inHigh[taFiniteIdx]) )
-               throw new IllegalArgumentException("MINUS_DM open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-            if( !Double.isFinite(inLow[taFiniteIdx]) )
-               throw new IllegalArgumentException("MINUS_DM open: BadParam");
-      }
       return MINUS_DM_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
    /**
@@ -1071,14 +1063,6 @@
     */
    public MINUS_DM_Stream MINUS_DM_OpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outReal[] )
    {
-      if( inHigh.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-            if( !Double.isFinite(inHigh[taFiniteIdx]) )
-               throw new IllegalArgumentException("MINUS_DM openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-            if( !Double.isFinite(inLow[taFiniteIdx]) )
-               throw new IllegalArgumentException("MINUS_DM openAndFill: BadParam");
-      }
       MINUS_DM_Stream sp = new MINUS_DM_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

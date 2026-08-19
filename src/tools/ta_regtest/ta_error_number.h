@@ -420,7 +420,6 @@ typedef enum
   TA_CDLSET_NOT_RESTORED             = 1586,
 
   /* Streaming non-finite input rejection (the boundary contract). */
-  TA_STREAM_FINITE_OPEN_ACCEPTED     = 1590,
   TA_STREAM_FINITE_BAR_ACCEPTED      = 1591,
   TA_STREAM_FINITE_STATE_MOVED       = 1592,
   TA_STREAM_FINITE_PARAM_ACCEPTED    = 1593,

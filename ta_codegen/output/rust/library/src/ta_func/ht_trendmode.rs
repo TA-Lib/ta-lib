@@ -1777,9 +1777,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_HT_TRENDMODE_Open")]
     pub fn HT_TRENDMODE_Open(&self, inReal: &[f64], ) -> Result<(HT_TRENDMODE_Stream, i32), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.HT_TRENDMODE_OpenInternal(inReal, 0)
     }
 
@@ -1791,9 +1788,6 @@ impl Core {
     pub fn HT_TRENDMODE_OpenAndFill(
         &self, inReal: &[f64], outInteger: &mut [i32],
     ) -> Result<(HT_TRENDMODE_Stream, OutRange), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.HT_TRENDMODE_OpenCore(inReal, 0, &mut outBegIdx, &mut outNBElement, outInteger, 1)?;

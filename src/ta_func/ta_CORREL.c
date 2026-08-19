@@ -553,12 +553,6 @@ TA_LIB_API TA_RetCode TA_CORREL_Open( TA_CORREL_Stream **stream, const double in
    if( !inReal0 || !inReal1 || !outReal ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   {
-      int taFiniteIdx;
-      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
-         if( !TA_IS_FINITE( inReal0[taFiniteIdx] ) ||
-             !TA_IS_FINITE( inReal1[taFiniteIdx] ) ) return TA_BAD_PARAM;
-   }
    return TA_CORREL_OpenInternal( stream, inReal0, inReal1, 0, historyLen, optInTimePeriod, outReal );
 }
 
@@ -571,12 +565,6 @@ TA_LIB_API TA_RetCode TA_CORREL_OpenAndFill( TA_CORREL_Stream **stream, const do
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inReal0 || (const void *)outReal == (const void *)inReal1 ) return TA_BAD_PARAM;
-   {
-      int taFiniteIdx;
-      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
-         if( !TA_IS_FINITE( inReal0[taFiniteIdx] ) ||
-             !TA_IS_FINITE( inReal1[taFiniteIdx] ) ) return TA_BAD_PARAM;
-   }
    return TA_CORREL_OpenCore( stream, inReal0, inReal1, 0, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 

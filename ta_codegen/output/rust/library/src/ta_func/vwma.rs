@@ -593,10 +593,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_VWMA_Open")]
     pub fn VWMA_Open(&self, inReal: &[f64], inVolume: &[f64], optInTimePeriod: i32) -> Result<(VWMA_Stream, f64), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite())
-            || inVolume.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.VWMA_OpenInternal(inReal, inVolume, 0, optInTimePeriod)
     }
 
@@ -608,10 +604,6 @@ impl Core {
     pub fn VWMA_OpenAndFill(
         &self, inReal: &[f64], inVolume: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(VWMA_Stream, OutRange), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite())
-            || inVolume.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.VWMA_OpenCore(inReal, inVolume, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

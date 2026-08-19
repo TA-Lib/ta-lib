@@ -309,10 +309,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_MULT_Open")]
     pub fn MULT_Open(&self, inReal0: &[f64], inReal1: &[f64], ) -> Result<(MULT_Stream, f64), RetCode> {
-        if inReal0.iter().any(|v| !v.is_finite())
-            || inReal1.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.MULT_OpenInternal(inReal0, inReal1, 0)
     }
 
@@ -324,10 +320,6 @@ impl Core {
     pub fn MULT_OpenAndFill(
         &self, inReal0: &[f64], inReal1: &[f64], outReal: &mut [f64],
     ) -> Result<(MULT_Stream, OutRange), RetCode> {
-        if inReal0.iter().any(|v| !v.is_finite())
-            || inReal1.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.MULT_OpenCore(inReal0, inReal1, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

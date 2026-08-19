@@ -800,14 +800,6 @@
     */
    public EFI_Stream EFI_Open( double inClose[], double inVolume[], int optInTimePeriod )
    {
-      if( inClose.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-            if( !Double.isFinite(inClose[taFiniteIdx]) )
-               throw new IllegalArgumentException("EFI open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-            if( !Double.isFinite(inVolume[taFiniteIdx]) )
-               throw new IllegalArgumentException("EFI open: BadParam");
-      }
       return EFI_OpenInternal(inClose, inVolume, 0, optInTimePeriod);
    }
    /**
@@ -821,14 +813,6 @@
     */
    public EFI_Stream EFI_OpenAndFill( double inClose[], double inVolume[], int optInTimePeriod, double outReal[] )
    {
-      if( inClose.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-            if( !Double.isFinite(inClose[taFiniteIdx]) )
-               throw new IllegalArgumentException("EFI openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inVolume.length; taFiniteIdx++ )
-            if( !Double.isFinite(inVolume[taFiniteIdx]) )
-               throw new IllegalArgumentException("EFI openAndFill: BadParam");
-      }
       EFI_Stream sp = new EFI_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

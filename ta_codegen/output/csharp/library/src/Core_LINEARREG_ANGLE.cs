@@ -726,8 +726,6 @@ public partial class Core
    public LINEARREG_ANGLE_Stream LINEARREG_ANGLE_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("LINEARREG_ANGLE", "open", RetCode.BadParam);
       return LINEARREG_ANGLE_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -760,8 +758,6 @@ public partial class Core
    public LINEARREG_ANGLE_Stream LINEARREG_ANGLE_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("LINEARREG_ANGLE", "openAndFill", RetCode.BadParam);
       LINEARREG_ANGLE_Stream sp = new LINEARREG_ANGLE_Stream(this);
       RetCode retCode = LINEARREG_ANGLE_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

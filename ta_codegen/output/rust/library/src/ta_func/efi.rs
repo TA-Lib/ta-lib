@@ -682,10 +682,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_EFI_Open")]
     pub fn EFI_Open(&self, inClose: &[f64], inVolume: &[f64], optInTimePeriod: i32) -> Result<(EFI_Stream, f64), RetCode> {
-        if inClose.iter().any(|v| !v.is_finite())
-            || inVolume.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.EFI_OpenInternal(inClose, inVolume, 0, optInTimePeriod)
     }
 
@@ -697,10 +693,6 @@ impl Core {
     pub fn EFI_OpenAndFill(
         &self, inClose: &[f64], inVolume: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(EFI_Stream, OutRange), RetCode> {
-        if inClose.iter().any(|v| !v.is_finite())
-            || inVolume.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.EFI_OpenCore(inClose, inVolume, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

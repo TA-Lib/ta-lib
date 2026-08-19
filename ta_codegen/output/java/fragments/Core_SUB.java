@@ -374,14 +374,6 @@
     */
    public SUB_Stream SUB_Open( double inReal0[], double inReal1[] )
    {
-      if( inReal0.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal0.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal0[taFiniteIdx]) )
-               throw new IllegalArgumentException("SUB open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal1.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal1[taFiniteIdx]) )
-               throw new IllegalArgumentException("SUB open: BadParam");
-      }
       return SUB_OpenInternal(inReal0, inReal1, 0);
    }
    /**
@@ -395,14 +387,6 @@
     */
    public SUB_Stream SUB_OpenAndFill( double inReal0[], double inReal1[], double outReal[] )
    {
-      if( inReal0.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal0.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal0[taFiniteIdx]) )
-               throw new IllegalArgumentException("SUB openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal1.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal1[taFiniteIdx]) )
-               throw new IllegalArgumentException("SUB openAndFill: BadParam");
-      }
       SUB_Stream sp = new SUB_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

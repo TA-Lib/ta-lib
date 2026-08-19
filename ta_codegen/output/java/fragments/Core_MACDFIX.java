@@ -899,11 +899,6 @@
     */
    public MACDFIX_Stream MACDFIX_Open( double inReal[], int optInSignalPeriod )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("MACDFIX open: BadParam");
-      }
       return MACDFIX_OpenInternal(inReal, 0, optInSignalPeriod);
    }
    /**
@@ -917,11 +912,6 @@
     */
    public MACDFIX_Stream MACDFIX_OpenAndFill( double inReal[], int optInSignalPeriod, double outMACD[], double outMACDSignal[], double outMACDHist[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("MACDFIX openAndFill: BadParam");
-      }
       MACDFIX_Stream sp = new MACDFIX_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

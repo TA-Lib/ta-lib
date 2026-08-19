@@ -863,10 +863,6 @@ public partial class Core
    {
       if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
-      foreach( double taFiniteV in inClose )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("EFI", "open", RetCode.BadParam);
-      foreach( double taFiniteV in inVolume )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("EFI", "open", RetCode.BadParam);
       return EFI_OpenInternal(inClose, inVolume, 0, optInTimePeriod);
    }
 
@@ -899,10 +895,6 @@ public partial class Core
    {
       if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
-      foreach( double taFiniteV in inClose )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("EFI", "openAndFill", RetCode.BadParam);
-      foreach( double taFiniteV in inVolume )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("EFI", "openAndFill", RetCode.BadParam);
       EFI_Stream sp = new EFI_Stream(this);
       RetCode retCode = EFI_OpenAndFillBody(sp, inClose, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

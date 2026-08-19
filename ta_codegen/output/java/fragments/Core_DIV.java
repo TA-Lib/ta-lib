@@ -380,14 +380,6 @@
     */
    public DIV_Stream DIV_Open( double inReal0[], double inReal1[] )
    {
-      if( inReal0.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal0.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal0[taFiniteIdx]) )
-               throw new IllegalArgumentException("DIV open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal1.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal1[taFiniteIdx]) )
-               throw new IllegalArgumentException("DIV open: BadParam");
-      }
       return DIV_OpenInternal(inReal0, inReal1, 0);
    }
    /**
@@ -401,14 +393,6 @@
     */
    public DIV_Stream DIV_OpenAndFill( double inReal0[], double inReal1[], double outReal[] )
    {
-      if( inReal0.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal0.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal0[taFiniteIdx]) )
-               throw new IllegalArgumentException("DIV openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal1.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal1[taFiniteIdx]) )
-               throw new IllegalArgumentException("DIV openAndFill: BadParam");
-      }
       DIV_Stream sp = new DIV_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

@@ -618,8 +618,6 @@ public partial class Core
    public STDDEV_Stream STDDEV_Open( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDev )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("STDDEV", "open", RetCode.BadParam);
       return STDDEV_OpenInternal(inReal, 0, optInTimePeriod, optInNbDev);
    }
 
@@ -652,8 +650,6 @@ public partial class Core
    public STDDEV_Stream STDDEV_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDev, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("STDDEV", "openAndFill", RetCode.BadParam);
       STDDEV_Stream sp = new STDDEV_Stream(this);
       RetCode retCode = STDDEV_OpenAndFillBody(sp, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

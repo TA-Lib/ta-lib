@@ -1018,11 +1018,6 @@
     */
    public MACD_Stream MACD_Open( double inReal[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("MACD open: BadParam");
-      }
       return MACD_OpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
    }
    /**
@@ -1036,11 +1031,6 @@
     */
    public MACD_Stream MACD_OpenAndFill( double inReal[], int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, double outMACD[], double outMACDSignal[], double outMACDHist[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("MACD openAndFill: BadParam");
-      }
       MACD_Stream sp = new MACD_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

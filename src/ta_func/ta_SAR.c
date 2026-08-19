@@ -1042,12 +1042,6 @@ TA_LIB_API TA_RetCode TA_SAR_Open( TA_SAR_Stream **stream, const double inHigh[]
    if( !inHigh || !inLow || !outReal ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   {
-      int taFiniteIdx;
-      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
-         if( !TA_IS_FINITE( inHigh[taFiniteIdx] ) ||
-             !TA_IS_FINITE( inLow[taFiniteIdx] ) ) return TA_BAD_PARAM;
-   }
    return TA_SAR_OpenInternal( stream, inHigh, inLow, 0, historyLen, optInAcceleration, optInMaximum, outReal );
 }
 
@@ -1060,12 +1054,6 @@ TA_LIB_API TA_RetCode TA_SAR_OpenAndFill( TA_SAR_Stream **stream, const double i
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow ) return TA_BAD_PARAM;
-   {
-      int taFiniteIdx;
-      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
-         if( !TA_IS_FINITE( inHigh[taFiniteIdx] ) ||
-             !TA_IS_FINITE( inLow[taFiniteIdx] ) ) return TA_BAD_PARAM;
-   }
    return TA_SAR_OpenCore( stream, inHigh, inLow, 0, historyLen, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal, 1 );
 }
 

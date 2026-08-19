@@ -687,8 +687,6 @@ public partial class Core
    public MAXINDEX_Stream MAXINDEX_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MAXINDEX", "open", RetCode.BadParam);
       return MAXINDEX_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -719,8 +717,6 @@ public partial class Core
    public MAXINDEX_Stream MAXINDEX_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<int> outInteger )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("MAXINDEX", "openAndFill", RetCode.BadParam);
       MAXINDEX_Stream sp = new MAXINDEX_Stream(this);
       RetCode retCode = MAXINDEX_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

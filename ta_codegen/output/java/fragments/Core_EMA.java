@@ -627,11 +627,6 @@
     */
    public EMA_Stream EMA_Open( double inReal[], int optInTimePeriod )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("EMA open: BadParam");
-      }
       return EMA_OpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
@@ -645,11 +640,6 @@
     */
    public EMA_Stream EMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("EMA openAndFill: BadParam");
-      }
       EMA_Stream sp = new EMA_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

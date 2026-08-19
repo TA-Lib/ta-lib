@@ -678,12 +678,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_CDLTASUKIGAP_Open")]
     pub fn CDLTASUKIGAP_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLTASUKIGAP_Stream, i32), RetCode> {
-        if inOpen.iter().any(|v| !v.is_finite())
-            || inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite())
-            || inClose.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.CDLTASUKIGAP_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
@@ -695,12 +689,6 @@ impl Core {
     pub fn CDLTASUKIGAP_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outInteger: &mut [i32],
     ) -> Result<(CDLTASUKIGAP_Stream, OutRange), RetCode> {
-        if inOpen.iter().any(|v| !v.is_finite())
-            || inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite())
-            || inClose.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.CDLTASUKIGAP_OpenCore(inOpen, inHigh, inLow, inClose, 0, &mut outBegIdx, &mut outNBElement, outInteger, 1)?;

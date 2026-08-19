@@ -1234,10 +1234,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_SAREXT_Open")]
     pub fn SAREXT_Open(&self, inHigh: &[f64], inLow: &[f64], optInStartValue: f64, optInOffsetOnReverse: f64, optInAccelerationInitLong: f64, optInAccelerationLong: f64, optInAccelerationMaxLong: f64, optInAccelerationInitShort: f64, optInAccelerationShort: f64, optInAccelerationMaxShort: f64) -> Result<(SAREXT_Stream, f64), RetCode> {
-        if inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.SAREXT_OpenInternal(inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort)
     }
 
@@ -1249,10 +1245,6 @@ impl Core {
     pub fn SAREXT_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], mut optInStartValue: f64, mut optInOffsetOnReverse: f64, mut optInAccelerationInitLong: f64, mut optInAccelerationLong: f64, mut optInAccelerationMaxLong: f64, mut optInAccelerationInitShort: f64, mut optInAccelerationShort: f64, mut optInAccelerationMaxShort: f64, outReal: &mut [f64],
     ) -> Result<(SAREXT_Stream, OutRange), RetCode> {
-        if inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.SAREXT_OpenCore(inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

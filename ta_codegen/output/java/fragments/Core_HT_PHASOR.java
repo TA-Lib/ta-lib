@@ -1743,11 +1743,6 @@
     */
    public HT_PHASOR_Stream HT_PHASOR_Open( double inReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("HT_PHASOR open: BadParam");
-      }
       return HT_PHASOR_OpenInternal(inReal, 0);
    }
    /**
@@ -1761,11 +1756,6 @@
     */
    public HT_PHASOR_Stream HT_PHASOR_OpenAndFill( double inReal[], double outInPhase[], double outQuadrature[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("HT_PHASOR openAndFill: BadParam");
-      }
       HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

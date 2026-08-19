@@ -873,8 +873,6 @@ public partial class Core
    public TEMA_Stream TEMA_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("TEMA", "open", RetCode.BadParam);
       return TEMA_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -905,8 +903,6 @@ public partial class Core
    public TEMA_Stream TEMA_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("TEMA", "openAndFill", RetCode.BadParam);
       TEMA_Stream sp = new TEMA_Stream(this);
       RetCode retCode = TEMA_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

@@ -998,11 +998,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_STOCH_Open")]
     pub fn STOCH_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInFastK_Period: i32, optInSlowK_Period: i32, optInSlowK_MAType: MAType, optInSlowD_Period: i32, optInSlowD_MAType: MAType) -> Result<(STOCH_Stream, (f64, f64)), RetCode> {
-        if inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite())
-            || inClose.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.STOCH_OpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType)
     }
 
@@ -1015,11 +1010,6 @@ impl Core {
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInFastK_Period: i32, mut optInSlowK_Period: i32, mut optInSlowK_MAType: MAType, mut optInSlowD_Period: i32, mut optInSlowD_MAType: MAType, outSlowK: &mut [f64], outSlowD: &mut [f64],
     ) -> Result<(STOCH_Stream, OutRange), RetCode> {
         if outSlowK.as_ptr() == outSlowD.as_ptr() {
-            return Err(RetCode::BadParam);
-        }
-        if inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite())
-            || inClose.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;

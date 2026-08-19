@@ -826,8 +826,6 @@ public partial class Core
    public STOCHRSI_Stream STOCHRSI_Open( ReadOnlySpan<double> inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("STOCHRSI", "open", RetCode.BadParam);
       return STOCHRSI_OpenInternal(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
    }
 
@@ -867,8 +865,6 @@ public partial class Core
    public STOCHRSI_Stream STOCHRSI_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, Span<double> outFastK, Span<double> outFastD )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("STOCHRSI", "openAndFill", RetCode.BadParam);
       STOCHRSI_Stream sp = new STOCHRSI_Stream(this);
       RetCode retCode = STOCHRSI_OpenAndFillBody(sp, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out int outBegIdx, out int outNBElement, outFastK, outFastD);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

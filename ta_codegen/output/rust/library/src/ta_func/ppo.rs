@@ -534,9 +534,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_PPO_Open")]
     pub fn PPO_Open(&self, inReal: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, optInMAType: MAType) -> Result<(PPO_Stream, f64), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.PPO_OpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType)
     }
 
@@ -548,9 +545,6 @@ impl Core {
     pub fn PPO_OpenAndFill(
         &self, inReal: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType, outReal: &mut [f64],
     ) -> Result<(PPO_Stream, OutRange), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.PPO_OpenCore(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

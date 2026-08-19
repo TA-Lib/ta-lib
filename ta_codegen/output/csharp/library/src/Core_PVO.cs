@@ -747,8 +747,6 @@ public partial class Core
    public PVO_Stream PVO_Open( ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
       if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
-      foreach( double taFiniteV in inVolume )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("PVO", "open", RetCode.BadParam);
       return PVO_OpenInternal(inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType);
    }
 
@@ -783,8 +781,6 @@ public partial class Core
    public PVO_Stream PVO_OpenAndFill( ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, Span<double> outReal )
    {
       if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
-      foreach( double taFiniteV in inVolume )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("PVO", "openAndFill", RetCode.BadParam);
       PVO_Stream sp = new PVO_Stream(this);
       RetCode retCode = PVO_OpenAndFillBody(sp, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

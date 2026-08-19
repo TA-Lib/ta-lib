@@ -456,10 +456,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_IMI_Open")]
     pub fn IMI_Open(&self, inOpen: &[f64], inClose: &[f64], optInTimePeriod: i32) -> Result<(IMI_Stream, f64), RetCode> {
-        if inOpen.iter().any(|v| !v.is_finite())
-            || inClose.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.IMI_OpenInternal(inOpen, inClose, 0, optInTimePeriod)
     }
 
@@ -471,10 +467,6 @@ impl Core {
     pub fn IMI_OpenAndFill(
         &self, inOpen: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(IMI_Stream, OutRange), RetCode> {
-        if inOpen.iter().any(|v| !v.is_finite())
-            || inClose.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.IMI_OpenCore(inOpen, inClose, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

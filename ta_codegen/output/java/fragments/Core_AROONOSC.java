@@ -818,14 +818,6 @@
     */
    public AROONOSC_Stream AROONOSC_Open( double inHigh[], double inLow[], int optInTimePeriod )
    {
-      if( inHigh.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-            if( !Double.isFinite(inHigh[taFiniteIdx]) )
-               throw new IllegalArgumentException("AROONOSC open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-            if( !Double.isFinite(inLow[taFiniteIdx]) )
-               throw new IllegalArgumentException("AROONOSC open: BadParam");
-      }
       return AROONOSC_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
    /**
@@ -839,14 +831,6 @@
     */
    public AROONOSC_Stream AROONOSC_OpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outReal[] )
    {
-      if( inHigh.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inHigh.length; taFiniteIdx++ )
-            if( !Double.isFinite(inHigh[taFiniteIdx]) )
-               throw new IllegalArgumentException("AROONOSC openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inLow.length; taFiniteIdx++ )
-            if( !Double.isFinite(inLow[taFiniteIdx]) )
-               throw new IllegalArgumentException("AROONOSC openAndFill: BadParam");
-      }
       AROONOSC_Stream sp = new AROONOSC_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

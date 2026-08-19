@@ -1796,8 +1796,6 @@ public partial class Core
    public HT_PHASOR_Stream HT_PHASOR_Open( ReadOnlySpan<double> inReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("HT_PHASOR", "open", RetCode.BadParam);
       return HT_PHASOR_OpenInternal(inReal, 0);
    }
 
@@ -1829,8 +1827,6 @@ public partial class Core
    public HT_PHASOR_Stream HT_PHASOR_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outInPhase, Span<double> outQuadrature )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("HT_PHASOR", "openAndFill", RetCode.BadParam);
       HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
       RetCode retCode = HT_PHASOR_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outInPhase, outQuadrature);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

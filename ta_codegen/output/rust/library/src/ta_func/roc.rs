@@ -466,9 +466,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_ROC_Open")]
     pub fn ROC_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(ROC_Stream, f64), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.ROC_OpenInternal(inReal, 0, optInTimePeriod)
     }
 
@@ -480,9 +477,6 @@ impl Core {
     pub fn ROC_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outReal: &mut [f64],
     ) -> Result<(ROC_Stream, OutRange), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.ROC_OpenCore(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

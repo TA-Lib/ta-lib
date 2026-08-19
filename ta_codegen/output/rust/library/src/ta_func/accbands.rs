@@ -643,11 +643,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_ACCBANDS_Open")]
     pub fn ACCBANDS_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32) -> Result<(ACCBANDS_Stream, (f64, f64, f64)), RetCode> {
-        if inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite())
-            || inClose.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.ACCBANDS_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod)
     }
 
@@ -666,11 +661,6 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         if outRealMiddleBand.as_ptr() == outRealLowerBand.as_ptr() {
-            return Err(RetCode::BadParam);
-        }
-        if inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite())
-            || inClose.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;

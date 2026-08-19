@@ -1949,8 +1949,6 @@ public partial class Core
    public HT_TRENDLINE_Stream HT_TRENDLINE_Open( ReadOnlySpan<double> inReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("HT_TRENDLINE", "open", RetCode.BadParam);
       return HT_TRENDLINE_OpenInternal(inReal, 0);
    }
 
@@ -1980,8 +1978,6 @@ public partial class Core
    public HT_TRENDLINE_Stream HT_TRENDLINE_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
       if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      foreach( double taFiniteV in inReal )
-         if( !double.IsFinite(taFiniteV) ) throw Core.StreamFailure("HT_TRENDLINE", "openAndFill", RetCode.BadParam);
       HT_TRENDLINE_Stream sp = new HT_TRENDLINE_Stream(this);
       RetCode retCode = HT_TRENDLINE_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

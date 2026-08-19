@@ -674,12 +674,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_ADOSC_Open")]
     pub fn ADOSC_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32) -> Result<(ADOSC_Stream, f64), RetCode> {
-        if inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite())
-            || inClose.iter().any(|v| !v.is_finite())
-            || inVolume.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.ADOSC_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod)
     }
 
@@ -691,12 +685,6 @@ impl Core {
     pub fn ADOSC_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, outReal: &mut [f64],
     ) -> Result<(ADOSC_Stream, OutRange), RetCode> {
-        if inHigh.iter().any(|v| !v.is_finite())
-            || inLow.iter().any(|v| !v.is_finite())
-            || inClose.iter().any(|v| !v.is_finite())
-            || inVolume.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
         let handle = self.ADOSC_OpenCore(inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;

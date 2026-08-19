@@ -617,14 +617,6 @@
     */
    public QSTICK_Stream QSTICK_Open( double inOpen[], double inClose[], int optInTimePeriod )
    {
-      if( inOpen.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-            if( !Double.isFinite(inOpen[taFiniteIdx]) )
-               throw new IllegalArgumentException("QSTICK open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-            if( !Double.isFinite(inClose[taFiniteIdx]) )
-               throw new IllegalArgumentException("QSTICK open: BadParam");
-      }
       return QSTICK_OpenInternal(inOpen, inClose, 0, optInTimePeriod);
    }
    /**
@@ -638,14 +630,6 @@
     */
    public QSTICK_Stream QSTICK_OpenAndFill( double inOpen[], double inClose[], int optInTimePeriod, double outReal[] )
    {
-      if( inOpen.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inOpen.length; taFiniteIdx++ )
-            if( !Double.isFinite(inOpen[taFiniteIdx]) )
-               throw new IllegalArgumentException("QSTICK openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inClose.length; taFiniteIdx++ )
-            if( !Double.isFinite(inClose[taFiniteIdx]) )
-               throw new IllegalArgumentException("QSTICK openAndFill: BadParam");
-      }
       QSTICK_Stream sp = new QSTICK_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

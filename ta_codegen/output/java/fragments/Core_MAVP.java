@@ -956,14 +956,6 @@
     */
    public MAVP_Stream MAVP_Open( double inReal[], double inPeriods[], int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("MAVP open: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inPeriods.length; taFiniteIdx++ )
-            if( !Double.isFinite(inPeriods[taFiniteIdx]) )
-               throw new IllegalArgumentException("MAVP open: BadParam");
-      }
       return MAVP_OpenInternal(inReal, inPeriods, 0, optInMinPeriod, optInMaxPeriod, optInMAType);
    }
    /**
@@ -977,14 +969,6 @@
     */
    public MAVP_Stream MAVP_OpenAndFill( double inReal[], double inPeriods[], int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, double outReal[] )
    {
-      if( inReal.length >= 1 ) {
-         for( int taFiniteIdx = 0; taFiniteIdx < inReal.length; taFiniteIdx++ )
-            if( !Double.isFinite(inReal[taFiniteIdx]) )
-               throw new IllegalArgumentException("MAVP openAndFill: BadParam");
-         for( int taFiniteIdx = 0; taFiniteIdx < inPeriods.length; taFiniteIdx++ )
-            if( !Double.isFinite(inPeriods[taFiniteIdx]) )
-               throw new IllegalArgumentException("MAVP openAndFill: BadParam");
-      }
       MAVP_Stream sp = new MAVP_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();

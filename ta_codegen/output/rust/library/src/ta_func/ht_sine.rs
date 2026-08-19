@@ -1520,9 +1520,6 @@ impl Core {
     /// ```
     #[doc(alias = "TA_HT_SINE_Open")]
     pub fn HT_SINE_Open(&self, inReal: &[f64], ) -> Result<(HT_SINE_Stream, (f64, f64)), RetCode> {
-        if inReal.iter().any(|v| !v.is_finite()) {
-            return Err(RetCode::BadParam);
-        }
         self.HT_SINE_OpenInternal(inReal, 0)
     }
 
@@ -1535,9 +1532,6 @@ impl Core {
         &self, inReal: &[f64], outSine: &mut [f64], outLeadSine: &mut [f64],
     ) -> Result<(HT_SINE_Stream, OutRange), RetCode> {
         if outSine.as_ptr() == outLeadSine.as_ptr() {
-            return Err(RetCode::BadParam);
-        }
-        if inReal.iter().any(|v| !v.is_finite()) {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;

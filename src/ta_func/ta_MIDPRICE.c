@@ -834,12 +834,6 @@ TA_LIB_API TA_RetCode TA_MIDPRICE_Open( TA_MIDPRICE_Stream **stream, const doubl
    if( !inHigh || !inLow || !outReal ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   {
-      int taFiniteIdx;
-      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
-         if( !TA_IS_FINITE( inHigh[taFiniteIdx] ) ||
-             !TA_IS_FINITE( inLow[taFiniteIdx] ) ) return TA_BAD_PARAM;
-   }
    return TA_MIDPRICE_OpenInternal( stream, inHigh, inLow, 0, historyLen, optInTimePeriod, outReal );
 }
 
@@ -852,12 +846,6 @@ TA_LIB_API TA_RetCode TA_MIDPRICE_OpenAndFill( TA_MIDPRICE_Stream **stream, cons
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow ) return TA_BAD_PARAM;
-   {
-      int taFiniteIdx;
-      for( taFiniteIdx = 0; taFiniteIdx < historyLen; taFiniteIdx++ )
-         if( !TA_IS_FINITE( inHigh[taFiniteIdx] ) ||
-             !TA_IS_FINITE( inLow[taFiniteIdx] ) ) return TA_BAD_PARAM;
-   }
    return TA_MIDPRICE_OpenCore( stream, inHigh, inLow, 0, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
