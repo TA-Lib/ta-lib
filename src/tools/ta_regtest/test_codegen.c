@@ -6133,10 +6133,38 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 
             xlang_set_opt_params(paramHolder, funcInfo, vec[k]);
 
-            /* subranges: full + two deterministic random windows (as --fuzz-064) */
+            /* subranges: full + two deterministic random windows (as --fuzz-064),
+             * plus -- once per (function, parameter vector) -- every ordered pair
+             * drawn from {0,1,2,3}.
+             *
+             * Those ten tight ranges are where an off-by-one in a lookback clamp
+             * shows up: (0,0) asks for a single output at bar 0, and the rest walk
+             * the first few bars in both endpoints. Each is a VALID call. A function
+             * whose lookback is 0 must answer with endIdx-startIdx+1 values starting
+             * at startIdx; one with a lookback above the range must answer SUCCESS
+             * WITH NO VALUES. Never an error, never a trap, and identically in every
+             * language.
+             *
+             * They are pinned rather than left to the two random windows, which draw
+             * rsS from fuzz_sm_unit()*n and rsE above it: landing on a range this
+             * tight is a coincidence, so coverage was luck-dependent and uneven.
+             * Measured with a deliberate count==0 fault injected into the Rust
+             * wrapper: the random windows caught it on 119 of the 174 functions,
+             * these ranges on all 144 that can produce an empty result.
+             *
+             * Pinned to the first unstable/shape/seed/size so the cost is
+             * 174 x vectors x 10 rather than a multiplier on the whole sweep --
+             * these probe the clamp arithmetic, which does not vary with the data.
+             * The e < s permutations are deliberately absent: that rejection is
+             * emitted from one prologue template and is already gated
+             * deterministically by the #180 index-range probe. */
             unsigned long long rs = 0xF0F0ULL ^ ((unsigned long long)shape<<8)
                                     ^ ((unsigned long long)seeds[si]<<16) ^ ((unsigned long long)k<<24);
-            int ranges[3][2];
+            static const int TIGHT[10][2] = {
+                {0,0},{0,1},{0,2},{0,3},{1,1},{1,2},{1,3},{2,2},{2,3},{3,3}
+            };
+            int ranges[3+10][2];
+            int nranges = 3;
             ranges[0][0] = 0; ranges[0][1] = n - 1;
             for( int rr = 1; rr < 3; rr++ )
             {
@@ -6147,8 +6175,17 @@ static void xlang_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                 if( rsE < rsS ) rsE = rsS;
                 ranges[rr][0] = rsS; ranges[rr][1] = rsE;
             }
+            if( ui == 0 && shape == 0 && si == 0 && zi == 0 && n >= 4 )
+            {
+                for( int t = 0; t < 10; t++ )
+                {
+                    ranges[nranges][0] = TIGHT[t][0];
+                    ranges[nranges][1] = TIGHT[t][1];
+                    nranges++;
+                }
+            }
 
-            for( int ri = 0; ri < 3; ri++ )
+            for( int ri = 0; ri < nranges; ri++ )
             {
                 int s = ranges[ri][0], e = ranges[ri][1];
                 /* Same reason: validation runs before any startIdx/endIdx logic, so
