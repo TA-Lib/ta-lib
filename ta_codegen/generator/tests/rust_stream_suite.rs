@@ -164,7 +164,15 @@ fn test_rust_cdldoji_candle_settings_and_int_output() {
     // cdlsticksandwich, cdltasukigap, cdltristar, qstick), consistently in Rust
     // and Java, and their peek went from zero allocations per call after warm-up
     // to one — against a clone a quarter the size. That trade is a CONSEQUENCE of
-    // #229 rather than a decision it recorded, and it is not benchmarked.
+    // #229 rather than a decision it recorded.
+    //
+    // Measured, so nobody has to re-derive the worry from the mechanism:
+    // CDLDOJI peek is 27.7 ns/call before the collapse and 27.1 ns/call after
+    // (best of 4 alternating passes) — a 2% gap inside a 5–28% run-to-run
+    // spread, i.e. no difference this machine can resolve. The extra
+    // allocation is paid for by the smaller copy. That is evidence it is not
+    // a regression on the shape that prompted the question, not evidence the
+    // trade is free on every shape.
     //
     // Asserted in both directions on purpose: the absence check alone would start
     // passing for free the day the emitter stopped naming the scratch at all.
