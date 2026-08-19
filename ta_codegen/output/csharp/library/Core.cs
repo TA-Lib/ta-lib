@@ -177,6 +177,55 @@ public partial class Core
         return unstablePeriod[slot];
     }
 
+    /* The requested start after the lookback clamp -- max(startIdx, lookback) --
+     * or -1 when the core will reject the call before it reaches the algorithm.
+     *
+     * -1 means "check no length at all": a negative or out-of-range index,
+     * endIdx < startIdx, or the -1 a lookback returns for an out-of-range
+     * optional parameter. The core owns that diagnosis and Failure() translates
+     * it, so pre-empting it would replace a documented exception with a length
+     * complaint.
+     *
+     * A result ABOVE endIdx is not an error: the range is shorter than the
+     * lookback, so the call produces no values. That switches the OUTPUT bound
+     * off -- any length will do, including none -- but not the input bound. An
+     * endIdx past the end of the series the caller supplied is a caller bug in
+     * any range; C answers it with TA_SUCCESS only because it has no size to
+     * check against.
+     *
+     * Same shape and same bound as Java's Core.clampedStart and the generated
+     * Rust asserts, so the three memory-safe backends reject the same calls. */
+    internal static int ClampedStart(int startIdx, int endIdx, int lookback)
+    {
+        if (lookback < 0 || startIdx < 0 || endIdx < startIdx || endIdx > MAX_INDEX)
+        {
+            return -1;
+        }
+        return startIdx > lookback ? startIdx : lookback;
+    }
+
+    /* Reject a span too short for the values this call would read or write.
+     *
+     * C cannot make this check -- it is handed bare pointers and has no sizes --
+     * and without it an undersized span surfaces as
+     * "IndexOutOfRangeException: Index was outside the bounds of the array",
+     * from inside the algorithm, with the output already partly written, naming
+     * neither the buffer nor either size.
+     *
+     * Takes the length rather than the span: a Span<T> is a ref struct that can
+     * never be null, so there is nothing to check but the count, and one method
+     * then serves every element type and both directions. */
+    internal static void RequireLength(string funcName, string argName, int actual, int required)
+    {
+        if (actual < required)
+        {
+            throw new ArgumentException(
+                "TA_" + funcName + ": " + argName + " has length " + actual
+                    + ", needs " + required,
+                argName);
+        }
+    }
+
     /* The RetCode -> exception mapping for the STREAMING tier. Deliberately not
      * a reuse of Failure(): a stream signals insufficient history in band as
      * OutOfRangeEndIndex, which Failure() renders as

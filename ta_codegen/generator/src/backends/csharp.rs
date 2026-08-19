@@ -590,26 +590,69 @@ fn gen_public_wrapper(
         out.push_str(param);
     }
     out.push_str(" )\n   {\n");
-    // A span is never null: `(double[])null` converts to a span of length 0.
-    // So the null check becomes an emptiness check, which carries the same
-    // information here — any valid range needs `endIdx >= 0`, hence at least
-    // one element, so an empty INPUT is always a caller error and is the shape
-    // a passed null arrives in. Without this it surfaces as an
-    // IndexOutOfRangeException from wherever the body first indexes, naming
-    // nothing.
+    // Argument checks. Public wrappers only — the internal cores are reached by
+    // cross-indicator calls and the JSON-RPC server with buffers the generator
+    // itself created.
     //
-    // Inputs only. An empty OUTPUT is legitimate: when the requested range is
-    // shorter than the lookback the call succeeds having written nothing, and
-    // rejecting a zero-length output would break that.
+    // A span is never null: `(double[])null` converts to a span of length 0. So
+    // C#'s null check IS the emptiness check, and the type system supplies the
+    // half Java has to write by hand. What it does not supply is the length
+    // bound, which is the rest of this block: the same bound the Rust backend
+    // asserts and Java's wrappers check — every input the body indexes must
+    // reach `endIdx`, every output must hold `endIdx - max(startIdx, lookback)
+    // + 1` values, the count actually produced.
     //
-    // Public wrappers only — the internal cores are reached by cross-indicator
-    // calls and the JSON-RPC server with buffers the generator itself created.
-    for input in &func.inputs {
+    // There is no separate emptiness check. There used to be one, on every
+    // declared input, and the length bound subsumes it: on any call the core
+    // actually runs, `guardInLen` is `endIdx + 1` and therefore at least 1, so an
+    // empty input fails the length check anyway — and fails it with a message
+    // naming both sizes rather than just the word "empty".
+    //
+    // Where the two differed, the emptiness check was WRONG. It ran before
+    // anything else, so `SMA(-1, 50, empty, 10, out)` reported "inReal is empty"
+    // when the caller's actual mistake was the startIdx: it pre-empted the
+    // RetCode the core exists to produce. The length bound cannot, because
+    // `ClampedStart` returns -1 for exactly those arguments and switches it off.
+    //
+    // It also ran over inputs the body never indexes — four candlestick patterns
+    // declare an OHLC leg they never read — so an empty leg was an error in C#
+    // and a success in Rust and Java, which both skip those.
+    let indexed = super::common::indexed_input_names(func);
+    let checked_inputs: Vec<&str> = func
+        .inputs
+        .iter()
+        .filter(|i| indexed.contains(&i.name))
+        .map(|i| i.name.as_str())
+        .collect();
+    if !checked_inputs.is_empty() || !func.outputs.is_empty() {
+        let lb_args: Vec<String> =
+            func.optional_inputs.iter().map(|o| o.name.clone()).collect();
         let _ = writeln!(
             out,
-            "      if( {0}.IsEmpty ) throw new ArgumentException(\"{0} is empty\", nameof({0}));",
-            input.name
+            "      int guardStart = ClampedStart(startIdx, endIdx, {base_name}_Lookback({}));",
+            lb_args.join(", ")
         );
+        if !checked_inputs.is_empty() {
+            out.push_str("      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;\n");
+        }
+        if !func.outputs.is_empty() {
+            out.push_str(
+                "      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;\n",
+            );
+        }
+        for name in &checked_inputs {
+            let _ = writeln!(
+                out,
+                "      RequireLength(\"{base_name}\", \"{name}\", {name}.Length, guardInLen);"
+            );
+        }
+        for output in &func.outputs {
+            let name = &output.name;
+            let _ = writeln!(
+                out,
+                "      RequireLength(\"{base_name}\", \"{name}\", {name}.Length, guardOutLen);"
+            );
+        }
     }
     {
         let _ = write!(out, "      RetCode retCode = {core}(");

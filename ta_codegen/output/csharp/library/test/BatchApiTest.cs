@@ -105,6 +105,43 @@ public static class BatchApiTest
         }
     }
 
+    /// <summary>
+    /// Same, plus the message has to name what a caller needs to fix it. The
+    /// length rejections all share one exception type, so the message is the only
+    /// thing that says WHICH span and by how much.
+    /// </summary>
+    private static void CheckThrows<TException>(Action body, string what, params string[] needles)
+        where TException : Exception
+    {
+        _checks++;
+        try
+        {
+            body();
+            _failures++;
+            Console.WriteLine("  FAIL: " + what + " (no exception thrown)");
+        }
+        catch (Exception e)
+        {
+            if (e is not TException)
+            {
+                _failures++;
+                Console.WriteLine("  FAIL: " + what + " (threw " + e.GetType().FullName + ")");
+                return;
+            }
+            string msg = e.Message ?? "";
+            foreach (string needle in needles)
+            {
+                if (!msg.Contains(needle, StringComparison.Ordinal))
+                {
+                    _failures++;
+                    Console.WriteLine("  FAIL: " + what + " (message \"" + msg
+                        + "\" omits \"" + needle + "\")");
+                    return;
+                }
+            }
+        }
+    }
+
     private static double[] Closes(int n)
     {
         var outv = new double[n];
@@ -220,10 +257,11 @@ public static class BatchApiTest
 
         // The cast is required, not incidental: `null` alone is ambiguous between
         // the double[] and float[] overloads. Real callers pass a typed array.
-        // A span is never null: a null array converts to a span of length 0,
-        // and so does an empty array. Both are rejected the same way, because
-        // for this library they mean the same thing — any valid range needs
-        // endIdx >= 0, so an empty input cannot be satisfied.
+        // A span is never null: a null array converts to a span of length 0, and
+        // so does an empty array, so for this library the two ARE the same state.
+        // Both are caught by the length bound, not by a separate emptiness check
+        // — any valid range needs endIdx >= 0 and therefore at least one element,
+        // so an empty input can never satisfy it.
         CheckThrows<ArgumentException>(
             () => core.SMA(0, 50, (double[])null!, 10, output),
             "null input -> ArgumentException");
@@ -249,11 +287,10 @@ public static class BatchApiTest
             }
         }
 
-        // Outputs are NOT capacity-checked, unchanged from the array API: the
-        // caller has always been responsible for sizing them, and a too-small
-        // output faults on write rather than being diagnosed. An empty output
-        // is deliberately not rejected — it is legitimate when the requested
-        // range is shorter than the lookback and the call writes nothing.
+        // An empty output is legitimate when the requested range is shorter than
+        // the lookback and the call writes nothing, so the output bound is
+        // switched off on exactly that branch. (Outputs ARE capacity-checked
+        // otherwise — see TheLengthBoundFromBothSides below.)
         _checks++;
         {
             OutRange r = core.SMA(0, 5, input, 30, Array.Empty<double>());
@@ -270,6 +307,260 @@ public static class BatchApiTest
         CheckThrows<ArgumentException>(
             () => core.BBANDS(0, 50, input, 20, 2.0, 2.0, MAType.SMA, shared, shared, third),
             "aliased output arrays -> ArgumentException");
+    }
+
+    /* ------------------------------------------ span-length checks (#172 C2) */
+
+    /*
+     * The same four misuses the Java suite covers, on C#'s span surface. Before
+     * these checks each one was "IndexOutOfRangeException: Index was outside the
+     * bounds of the array" — raised from inside the algorithm, after the output
+     * was partly written, naming neither the buffer nor either size.
+     *
+     * The bound is the one the Rust backend asserts and Java's wrappers check:
+     * an input must reach endIdx, an output must hold the values actually
+     * PRODUCED, endIdx - max(startIdx, lookback) + 1. The exact boundary is
+     * pinned from both sides below; without that pair every assertion here would
+     * pass against a bound that was merely "some number".
+     */
+
+    /// <summary>An undersized output names the span and both sizes.</summary>
+    private static void UndersizedOutputIsRejected()
+    {
+        var core = new Core();
+        double[] input = Closes(200);
+
+        CheckThrows<ArgumentException>(
+            () => core.SMA(0, 199, input, 10, new double[3]),
+            "undersized output -> ArgumentException",
+            "SMA", "outReal", "3", "191");
+    }
+
+    /// <summary>Requesting more than the input holds names the input.</summary>
+    private static void UndersizedInputIsRejected()
+    {
+        var core = new Core();
+        double[] input = Closes(200);
+
+        CheckThrows<ArgumentException>(
+            () => core.SMA(0, 500, input, 10, new double[501]),
+            "endIdx past the input end -> ArgumentException",
+            "SMA", "inReal", "200", "501");
+    }
+
+    /// <summary>Two inputs of different lengths: the short one is named.</summary>
+    private static void MismatchedInputLengthsAreRejected()
+    {
+        var core = new Core();
+        double[] longer = Closes(200);
+        double[] shorter = Closes(50);
+        var output = new double[200];
+
+        CheckThrows<ArgumentException>(
+            () => core.ADD(0, 199, longer, shorter, output),
+            "mismatched input lengths -> ArgumentException",
+            "ADD", "inReal1", "50", "200");
+        // Control: over the range both legs cover, the same call succeeds.
+        Check(core.ADD(0, 49, longer, shorter, output).Count == 50,
+              "ADD over the range both legs cover succeeds");
+    }
+
+    /// <summary>
+    /// The exact boundary, from both sides. This is what makes every other length
+    /// assertion here mean something: a bound of endIdx - startIdx + 1 instead of
+    /// the produced count would still reject all the calls above, and would fail
+    /// on the accepted side of this one.
+    /// </summary>
+    private static void TheLengthBoundFromBothSides()
+    {
+        var core = new Core();
+        double[] input = Closes(200);
+        int produced = 199 - core.SMA_Lookback(10) + 1;
+
+        Check(produced == 191, "the produced count really is 191 (got " + produced + ")");
+        Check(produced < 200, "the produced count is shorter than the requested range");
+        Check(core.SMA(0, 199, input, 10, new double[produced]).Count == produced,
+              "an exactly-sized output is accepted and filled");
+        CheckThrows<ArgumentException>(
+            () => core.SMA(0, 199, input, 10, new double[produced - 1]),
+            "one element short of the produced count -> ArgumentException",
+            "outReal", (produced - 1).ToString(), produced.ToString());
+    }
+
+    /// <summary>
+    /// The complaint this fixes: not that the call fails, but that it used to fail
+    /// halfway through, having already written to the caller's buffer.
+    /// </summary>
+    private static void ARejectedCallWritesNothing()
+    {
+        const double sentinel = -3e37;
+        var core = new Core();
+        double[] input = Closes(200);
+        var output = new double[3];
+        Array.Fill(output, sentinel);
+
+        CheckThrows<ArgumentException>(
+            () => core.SMA(0, 199, input, 10, output), "undersized output throws");
+
+        bool untouched = true;
+        foreach (double v in output)
+        {
+            if (v != sentinel)
+            {
+                untouched = false;
+            }
+        }
+        Check(untouched, "a rejected call left the output buffer untouched");
+        // Non-vacuity: the same buffer IS writable by a call that is accepted.
+        core.SMA(0, 2, input, 1, output);
+        Check(output[0] != sentinel, "the sentinel is overwritten by a call that runs");
+    }
+
+    /// <summary>
+    /// The checks do not pre-empt the core's own RetCode mapping. Every case is
+    /// BOTH a bad argument and an unusable buffer; the core owns the diagnosis.
+    /// </summary>
+    private static void TheCoreStillOwnsItsOwnDiagnoses()
+    {
+        var core = new Core();
+        double[] input = Closes(200);
+        var tiny = new double[3];
+
+        CheckThrows<ArgumentOutOfRangeException>(
+            () => core.SMA(50, 10, input, 10, tiny),
+            "endIdx < startIdx still -> ArgumentOutOfRange", "endIdx");
+        CheckThrows<ArgumentOutOfRangeException>(
+            () => core.SMA(-1, 199, input, 10, tiny),
+            "negative startIdx still -> ArgumentOutOfRange", "startIdx");
+        CheckThrows<ArgumentOutOfRangeException>(
+            () => core.SMA(0, Core.MAX_INDEX + 1, input, 10, tiny),
+            "endIdx above MAX_INDEX still -> ArgumentOutOfRange", "endIdx");
+        CheckThrows<ArgumentException>(
+            () => core.SMA(0, 199, input, 0, tiny),
+            "out-of-range period still -> the parameter message", "bad parameter");
+
+        // And an EMPTY input does not change any of those answers. It used to:
+        // a separate emptiness check ran first and reported "inReal is empty"
+        // when the caller's actual mistake was the index or the parameter.
+        //
+        // One case per condition under which ClampedStart returns -1, which is
+        // the complete set of arguments whose diagnosis belongs to the core.
+        // Fewer than all four would leave a branch where the old behaviour could
+        // come back unnoticed.
+        CheckThrows<ArgumentOutOfRangeException>(
+            () => core.SMA(-1, 199, ReadOnlySpan<double>.Empty, 10, tiny),
+            "empty input does not mask a bad startIdx", "startIdx");
+        CheckThrows<ArgumentOutOfRangeException>(
+            () => core.SMA(50, 10, ReadOnlySpan<double>.Empty, 10, tiny),
+            "empty input does not mask endIdx < startIdx", "endIdx");
+        CheckThrows<ArgumentOutOfRangeException>(
+            () => core.SMA(0, Core.MAX_INDEX + 1, ReadOnlySpan<double>.Empty, 10, tiny),
+            "empty input does not mask endIdx above MAX_INDEX", "endIdx");
+        CheckThrows<ArgumentException>(
+            () => core.SMA(0, 199, ReadOnlySpan<double>.Empty, 0, tiny),
+            "empty input does not mask a bad parameter", "bad parameter");
+    }
+
+    /// <summary>Each output is checked on its own, and named on its own.</summary>
+    private static void EachOutputIsCheckedSeparately()
+    {
+        var core = new Core();
+        double[] input = Closes(200);
+        int produced = 199 - core.MACD_Lookback(12, 26, 9) + 1;
+        Check(produced > 0, "MACD produces values over this range");
+
+        var big1 = new double[200];
+        var big2 = new double[200];
+        var small = new double[produced - 1];
+
+        CheckThrows<ArgumentException>(
+            () => core.MACD(0, 199, input, 12, 26, 9, small, big1, big2),
+            "short first output is named", "outMACD", produced.ToString());
+        CheckThrows<ArgumentException>(
+            () => core.MACD(0, 199, input, 12, 26, 9, big1, small, big2),
+            "short second output is named", "outMACDSignal", produced.ToString());
+        CheckThrows<ArgumentException>(
+            () => core.MACD(0, 199, input, 12, 26, 9, big1, big2, small),
+            "short third output is named", "outMACDHist", produced.ToString());
+    }
+
+    /// <summary>The int outputs the candlestick patterns write are checked too.</summary>
+    private static void IntegerOutputsAreChecked()
+    {
+        var core = new Core();
+        double[] o = Closes(200);
+        double[] h = Closes(200);
+        double[] l = Closes(200);
+        double[] c = Closes(200);
+        int produced = 199 - core.CDLDOJI_Lookback() + 1;
+
+        CheckThrows<ArgumentException>(
+            () => core.CDLDOJI(0, 199, o, h, l, c, new int[3]),
+            "short int output -> ArgumentException",
+            "CDLDOJI", "outInteger", "3", produced.ToString());
+    }
+
+    /// <summary>The float overload carries the identical checks.</summary>
+    private static void FloatOverloadIsCheckedToo()
+    {
+        var core = new Core();
+        double[] input = Closes(200);
+        var inF = new float[200];
+        for (int i = 0; i < input.Length; i++)
+        {
+            inF[i] = (float)input[i];
+        }
+
+        CheckThrows<ArgumentException>(
+            () => core.SMA(0, 199, inF, 10, new double[3]),
+            "float overload: undersized output", "SMA", "outReal", "3", "191");
+        CheckThrows<ArgumentException>(
+            () => core.SMA(0, 500, inF, 10, new double[501]),
+            "float overload: endIdx past the input end", "SMA", "inReal", "200", "501");
+        Check(core.SMA(0, 199, inF, 10, new double[191]).Count == 191,
+              "float overload accepts an exactly-sized output");
+    }
+
+    /// <summary>
+    /// A leg the algorithm never indexes is not checked — not for length and not
+    /// for emptiness. Four candlestick patterns declare an OHLC input they never
+    /// read; the generated Rust asserts and the Java checks skip exactly those, so
+    /// rejecting them here would make the same call an error in C# alone. The
+    /// control is the leg beside it, which IS read.
+    /// </summary>
+    private static void AnUnreadLegIsNotChecked()
+    {
+        var core = new Core();
+        double[] real = Closes(200);
+        var outv = new int[200];
+
+        OutRange r = core.CDL3OUTSIDE(0, 199, real, ReadOnlySpan<double>.Empty,
+                                      ReadOnlySpan<double>.Empty, real, outv);
+        Check(r.Count > 0, "CDL3OUTSIDE runs with empty high/low legs it never reads");
+
+        CheckThrows<ArgumentException>(
+            () => core.CDL3OUTSIDE(0, 199, ReadOnlySpan<double>.Empty, real, real, real, outv),
+            "the open leg, which IS read, is still checked", "inOpen", "0", "200");
+    }
+
+    /// <summary>
+    /// The input bound survives the short-range escape that switches the output
+    /// bound off: an endIdx past the end of the supplied series is a caller bug in
+    /// any range, including one that produces no values.
+    /// </summary>
+    private static void AnEndIdxPastTheInputIsRejectedEvenProducingNothing()
+    {
+        var core = new Core();
+        double[] input = Closes(24);
+        double[] wide = Closes(25);
+
+        Check(core.APO_Lookback(12, 26, MAType.EMA) > 24,
+              "APO's lookback exceeds this range, so nothing is produced");
+        CheckThrows<ArgumentException>(
+            () => core.APO(0, 24, input, 12, 26, MAType.EMA, Array.Empty<double>()),
+            "endIdx past the input, producing nothing", "APO", "inReal", "24", "25");
+        Check(core.APO(0, 24, wide, 12, 26, MAType.EMA, Array.Empty<double>()).Count == 0,
+              "an input reaching endIdx is an empty success, zero-length output");
     }
 
     /// <summary>
@@ -451,6 +742,17 @@ public static class BatchApiTest
         CmoLeavesTheTailUntouched();
         ShortRangeIsAnEmptySuccessNotAnException();
         MisuseThrowsTheDocumentedException();
+        UndersizedOutputIsRejected();
+        UndersizedInputIsRejected();
+        MismatchedInputLengthsAreRejected();
+        TheLengthBoundFromBothSides();
+        ARejectedCallWritesNothing();
+        TheCoreStillOwnsItsOwnDiagnoses();
+        EachOutputIsCheckedSeparately();
+        IntegerOutputsAreChecked();
+        FloatOverloadIsCheckedToo();
+        AnUnreadLegIsNotChecked();
+        AnEndIdxPastTheInputIsRejectedEvenProducingNothing();
         OverlappingBuffersAreRejected();
         NoUnguardedTierOnThePublicSurface();
         FloatOverloadHasTheSameShape();

@@ -252,10 +252,14 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
-   /// span cannot be null — or two output buffers overlap, or an output
-   /// partially overlaps an input. Computing wholly in place (an output that IS
-   /// an input) is allowed.</exception>
+   /// <exception cref="System.ArgumentException">A span is too short for the range requested: an input that does not reach
+   /// <c>endIdx</c>, or an output that cannot hold the values produced. Checked
+   /// before anything is written, so a rejected call leaves every buffer
+   /// untouched. An empty span — which is what a null array becomes, since a
+   /// span cannot be null — fails the same check, because any valid range needs
+   /// at least one element.</exception>
+   /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output partially overlaps an input.
+   /// Computing wholly in place (an output that IS an input) is allowed.</exception>
    public OutRange ADXR( int startIdx,
                          int endIdx,
                          ReadOnlySpan<double> inHigh,
@@ -264,9 +268,13 @@ public partial class Core
                          int optInTimePeriod,
                          Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      int guardStart = ClampedStart(startIdx, endIdx, ADXR_Lookback(optInTimePeriod));
+      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      RequireLength("ADXR", "inHigh", inHigh.Length, guardInLen);
+      RequireLength("ADXR", "inLow", inLow.Length, guardInLen);
+      RequireLength("ADXR", "inClose", inClose.Length, guardInLen);
+      RequireLength("ADXR", "outReal", outReal.Length, guardOutLen);
       RetCode retCode = ADXR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ADXR", retCode);
@@ -316,10 +324,14 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.ArgumentException">An input series is empty — which is what a null array becomes, since a
-   /// span cannot be null — or two output buffers overlap, or an output
-   /// partially overlaps an input. Computing wholly in place (an output that IS
-   /// an input) is allowed.</exception>
+   /// <exception cref="System.ArgumentException">A span is too short for the range requested: an input that does not reach
+   /// <c>endIdx</c>, or an output that cannot hold the values produced. Checked
+   /// before anything is written, so a rejected call leaves every buffer
+   /// untouched. An empty span — which is what a null array becomes, since a
+   /// span cannot be null — fails the same check, because any valid range needs
+   /// at least one element.</exception>
+   /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output partially overlaps an input.
+   /// Computing wholly in place (an output that IS an input) is allowed.</exception>
    public OutRange ADXR( int startIdx,
                          int endIdx,
                          ReadOnlySpan<float> inHigh,
@@ -328,9 +340,13 @@ public partial class Core
                          int optInTimePeriod,
                          Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      int guardStart = ClampedStart(startIdx, endIdx, ADXR_Lookback(optInTimePeriod));
+      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      RequireLength("ADXR", "inHigh", inHigh.Length, guardInLen);
+      RequireLength("ADXR", "inLow", inLow.Length, guardInLen);
+      RequireLength("ADXR", "inClose", inClose.Length, guardInLen);
+      RequireLength("ADXR", "outReal", outReal.Length, guardOutLen);
       RetCode retCode = ADXR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ADXR", retCode);
