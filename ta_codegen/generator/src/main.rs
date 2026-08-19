@@ -1443,9 +1443,10 @@ fn build_java_library(root: &Path, bin_dir: &Path) -> bool {
     // The suites: discovered, not listed. A hardcoded roster is how the retired
     // `AllTests` suite went vacuous (it named one class, a later change deleted
     // it, and `ant test` kept passing). Discovery walks BOTH Maven source roots,
-    // so a suite misfiled under src/main/java is caught twice over -- once by the
-    // jar-content check above, and again by the run below failing to resolve
-    // `io.github.talib.test.<name>`.
+    // so a suite misfiled under src/main/java is caught by the jar-content check
+    // above -- its class leaks into the shipped jar and the `leaked` filter fires.
+    // That check is the whole net: the run below launches each suite by the
+    // package its own file declares, so a misfiled suite resolves and passes.
     let mut sources: Vec<std::path::PathBuf> = Vec::new();
     let mut junit_skipped: Vec<String> = Vec::new();
     collect_java_sources(&src_root, &mut sources, &mut junit_skipped);

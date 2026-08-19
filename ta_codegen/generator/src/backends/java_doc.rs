@@ -112,12 +112,18 @@ pub fn guarded_docs(
     b.tag(
         "throws IllegalArgumentException",
         "if an optional parameter is outside its documented range, two outputs share \
-         one array, or an array is too short for the range requested — an input that \
-         does not reach {@code endIdx}, or an output that cannot hold the values \
-         produced. Checked before anything is written, so a rejected call leaves \
-         every buffer untouched.",
+         one array, or an array is too short for the range requested — an input this \
+         function <i>reads</i> that does not reach {@code endIdx}, or an output that \
+         cannot hold the values produced. Checked before anything is written, so a \
+         rejected call leaves every buffer untouched.",
     );
-    b.tag("throws NullPointerException", "if any input or output array is null.");
+    b.tag(
+        "throws NullPointerException",
+        "if an input this function reads, or any output, is null. A few candlestick \
+         patterns declare an OHLC series they never index; those are neither \
+         length-checked nor null-checked, because rejecting them would refuse a call \
+         the algorithm can answer.",
+    );
 
     if !doc.see_also.is_empty() {
         let links: Vec<String> = doc

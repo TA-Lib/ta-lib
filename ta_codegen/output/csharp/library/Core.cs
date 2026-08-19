@@ -193,8 +193,13 @@ public partial class Core
      * any range; C answers it with TA_SUCCESS only because it has no size to
      * check against.
      *
-     * Same shape and same bound as Java's Core.clampedStart and the generated
-     * Rust asserts, so the three memory-safe backends reject the same calls. */
+     * Same shape and same bound as Java's Core.clampedStart. NOT the same as Rust:
+     * rust_lang.rs prefixes BOTH of its generated asserts with
+     * `_assertStart > endIdx ||`, so on a sub-lookback range Rust asserts nothing
+     * about the input length and SMA(0, 5, &[], 30, &mut []) is Ok(count 0) there
+     * while it throws here. This input bound is the one place C# and Java check
+     * more than C and Rust do; it is a diagnostic, not a safety net, since
+     * NoPhantomIoTest pins that no core reads on such a range. */
     internal static int ClampedStart(int startIdx, int endIdx, int lookback)
     {
         if (lookback < 0 || startIdx < 0 || endIdx < startIdx || endIdx > MAX_INDEX)

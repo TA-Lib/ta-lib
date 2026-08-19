@@ -93,8 +93,9 @@ namespace TALib.Test;
 /// enumerates all 174 functions with their input kinds, price components,
 /// parameter domains and output kinds, and <see cref="FunctionCall"/>'s thunks
 /// reach the <c>RetCode</c> tier directly — the typed <see cref="Core"/> wrapper
-/// rejects an empty input span before the body could touch it, which is a
-/// different (and separately tested) property.</para>
+/// rejects a too-short input span, empty included, before the body could touch it,
+/// which is a different (and separately tested) property. It does not reject the
+/// OHLC legs a few candlestick patterns declare but never index.</para>
 /// </remarks>
 public static class NoPhantomIoTest
 {
@@ -720,6 +721,42 @@ public static class NoPhantomIoTest
         TheProbesCanFail(core);
         SubLookbackSweep(core, catalog);
         ExactExtentSweep(core, catalog);
+
+        // Once more against a non-zero unstable period, mirroring the pass in
+        // NoPhantomIoTest.java. A dozen cores carry an explicit
+        //     /* Skip the unstable period */ i = unstablePeriod[...]; while (i-- > 0)
+        // warm-up loop that reads the input on every trip -- and at the default of
+        // 0, NINE of those loops (RSI, CMO, ATR, NATR, ADX, MINUS_DM, PLUS_DM, T3,
+        // KAMA) run zero times, so in C# their reads had never executed under a
+        // bounds check at all. Only DX, MINUS_DI and PLUS_DI are live at the
+        // default, because their form is `i = unstable + 1; while (i-- != 0)`.
+        //
+        // The setting also raises the published lookback of every function that
+        // carries it, and of every composite that calls one, which is exactly the
+        // lookback-versus-what-the-body-reads coupling every bug found here so far
+        // has lived in.
+        //
+        // Batch sweeps only: the control and streaming shapes do not move with it.
+        Core unstable = Core.Builder().UnstablePeriod(FuncUnstId.ALL, 3).Build();
+        int moved = 0;
+        foreach (FunctionInfo f in catalog)
+        {
+            List<Vector> baseline = Vectors(f, core);
+            List<Vector> shifted = Vectors(f, unstable);
+            if (baseline.Count > 0 && shifted.Count > 0
+                && baseline[0].Lookback != shifted[0].Lookback)
+            {
+                moved++;
+            }
+        }
+        // Tied to what the setting actually moves, not to a literal: if no lookback
+        // changed, this pass is a duplicate of the one above and the reader should
+        // be told rather than left to assume it added coverage.
+        Check(moved > 0,
+            $"a non-zero unstable period moves at least one lookback ({moved} of {catalog.Count})");
+        Console.WriteLine($"  unstable period 3: {moved} of {catalog.Count} lookbacks move");
+        SubLookbackSweep(unstable, catalog);
+        ExactExtentSweep(unstable, catalog);
 
         if (_failures == 0)
         {

@@ -236,12 +236,14 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.ArgumentException">A span is too short for the range requested: an input that does not reach
-   /// <c>endIdx</c>, or an output that cannot hold the values produced. Checked
-   /// before anything is written, so a rejected call leaves every buffer
-   /// untouched. An empty span — which is what a null array becomes, since a
-   /// span cannot be null — fails the same check, because any valid range needs
-   /// at least one element.</exception>
+   /// <exception cref="System.ArgumentException">A span is too short for the range requested: an input this function
+   /// <i>reads</i> that does not reach <c>endIdx</c>, or an output that cannot
+   /// hold the values produced. Checked before anything is written, so a
+   /// rejected call leaves every buffer untouched. An empty span — which is what
+   /// a null array becomes, since a span cannot be null — fails the same check,
+   /// because any valid range needs at least one element. A few candlestick
+   /// patterns declare an OHLC series they never index; those are not checked at
+   /// all, because rejecting them would refuse a call the algorithm can answer.</exception>
    /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output partially overlaps an input.
    /// Computing wholly in place (an output that IS an input) is allowed.</exception>
    public OutRange MOM( int startIdx,
@@ -298,12 +300,14 @@ public partial class Core
    /// <see cref="Core.MAX_INDEX"/>, or <c>endIdx &lt; startIdx</c>.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or two outputs
    /// share one array.</exception>
-   /// <exception cref="System.ArgumentException">A span is too short for the range requested: an input that does not reach
-   /// <c>endIdx</c>, or an output that cannot hold the values produced. Checked
-   /// before anything is written, so a rejected call leaves every buffer
-   /// untouched. An empty span — which is what a null array becomes, since a
-   /// span cannot be null — fails the same check, because any valid range needs
-   /// at least one element.</exception>
+   /// <exception cref="System.ArgumentException">A span is too short for the range requested: an input this function
+   /// <i>reads</i> that does not reach <c>endIdx</c>, or an output that cannot
+   /// hold the values produced. Checked before anything is written, so a
+   /// rejected call leaves every buffer untouched. An empty span — which is what
+   /// a null array becomes, since a span cannot be null — fails the same check,
+   /// because any valid range needs at least one element. A few candlestick
+   /// patterns declare an OHLC series they never index; those are not checked at
+   /// all, because rejecting them would refuse a call the algorithm can answer.</exception>
    /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output partially overlaps an input.
    /// Computing wholly in place (an output that IS an input) is allowed.</exception>
    public OutRange MOM( int startIdx,

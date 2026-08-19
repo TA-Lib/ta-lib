@@ -534,10 +534,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#AO
         * @see Core#MACD
@@ -621,10 +625,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#AO
         * @see Core#MACD
@@ -1516,10 +1524,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#SMA
         * @see Core#BBANDS
@@ -1589,10 +1601,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#SMA
         * @see Core#BBANDS
@@ -2209,10 +2225,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#COS
         * @see Core#ASIN
@@ -2267,10 +2287,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#COS
         * @see Core#ASIN
@@ -2678,10 +2702,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ADOSC
         * @see Core#OBV
@@ -2742,10 +2770,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ADOSC
         * @see Core#OBV
@@ -3160,10 +3192,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#SUB
         * @see Core#MULT
@@ -3217,10 +3253,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#SUB
         * @see Core#MULT
@@ -3807,10 +3847,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#AD
         * @see Core#EMA
@@ -3880,10 +3924,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#AD
         * @see Core#EMA
@@ -4980,10 +5028,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ADXR
         * @see Core#DX
@@ -5055,10 +5107,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ADXR
         * @see Core#DX
@@ -5965,10 +6021,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ADX
         * @see Core#DX
@@ -6036,10 +6096,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ADX
         * @see Core#DX
@@ -6704,10 +6768,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#APO
         * @see Core#MACD
@@ -6784,10 +6852,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#APO
         * @see Core#MACD
@@ -7507,10 +7579,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#PPO
         * @see Core#MACD
@@ -7581,10 +7657,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#PPO
         * @see Core#MACD
@@ -8232,10 +8312,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#AROONOSC
         * @see Core#MINMAXINDEX
@@ -8302,10 +8386,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#AROONOSC
         * @see Core#MINMAXINDEX
@@ -9093,10 +9181,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#AROON
         * @see Core#MINMAX
@@ -9159,10 +9251,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#AROON
         * @see Core#MINMAX
@@ -9760,10 +9856,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ACOS
         * @see Core#ATAN
@@ -9819,10 +9919,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ACOS
         * @see Core#ATAN
@@ -10164,10 +10268,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#TAN
         * @see Core#ACOS
@@ -10218,10 +10326,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#TAN
         * @see Core#ACOS
@@ -10821,10 +10933,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#TRANGE
         * @see Core#NATR
@@ -10888,10 +11004,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#TRANGE
         * @see Core#NATR
@@ -11504,10 +11624,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#STDDEV
         * @see Core#VAR
@@ -11563,10 +11687,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#STDDEV
         * @see Core#VAR
@@ -11998,10 +12126,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MEDPRICE
         * @see Core#TYPPRICE
@@ -12062,10 +12194,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MEDPRICE
         * @see Core#TYPPRICE
@@ -12962,10 +13098,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MA
         * @see Core#STDDEV
@@ -13054,10 +13194,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MA
         * @see Core#STDDEV
@@ -13881,10 +14025,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CORREL
         * @see Core#LINEARREG_SLOPE
@@ -13946,10 +14094,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CORREL
         * @see Core#LINEARREG_SLOPE
@@ -14621,10 +14773,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         */
        public OutRange BOP( int startIdx,
                             int endIdx,
@@ -14682,10 +14838,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         */
        public OutRange BOP( int startIdx,
                             int endIdx,
@@ -15235,10 +15395,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#TYPPRICE
         * @see Core#SMA
@@ -15303,10 +15467,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#TYPPRICE
         * @see Core#SMA
@@ -15931,10 +16099,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLUPSIDEGAP2CROWS
         * @see Core#CDLIDENTICAL3CROWS
@@ -15998,10 +16170,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLUPSIDEGAP2CROWS
         * @see Core#CDLIDENTICAL3CROWS
@@ -16666,10 +16842,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDL3WHITESOLDIERS
         * @see Core#CDLIDENTICAL3CROWS
@@ -16731,10 +16911,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDL3WHITESOLDIERS
         * @see Core#CDLIDENTICAL3CROWS
@@ -17526,10 +17710,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLHARAMI
         * @see Core#CDL3OUTSIDE
@@ -17595,10 +17783,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLHARAMI
         * @see Core#CDL3OUTSIDE
@@ -18328,10 +18520,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDL3WHITESOLDIERS
         * @see Core#CDL3BLACKCROWS
@@ -18397,10 +18593,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDL3WHITESOLDIERS
         * @see Core#CDL3BLACKCROWS
@@ -19114,10 +19314,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDL3INSIDE
         * @see Core#CDLENGULFING
@@ -19180,10 +19384,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDL3INSIDE
         * @see Core#CDLENGULFING
@@ -19837,10 +20045,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDL3BLACKCROWS
         * @see Core#CDLIDENTICAL3CROWS
@@ -19906,10 +20118,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDL3BLACKCROWS
         * @see Core#CDLIDENTICAL3CROWS
@@ -20996,10 +21212,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDL3BLACKCROWS
         * @see Core#CDLADVANCEBLOCK
@@ -21063,10 +21283,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDL3BLACKCROWS
         * @see Core#CDLADVANCEBLOCK
@@ -22126,10 +22350,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLEVENINGDOJISTAR
         * @see Core#CDLMORNINGDOJISTAR
@@ -22198,10 +22426,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLEVENINGDOJISTAR
         * @see Core#CDLMORNINGDOJISTAR
@@ -23167,10 +23399,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDL3WHITESOLDIERS
         * @see Core#CDLSTALLEDPATTERN
@@ -23234,10 +23470,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDL3WHITESOLDIERS
         * @see Core#CDLSTALLEDPATTERN
@@ -24309,10 +24549,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLCLOSINGMARUBOZU
         * @see Core#CDLMARUBOZU
@@ -24381,10 +24625,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLCLOSINGMARUBOZU
         * @see Core#CDLMARUBOZU
@@ -25050,10 +25298,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLGAPSIDESIDEWHITE
         * @see Core#CDLRISEFALL3METHODS
@@ -25118,10 +25370,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLGAPSIDESIDEWHITE
         * @see Core#CDLRISEFALL3METHODS
@@ -25826,10 +26082,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLMARUBOZU
         * @see Core#CDLLONGLINE
@@ -25896,10 +26156,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLMARUBOZU
         * @see Core#CDLLONGLINE
@@ -26584,10 +26848,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLMARUBOZU
         * @see Core#CDLENGULFING
@@ -26649,10 +26917,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLMARUBOZU
         * @see Core#CDLENGULFING
@@ -27452,10 +27724,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLPIERCING
         * @see Core#CDLDARKCLOUDCOVER
@@ -27519,10 +27795,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLPIERCING
         * @see Core#CDLDARKCLOUDCOVER
@@ -28316,10 +28596,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLPIERCING
         * @see Core#CDLENGULFING
@@ -28386,10 +28670,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLPIERCING
         * @see Core#CDLENGULFING
@@ -29007,10 +29295,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLDOJISTAR
         * @see Core#CDLDRAGONFLYDOJI
@@ -29072,10 +29364,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLDOJISTAR
         * @see Core#CDLDRAGONFLYDOJI
@@ -29693,10 +29989,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLMORNINGDOJISTAR
         * @see Core#CDLEVENINGDOJISTAR
@@ -29769,10 +30069,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLMORNINGDOJISTAR
         * @see Core#CDLEVENINGDOJISTAR
@@ -30493,10 +30797,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLDOJI
         * @see Core#CDLGRAVESTONEDOJI
@@ -30567,10 +30875,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLDOJI
         * @see Core#CDLGRAVESTONEDOJI
@@ -31209,10 +31521,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLHARAMI
         * @see Core#CDLCOUNTERATTACK
@@ -31276,10 +31592,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLHARAMI
         * @see Core#CDLCOUNTERATTACK
@@ -31901,10 +32221,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLEVENINGSTAR
         * @see Core#CDLMORNINGDOJISTAR
@@ -31972,10 +32296,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLEVENINGSTAR
         * @see Core#CDLMORNINGDOJISTAR
@@ -32839,10 +33167,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLEVENINGDOJISTAR
         * @see Core#CDLMORNINGSTAR
@@ -32909,10 +33241,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLEVENINGDOJISTAR
         * @see Core#CDLMORNINGSTAR
@@ -33690,10 +34026,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLTASUKIGAP
         * @see Core#CDLXSIDEGAP3METHODS
@@ -33758,10 +34098,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLTASUKIGAP
         * @see Core#CDLXSIDEGAP3METHODS
@@ -34503,10 +34847,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLDOJI
         * @see Core#CDLDRAGONFLYDOJI
@@ -34577,10 +34925,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLDOJI
         * @see Core#CDLDRAGONFLYDOJI
@@ -35334,10 +35686,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLINVERTEDHAMMER
         * @see Core#CDLHANGINGMAN
@@ -35400,10 +35756,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLINVERTEDHAMMER
         * @see Core#CDLHANGINGMAN
@@ -36319,10 +36679,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLHAMMER
         * @see Core#CDLINVERTEDHAMMER
@@ -36386,10 +36750,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLHAMMER
         * @see Core#CDLINVERTEDHAMMER
@@ -37272,10 +37640,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLHARAMICROSS
         * @see Core#CDLENGULFING
@@ -37338,10 +37710,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLHARAMICROSS
         * @see Core#CDLENGULFING
@@ -38114,10 +38490,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLHARAMI
         * @see Core#CDLDOJI
@@ -38181,10 +38561,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLHARAMI
         * @see Core#CDLDOJI
@@ -38926,10 +39310,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLLONGLEGGEDDOJI
         * @see Core#CDLSPINNINGTOP
@@ -38999,10 +39387,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLLONGLEGGEDDOJI
         * @see Core#CDLSPINNINGTOP
@@ -39707,10 +40099,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLHIKKAKEMOD
         * @see Core#CDLHARAMI
@@ -39772,10 +40168,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLHIKKAKEMOD
         * @see Core#CDLHARAMI
@@ -40475,10 +40875,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLHIKKAKE
         */
@@ -40540,10 +40944,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLHIKKAKE
         */
@@ -41299,10 +41707,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLHARAMI
         * @see Core#CDLMATCHINGLOW
@@ -41368,10 +41780,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLHARAMI
         * @see Core#CDLMATCHINGLOW
@@ -42129,10 +42545,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDL3BLACKCROWS
         * @see Core#CDL2CROWS
@@ -42195,10 +42615,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDL3BLACKCROWS
         * @see Core#CDL2CROWS
@@ -43052,10 +43476,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLONNECK
         * @see Core#CDLTHRUSTING
@@ -43123,10 +43551,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLONNECK
         * @see Core#CDLTHRUSTING
@@ -43883,10 +44315,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLHAMMER
         * @see Core#CDLSHOOTINGSTAR
@@ -43949,10 +44385,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLHAMMER
         * @see Core#CDLSHOOTINGSTAR
@@ -44745,10 +45185,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLKICKINGBYLENGTH
         * @see Core#CDLMARUBOZU
@@ -44810,10 +45254,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLKICKINGBYLENGTH
         * @see Core#CDLMARUBOZU
@@ -45637,10 +46085,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLKICKING
         * @see Core#CDLMARUBOZU
@@ -45699,10 +46151,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLKICKING
         * @see Core#CDLMARUBOZU
@@ -46494,10 +46950,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDL3BLACKCROWS
         * @see Core#CDLMATCHINGLOW
@@ -46562,10 +47022,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDL3BLACKCROWS
         * @see Core#CDLMATCHINGLOW
@@ -47251,10 +47715,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLDOJI
         * @see Core#CDLGRAVESTONEDOJI
@@ -47322,10 +47790,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLDOJI
         * @see Core#CDLGRAVESTONEDOJI
@@ -48002,10 +48474,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLSHORTLINE
         * @see Core#CDLCLOSINGMARUBOZU
@@ -48065,10 +48541,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLSHORTLINE
         * @see Core#CDLCLOSINGMARUBOZU
@@ -48751,10 +49231,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLCLOSINGMARUBOZU
         * @see Core#CDLLONGLINE
@@ -48820,10 +49304,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLCLOSINGMARUBOZU
         * @see Core#CDLLONGLINE
@@ -49482,10 +49970,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLHOMINGPIGEON
         */
@@ -49551,10 +50043,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLHOMINGPIGEON
         */
@@ -50249,10 +50745,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLRISEFALL3METHODS
         * @see Core#CDLXSIDEGAP3METHODS
@@ -50320,10 +50820,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLRISEFALL3METHODS
         * @see Core#CDLXSIDEGAP3METHODS
@@ -51282,10 +51786,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLMORNINGSTAR
         * @see Core#CDLEVENINGDOJISTAR
@@ -51356,10 +51864,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLMORNINGSTAR
         * @see Core#CDLEVENINGDOJISTAR
@@ -52226,10 +52738,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLMORNINGDOJISTAR
         * @see Core#CDLEVENINGSTAR
@@ -52300,10 +52816,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLMORNINGDOJISTAR
         * @see Core#CDLEVENINGSTAR
@@ -53080,10 +53600,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLINNECK
         * @see Core#CDLTHRUSTING
@@ -53150,10 +53674,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLINNECK
         * @see Core#CDLTHRUSTING
@@ -53861,10 +54389,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLDARKCLOUDCOVER
         * @see Core#CDLENGULFING
@@ -53927,10 +54459,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLDARKCLOUDCOVER
         * @see Core#CDLENGULFING
@@ -54694,10 +55230,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLLONGLEGGEDDOJI
         * @see Core#CDLDOJI
@@ -54760,10 +55300,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLLONGLEGGEDDOJI
         * @see Core#CDLDOJI
@@ -55566,10 +56110,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLXSIDEGAP3METHODS
         * @see Core#CDL3INSIDE
@@ -55636,10 +56184,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLXSIDEGAP3METHODS
         * @see Core#CDL3INSIDE
@@ -56565,10 +57117,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLBELTHOLD
         */
@@ -56633,10 +57189,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLBELTHOLD
         */
@@ -57455,10 +58015,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLINVERTEDHAMMER
         * @see Core#CDLHANGINGMAN
@@ -57523,10 +58087,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLINVERTEDHAMMER
         * @see Core#CDLHANGINGMAN
@@ -58301,10 +58869,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLLONGLINE
         * @see Core#CDLSPINNINGTOP
@@ -58371,10 +58943,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLLONGLINE
         * @see Core#CDLSPINNINGTOP
@@ -59023,10 +59599,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLDOJI
         * @see Core#CDLHIGHWAVE
@@ -59088,10 +59668,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLDOJI
         * @see Core#CDLHIGHWAVE
@@ -59794,10 +60378,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLADVANCEBLOCK
         * @see Core#CDL3WHITESOLDIERS
@@ -59861,10 +60449,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLADVANCEBLOCK
         * @see Core#CDL3WHITESOLDIERS
@@ -60818,10 +61410,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLMATCHINGLOW
         * @see Core#CDLHOMINGPIGEON
@@ -60884,10 +61480,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLMATCHINGLOW
         * @see Core#CDLHOMINGPIGEON
@@ -61580,10 +62180,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLDRAGONFLYDOJI
         * @see Core#CDLDOJI
@@ -61648,10 +62252,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLDRAGONFLYDOJI
         * @see Core#CDLDOJI
@@ -62393,10 +63001,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLGAPSIDESIDEWHITE
         * @see Core#CDLXSIDEGAP3METHODS
@@ -62460,10 +63072,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLGAPSIDESIDEWHITE
         * @see Core#CDLXSIDEGAP3METHODS
@@ -63144,10 +63760,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLINNECK
         * @see Core#CDLONNECK
@@ -63213,10 +63833,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLINNECK
         * @see Core#CDLONNECK
@@ -63930,10 +64554,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLDOJI
         * @see Core#CDLDOJISTAR
@@ -63997,10 +64625,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLDOJI
         * @see Core#CDLDOJISTAR
@@ -64687,10 +65319,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLHARAMI
         * @see Core#CDLHOMINGPIGEON
@@ -64754,10 +65390,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLHARAMI
         * @see Core#CDLHOMINGPIGEON
@@ -65516,10 +66156,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDL2CROWS
         * @see Core#CDLGAPSIDESIDEWHITE
@@ -65583,10 +66227,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDL2CROWS
         * @see Core#CDLGAPSIDESIDEWHITE
@@ -66280,10 +66928,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLGAPSIDESIDEWHITE
         * @see Core#CDLTASUKIGAP
@@ -66346,10 +66998,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CDLGAPSIDESIDEWHITE
         * @see Core#CDLTASUKIGAP
@@ -66792,10 +67448,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#FLOOR
         */
@@ -66844,10 +67504,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#FLOOR
         */
@@ -67420,10 +68084,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#AD
         * @see Core#ADOSC
@@ -67513,10 +68181,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#AD
         * @see Core#ADOSC
@@ -68356,10 +69028,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#RSI
         */
@@ -68417,10 +69093,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#RSI
         */
@@ -69154,10 +69834,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CMO
         * @see Core#RSI
@@ -69216,10 +69900,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CMO
         * @see Core#RSI
@@ -69926,10 +70614,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#BETA
         * @see Core#STDDEV
@@ -69992,10 +70684,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#BETA
         * @see Core#STDDEV
@@ -70552,10 +71248,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ACOS
         * @see Core#SIN
@@ -70607,10 +71307,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ACOS
         * @see Core#SIN
@@ -70951,10 +71655,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#SINH
         * @see Core#TANH
@@ -71005,10 +71713,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#SINH
         * @see Core#TANH
@@ -71562,10 +72274,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#EMA
         * @see Core#TEMA
@@ -71623,10 +72339,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#EMA
         * @see Core#TEMA
@@ -72129,10 +72849,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MULT
         * @see Core#ADD
@@ -72190,10 +72914,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MULT
         * @see Core#ADD
@@ -73012,10 +73740,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ADX
         * @see Core#ADXR
@@ -73086,10 +73818,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ADX
         * @see Core#ADXR
@@ -74035,10 +74771,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#AD
         * @see Core#EMA
@@ -74109,10 +74849,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#AD
         * @see Core#EMA
@@ -74817,10 +75561,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#SMA
         * @see Core#DEMA
@@ -74884,10 +75632,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#SMA
         * @see Core#DEMA
@@ -75329,10 +76081,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#LN
         * @see Core#SQRT
@@ -75382,10 +76138,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#LN
         * @see Core#SQRT
@@ -75724,10 +76484,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CEIL
         */
@@ -75776,10 +76540,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CEIL
         */
@@ -76518,10 +77286,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#WMA
         * @see Core#MA
@@ -76594,10 +77366,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#WMA
         * @see Core#MA
@@ -78115,10 +78891,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#HT_DCPHASE
         * @see Core#HT_PHASOR
@@ -78169,10 +78949,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#HT_DCPHASE
         * @see Core#HT_PHASOR
@@ -79969,10 +80753,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#HT_DCPERIOD
         * @see Core#HT_PHASOR
@@ -80026,10 +80814,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#HT_DCPERIOD
         * @see Core#HT_PHASOR
@@ -81886,10 +82678,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#HT_DCPERIOD
         * @see Core#HT_DCPHASE
@@ -81948,10 +82744,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#HT_DCPERIOD
         * @see Core#HT_DCPHASE
@@ -83789,10 +84589,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#HT_DCPHASE
         * @see Core#HT_DCPERIOD
@@ -83847,10 +84651,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#HT_DCPHASE
         * @see Core#HT_DCPERIOD
@@ -85801,10 +86609,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#HT_DCPERIOD
         * @see Core#HT_PHASOR
@@ -85853,10 +86665,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#HT_DCPERIOD
         * @see Core#HT_PHASOR
@@ -87917,10 +88733,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#HT_TRENDLINE
         * @see Core#HT_SINE
@@ -87971,10 +88791,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#HT_TRENDLINE
         * @see Core#HT_SINE
@@ -89524,10 +90348,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#RSI
         */
@@ -89584,10 +90412,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#RSI
         */
@@ -90338,10 +91170,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MAMA
         * @see Core#EMA
@@ -90404,10 +91240,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MAMA
         * @see Core#EMA
@@ -91154,10 +91994,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#LINEARREG_SLOPE
         * @see Core#LINEARREG_ANGLE
@@ -91209,10 +92053,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#LINEARREG_SLOPE
         * @see Core#LINEARREG_ANGLE
@@ -91847,10 +92695,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#LINEARREG
         * @see Core#LINEARREG_SLOPE
@@ -91907,10 +92759,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#LINEARREG
         * @see Core#LINEARREG_SLOPE
@@ -92538,10 +93394,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#LINEARREG
         * @see Core#LINEARREG_SLOPE
@@ -92599,10 +93459,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#LINEARREG
         * @see Core#LINEARREG_SLOPE
@@ -93225,10 +94089,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#LINEARREG
         * @see Core#LINEARREG_INTERCEPT
@@ -93287,10 +94155,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#LINEARREG
         * @see Core#LINEARREG_INTERCEPT
@@ -93771,10 +94643,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#LOG10
         * @see Core#EXP
@@ -93829,10 +94705,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#LOG10
         * @see Core#EXP
@@ -94176,10 +95056,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#LN
         * @see Core#EXP
@@ -94233,10 +95117,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#LN
         * @see Core#EXP
@@ -94761,10 +95649,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#SMA
         * @see Core#EMA
@@ -94837,10 +95729,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#SMA
         * @see Core#EMA
@@ -96039,10 +96935,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MACDEXT
         * @see Core#MACDFIX
@@ -96118,10 +97018,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MACDEXT
         * @see Core#MACDFIX
@@ -97054,10 +97958,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MACD
         * @see Core#MACDFIX
@@ -97152,10 +98060,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MACD
         * @see Core#MACDFIX
@@ -98033,10 +98945,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MACD
         * @see Core#MACDEXT
@@ -98106,10 +99022,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MACD
         * @see Core#MACDEXT
@@ -99414,10 +100334,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MA
         * @see Core#WMA
@@ -99483,10 +100407,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MA
         * @see Core#WMA
@@ -100741,10 +101669,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#AD
         * @see Core#ADOSC
@@ -100813,10 +101745,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#AD
         * @see Core#ADOSC
@@ -101664,10 +102600,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MA
         * @see Core#SMA
@@ -101738,10 +102678,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MA
         * @see Core#SMA
@@ -102437,10 +103381,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MIN
         * @see Core#MAXINDEX
@@ -102494,10 +103442,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MIN
         * @see Core#MAXINDEX
@@ -103102,10 +104054,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MAX
         * @see Core#MININDEX
@@ -103166,10 +104122,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MAX
         * @see Core#MININDEX
@@ -103659,10 +104619,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MIDPRICE
         * @see Core#AVGPRICE
@@ -103717,10 +104681,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MIDPRICE
         * @see Core#AVGPRICE
@@ -104316,10 +105284,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#RSI
         * @see Core#AD
@@ -104387,10 +105359,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#RSI
         * @see Core#AD
@@ -105268,10 +106244,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MIDPRICE
         * @see Core#MAX
@@ -105326,10 +106306,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MIDPRICE
         * @see Core#MAX
@@ -106193,10 +107177,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MIDPOINT
         * @see Core#MEDPRICE
@@ -106254,10 +107242,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MIDPOINT
         * @see Core#MEDPRICE
@@ -107054,10 +108046,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MAX
         * @see Core#MININDEX
@@ -107110,10 +108106,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MAX
         * @see Core#MININDEX
@@ -107716,10 +108716,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MIN
         * @see Core#MAXINDEX
@@ -107780,10 +108784,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MIN
         * @see Core#MAXINDEX
@@ -108559,10 +109567,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MIN
         * @see Core#MAX
@@ -108619,10 +109631,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MIN
         * @see Core#MAX
@@ -109370,10 +110386,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MINMAX
         * @see Core#MIN
@@ -109437,10 +110457,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MINMAX
         * @see Core#MIN
@@ -110503,10 +111527,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#PLUS_DI
         * @see Core#MINUS_DM
@@ -110575,10 +111603,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#PLUS_DI
         * @see Core#MINUS_DM
@@ -111793,10 +112825,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#PLUS_DM
         * @see Core#MINUS_DI
@@ -111861,10 +112897,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#PLUS_DM
         * @see Core#MINUS_DI
@@ -112658,10 +113698,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ROC
         * @see Core#ROCP
@@ -112717,10 +113761,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ROC
         * @see Core#ROCP
@@ -113165,10 +114213,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ADD
         * @see Core#SUB
@@ -113222,10 +114274,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ADD
         * @see Core#SUB
@@ -113901,10 +114957,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ATR
         * @see Core#TRANGE
@@ -113968,10 +115028,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ATR
         * @see Core#TRANGE
@@ -114643,10 +115707,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         */
        public OutRange NVI( int startIdx,
                             int endIdx,
@@ -114709,10 +115777,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         */
        public OutRange NVI( int startIdx,
                             int endIdx,
@@ -115174,10 +116246,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         */
        public OutRange OBV( int startIdx,
                             int endIdx,
@@ -115228,10 +116304,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         */
        public OutRange OBV( int startIdx,
                             int endIdx,
@@ -116114,10 +117194,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MINUS_DI
         * @see Core#DX
@@ -116190,10 +117274,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MINUS_DI
         * @see Core#DX
@@ -117408,10 +118496,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MINUS_DM
         * @see Core#PLUS_DI
@@ -117475,10 +118567,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MINUS_DM
         * @see Core#PLUS_DI
@@ -118343,10 +119439,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#APO
         * @see Core#MACD
@@ -118416,10 +119516,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#APO
         * @see Core#MACD
@@ -118972,10 +120076,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         */
        public OutRange PVI( int startIdx,
                             int endIdx,
@@ -119038,10 +120146,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         */
        public OutRange PVI( int startIdx,
                             int endIdx,
@@ -119623,10 +120735,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#PPO
         * @see Core#OBV
@@ -119698,10 +120814,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#PPO
         * @see Core#OBV
@@ -120297,10 +121417,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CMO
         * @see Core#IMI
@@ -120364,10 +121488,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CMO
         * @see Core#IMI
@@ -120931,10 +122059,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MOM
         * @see Core#ROCP
@@ -120991,10 +122123,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MOM
         * @see Core#ROCP
@@ -121537,10 +122673,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ROC
         * @see Core#ROCR
@@ -121596,10 +122736,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ROC
         * @see Core#ROCR
@@ -122144,10 +123288,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ROC
         * @see Core#ROCP
@@ -122204,10 +123352,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ROC
         * @see Core#ROCP
@@ -122753,10 +123905,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ROCR
         * @see Core#ROC
@@ -122814,10 +123970,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ROCR
         * @see Core#ROC
@@ -123553,10 +124713,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CMO
         * @see Core#STOCHRSI
@@ -123626,10 +124790,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#CMO
         * @see Core#STOCHRSI
@@ -124570,10 +125738,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#SAREXT
         * @see Core#MINUS_DM
@@ -124638,10 +125810,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#SAREXT
         * @see Core#MINUS_DM
@@ -125987,10 +127163,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#SAR
         * @see Core#MINUS_DM
@@ -126071,10 +127251,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#SAR
         * @see Core#MINUS_DM
@@ -126927,10 +128111,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#COS
         * @see Core#TAN
@@ -126981,10 +128169,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#COS
         * @see Core#TAN
@@ -127324,10 +128516,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#COSH
         * @see Core#TANH
@@ -127377,10 +128573,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#COSH
         * @see Core#TANH
@@ -127818,10 +129018,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#EMA
         * @see Core#WMA
@@ -127881,10 +129085,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#EMA
         * @see Core#WMA
@@ -128325,10 +129533,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         */
        public OutRange SQRT( int startIdx,
                              int endIdx,
@@ -128379,10 +129591,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         */
        public OutRange SQRT( int startIdx,
                              int endIdx,
@@ -128813,10 +130029,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#VAR
         * @see Core#BBANDS
@@ -128877,10 +130097,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#VAR
         * @see Core#BBANDS
@@ -129739,10 +130963,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#STOCHF
         * @see Core#STOCHRSI
@@ -129833,10 +131061,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#STOCHF
         * @see Core#STOCHRSI
@@ -131019,10 +132251,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#STOCH
         * @see Core#STOCHRSI
@@ -131102,10 +132338,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#STOCH
         * @see Core#STOCHRSI
@@ -132062,10 +133302,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#RSI
         * @see Core#STOCHF
@@ -132145,10 +133389,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#RSI
         * @see Core#STOCHF
@@ -132662,10 +133910,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ADD
         * @see Core#MULT
@@ -132719,10 +133971,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ADD
         * @see Core#MULT
@@ -133157,10 +134413,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#SMA
         */
@@ -133212,10 +134472,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#SMA
         */
@@ -133952,10 +135216,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#EMA
         * @see Core#DEMA
@@ -134021,10 +135289,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#EMA
         * @see Core#DEMA
@@ -134598,10 +135870,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ATAN
         * @see Core#SIN
@@ -134653,10 +135929,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ATAN
         * @see Core#SIN
@@ -134996,10 +136276,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#SINH
         * @see Core#COSH
@@ -135049,10 +136333,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#SINH
         * @see Core#COSH
@@ -135645,10 +136933,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#EMA
         * @see Core#DEMA
@@ -135707,10 +136999,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#EMA
         * @see Core#DEMA
@@ -136328,10 +137624,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ATR
         * @see Core#NATR
@@ -136393,10 +137693,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ATR
         * @see Core#NATR
@@ -137210,10 +138514,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#SMA
         * @see Core#WMA
@@ -137274,10 +138582,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#SMA
         * @see Core#WMA
@@ -138367,10 +139679,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#EMA
         * @see Core#ROC
@@ -138432,10 +139748,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#EMA
         * @see Core#ROC
@@ -139061,10 +140381,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#LINEARREG
         * @see Core#LINEARREG_SLOPE
@@ -139120,10 +140444,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#LINEARREG
         * @see Core#LINEARREG_SLOPE
@@ -139623,10 +140951,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MEDPRICE
         * @see Core#WCLPRICE
@@ -139683,10 +141015,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#MEDPRICE
         * @see Core#WCLPRICE
@@ -140488,10 +141824,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ATR
         * @see Core#TRANGE
@@ -140567,10 +141907,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#ATR
         * @see Core#TRANGE
@@ -141556,10 +142900,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#STDDEV
         */
@@ -141620,10 +142968,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#STDDEV
         */
@@ -142429,10 +143781,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#SMA
         * @see Core#WMA
@@ -142503,10 +143859,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#SMA
         * @see Core#WMA
@@ -143149,10 +144509,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#AD
         * @see Core#ADOSC
@@ -143221,10 +144585,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#AD
         * @see Core#ADOSC
@@ -143680,10 +145048,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#TYPPRICE
         * @see Core#MEDPRICE
@@ -143740,10 +145112,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#TYPPRICE
         * @see Core#MEDPRICE
@@ -144432,10 +145808,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#STOCH
         * @see Core#STOCHF
@@ -144497,10 +145877,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#STOCH
         * @see Core#STOCHF
@@ -145291,10 +146675,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#SMA
         * @see Core#EMA
@@ -145355,10 +146743,14 @@ class Core {
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
         *        documented range, two outputs share one array, or an array is too short
-        *        for the range requested — an input that does not reach {@code endIdx}, or
-        *        an output that cannot hold the values produced. Checked before anything is
-        *        written, so a rejected call leaves every buffer untouched.
-        * @throws NullPointerException if any input or output array is null.
+        *        for the range requested — an input this function <i>reads</i> that does
+        *        not reach {@code endIdx}, or an output that cannot hold the values
+        *        produced. Checked before anything is written, so a rejected call leaves
+        *        every buffer untouched.
+        * @throws NullPointerException if an input this function reads, or any
+        *        output, is null. A few candlestick patterns declare an OHLC series they
+        *        never index; those are neither length-checked nor null-checked, because
+        *        rejecting them would refuse a call the algorithm can answer.
         *
         * @see Core#SMA
         * @see Core#EMA
