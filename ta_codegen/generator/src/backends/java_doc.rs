@@ -111,8 +111,11 @@ pub fn guarded_docs(
     );
     b.tag(
         "throws IllegalArgumentException",
-        "if an optional parameter is outside its documented range, or two outputs share \
-         one array.",
+        "if an optional parameter is outside its documented range, two outputs share \
+         one array, or an array is too short for the range requested — an input that \
+         does not reach {@code endIdx}, or an output that cannot hold the values \
+         produced. Checked before anything is written, so a rejected call leaves \
+         every buffer untouched.",
     );
     b.tag("throws NullPointerException", "if any input or output array is null.");
 

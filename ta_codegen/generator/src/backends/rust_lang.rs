@@ -1198,16 +1198,14 @@ fn emit_bounds_asserts(func: &FuncDef, snake: &str, guard_empty_range: bool) -> 
         );
     }
     let escape = if guard_empty_range { "_assertStart > endIdx || " } else { "" };
-    // Only assert on inputs the body actually reads. Four CDL patterns take an
-    // OHLC leg they never index (e.g. cdl3outside's inHigh/inLow), and asserting
-    // on those would reject a caller who legitimately passed a short or empty
-    // slice for a leg the algorithm ignores — while proving nothing to LLVM,
-    // which is the only reason the assert is here. Detected on the
-    // comment-stripped IR so a name mentioned only in prose cannot count.
-    let body_no_comments = super::stmt_walk::strip_comments(&func.body);
-    let body_repr = format!("{body_no_comments:?}");
+    // Only assert on inputs the body actually reads: asserting on a leg the
+    // algorithm ignores would reject a caller who legitimately passed a short or
+    // empty slice, while proving nothing to LLVM — which is the only reason the
+    // assert is here. Shared with the Java argument checks, which bound the same
+    // accesses (`backends::common::indexed_input_names`).
+    let indexed = super::common::indexed_input_names(func);
     for input in &func.inputs {
-        if !body_repr.contains(&format!("\"{}\"", input.name)) {
+        if !indexed.contains(&input.name) {
             continue;
         }
         out.push_str(&format!(

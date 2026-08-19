@@ -47,7 +47,7 @@ int lookback = Core.DEFAULT.SMA_Lookback(30);    // 29 for a 30-period SMA
 
 The lookback is how many inputs are consumed before the first output.
 
-**Too little data is a success, not an error.** A valid range shorter than the lookback simply produces no values: `count()` is 0 and `isEmpty()` is true. No exception is thrown — this matches the C library's `TA_SUCCESS` with `outNBElement == 0`.
+**Too little data is a success, not an error.** A valid range shorter than the lookback simply produces no values: `count()` is 0 and `isEmpty()` is true. No exception is thrown — this matches the C library's `TA_SUCCESS` with `outNBElement == 0`. Nothing is written, so the output array's length is not checked on such a call — it may even be zero-length. The input is still checked, though: an `endIdx` past the end of the series you passed is a mistake worth hearing about in any range, and an empty range would otherwise hide it behind a "no data yet" result.
 
 ## Parameters and errors
 
@@ -60,7 +60,10 @@ Misuse throws rather than returning an error code:
 | `startIdx`/`endIdx` out of range, or `endIdx < startIdx` | `IndexOutOfBoundsException` |
 | Optional parameter outside its documented range | `IllegalArgumentException` |
 | Two outputs sharing one array | `IllegalArgumentException` |
+| An array too short for the range requested | `IllegalArgumentException` |
 | A null input or output array | `NullPointerException` |
+
+Array lengths are checked before anything is written, so a rejected call leaves every buffer untouched. An input must reach `endIdx`; an output must hold the values actually produced, `endIdx - max(startIdx, lookback) + 1`. The message names the array and both sizes — `SMA: outReal has length 3, needs 191`.
 
 ## `float` inputs
 

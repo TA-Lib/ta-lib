@@ -676,6 +676,81 @@ fn internal_core_name(base: &str) -> String {
     format!("{base}_Internal")
 }
 
+/// Emit the wrapper's array-argument checks (issue #172 C2).
+///
+/// C cannot do this — it is handed bare pointers and has no sizes. Java arrays
+/// carry their length, so an undersized output, an `endIdx` past the end of the
+/// input, or a null array is detectable here, before the core writes a single
+/// element. Without it each of those is an `ArrayIndexOutOfBoundsException`
+/// raised from deep inside the algorithm, after the output buffer is already
+/// half written and with no `OutRange` to say how far the call got.
+///
+/// The bound is the one the Rust backend already asserts and the cross-language
+/// harness already verifies (`rust_lang::emit_bounds_asserts`): every input the
+/// body indexes must reach `endIdx`, and every output must hold the values
+/// actually produced — `endIdx - max(startIdx, lookback) + 1`, the produced
+/// count, not the width of the requested range.
+///
+/// `clampedStart` is `max(startIdx, lookback)`, or `-1` when the core will reject
+/// the call itself — the one case that must not be pre-empted, because the core
+/// owns that diagnosis.
+///
+/// The `_assertStart > endIdx ||` escape in front of the Rust asserts is applied
+/// to the OUTPUT bound only. A range shorter than the lookback produces no values,
+/// so any output length will do — including none. The input bound does NOT take
+/// the escape: `endIdx` past the end of the series the caller supplied is a caller
+/// bug in every range, and the only reason C answers it with `TA_SUCCESS` is that
+/// it has no size to check against. Reporting it beats an empty `OutRange` that
+/// reads as "no data yet".
+///
+/// This is the one bound where Java checks more than C and Rust do. It is not
+/// load-bearing for memory safety — `NoPhantomIoTest` pins that no core reads
+/// anything on a sub-lookback range — it is a diagnostic.
+///
+/// A null array is rejected either way — the length check is conditional, the
+/// contract that an argument exists is not.
+fn gen_argument_checks(func: &FuncDef, base_name: &str) -> String {
+    let indexed = super::common::indexed_input_names(func);
+    let inputs: Vec<&str> = func
+        .inputs
+        .iter()
+        .filter(|i| indexed.contains(&i.name))
+        .map(|i| i.name.as_str())
+        .collect();
+    if inputs.is_empty() && func.outputs.is_empty() {
+        return String::new();
+    }
+    let mut out = String::new();
+    let lb_args: Vec<String> = func.optional_inputs.iter().map(|o| o.name.clone()).collect();
+    let _ = writeln!(
+        out,
+        "      int guardStart = clampedStart(startIdx, endIdx, {base_name}_Lookback({}));",
+        lb_args.join(", ")
+    );
+    if !inputs.is_empty() {
+        out.push_str("      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;\n");
+    }
+    if !func.outputs.is_empty() {
+        out.push_str(
+            "      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;\n",
+        );
+    }
+    for name in inputs {
+        let _ = writeln!(
+            out,
+            "      requireLength(\"{base_name}\", \"{name}\", {name}, guardInLen);"
+        );
+    }
+    for output in &func.outputs {
+        let name = &output.name;
+        let _ = writeln!(
+            out,
+            "      requireLength(\"{base_name}\", \"{name}\", {name}, guardOutLen);"
+        );
+    }
+    out
+}
+
 /// Emit the public, `OutRange`-returning wrapper over one internal core.
 ///
 /// The wrapper translates the core's `RetCode` into the documented exception
@@ -741,6 +816,7 @@ fn gen_public_wrapper(
         out.push_str(param);
     }
     out.push_str(" )\n   {\n");
+    out.push_str(&gen_argument_checks(func, &base_name));
     out.push_str("      MInteger outBegIdx = new MInteger();\n");
     out.push_str("      MInteger outNBElement = new MInteger();\n");
     {

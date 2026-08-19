@@ -2391,6 +2391,32 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("            default: return new IllegalStateException(where + retCode);\n");
     s.push_str("        }\n");
     s.push_str("    }\n\n");
+    // Same for the wrapper's argument checks (#172 C2). The server never calls a
+    // public wrapper — it calls the cores — but the spliced text has to compile,
+    // and it has to compile against the SAME helpers the library ships, or the
+    // identity this splice exists to preserve would be an identity of text only.
+    s.push_str("    static int clampedStart(int startIdx, int endIdx, int lookback) {\n");
+    s.push_str("        if (lookback < 0 || startIdx < 0 || endIdx < startIdx || endIdx > MAX_INDEX) {\n");
+    s.push_str("            return -1;\n");
+    s.push_str("        }\n");
+    s.push_str("        return startIdx > lookback ? startIdx : lookback;\n");
+    s.push_str("    }\n\n");
+    for ty in ["double", "float", "int"] {
+        s.push_str(&format!(
+            "    static void requireLength(String funcName, String argName, {ty}[] array, int required) {{\n"
+        ));
+        s.push_str("        checkLength(funcName, argName, array == null ? -1 : array.length, required);\n");
+        s.push_str("    }\n\n");
+    }
+    s.push_str("    static void checkLength(String funcName, String argName, int actual, int required) {\n");
+    s.push_str("        if (actual < 0) {\n");
+    s.push_str("            throw new NullPointerException(funcName + \": \" + argName + \" is null\");\n");
+    s.push_str("        }\n");
+    s.push_str("        if (actual < required) {\n");
+    s.push_str("            throw new IllegalArgumentException(funcName + \": \" + argName\n");
+    s.push_str("                + \" has length \" + actual + \", needs \" + required);\n");
+    s.push_str("        }\n");
+    s.push_str("    }\n\n");
     for func in funcs {
         s.push_str(&format!("    // @@CORE_{}@@\n", func.name));
     }

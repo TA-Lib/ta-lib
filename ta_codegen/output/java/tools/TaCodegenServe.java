@@ -93,6 +93,35 @@ class Core {
         }
     }
 
+    static int clampedStart(int startIdx, int endIdx, int lookback) {
+        if (lookback < 0 || startIdx < 0 || endIdx < startIdx || endIdx > MAX_INDEX) {
+            return -1;
+        }
+        return startIdx > lookback ? startIdx : lookback;
+    }
+
+    static void requireLength(String funcName, String argName, double[] array, int required) {
+        checkLength(funcName, argName, array == null ? -1 : array.length, required);
+    }
+
+    static void requireLength(String funcName, String argName, float[] array, int required) {
+        checkLength(funcName, argName, array == null ? -1 : array.length, required);
+    }
+
+    static void requireLength(String funcName, String argName, int[] array, int required) {
+        checkLength(funcName, argName, array == null ? -1 : array.length, required);
+    }
+
+    static void checkLength(String funcName, String argName, int actual, int required) {
+        if (actual < 0) {
+            throw new NullPointerException(funcName + ": " + argName + " is null");
+        }
+        if (actual < required) {
+            throw new IllegalArgumentException(funcName + ": " + argName
+                + " has length " + actual + ", needs " + required);
+        }
+    }
+
     /* List of contributors:
      *
      *  Initial  Name/description
@@ -504,7 +533,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#AO
@@ -522,6 +554,12 @@ class Core {
                            int optInSignalPeriod,
                            double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("AC", "inHigh", inHigh, guardInLen);
+          requireLength("AC", "inLow", inLow, guardInLen);
+          requireLength("AC", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = AC_Internal(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal);
@@ -582,7 +620,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#AO
@@ -600,6 +641,12 @@ class Core {
                            int optInSignalPeriod,
                            double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("AC", "inHigh", inHigh, guardInLen);
+          requireLength("AC", "inLow", inLow, guardInLen);
+          requireLength("AC", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = AC_Internal(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal);
@@ -1468,7 +1515,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#SMA
@@ -1484,6 +1534,15 @@ class Core {
                                  double outRealMiddleBand[],
                                  double outRealLowerBand[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, ACCBANDS_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ACCBANDS", "inHigh", inHigh, guardInLen);
+          requireLength("ACCBANDS", "inLow", inLow, guardInLen);
+          requireLength("ACCBANDS", "inClose", inClose, guardInLen);
+          requireLength("ACCBANDS", "outRealUpperBand", outRealUpperBand, guardOutLen);
+          requireLength("ACCBANDS", "outRealMiddleBand", outRealMiddleBand, guardOutLen);
+          requireLength("ACCBANDS", "outRealLowerBand", outRealLowerBand, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = ACCBANDS_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
@@ -1529,7 +1588,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#SMA
@@ -1545,6 +1607,15 @@ class Core {
                                  double outRealMiddleBand[],
                                  double outRealLowerBand[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, ACCBANDS_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ACCBANDS", "inHigh", inHigh, guardInLen);
+          requireLength("ACCBANDS", "inLow", inLow, guardInLen);
+          requireLength("ACCBANDS", "inClose", inClose, guardInLen);
+          requireLength("ACCBANDS", "outRealUpperBand", outRealUpperBand, guardOutLen);
+          requireLength("ACCBANDS", "outRealMiddleBand", outRealMiddleBand, guardOutLen);
+          requireLength("ACCBANDS", "outRealLowerBand", outRealLowerBand, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = ACCBANDS_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
@@ -2137,7 +2208,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#COS
@@ -2149,6 +2223,11 @@ class Core {
                              double inReal[],
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, ACOS_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ACOS", "inReal", inReal, guardInLen);
+          requireLength("ACOS", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = ACOS_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -2187,7 +2266,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#COS
@@ -2199,6 +2281,11 @@ class Core {
                              float inReal[],
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, ACOS_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ACOS", "inReal", inReal, guardInLen);
+          requireLength("ACOS", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = ACOS_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -2590,7 +2677,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ADOSC
@@ -2604,6 +2694,14 @@ class Core {
                            double inVolume[],
                            double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, AD_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("AD", "inHigh", inHigh, guardInLen);
+          requireLength("AD", "inLow", inLow, guardInLen);
+          requireLength("AD", "inClose", inClose, guardInLen);
+          requireLength("AD", "inVolume", inVolume, guardInLen);
+          requireLength("AD", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = AD_Internal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outReal);
@@ -2643,7 +2741,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ADOSC
@@ -2657,6 +2758,14 @@ class Core {
                            float inVolume[],
                            double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, AD_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("AD", "inHigh", inHigh, guardInLen);
+          requireLength("AD", "inLow", inLow, guardInLen);
+          requireLength("AD", "inClose", inClose, guardInLen);
+          requireLength("AD", "inVolume", inVolume, guardInLen);
+          requireLength("AD", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = AD_Internal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outReal);
@@ -3050,7 +3159,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#SUB
@@ -3063,6 +3175,12 @@ class Core {
                             double inReal1[],
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, ADD_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ADD", "inReal0", inReal0, guardInLen);
+          requireLength("ADD", "inReal1", inReal1, guardInLen);
+          requireLength("ADD", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = ADD_Internal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
@@ -3098,7 +3216,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#SUB
@@ -3111,6 +3232,12 @@ class Core {
                             float inReal1[],
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, ADD_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ADD", "inReal0", inReal0, guardInLen);
+          requireLength("ADD", "inReal1", inReal1, guardInLen);
+          requireLength("ADD", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = ADD_Internal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
@@ -3679,7 +3806,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#AD
@@ -3695,6 +3825,14 @@ class Core {
                               int optInSlowPeriod,
                               double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, ADOSC_Lookback(optInFastPeriod, optInSlowPeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ADOSC", "inHigh", inHigh, guardInLen);
+          requireLength("ADOSC", "inLow", inLow, guardInLen);
+          requireLength("ADOSC", "inClose", inClose, guardInLen);
+          requireLength("ADOSC", "inVolume", inVolume, guardInLen);
+          requireLength("ADOSC", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = ADOSC_Internal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
@@ -3741,7 +3879,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#AD
@@ -3757,6 +3898,14 @@ class Core {
                               int optInSlowPeriod,
                               double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, ADOSC_Lookback(optInFastPeriod, optInSlowPeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ADOSC", "inHigh", inHigh, guardInLen);
+          requireLength("ADOSC", "inLow", inLow, guardInLen);
+          requireLength("ADOSC", "inClose", inClose, guardInLen);
+          requireLength("ADOSC", "inVolume", inVolume, guardInLen);
+          requireLength("ADOSC", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = ADOSC_Internal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
@@ -4830,7 +4979,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ADXR
@@ -4849,6 +5001,13 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, ADX_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ADX", "inHigh", inHigh, guardInLen);
+          requireLength("ADX", "inLow", inLow, guardInLen);
+          requireLength("ADX", "inClose", inClose, guardInLen);
+          requireLength("ADX", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = ADX_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -4895,7 +5054,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ADXR
@@ -4914,6 +5076,13 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, ADX_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ADX", "inHigh", inHigh, guardInLen);
+          requireLength("ADX", "inLow", inLow, guardInLen);
+          requireLength("ADX", "inClose", inClose, guardInLen);
+          requireLength("ADX", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = ADX_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -5795,7 +5964,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ADX
@@ -5811,6 +5983,13 @@ class Core {
                              int optInTimePeriod,
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, ADXR_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ADXR", "inHigh", inHigh, guardInLen);
+          requireLength("ADXR", "inLow", inLow, guardInLen);
+          requireLength("ADXR", "inClose", inClose, guardInLen);
+          requireLength("ADXR", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = ADXR_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -5856,7 +6035,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ADX
@@ -5872,6 +6054,13 @@ class Core {
                              int optInTimePeriod,
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, ADXR_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ADXR", "inHigh", inHigh, guardInLen);
+          requireLength("ADXR", "inLow", inLow, guardInLen);
+          requireLength("ADXR", "inClose", inClose, guardInLen);
+          requireLength("ADXR", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = ADXR_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -6514,7 +6703,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#APO
@@ -6531,6 +6723,12 @@ class Core {
                            int optInSlowPeriod,
                            double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, AO_Lookback(optInFastPeriod, optInSlowPeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("AO", "inHigh", inHigh, guardInLen);
+          requireLength("AO", "inLow", inLow, guardInLen);
+          requireLength("AO", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = AO_Internal(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
@@ -6585,7 +6783,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#APO
@@ -6602,6 +6803,12 @@ class Core {
                            int optInSlowPeriod,
                            double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, AO_Lookback(optInFastPeriod, optInSlowPeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("AO", "inHigh", inHigh, guardInLen);
+          requireLength("AO", "inLow", inLow, guardInLen);
+          requireLength("AO", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = AO_Internal(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
@@ -7299,7 +7506,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#PPO
@@ -7316,6 +7526,11 @@ class Core {
                             MAType optInMAType,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("APO", "inReal", inReal, guardInLen);
+          requireLength("APO", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = APO_Internal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
@@ -7365,7 +7580,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#PPO
@@ -7382,6 +7600,11 @@ class Core {
                             MAType optInMAType,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("APO", "inReal", inReal, guardInLen);
+          requireLength("APO", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = APO_Internal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
@@ -8008,7 +8231,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#AROONOSC
@@ -8024,6 +8250,13 @@ class Core {
                               double outAroonDown[],
                               double outAroonUp[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, AROON_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("AROON", "inHigh", inHigh, guardInLen);
+          requireLength("AROON", "inLow", inLow, guardInLen);
+          requireLength("AROON", "outAroonDown", outAroonDown, guardOutLen);
+          requireLength("AROON", "outAroonUp", outAroonUp, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = AROON_Internal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp);
@@ -8068,7 +8301,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#AROONOSC
@@ -8084,6 +8320,13 @@ class Core {
                               double outAroonDown[],
                               double outAroonUp[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, AROON_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("AROON", "inHigh", inHigh, guardInLen);
+          requireLength("AROON", "inLow", inLow, guardInLen);
+          requireLength("AROON", "outAroonDown", outAroonDown, guardOutLen);
+          requireLength("AROON", "outAroonUp", outAroonUp, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = AROON_Internal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp);
@@ -8849,7 +9092,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#AROON
@@ -8862,6 +9108,12 @@ class Core {
                                  int optInTimePeriod,
                                  double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, AROONOSC_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("AROONOSC", "inHigh", inHigh, guardInLen);
+          requireLength("AROONOSC", "inLow", inLow, guardInLen);
+          requireLength("AROONOSC", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = AROONOSC_Internal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -8906,7 +9158,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#AROON
@@ -8919,6 +9174,12 @@ class Core {
                                  int optInTimePeriod,
                                  double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, AROONOSC_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("AROONOSC", "inHigh", inHigh, guardInLen);
+          requireLength("AROONOSC", "inLow", inLow, guardInLen);
+          requireLength("AROONOSC", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = AROONOSC_Internal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -9498,7 +9759,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ACOS
@@ -9511,6 +9775,11 @@ class Core {
                              double inReal[],
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, ASIN_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ASIN", "inReal", inReal, guardInLen);
+          requireLength("ASIN", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = ASIN_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -9549,7 +9818,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ACOS
@@ -9562,6 +9834,11 @@ class Core {
                              float inReal[],
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, ASIN_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ASIN", "inReal", inReal, guardInLen);
+          requireLength("ASIN", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = ASIN_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -9886,7 +10163,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#TAN
@@ -9898,6 +10178,11 @@ class Core {
                              double inReal[],
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, ATAN_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ATAN", "inReal", inReal, guardInLen);
+          requireLength("ATAN", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = ATAN_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -9932,7 +10217,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#TAN
@@ -9944,6 +10232,11 @@ class Core {
                              float inReal[],
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, ATAN_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ATAN", "inReal", inReal, guardInLen);
+          requireLength("ATAN", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = ATAN_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -10527,7 +10820,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#TRANGE
@@ -10543,6 +10839,13 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, ATR_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ATR", "inHigh", inHigh, guardInLen);
+          requireLength("ATR", "inLow", inLow, guardInLen);
+          requireLength("ATR", "inClose", inClose, guardInLen);
+          requireLength("ATR", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = ATR_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -10584,7 +10887,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#TRANGE
@@ -10600,6 +10906,13 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, ATR_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ATR", "inHigh", inHigh, guardInLen);
+          requireLength("ATR", "inLow", inLow, guardInLen);
+          requireLength("ATR", "inClose", inClose, guardInLen);
+          requireLength("ATR", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = ATR_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -11190,7 +11503,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#STDDEV
@@ -11203,6 +11519,11 @@ class Core {
                                int optInTimePeriod,
                                double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, AVGDEV_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("AVGDEV", "inReal", inReal, guardInLen);
+          requireLength("AVGDEV", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = AVGDEV_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -11241,7 +11562,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#STDDEV
@@ -11254,6 +11578,11 @@ class Core {
                                int optInTimePeriod,
                                double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, AVGDEV_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("AVGDEV", "inReal", inReal, guardInLen);
+          requireLength("AVGDEV", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = AVGDEV_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -11668,7 +11997,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MEDPRICE
@@ -11683,6 +12015,14 @@ class Core {
                                  double inClose[],
                                  double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, AVGPRICE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("AVGPRICE", "inOpen", inOpen, guardInLen);
+          requireLength("AVGPRICE", "inHigh", inHigh, guardInLen);
+          requireLength("AVGPRICE", "inLow", inLow, guardInLen);
+          requireLength("AVGPRICE", "inClose", inClose, guardInLen);
+          requireLength("AVGPRICE", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = AVGPRICE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
@@ -11721,7 +12061,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MEDPRICE
@@ -11736,6 +12079,14 @@ class Core {
                                  float inClose[],
                                  double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, AVGPRICE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("AVGPRICE", "inOpen", inOpen, guardInLen);
+          requireLength("AVGPRICE", "inHigh", inHigh, guardInLen);
+          requireLength("AVGPRICE", "inLow", inLow, guardInLen);
+          requireLength("AVGPRICE", "inClose", inClose, guardInLen);
+          requireLength("AVGPRICE", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = AVGPRICE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
@@ -12610,7 +12961,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MA
@@ -12628,6 +12982,13 @@ class Core {
                                double outRealMiddleBand[],
                                double outRealLowerBand[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("BBANDS", "inReal", inReal, guardInLen);
+          requireLength("BBANDS", "outRealUpperBand", outRealUpperBand, guardOutLen);
+          requireLength("BBANDS", "outRealMiddleBand", outRealMiddleBand, guardOutLen);
+          requireLength("BBANDS", "outRealLowerBand", outRealLowerBand, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = BBANDS_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
@@ -12692,7 +13053,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MA
@@ -12710,6 +13074,13 @@ class Core {
                                double outRealMiddleBand[],
                                double outRealLowerBand[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("BBANDS", "inReal", inReal, guardInLen);
+          requireLength("BBANDS", "outRealUpperBand", outRealUpperBand, guardOutLen);
+          requireLength("BBANDS", "outRealMiddleBand", outRealMiddleBand, guardOutLen);
+          requireLength("BBANDS", "outRealLowerBand", outRealLowerBand, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = BBANDS_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
@@ -13509,7 +13880,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CORREL
@@ -13524,6 +13898,12 @@ class Core {
                              int optInTimePeriod,
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, BETA_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("BETA", "inReal0", inReal0, guardInLen);
+          requireLength("BETA", "inReal1", inReal1, guardInLen);
+          requireLength("BETA", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = BETA_Internal(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -13565,7 +13945,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CORREL
@@ -13580,6 +13963,12 @@ class Core {
                              int optInTimePeriod,
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, BETA_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("BETA", "inReal0", inReal0, guardInLen);
+          requireLength("BETA", "inReal1", inReal1, guardInLen);
+          requireLength("BETA", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = BETA_Internal(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -14231,7 +14620,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         */
        public OutRange BOP( int startIdx,
@@ -14242,6 +14634,14 @@ class Core {
                             double inClose[],
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, BOP_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("BOP", "inOpen", inOpen, guardInLen);
+          requireLength("BOP", "inHigh", inHigh, guardInLen);
+          requireLength("BOP", "inLow", inLow, guardInLen);
+          requireLength("BOP", "inClose", inClose, guardInLen);
+          requireLength("BOP", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = BOP_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
@@ -14281,7 +14681,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         */
        public OutRange BOP( int startIdx,
@@ -14292,6 +14695,14 @@ class Core {
                             float inClose[],
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, BOP_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("BOP", "inOpen", inOpen, guardInLen);
+          requireLength("BOP", "inHigh", inHigh, guardInLen);
+          requireLength("BOP", "inLow", inLow, guardInLen);
+          requireLength("BOP", "inClose", inClose, guardInLen);
+          requireLength("BOP", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = BOP_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
@@ -14823,7 +15234,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#TYPPRICE
@@ -14837,6 +15251,13 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CCI_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CCI", "inHigh", inHigh, guardInLen);
+          requireLength("CCI", "inLow", inLow, guardInLen);
+          requireLength("CCI", "inClose", inClose, guardInLen);
+          requireLength("CCI", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CCI_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -14881,7 +15302,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#TYPPRICE
@@ -14895,6 +15319,13 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CCI_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CCI", "inHigh", inHigh, guardInLen);
+          requireLength("CCI", "inLow", inLow, guardInLen);
+          requireLength("CCI", "inClose", inClose, guardInLen);
+          requireLength("CCI", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CCI_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -15499,7 +15930,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLUPSIDEGAP2CROWS
@@ -15513,6 +15947,14 @@ class Core {
                                   double inClose[],
                                   int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDL2CROWS_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDL2CROWS", "inOpen", inOpen, guardInLen);
+          requireLength("CDL2CROWS", "inHigh", inHigh, guardInLen);
+          requireLength("CDL2CROWS", "inLow", inLow, guardInLen);
+          requireLength("CDL2CROWS", "inClose", inClose, guardInLen);
+          requireLength("CDL2CROWS", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDL2CROWS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -15555,7 +15997,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLUPSIDEGAP2CROWS
@@ -15569,6 +16014,14 @@ class Core {
                                   float inClose[],
                                   int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDL2CROWS_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDL2CROWS", "inOpen", inOpen, guardInLen);
+          requireLength("CDL2CROWS", "inHigh", inHigh, guardInLen);
+          requireLength("CDL2CROWS", "inLow", inLow, guardInLen);
+          requireLength("CDL2CROWS", "inClose", inClose, guardInLen);
+          requireLength("CDL2CROWS", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDL2CROWS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -16212,7 +16665,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDL3WHITESOLDIERS
@@ -16227,6 +16683,14 @@ class Core {
                                        double inClose[],
                                        int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDL3BLACKCROWS_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDL3BLACKCROWS", "inOpen", inOpen, guardInLen);
+          requireLength("CDL3BLACKCROWS", "inHigh", inHigh, guardInLen);
+          requireLength("CDL3BLACKCROWS", "inLow", inLow, guardInLen);
+          requireLength("CDL3BLACKCROWS", "inClose", inClose, guardInLen);
+          requireLength("CDL3BLACKCROWS", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDL3BLACKCROWS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -16266,7 +16730,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDL3WHITESOLDIERS
@@ -16281,6 +16748,14 @@ class Core {
                                        float inClose[],
                                        int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDL3BLACKCROWS_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDL3BLACKCROWS", "inOpen", inOpen, guardInLen);
+          requireLength("CDL3BLACKCROWS", "inHigh", inHigh, guardInLen);
+          requireLength("CDL3BLACKCROWS", "inLow", inLow, guardInLen);
+          requireLength("CDL3BLACKCROWS", "inClose", inClose, guardInLen);
+          requireLength("CDL3BLACKCROWS", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDL3BLACKCROWS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -17050,7 +17525,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLHARAMI
@@ -17065,6 +17543,14 @@ class Core {
                                    double inClose[],
                                    int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDL3INSIDE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDL3INSIDE", "inOpen", inOpen, guardInLen);
+          requireLength("CDL3INSIDE", "inHigh", inHigh, guardInLen);
+          requireLength("CDL3INSIDE", "inLow", inLow, guardInLen);
+          requireLength("CDL3INSIDE", "inClose", inClose, guardInLen);
+          requireLength("CDL3INSIDE", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDL3INSIDE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -17108,7 +17594,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLHARAMI
@@ -17123,6 +17612,14 @@ class Core {
                                    float inClose[],
                                    int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDL3INSIDE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDL3INSIDE", "inOpen", inOpen, guardInLen);
+          requireLength("CDL3INSIDE", "inHigh", inHigh, guardInLen);
+          requireLength("CDL3INSIDE", "inLow", inLow, guardInLen);
+          requireLength("CDL3INSIDE", "inClose", inClose, guardInLen);
+          requireLength("CDL3INSIDE", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDL3INSIDE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -17830,7 +18327,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDL3WHITESOLDIERS
@@ -17844,6 +18344,14 @@ class Core {
                                        double inClose[],
                                        int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDL3LINESTRIKE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDL3LINESTRIKE", "inOpen", inOpen, guardInLen);
+          requireLength("CDL3LINESTRIKE", "inHigh", inHigh, guardInLen);
+          requireLength("CDL3LINESTRIKE", "inLow", inLow, guardInLen);
+          requireLength("CDL3LINESTRIKE", "inClose", inClose, guardInLen);
+          requireLength("CDL3LINESTRIKE", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDL3LINESTRIKE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -17888,7 +18396,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDL3WHITESOLDIERS
@@ -17902,6 +18413,14 @@ class Core {
                                        float inClose[],
                                        int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDL3LINESTRIKE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDL3LINESTRIKE", "inOpen", inOpen, guardInLen);
+          requireLength("CDL3LINESTRIKE", "inHigh", inHigh, guardInLen);
+          requireLength("CDL3LINESTRIKE", "inLow", inLow, guardInLen);
+          requireLength("CDL3LINESTRIKE", "inClose", inClose, guardInLen);
+          requireLength("CDL3LINESTRIKE", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDL3LINESTRIKE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -18594,7 +19113,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDL3INSIDE
@@ -18609,6 +19131,12 @@ class Core {
                                     double inClose[],
                                     int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDL3OUTSIDE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDL3OUTSIDE", "inOpen", inOpen, guardInLen);
+          requireLength("CDL3OUTSIDE", "inClose", inClose, guardInLen);
+          requireLength("CDL3OUTSIDE", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDL3OUTSIDE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -18651,7 +19179,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDL3INSIDE
@@ -18666,6 +19197,12 @@ class Core {
                                     float inClose[],
                                     int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDL3OUTSIDE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDL3OUTSIDE", "inOpen", inOpen, guardInLen);
+          requireLength("CDL3OUTSIDE", "inClose", inClose, guardInLen);
+          requireLength("CDL3OUTSIDE", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDL3OUTSIDE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -19299,7 +19836,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDL3BLACKCROWS
@@ -19314,6 +19854,14 @@ class Core {
                                          double inClose[],
                                          int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDL3STARSINSOUTH_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDL3STARSINSOUTH", "inOpen", inOpen, guardInLen);
+          requireLength("CDL3STARSINSOUTH", "inHigh", inHigh, guardInLen);
+          requireLength("CDL3STARSINSOUTH", "inLow", inLow, guardInLen);
+          requireLength("CDL3STARSINSOUTH", "inClose", inClose, guardInLen);
+          requireLength("CDL3STARSINSOUTH", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDL3STARSINSOUTH_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -19357,7 +19905,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDL3BLACKCROWS
@@ -19372,6 +19923,14 @@ class Core {
                                          float inClose[],
                                          int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDL3STARSINSOUTH_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDL3STARSINSOUTH", "inOpen", inOpen, guardInLen);
+          requireLength("CDL3STARSINSOUTH", "inHigh", inHigh, guardInLen);
+          requireLength("CDL3STARSINSOUTH", "inLow", inLow, guardInLen);
+          requireLength("CDL3STARSINSOUTH", "inClose", inClose, guardInLen);
+          requireLength("CDL3STARSINSOUTH", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDL3STARSINSOUTH_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -20436,7 +20995,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDL3BLACKCROWS
@@ -20451,6 +21013,14 @@ class Core {
                                           double inClose[],
                                           int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDL3WHITESOLDIERS_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDL3WHITESOLDIERS", "inOpen", inOpen, guardInLen);
+          requireLength("CDL3WHITESOLDIERS", "inHigh", inHigh, guardInLen);
+          requireLength("CDL3WHITESOLDIERS", "inLow", inLow, guardInLen);
+          requireLength("CDL3WHITESOLDIERS", "inClose", inClose, guardInLen);
+          requireLength("CDL3WHITESOLDIERS", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDL3WHITESOLDIERS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -20492,7 +21062,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDL3BLACKCROWS
@@ -20507,6 +21080,14 @@ class Core {
                                           float inClose[],
                                           int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDL3WHITESOLDIERS_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDL3WHITESOLDIERS", "inOpen", inOpen, guardInLen);
+          requireLength("CDL3WHITESOLDIERS", "inHigh", inHigh, guardInLen);
+          requireLength("CDL3WHITESOLDIERS", "inLow", inLow, guardInLen);
+          requireLength("CDL3WHITESOLDIERS", "inClose", inClose, guardInLen);
+          requireLength("CDL3WHITESOLDIERS", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDL3WHITESOLDIERS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -21544,7 +22125,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLEVENINGDOJISTAR
@@ -21561,6 +22145,14 @@ class Core {
                                          double optInPenetration,
                                          int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLABANDONEDBABY_Lookback(optInPenetration));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLABANDONEDBABY", "inOpen", inOpen, guardInLen);
+          requireLength("CDLABANDONEDBABY", "inHigh", inHigh, guardInLen);
+          requireLength("CDLABANDONEDBABY", "inLow", inLow, guardInLen);
+          requireLength("CDLABANDONEDBABY", "inClose", inClose, guardInLen);
+          requireLength("CDLABANDONEDBABY", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLABANDONEDBABY_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
@@ -21605,7 +22197,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLEVENINGDOJISTAR
@@ -21622,6 +22217,14 @@ class Core {
                                          double optInPenetration,
                                          int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLABANDONEDBABY_Lookback(optInPenetration));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLABANDONEDBABY", "inOpen", inOpen, guardInLen);
+          requireLength("CDLABANDONEDBABY", "inHigh", inHigh, guardInLen);
+          requireLength("CDLABANDONEDBABY", "inLow", inLow, guardInLen);
+          requireLength("CDLABANDONEDBABY", "inClose", inClose, guardInLen);
+          requireLength("CDLABANDONEDBABY", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLABANDONEDBABY_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
@@ -22563,7 +23166,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDL3WHITESOLDIERS
@@ -22577,6 +23183,14 @@ class Core {
                                         double inClose[],
                                         int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLADVANCEBLOCK_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLADVANCEBLOCK", "inOpen", inOpen, guardInLen);
+          requireLength("CDLADVANCEBLOCK", "inHigh", inHigh, guardInLen);
+          requireLength("CDLADVANCEBLOCK", "inLow", inLow, guardInLen);
+          requireLength("CDLADVANCEBLOCK", "inClose", inClose, guardInLen);
+          requireLength("CDLADVANCEBLOCK", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLADVANCEBLOCK_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -22619,7 +23233,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDL3WHITESOLDIERS
@@ -22633,6 +23250,14 @@ class Core {
                                         float inClose[],
                                         int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLADVANCEBLOCK_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLADVANCEBLOCK", "inOpen", inOpen, guardInLen);
+          requireLength("CDLADVANCEBLOCK", "inHigh", inHigh, guardInLen);
+          requireLength("CDLADVANCEBLOCK", "inLow", inLow, guardInLen);
+          requireLength("CDLADVANCEBLOCK", "inClose", inClose, guardInLen);
+          requireLength("CDLADVANCEBLOCK", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLADVANCEBLOCK_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -23683,7 +24308,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLCLOSINGMARUBOZU
@@ -23698,6 +24326,14 @@ class Core {
                                     double inClose[],
                                     int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLBELTHOLD_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLBELTHOLD", "inOpen", inOpen, guardInLen);
+          requireLength("CDLBELTHOLD", "inHigh", inHigh, guardInLen);
+          requireLength("CDLBELTHOLD", "inLow", inLow, guardInLen);
+          requireLength("CDLBELTHOLD", "inClose", inClose, guardInLen);
+          requireLength("CDLBELTHOLD", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLBELTHOLD_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -23744,7 +24380,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLCLOSINGMARUBOZU
@@ -23759,6 +24398,14 @@ class Core {
                                     float inClose[],
                                     int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLBELTHOLD_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLBELTHOLD", "inOpen", inOpen, guardInLen);
+          requireLength("CDLBELTHOLD", "inHigh", inHigh, guardInLen);
+          requireLength("CDLBELTHOLD", "inLow", inLow, guardInLen);
+          requireLength("CDLBELTHOLD", "inClose", inClose, guardInLen);
+          requireLength("CDLBELTHOLD", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLBELTHOLD_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -24402,7 +25049,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLGAPSIDESIDEWHITE
@@ -24417,6 +25067,14 @@ class Core {
                                      double inClose[],
                                      int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLBREAKAWAY_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLBREAKAWAY", "inOpen", inOpen, guardInLen);
+          requireLength("CDLBREAKAWAY", "inHigh", inHigh, guardInLen);
+          requireLength("CDLBREAKAWAY", "inLow", inLow, guardInLen);
+          requireLength("CDLBREAKAWAY", "inClose", inClose, guardInLen);
+          requireLength("CDLBREAKAWAY", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLBREAKAWAY_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -24459,7 +25117,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLGAPSIDESIDEWHITE
@@ -24474,6 +25135,14 @@ class Core {
                                      float inClose[],
                                      int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLBREAKAWAY_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLBREAKAWAY", "inOpen", inOpen, guardInLen);
+          requireLength("CDLBREAKAWAY", "inHigh", inHigh, guardInLen);
+          requireLength("CDLBREAKAWAY", "inLow", inLow, guardInLen);
+          requireLength("CDLBREAKAWAY", "inClose", inClose, guardInLen);
+          requireLength("CDLBREAKAWAY", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLBREAKAWAY_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -25156,7 +25825,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLMARUBOZU
@@ -25171,6 +25843,14 @@ class Core {
                                            double inClose[],
                                            int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLCLOSINGMARUBOZU_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLCLOSINGMARUBOZU", "inOpen", inOpen, guardInLen);
+          requireLength("CDLCLOSINGMARUBOZU", "inHigh", inHigh, guardInLen);
+          requireLength("CDLCLOSINGMARUBOZU", "inLow", inLow, guardInLen);
+          requireLength("CDLCLOSINGMARUBOZU", "inClose", inClose, guardInLen);
+          requireLength("CDLCLOSINGMARUBOZU", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLCLOSINGMARUBOZU_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -25215,7 +25895,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLMARUBOZU
@@ -25230,6 +25913,14 @@ class Core {
                                            float inClose[],
                                            int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLCLOSINGMARUBOZU_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLCLOSINGMARUBOZU", "inOpen", inOpen, guardInLen);
+          requireLength("CDLCLOSINGMARUBOZU", "inHigh", inHigh, guardInLen);
+          requireLength("CDLCLOSINGMARUBOZU", "inLow", inLow, guardInLen);
+          requireLength("CDLCLOSINGMARUBOZU", "inClose", inClose, guardInLen);
+          requireLength("CDLCLOSINGMARUBOZU", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLCLOSINGMARUBOZU_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -25892,7 +26583,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLMARUBOZU
@@ -25906,6 +26600,14 @@ class Core {
                                             double inClose[],
                                             int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLCONCEALBABYSWALL_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLCONCEALBABYSWALL", "inOpen", inOpen, guardInLen);
+          requireLength("CDLCONCEALBABYSWALL", "inHigh", inHigh, guardInLen);
+          requireLength("CDLCONCEALBABYSWALL", "inLow", inLow, guardInLen);
+          requireLength("CDLCONCEALBABYSWALL", "inClose", inClose, guardInLen);
+          requireLength("CDLCONCEALBABYSWALL", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLCONCEALBABYSWALL_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -25946,7 +26648,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLMARUBOZU
@@ -25960,6 +26665,14 @@ class Core {
                                             float inClose[],
                                             int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLCONCEALBABYSWALL_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLCONCEALBABYSWALL", "inOpen", inOpen, guardInLen);
+          requireLength("CDLCONCEALBABYSWALL", "inHigh", inHigh, guardInLen);
+          requireLength("CDLCONCEALBABYSWALL", "inLow", inLow, guardInLen);
+          requireLength("CDLCONCEALBABYSWALL", "inClose", inClose, guardInLen);
+          requireLength("CDLCONCEALBABYSWALL", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLCONCEALBABYSWALL_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -26738,7 +27451,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLPIERCING
@@ -26753,6 +27469,14 @@ class Core {
                                          double inClose[],
                                          int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLCOUNTERATTACK_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLCOUNTERATTACK", "inOpen", inOpen, guardInLen);
+          requireLength("CDLCOUNTERATTACK", "inHigh", inHigh, guardInLen);
+          requireLength("CDLCOUNTERATTACK", "inLow", inLow, guardInLen);
+          requireLength("CDLCOUNTERATTACK", "inClose", inClose, guardInLen);
+          requireLength("CDLCOUNTERATTACK", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLCOUNTERATTACK_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -26794,7 +27518,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLPIERCING
@@ -26809,6 +27536,14 @@ class Core {
                                          float inClose[],
                                          int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLCOUNTERATTACK_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLCOUNTERATTACK", "inOpen", inOpen, guardInLen);
+          requireLength("CDLCOUNTERATTACK", "inHigh", inHigh, guardInLen);
+          requireLength("CDLCOUNTERATTACK", "inLow", inLow, guardInLen);
+          requireLength("CDLCOUNTERATTACK", "inClose", inClose, guardInLen);
+          requireLength("CDLCOUNTERATTACK", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLCOUNTERATTACK_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -27580,7 +28315,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLPIERCING
@@ -27596,6 +28334,14 @@ class Core {
                                           double optInPenetration,
                                           int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLDARKCLOUDCOVER_Lookback(optInPenetration));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLDARKCLOUDCOVER", "inOpen", inOpen, guardInLen);
+          requireLength("CDLDARKCLOUDCOVER", "inHigh", inHigh, guardInLen);
+          requireLength("CDLDARKCLOUDCOVER", "inLow", inLow, guardInLen);
+          requireLength("CDLDARKCLOUDCOVER", "inClose", inClose, guardInLen);
+          requireLength("CDLDARKCLOUDCOVER", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLDARKCLOUDCOVER_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
@@ -27639,7 +28385,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLPIERCING
@@ -27655,6 +28404,14 @@ class Core {
                                           double optInPenetration,
                                           int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLDARKCLOUDCOVER_Lookback(optInPenetration));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLDARKCLOUDCOVER", "inOpen", inOpen, guardInLen);
+          requireLength("CDLDARKCLOUDCOVER", "inHigh", inHigh, guardInLen);
+          requireLength("CDLDARKCLOUDCOVER", "inLow", inLow, guardInLen);
+          requireLength("CDLDARKCLOUDCOVER", "inClose", inClose, guardInLen);
+          requireLength("CDLDARKCLOUDCOVER", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLDARKCLOUDCOVER_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
@@ -28249,7 +29006,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLDOJISTAR
@@ -28265,6 +29025,14 @@ class Core {
                                 double inClose[],
                                 int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLDOJI_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLDOJI", "inOpen", inOpen, guardInLen);
+          requireLength("CDLDOJI", "inHigh", inHigh, guardInLen);
+          requireLength("CDLDOJI", "inLow", inLow, guardInLen);
+          requireLength("CDLDOJI", "inClose", inClose, guardInLen);
+          requireLength("CDLDOJI", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLDOJI_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -28303,7 +29071,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLDOJISTAR
@@ -28319,6 +29090,14 @@ class Core {
                                 float inClose[],
                                 int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLDOJI_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLDOJI", "inOpen", inOpen, guardInLen);
+          requireLength("CDLDOJI", "inHigh", inHigh, guardInLen);
+          requireLength("CDLDOJI", "inLow", inLow, guardInLen);
+          requireLength("CDLDOJI", "inClose", inClose, guardInLen);
+          requireLength("CDLDOJI", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLDOJI_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -28913,7 +29692,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLMORNINGDOJISTAR
@@ -28930,6 +29712,14 @@ class Core {
                                     double inClose[],
                                     int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLDOJISTAR_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLDOJISTAR", "inOpen", inOpen, guardInLen);
+          requireLength("CDLDOJISTAR", "inHigh", inHigh, guardInLen);
+          requireLength("CDLDOJISTAR", "inLow", inLow, guardInLen);
+          requireLength("CDLDOJISTAR", "inClose", inClose, guardInLen);
+          requireLength("CDLDOJISTAR", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLDOJISTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -28978,7 +29768,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLMORNINGDOJISTAR
@@ -28995,6 +29788,14 @@ class Core {
                                     float inClose[],
                                     int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLDOJISTAR_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLDOJISTAR", "inOpen", inOpen, guardInLen);
+          requireLength("CDLDOJISTAR", "inHigh", inHigh, guardInLen);
+          requireLength("CDLDOJISTAR", "inLow", inLow, guardInLen);
+          requireLength("CDLDOJISTAR", "inClose", inClose, guardInLen);
+          requireLength("CDLDOJISTAR", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLDOJISTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -29691,7 +30492,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLDOJI
@@ -29707,6 +30511,14 @@ class Core {
                                          double inClose[],
                                          int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLDRAGONFLYDOJI_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLDRAGONFLYDOJI", "inOpen", inOpen, guardInLen);
+          requireLength("CDLDRAGONFLYDOJI", "inHigh", inHigh, guardInLen);
+          requireLength("CDLDRAGONFLYDOJI", "inLow", inLow, guardInLen);
+          requireLength("CDLDRAGONFLYDOJI", "inClose", inClose, guardInLen);
+          requireLength("CDLDRAGONFLYDOJI", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLDRAGONFLYDOJI_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -29754,7 +30566,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLDOJI
@@ -29770,6 +30585,14 @@ class Core {
                                          float inClose[],
                                          int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLDRAGONFLYDOJI_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLDRAGONFLYDOJI", "inOpen", inOpen, guardInLen);
+          requireLength("CDLDRAGONFLYDOJI", "inHigh", inHigh, guardInLen);
+          requireLength("CDLDRAGONFLYDOJI", "inLow", inLow, guardInLen);
+          requireLength("CDLDRAGONFLYDOJI", "inClose", inClose, guardInLen);
+          requireLength("CDLDRAGONFLYDOJI", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLDRAGONFLYDOJI_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -30385,7 +31208,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLHARAMI
@@ -30400,6 +31226,12 @@ class Core {
                                      double inClose[],
                                      int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLENGULFING_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLENGULFING", "inOpen", inOpen, guardInLen);
+          requireLength("CDLENGULFING", "inClose", inClose, guardInLen);
+          requireLength("CDLENGULFING", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLENGULFING_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -30443,7 +31275,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLHARAMI
@@ -30458,6 +31293,12 @@ class Core {
                                      float inClose[],
                                      int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLENGULFING_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLENGULFING", "inOpen", inOpen, guardInLen);
+          requireLength("CDLENGULFING", "inClose", inClose, guardInLen);
+          requireLength("CDLENGULFING", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLENGULFING_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -31059,7 +31900,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLEVENINGSTAR
@@ -31076,6 +31920,14 @@ class Core {
                                            double optInPenetration,
                                            int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLEVENINGDOJISTAR_Lookback(optInPenetration));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLEVENINGDOJISTAR", "inOpen", inOpen, guardInLen);
+          requireLength("CDLEVENINGDOJISTAR", "inHigh", inHigh, guardInLen);
+          requireLength("CDLEVENINGDOJISTAR", "inLow", inLow, guardInLen);
+          requireLength("CDLEVENINGDOJISTAR", "inClose", inClose, guardInLen);
+          requireLength("CDLEVENINGDOJISTAR", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLEVENINGDOJISTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
@@ -31119,7 +31971,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLEVENINGSTAR
@@ -31136,6 +31991,14 @@ class Core {
                                            double optInPenetration,
                                            int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLEVENINGDOJISTAR_Lookback(optInPenetration));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLEVENINGDOJISTAR", "inOpen", inOpen, guardInLen);
+          requireLength("CDLEVENINGDOJISTAR", "inHigh", inHigh, guardInLen);
+          requireLength("CDLEVENINGDOJISTAR", "inLow", inLow, guardInLen);
+          requireLength("CDLEVENINGDOJISTAR", "inClose", inClose, guardInLen);
+          requireLength("CDLEVENINGDOJISTAR", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLEVENINGDOJISTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
@@ -31975,7 +32838,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLEVENINGDOJISTAR
@@ -31991,6 +32857,14 @@ class Core {
                                        double optInPenetration,
                                        int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLEVENINGSTAR_Lookback(optInPenetration));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLEVENINGSTAR", "inOpen", inOpen, guardInLen);
+          requireLength("CDLEVENINGSTAR", "inHigh", inHigh, guardInLen);
+          requireLength("CDLEVENINGSTAR", "inLow", inLow, guardInLen);
+          requireLength("CDLEVENINGSTAR", "inClose", inClose, guardInLen);
+          requireLength("CDLEVENINGSTAR", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLEVENINGSTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
@@ -32034,7 +32908,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLEVENINGDOJISTAR
@@ -32050,6 +32927,14 @@ class Core {
                                        double optInPenetration,
                                        int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLEVENINGSTAR_Lookback(optInPenetration));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLEVENINGSTAR", "inOpen", inOpen, guardInLen);
+          requireLength("CDLEVENINGSTAR", "inHigh", inHigh, guardInLen);
+          requireLength("CDLEVENINGSTAR", "inLow", inLow, guardInLen);
+          requireLength("CDLEVENINGSTAR", "inClose", inClose, guardInLen);
+          requireLength("CDLEVENINGSTAR", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLEVENINGSTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
@@ -32804,7 +33689,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLTASUKIGAP
@@ -32818,6 +33706,14 @@ class Core {
                                             double inClose[],
                                             int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLGAPSIDESIDEWHITE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLGAPSIDESIDEWHITE", "inOpen", inOpen, guardInLen);
+          requireLength("CDLGAPSIDESIDEWHITE", "inHigh", inHigh, guardInLen);
+          requireLength("CDLGAPSIDESIDEWHITE", "inLow", inLow, guardInLen);
+          requireLength("CDLGAPSIDESIDEWHITE", "inClose", inClose, guardInLen);
+          requireLength("CDLGAPSIDESIDEWHITE", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLGAPSIDESIDEWHITE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -32861,7 +33757,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLTASUKIGAP
@@ -32875,6 +33774,14 @@ class Core {
                                             float inClose[],
                                             int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLGAPSIDESIDEWHITE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLGAPSIDESIDEWHITE", "inOpen", inOpen, guardInLen);
+          requireLength("CDLGAPSIDESIDEWHITE", "inHigh", inHigh, guardInLen);
+          requireLength("CDLGAPSIDESIDEWHITE", "inLow", inLow, guardInLen);
+          requireLength("CDLGAPSIDESIDEWHITE", "inClose", inClose, guardInLen);
+          requireLength("CDLGAPSIDESIDEWHITE", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLGAPSIDESIDEWHITE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -33595,7 +34502,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLDOJI
@@ -33611,6 +34521,14 @@ class Core {
                                           double inClose[],
                                           int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLGRAVESTONEDOJI_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLGRAVESTONEDOJI", "inOpen", inOpen, guardInLen);
+          requireLength("CDLGRAVESTONEDOJI", "inHigh", inHigh, guardInLen);
+          requireLength("CDLGRAVESTONEDOJI", "inLow", inLow, guardInLen);
+          requireLength("CDLGRAVESTONEDOJI", "inClose", inClose, guardInLen);
+          requireLength("CDLGRAVESTONEDOJI", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLGRAVESTONEDOJI_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -33658,7 +34576,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLDOJI
@@ -33674,6 +34595,14 @@ class Core {
                                           float inClose[],
                                           int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLGRAVESTONEDOJI_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLGRAVESTONEDOJI", "inOpen", inOpen, guardInLen);
+          requireLength("CDLGRAVESTONEDOJI", "inHigh", inHigh, guardInLen);
+          requireLength("CDLGRAVESTONEDOJI", "inLow", inLow, guardInLen);
+          requireLength("CDLGRAVESTONEDOJI", "inClose", inClose, guardInLen);
+          requireLength("CDLGRAVESTONEDOJI", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLGRAVESTONEDOJI_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -34404,7 +35333,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLINVERTEDHAMMER
@@ -34419,6 +35351,14 @@ class Core {
                                   double inClose[],
                                   int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLHAMMER_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLHAMMER", "inOpen", inOpen, guardInLen);
+          requireLength("CDLHAMMER", "inHigh", inHigh, guardInLen);
+          requireLength("CDLHAMMER", "inLow", inLow, guardInLen);
+          requireLength("CDLHAMMER", "inClose", inClose, guardInLen);
+          requireLength("CDLHAMMER", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLHAMMER_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -34459,7 +35399,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLINVERTEDHAMMER
@@ -34474,6 +35417,14 @@ class Core {
                                   float inClose[],
                                   int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLHAMMER_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLHAMMER", "inOpen", inOpen, guardInLen);
+          requireLength("CDLHAMMER", "inHigh", inHigh, guardInLen);
+          requireLength("CDLHAMMER", "inLow", inLow, guardInLen);
+          requireLength("CDLHAMMER", "inClose", inClose, guardInLen);
+          requireLength("CDLHAMMER", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLHAMMER_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -35367,7 +36318,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLHAMMER
@@ -35383,6 +36337,14 @@ class Core {
                                       double inClose[],
                                       int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLHANGINGMAN_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLHANGINGMAN", "inOpen", inOpen, guardInLen);
+          requireLength("CDLHANGINGMAN", "inHigh", inHigh, guardInLen);
+          requireLength("CDLHANGINGMAN", "inLow", inLow, guardInLen);
+          requireLength("CDLHANGINGMAN", "inClose", inClose, guardInLen);
+          requireLength("CDLHANGINGMAN", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLHANGINGMAN_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -35423,7 +36385,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLHAMMER
@@ -35439,6 +36404,14 @@ class Core {
                                       float inClose[],
                                       int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLHANGINGMAN_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLHANGINGMAN", "inOpen", inOpen, guardInLen);
+          requireLength("CDLHANGINGMAN", "inHigh", inHigh, guardInLen);
+          requireLength("CDLHANGINGMAN", "inLow", inLow, guardInLen);
+          requireLength("CDLHANGINGMAN", "inClose", inClose, guardInLen);
+          requireLength("CDLHANGINGMAN", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLHANGINGMAN_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -36298,7 +37271,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLHARAMICROSS
@@ -36312,6 +37288,14 @@ class Core {
                                   double inClose[],
                                   int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLHARAMI_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLHARAMI", "inOpen", inOpen, guardInLen);
+          requireLength("CDLHARAMI", "inHigh", inHigh, guardInLen);
+          requireLength("CDLHARAMI", "inLow", inLow, guardInLen);
+          requireLength("CDLHARAMI", "inClose", inClose, guardInLen);
+          requireLength("CDLHARAMI", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLHARAMI_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -36353,7 +37337,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLHARAMICROSS
@@ -36367,6 +37354,14 @@ class Core {
                                   float inClose[],
                                   int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLHARAMI_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLHARAMI", "inOpen", inOpen, guardInLen);
+          requireLength("CDLHARAMI", "inHigh", inHigh, guardInLen);
+          requireLength("CDLHARAMI", "inLow", inLow, guardInLen);
+          requireLength("CDLHARAMI", "inClose", inClose, guardInLen);
+          requireLength("CDLHARAMI", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLHARAMI_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -37118,7 +38113,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLHARAMI
@@ -37132,6 +38130,14 @@ class Core {
                                        double inClose[],
                                        int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLHARAMICROSS_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLHARAMICROSS", "inOpen", inOpen, guardInLen);
+          requireLength("CDLHARAMICROSS", "inHigh", inHigh, guardInLen);
+          requireLength("CDLHARAMICROSS", "inLow", inLow, guardInLen);
+          requireLength("CDLHARAMICROSS", "inClose", inClose, guardInLen);
+          requireLength("CDLHARAMICROSS", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLHARAMICROSS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -37174,7 +38180,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLHARAMI
@@ -37188,6 +38197,14 @@ class Core {
                                        float inClose[],
                                        int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLHARAMICROSS_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLHARAMICROSS", "inOpen", inOpen, guardInLen);
+          requireLength("CDLHARAMICROSS", "inHigh", inHigh, guardInLen);
+          requireLength("CDLHARAMICROSS", "inLow", inLow, guardInLen);
+          requireLength("CDLHARAMICROSS", "inClose", inClose, guardInLen);
+          requireLength("CDLHARAMICROSS", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLHARAMICROSS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -37908,7 +38925,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLLONGLEGGEDDOJI
@@ -37924,6 +38944,14 @@ class Core {
                                     double inClose[],
                                     int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLHIGHWAVE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLHIGHWAVE", "inOpen", inOpen, guardInLen);
+          requireLength("CDLHIGHWAVE", "inHigh", inHigh, guardInLen);
+          requireLength("CDLHIGHWAVE", "inLow", inLow, guardInLen);
+          requireLength("CDLHIGHWAVE", "inClose", inClose, guardInLen);
+          requireLength("CDLHIGHWAVE", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLHIGHWAVE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -37970,7 +38998,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLLONGLEGGEDDOJI
@@ -37986,6 +39017,14 @@ class Core {
                                     float inClose[],
                                     int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLHIGHWAVE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLHIGHWAVE", "inOpen", inOpen, guardInLen);
+          requireLength("CDLHIGHWAVE", "inHigh", inHigh, guardInLen);
+          requireLength("CDLHIGHWAVE", "inLow", inLow, guardInLen);
+          requireLength("CDLHIGHWAVE", "inClose", inClose, guardInLen);
+          requireLength("CDLHIGHWAVE", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLHIGHWAVE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -38667,7 +39706,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLHIKKAKEMOD
@@ -38681,6 +39723,13 @@ class Core {
                                    double inClose[],
                                    int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLHIKKAKE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLHIKKAKE", "inHigh", inHigh, guardInLen);
+          requireLength("CDLHIKKAKE", "inLow", inLow, guardInLen);
+          requireLength("CDLHIKKAKE", "inClose", inClose, guardInLen);
+          requireLength("CDLHIKKAKE", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLHIKKAKE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -38722,7 +39771,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLHIKKAKEMOD
@@ -38736,6 +39788,13 @@ class Core {
                                    float inClose[],
                                    int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLHIKKAKE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLHIKKAKE", "inHigh", inHigh, guardInLen);
+          requireLength("CDLHIKKAKE", "inLow", inLow, guardInLen);
+          requireLength("CDLHIKKAKE", "inClose", inClose, guardInLen);
+          requireLength("CDLHIKKAKE", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLHIKKAKE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -39415,7 +40474,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLHIKKAKE
@@ -39428,6 +40490,14 @@ class Core {
                                       double inClose[],
                                       int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLHIKKAKEMOD_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLHIKKAKEMOD", "inOpen", inOpen, guardInLen);
+          requireLength("CDLHIKKAKEMOD", "inHigh", inHigh, guardInLen);
+          requireLength("CDLHIKKAKEMOD", "inLow", inLow, guardInLen);
+          requireLength("CDLHIKKAKEMOD", "inClose", inClose, guardInLen);
+          requireLength("CDLHIKKAKEMOD", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLHIKKAKEMOD_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -39469,7 +40539,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLHIKKAKE
@@ -39482,6 +40555,14 @@ class Core {
                                       float inClose[],
                                       int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLHIKKAKEMOD_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLHIKKAKEMOD", "inOpen", inOpen, guardInLen);
+          requireLength("CDLHIKKAKEMOD", "inHigh", inHigh, guardInLen);
+          requireLength("CDLHIKKAKEMOD", "inLow", inLow, guardInLen);
+          requireLength("CDLHIKKAKEMOD", "inClose", inClose, guardInLen);
+          requireLength("CDLHIKKAKEMOD", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLHIKKAKEMOD_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -40217,7 +41298,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLHARAMI
@@ -40231,6 +41315,14 @@ class Core {
                                         double inClose[],
                                         int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLHOMINGPIGEON_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLHOMINGPIGEON", "inOpen", inOpen, guardInLen);
+          requireLength("CDLHOMINGPIGEON", "inHigh", inHigh, guardInLen);
+          requireLength("CDLHOMINGPIGEON", "inLow", inLow, guardInLen);
+          requireLength("CDLHOMINGPIGEON", "inClose", inClose, guardInLen);
+          requireLength("CDLHOMINGPIGEON", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLHOMINGPIGEON_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -40275,7 +41367,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLHARAMI
@@ -40289,6 +41384,14 @@ class Core {
                                         float inClose[],
                                         int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLHOMINGPIGEON_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLHOMINGPIGEON", "inOpen", inOpen, guardInLen);
+          requireLength("CDLHOMINGPIGEON", "inHigh", inHigh, guardInLen);
+          requireLength("CDLHOMINGPIGEON", "inLow", inLow, guardInLen);
+          requireLength("CDLHOMINGPIGEON", "inClose", inClose, guardInLen);
+          requireLength("CDLHOMINGPIGEON", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLHOMINGPIGEON_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -41025,7 +42128,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDL3BLACKCROWS
@@ -41039,6 +42145,14 @@ class Core {
                                            double inClose[],
                                            int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLIDENTICAL3CROWS_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLIDENTICAL3CROWS", "inOpen", inOpen, guardInLen);
+          requireLength("CDLIDENTICAL3CROWS", "inHigh", inHigh, guardInLen);
+          requireLength("CDLIDENTICAL3CROWS", "inLow", inLow, guardInLen);
+          requireLength("CDLIDENTICAL3CROWS", "inClose", inClose, guardInLen);
+          requireLength("CDLIDENTICAL3CROWS", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLIDENTICAL3CROWS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -41080,7 +42194,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDL3BLACKCROWS
@@ -41094,6 +42211,14 @@ class Core {
                                            float inClose[],
                                            int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLIDENTICAL3CROWS_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLIDENTICAL3CROWS", "inOpen", inOpen, guardInLen);
+          requireLength("CDLIDENTICAL3CROWS", "inHigh", inHigh, guardInLen);
+          requireLength("CDLIDENTICAL3CROWS", "inLow", inLow, guardInLen);
+          requireLength("CDLIDENTICAL3CROWS", "inClose", inClose, guardInLen);
+          requireLength("CDLIDENTICAL3CROWS", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLIDENTICAL3CROWS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -41926,7 +43051,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLONNECK
@@ -41941,6 +43069,14 @@ class Core {
                                   double inClose[],
                                   int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLINNECK_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLINNECK", "inOpen", inOpen, guardInLen);
+          requireLength("CDLINNECK", "inHigh", inHigh, guardInLen);
+          requireLength("CDLINNECK", "inLow", inLow, guardInLen);
+          requireLength("CDLINNECK", "inClose", inClose, guardInLen);
+          requireLength("CDLINNECK", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLINNECK_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -41986,7 +43122,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLONNECK
@@ -42001,6 +43140,14 @@ class Core {
                                   float inClose[],
                                   int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLINNECK_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLINNECK", "inOpen", inOpen, guardInLen);
+          requireLength("CDLINNECK", "inHigh", inHigh, guardInLen);
+          requireLength("CDLINNECK", "inLow", inLow, guardInLen);
+          requireLength("CDLINNECK", "inClose", inClose, guardInLen);
+          requireLength("CDLINNECK", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLINNECK_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -42735,7 +43882,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLHAMMER
@@ -42750,6 +43900,14 @@ class Core {
                                           double inClose[],
                                           int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLINVERTEDHAMMER_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLINVERTEDHAMMER", "inOpen", inOpen, guardInLen);
+          requireLength("CDLINVERTEDHAMMER", "inHigh", inHigh, guardInLen);
+          requireLength("CDLINVERTEDHAMMER", "inLow", inLow, guardInLen);
+          requireLength("CDLINVERTEDHAMMER", "inClose", inClose, guardInLen);
+          requireLength("CDLINVERTEDHAMMER", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLINVERTEDHAMMER_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -42790,7 +43948,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLHAMMER
@@ -42805,6 +43966,14 @@ class Core {
                                           float inClose[],
                                           int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLINVERTEDHAMMER_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLINVERTEDHAMMER", "inOpen", inOpen, guardInLen);
+          requireLength("CDLINVERTEDHAMMER", "inHigh", inHigh, guardInLen);
+          requireLength("CDLINVERTEDHAMMER", "inLow", inLow, guardInLen);
+          requireLength("CDLINVERTEDHAMMER", "inClose", inClose, guardInLen);
+          requireLength("CDLINVERTEDHAMMER", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLINVERTEDHAMMER_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -43575,7 +44744,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLKICKINGBYLENGTH
@@ -43590,6 +44762,14 @@ class Core {
                                    double inClose[],
                                    int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLKICKING_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLKICKING", "inOpen", inOpen, guardInLen);
+          requireLength("CDLKICKING", "inHigh", inHigh, guardInLen);
+          requireLength("CDLKICKING", "inLow", inLow, guardInLen);
+          requireLength("CDLKICKING", "inClose", inClose, guardInLen);
+          requireLength("CDLKICKING", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLKICKING_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -43629,7 +44809,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLKICKINGBYLENGTH
@@ -43644,6 +44827,14 @@ class Core {
                                    float inClose[],
                                    int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLKICKING_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLKICKING", "inOpen", inOpen, guardInLen);
+          requireLength("CDLKICKING", "inHigh", inHigh, guardInLen);
+          requireLength("CDLKICKING", "inLow", inLow, guardInLen);
+          requireLength("CDLKICKING", "inClose", inClose, guardInLen);
+          requireLength("CDLKICKING", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLKICKING_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -44445,7 +45636,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLKICKING
@@ -44460,6 +45654,14 @@ class Core {
                                            double inClose[],
                                            int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLKICKINGBYLENGTH_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLKICKINGBYLENGTH", "inOpen", inOpen, guardInLen);
+          requireLength("CDLKICKINGBYLENGTH", "inHigh", inHigh, guardInLen);
+          requireLength("CDLKICKINGBYLENGTH", "inLow", inLow, guardInLen);
+          requireLength("CDLKICKINGBYLENGTH", "inClose", inClose, guardInLen);
+          requireLength("CDLKICKINGBYLENGTH", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLKICKINGBYLENGTH_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -44496,7 +45698,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLKICKING
@@ -44511,6 +45716,14 @@ class Core {
                                            float inClose[],
                                            int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLKICKINGBYLENGTH_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLKICKINGBYLENGTH", "inOpen", inOpen, guardInLen);
+          requireLength("CDLKICKINGBYLENGTH", "inHigh", inHigh, guardInLen);
+          requireLength("CDLKICKINGBYLENGTH", "inLow", inLow, guardInLen);
+          requireLength("CDLKICKINGBYLENGTH", "inClose", inClose, guardInLen);
+          requireLength("CDLKICKINGBYLENGTH", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLKICKINGBYLENGTH_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -45280,7 +46493,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDL3BLACKCROWS
@@ -45295,6 +46511,14 @@ class Core {
                                         double inClose[],
                                         int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLLADDERBOTTOM_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLLADDERBOTTOM", "inOpen", inOpen, guardInLen);
+          requireLength("CDLLADDERBOTTOM", "inHigh", inHigh, guardInLen);
+          requireLength("CDLLADDERBOTTOM", "inLow", inLow, guardInLen);
+          requireLength("CDLLADDERBOTTOM", "inClose", inClose, guardInLen);
+          requireLength("CDLLADDERBOTTOM", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLLADDERBOTTOM_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -45337,7 +46561,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDL3BLACKCROWS
@@ -45352,6 +46579,14 @@ class Core {
                                         float inClose[],
                                         int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLLADDERBOTTOM_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLLADDERBOTTOM", "inOpen", inOpen, guardInLen);
+          requireLength("CDLLADDERBOTTOM", "inHigh", inHigh, guardInLen);
+          requireLength("CDLLADDERBOTTOM", "inLow", inLow, guardInLen);
+          requireLength("CDLLADDERBOTTOM", "inClose", inClose, guardInLen);
+          requireLength("CDLLADDERBOTTOM", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLLADDERBOTTOM_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -46015,7 +47250,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLDOJI
@@ -46031,6 +47269,14 @@ class Core {
                                           double inClose[],
                                           int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLLONGLEGGEDDOJI_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLLONGLEGGEDDOJI", "inOpen", inOpen, guardInLen);
+          requireLength("CDLLONGLEGGEDDOJI", "inHigh", inHigh, guardInLen);
+          requireLength("CDLLONGLEGGEDDOJI", "inLow", inLow, guardInLen);
+          requireLength("CDLLONGLEGGEDDOJI", "inClose", inClose, guardInLen);
+          requireLength("CDLLONGLEGGEDDOJI", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLLONGLEGGEDDOJI_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -46075,7 +47321,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLDOJI
@@ -46091,6 +47340,14 @@ class Core {
                                           float inClose[],
                                           int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLLONGLEGGEDDOJI_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLLONGLEGGEDDOJI", "inOpen", inOpen, guardInLen);
+          requireLength("CDLLONGLEGGEDDOJI", "inHigh", inHigh, guardInLen);
+          requireLength("CDLLONGLEGGEDDOJI", "inLow", inLow, guardInLen);
+          requireLength("CDLLONGLEGGEDDOJI", "inClose", inClose, guardInLen);
+          requireLength("CDLLONGLEGGEDDOJI", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLLONGLEGGEDDOJI_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -46744,7 +48001,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLSHORTLINE
@@ -46760,6 +48020,14 @@ class Core {
                                     double inClose[],
                                     int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLLONGLINE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLLONGLINE", "inOpen", inOpen, guardInLen);
+          requireLength("CDLLONGLINE", "inHigh", inHigh, guardInLen);
+          requireLength("CDLLONGLINE", "inLow", inLow, guardInLen);
+          requireLength("CDLLONGLINE", "inClose", inClose, guardInLen);
+          requireLength("CDLLONGLINE", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLLONGLINE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -46796,7 +48064,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLSHORTLINE
@@ -46812,6 +48083,14 @@ class Core {
                                     float inClose[],
                                     int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLLONGLINE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLLONGLINE", "inOpen", inOpen, guardInLen);
+          requireLength("CDLLONGLINE", "inHigh", inHigh, guardInLen);
+          requireLength("CDLLONGLINE", "inLow", inLow, guardInLen);
+          requireLength("CDLLONGLINE", "inClose", inClose, guardInLen);
+          requireLength("CDLLONGLINE", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLLONGLINE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -47471,7 +48750,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLCLOSINGMARUBOZU
@@ -47486,6 +48768,14 @@ class Core {
                                     double inClose[],
                                     int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLMARUBOZU_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLMARUBOZU", "inOpen", inOpen, guardInLen);
+          requireLength("CDLMARUBOZU", "inHigh", inHigh, guardInLen);
+          requireLength("CDLMARUBOZU", "inLow", inLow, guardInLen);
+          requireLength("CDLMARUBOZU", "inClose", inClose, guardInLen);
+          requireLength("CDLMARUBOZU", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLMARUBOZU_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -47529,7 +48819,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLCLOSINGMARUBOZU
@@ -47544,6 +48837,14 @@ class Core {
                                     float inClose[],
                                     int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLMARUBOZU_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLMARUBOZU", "inOpen", inOpen, guardInLen);
+          requireLength("CDLMARUBOZU", "inHigh", inHigh, guardInLen);
+          requireLength("CDLMARUBOZU", "inLow", inLow, guardInLen);
+          requireLength("CDLMARUBOZU", "inClose", inClose, guardInLen);
+          requireLength("CDLMARUBOZU", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLMARUBOZU_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -48180,7 +49481,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLHOMINGPIGEON
@@ -48193,6 +49497,14 @@ class Core {
                                        double inClose[],
                                        int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLMATCHINGLOW_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLMATCHINGLOW", "inOpen", inOpen, guardInLen);
+          requireLength("CDLMATCHINGLOW", "inHigh", inHigh, guardInLen);
+          requireLength("CDLMATCHINGLOW", "inLow", inLow, guardInLen);
+          requireLength("CDLMATCHINGLOW", "inClose", inClose, guardInLen);
+          requireLength("CDLMATCHINGLOW", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLMATCHINGLOW_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -48238,7 +49550,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLHOMINGPIGEON
@@ -48251,6 +49566,14 @@ class Core {
                                        float inClose[],
                                        int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLMATCHINGLOW_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLMATCHINGLOW", "inOpen", inOpen, guardInLen);
+          requireLength("CDLMATCHINGLOW", "inHigh", inHigh, guardInLen);
+          requireLength("CDLMATCHINGLOW", "inLow", inLow, guardInLen);
+          requireLength("CDLMATCHINGLOW", "inClose", inClose, guardInLen);
+          requireLength("CDLMATCHINGLOW", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLMATCHINGLOW_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -48925,7 +50248,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLRISEFALL3METHODS
@@ -48940,6 +50266,14 @@ class Core {
                                    double optInPenetration,
                                    int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLMATHOLD_Lookback(optInPenetration));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLMATHOLD", "inOpen", inOpen, guardInLen);
+          requireLength("CDLMATHOLD", "inHigh", inHigh, guardInLen);
+          requireLength("CDLMATHOLD", "inLow", inLow, guardInLen);
+          requireLength("CDLMATHOLD", "inClose", inClose, guardInLen);
+          requireLength("CDLMATHOLD", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLMATHOLD_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
@@ -48985,7 +50319,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLRISEFALL3METHODS
@@ -49000,6 +50337,14 @@ class Core {
                                    double optInPenetration,
                                    int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLMATHOLD_Lookback(optInPenetration));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLMATHOLD", "inOpen", inOpen, guardInLen);
+          requireLength("CDLMATHOLD", "inHigh", inHigh, guardInLen);
+          requireLength("CDLMATHOLD", "inLow", inLow, guardInLen);
+          requireLength("CDLMATHOLD", "inClose", inClose, guardInLen);
+          requireLength("CDLMATHOLD", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLMATHOLD_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
@@ -49936,7 +51281,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLMORNINGSTAR
@@ -49953,6 +51301,14 @@ class Core {
                                            double optInPenetration,
                                            int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLMORNINGDOJISTAR_Lookback(optInPenetration));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLMORNINGDOJISTAR", "inOpen", inOpen, guardInLen);
+          requireLength("CDLMORNINGDOJISTAR", "inHigh", inHigh, guardInLen);
+          requireLength("CDLMORNINGDOJISTAR", "inLow", inLow, guardInLen);
+          requireLength("CDLMORNINGDOJISTAR", "inClose", inClose, guardInLen);
+          requireLength("CDLMORNINGDOJISTAR", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLMORNINGDOJISTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
@@ -49999,7 +51355,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLMORNINGSTAR
@@ -50016,6 +51375,14 @@ class Core {
                                            double optInPenetration,
                                            int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLMORNINGDOJISTAR_Lookback(optInPenetration));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLMORNINGDOJISTAR", "inOpen", inOpen, guardInLen);
+          requireLength("CDLMORNINGDOJISTAR", "inHigh", inHigh, guardInLen);
+          requireLength("CDLMORNINGDOJISTAR", "inLow", inLow, guardInLen);
+          requireLength("CDLMORNINGDOJISTAR", "inClose", inClose, guardInLen);
+          requireLength("CDLMORNINGDOJISTAR", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLMORNINGDOJISTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
@@ -50858,7 +52225,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLMORNINGDOJISTAR
@@ -50875,6 +52245,14 @@ class Core {
                                        double optInPenetration,
                                        int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLMORNINGSTAR_Lookback(optInPenetration));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLMORNINGSTAR", "inOpen", inOpen, guardInLen);
+          requireLength("CDLMORNINGSTAR", "inHigh", inHigh, guardInLen);
+          requireLength("CDLMORNINGSTAR", "inLow", inLow, guardInLen);
+          requireLength("CDLMORNINGSTAR", "inClose", inClose, guardInLen);
+          requireLength("CDLMORNINGSTAR", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLMORNINGSTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
@@ -50921,7 +52299,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLMORNINGDOJISTAR
@@ -50938,6 +52319,14 @@ class Core {
                                        double optInPenetration,
                                        int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLMORNINGSTAR_Lookback(optInPenetration));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLMORNINGSTAR", "inOpen", inOpen, guardInLen);
+          requireLength("CDLMORNINGSTAR", "inHigh", inHigh, guardInLen);
+          requireLength("CDLMORNINGSTAR", "inLow", inLow, guardInLen);
+          requireLength("CDLMORNINGSTAR", "inClose", inClose, guardInLen);
+          requireLength("CDLMORNINGSTAR", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLMORNINGSTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
@@ -51690,7 +53079,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLINNECK
@@ -51704,6 +53096,14 @@ class Core {
                                   double inClose[],
                                   int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLONNECK_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLONNECK", "inOpen", inOpen, guardInLen);
+          requireLength("CDLONNECK", "inHigh", inHigh, guardInLen);
+          requireLength("CDLONNECK", "inLow", inLow, guardInLen);
+          requireLength("CDLONNECK", "inClose", inClose, guardInLen);
+          requireLength("CDLONNECK", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLONNECK_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -51749,7 +53149,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLINNECK
@@ -51763,6 +53166,14 @@ class Core {
                                   float inClose[],
                                   int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLONNECK_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLONNECK", "inOpen", inOpen, guardInLen);
+          requireLength("CDLONNECK", "inHigh", inHigh, guardInLen);
+          requireLength("CDLONNECK", "inLow", inLow, guardInLen);
+          requireLength("CDLONNECK", "inClose", inClose, guardInLen);
+          requireLength("CDLONNECK", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLONNECK_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -52449,7 +53860,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLDARKCLOUDCOVER
@@ -52464,6 +53878,14 @@ class Core {
                                     double inClose[],
                                     int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLPIERCING_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLPIERCING", "inOpen", inOpen, guardInLen);
+          requireLength("CDLPIERCING", "inHigh", inHigh, guardInLen);
+          requireLength("CDLPIERCING", "inLow", inLow, guardInLen);
+          requireLength("CDLPIERCING", "inClose", inClose, guardInLen);
+          requireLength("CDLPIERCING", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLPIERCING_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -52504,7 +53926,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLDARKCLOUDCOVER
@@ -52519,6 +53944,14 @@ class Core {
                                     float inClose[],
                                     int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLPIERCING_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLPIERCING", "inOpen", inOpen, guardInLen);
+          requireLength("CDLPIERCING", "inHigh", inHigh, guardInLen);
+          requireLength("CDLPIERCING", "inLow", inLow, guardInLen);
+          requireLength("CDLPIERCING", "inClose", inClose, guardInLen);
+          requireLength("CDLPIERCING", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLPIERCING_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -53260,7 +54693,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLLONGLEGGEDDOJI
@@ -53275,6 +54711,14 @@ class Core {
                                        double inClose[],
                                        int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLRICKSHAWMAN_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLRICKSHAWMAN", "inOpen", inOpen, guardInLen);
+          requireLength("CDLRICKSHAWMAN", "inHigh", inHigh, guardInLen);
+          requireLength("CDLRICKSHAWMAN", "inLow", inLow, guardInLen);
+          requireLength("CDLRICKSHAWMAN", "inClose", inClose, guardInLen);
+          requireLength("CDLRICKSHAWMAN", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLRICKSHAWMAN_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -53315,7 +54759,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLLONGLEGGEDDOJI
@@ -53330,6 +54777,14 @@ class Core {
                                        float inClose[],
                                        int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLRICKSHAWMAN_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLRICKSHAWMAN", "inOpen", inOpen, guardInLen);
+          requireLength("CDLRICKSHAWMAN", "inHigh", inHigh, guardInLen);
+          requireLength("CDLRICKSHAWMAN", "inLow", inLow, guardInLen);
+          requireLength("CDLRICKSHAWMAN", "inClose", inClose, guardInLen);
+          requireLength("CDLRICKSHAWMAN", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLRICKSHAWMAN_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -54110,7 +55565,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLXSIDEGAP3METHODS
@@ -54125,6 +55583,14 @@ class Core {
                                             double inClose[],
                                             int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLRISEFALL3METHODS_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLRISEFALL3METHODS", "inOpen", inOpen, guardInLen);
+          requireLength("CDLRISEFALL3METHODS", "inHigh", inHigh, guardInLen);
+          requireLength("CDLRISEFALL3METHODS", "inLow", inLow, guardInLen);
+          requireLength("CDLRISEFALL3METHODS", "inClose", inClose, guardInLen);
+          requireLength("CDLRISEFALL3METHODS", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLRISEFALL3METHODS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -54169,7 +55635,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLXSIDEGAP3METHODS
@@ -54184,6 +55653,14 @@ class Core {
                                             float inClose[],
                                             int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLRISEFALL3METHODS_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLRISEFALL3METHODS", "inOpen", inOpen, guardInLen);
+          requireLength("CDLRISEFALL3METHODS", "inHigh", inHigh, guardInLen);
+          requireLength("CDLRISEFALL3METHODS", "inLow", inLow, guardInLen);
+          requireLength("CDLRISEFALL3METHODS", "inClose", inClose, guardInLen);
+          requireLength("CDLRISEFALL3METHODS", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLRISEFALL3METHODS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -55087,7 +56564,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLBELTHOLD
@@ -55100,6 +56580,14 @@ class Core {
                                            double inClose[],
                                            int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLSEPARATINGLINES_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLSEPARATINGLINES", "inOpen", inOpen, guardInLen);
+          requireLength("CDLSEPARATINGLINES", "inHigh", inHigh, guardInLen);
+          requireLength("CDLSEPARATINGLINES", "inLow", inLow, guardInLen);
+          requireLength("CDLSEPARATINGLINES", "inClose", inClose, guardInLen);
+          requireLength("CDLSEPARATINGLINES", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLSEPARATINGLINES_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -55144,7 +56632,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLBELTHOLD
@@ -55157,6 +56648,14 @@ class Core {
                                            float inClose[],
                                            int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLSEPARATINGLINES_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLSEPARATINGLINES", "inOpen", inOpen, guardInLen);
+          requireLength("CDLSEPARATINGLINES", "inHigh", inHigh, guardInLen);
+          requireLength("CDLSEPARATINGLINES", "inLow", inLow, guardInLen);
+          requireLength("CDLSEPARATINGLINES", "inClose", inClose, guardInLen);
+          requireLength("CDLSEPARATINGLINES", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLSEPARATINGLINES_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -55955,7 +57454,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLINVERTEDHAMMER
@@ -55971,6 +57473,14 @@ class Core {
                                         double inClose[],
                                         int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLSHOOTINGSTAR_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLSHOOTINGSTAR", "inOpen", inOpen, guardInLen);
+          requireLength("CDLSHOOTINGSTAR", "inHigh", inHigh, guardInLen);
+          requireLength("CDLSHOOTINGSTAR", "inLow", inLow, guardInLen);
+          requireLength("CDLSHOOTINGSTAR", "inClose", inClose, guardInLen);
+          requireLength("CDLSHOOTINGSTAR", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLSHOOTINGSTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -56012,7 +57522,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLINVERTEDHAMMER
@@ -56028,6 +57541,14 @@ class Core {
                                         float inClose[],
                                         int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLSHOOTINGSTAR_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLSHOOTINGSTAR", "inOpen", inOpen, guardInLen);
+          requireLength("CDLSHOOTINGSTAR", "inHigh", inHigh, guardInLen);
+          requireLength("CDLSHOOTINGSTAR", "inLow", inLow, guardInLen);
+          requireLength("CDLSHOOTINGSTAR", "inClose", inClose, guardInLen);
+          requireLength("CDLSHOOTINGSTAR", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLSHOOTINGSTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -56779,7 +58300,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLLONGLINE
@@ -56794,6 +58318,14 @@ class Core {
                                      double inClose[],
                                      int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLSHORTLINE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLSHORTLINE", "inOpen", inOpen, guardInLen);
+          requireLength("CDLSHORTLINE", "inHigh", inHigh, guardInLen);
+          requireLength("CDLSHORTLINE", "inLow", inLow, guardInLen);
+          requireLength("CDLSHORTLINE", "inClose", inClose, guardInLen);
+          requireLength("CDLSHORTLINE", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLSHORTLINE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -56838,7 +58370,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLLONGLINE
@@ -56853,6 +58388,14 @@ class Core {
                                      float inClose[],
                                      int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLSHORTLINE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLSHORTLINE", "inOpen", inOpen, guardInLen);
+          requireLength("CDLSHORTLINE", "inHigh", inHigh, guardInLen);
+          requireLength("CDLSHORTLINE", "inLow", inLow, guardInLen);
+          requireLength("CDLSHORTLINE", "inClose", inClose, guardInLen);
+          requireLength("CDLSHORTLINE", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLSHORTLINE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -57479,7 +59022,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLDOJI
@@ -57494,6 +59040,14 @@ class Core {
                                        double inClose[],
                                        int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLSPINNINGTOP_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLSPINNINGTOP", "inOpen", inOpen, guardInLen);
+          requireLength("CDLSPINNINGTOP", "inHigh", inHigh, guardInLen);
+          requireLength("CDLSPINNINGTOP", "inLow", inLow, guardInLen);
+          requireLength("CDLSPINNINGTOP", "inClose", inClose, guardInLen);
+          requireLength("CDLSPINNINGTOP", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLSPINNINGTOP_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -57533,7 +59087,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLDOJI
@@ -57548,6 +59105,14 @@ class Core {
                                        float inClose[],
                                        int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLSPINNINGTOP_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLSPINNINGTOP", "inOpen", inOpen, guardInLen);
+          requireLength("CDLSPINNINGTOP", "inHigh", inHigh, guardInLen);
+          requireLength("CDLSPINNINGTOP", "inLow", inLow, guardInLen);
+          requireLength("CDLSPINNINGTOP", "inClose", inClose, guardInLen);
+          requireLength("CDLSPINNINGTOP", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLSPINNINGTOP_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -58228,7 +59793,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLADVANCEBLOCK
@@ -58243,6 +59811,14 @@ class Core {
                                           double inClose[],
                                           int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLSTALLEDPATTERN_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLSTALLEDPATTERN", "inOpen", inOpen, guardInLen);
+          requireLength("CDLSTALLEDPATTERN", "inHigh", inHigh, guardInLen);
+          requireLength("CDLSTALLEDPATTERN", "inLow", inLow, guardInLen);
+          requireLength("CDLSTALLEDPATTERN", "inClose", inClose, guardInLen);
+          requireLength("CDLSTALLEDPATTERN", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLSTALLEDPATTERN_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -58284,7 +59860,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLADVANCEBLOCK
@@ -58299,6 +59878,14 @@ class Core {
                                           float inClose[],
                                           int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLSTALLEDPATTERN_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLSTALLEDPATTERN", "inOpen", inOpen, guardInLen);
+          requireLength("CDLSTALLEDPATTERN", "inHigh", inHigh, guardInLen);
+          requireLength("CDLSTALLEDPATTERN", "inLow", inLow, guardInLen);
+          requireLength("CDLSTALLEDPATTERN", "inClose", inClose, guardInLen);
+          requireLength("CDLSTALLEDPATTERN", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLSTALLEDPATTERN_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -59230,7 +60817,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLMATCHINGLOW
@@ -59244,6 +60834,14 @@ class Core {
                                          double inClose[],
                                          int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLSTICKSANDWICH_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLSTICKSANDWICH", "inOpen", inOpen, guardInLen);
+          requireLength("CDLSTICKSANDWICH", "inHigh", inHigh, guardInLen);
+          requireLength("CDLSTICKSANDWICH", "inLow", inLow, guardInLen);
+          requireLength("CDLSTICKSANDWICH", "inClose", inClose, guardInLen);
+          requireLength("CDLSTICKSANDWICH", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLSTICKSANDWICH_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -59285,7 +60883,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLMATCHINGLOW
@@ -59299,6 +60900,14 @@ class Core {
                                          float inClose[],
                                          int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLSTICKSANDWICH_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLSTICKSANDWICH", "inOpen", inOpen, guardInLen);
+          requireLength("CDLSTICKSANDWICH", "inHigh", inHigh, guardInLen);
+          requireLength("CDLSTICKSANDWICH", "inLow", inLow, guardInLen);
+          requireLength("CDLSTICKSANDWICH", "inClose", inClose, guardInLen);
+          requireLength("CDLSTICKSANDWICH", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLSTICKSANDWICH_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -59970,7 +61579,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLDRAGONFLYDOJI
@@ -59986,6 +61598,14 @@ class Core {
                                   double inClose[],
                                   int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLTAKURI_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLTAKURI", "inOpen", inOpen, guardInLen);
+          requireLength("CDLTAKURI", "inHigh", inHigh, guardInLen);
+          requireLength("CDLTAKURI", "inLow", inLow, guardInLen);
+          requireLength("CDLTAKURI", "inClose", inClose, guardInLen);
+          requireLength("CDLTAKURI", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLTAKURI_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -60027,7 +61647,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLDRAGONFLYDOJI
@@ -60043,6 +61666,14 @@ class Core {
                                   float inClose[],
                                   int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLTAKURI_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLTAKURI", "inOpen", inOpen, guardInLen);
+          requireLength("CDLTAKURI", "inHigh", inHigh, guardInLen);
+          requireLength("CDLTAKURI", "inLow", inLow, guardInLen);
+          requireLength("CDLTAKURI", "inClose", inClose, guardInLen);
+          requireLength("CDLTAKURI", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLTAKURI_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -60761,7 +62392,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLGAPSIDESIDEWHITE
@@ -60775,6 +62409,14 @@ class Core {
                                      double inClose[],
                                      int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLTASUKIGAP_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLTASUKIGAP", "inOpen", inOpen, guardInLen);
+          requireLength("CDLTASUKIGAP", "inHigh", inHigh, guardInLen);
+          requireLength("CDLTASUKIGAP", "inLow", inLow, guardInLen);
+          requireLength("CDLTASUKIGAP", "inClose", inClose, guardInLen);
+          requireLength("CDLTASUKIGAP", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLTASUKIGAP_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -60817,7 +62459,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLGAPSIDESIDEWHITE
@@ -60831,6 +62476,14 @@ class Core {
                                      float inClose[],
                                      int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLTASUKIGAP_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLTASUKIGAP", "inOpen", inOpen, guardInLen);
+          requireLength("CDLTASUKIGAP", "inHigh", inHigh, guardInLen);
+          requireLength("CDLTASUKIGAP", "inLow", inLow, guardInLen);
+          requireLength("CDLTASUKIGAP", "inClose", inClose, guardInLen);
+          requireLength("CDLTASUKIGAP", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLTASUKIGAP_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -61490,7 +63143,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLINNECK
@@ -61505,6 +63161,14 @@ class Core {
                                      double inClose[],
                                      int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLTHRUSTING_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLTHRUSTING", "inOpen", inOpen, guardInLen);
+          requireLength("CDLTHRUSTING", "inHigh", inHigh, guardInLen);
+          requireLength("CDLTHRUSTING", "inLow", inLow, guardInLen);
+          requireLength("CDLTHRUSTING", "inClose", inClose, guardInLen);
+          requireLength("CDLTHRUSTING", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLTHRUSTING_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -61548,7 +63212,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLINNECK
@@ -61563,6 +63230,14 @@ class Core {
                                      float inClose[],
                                      int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLTHRUSTING_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLTHRUSTING", "inOpen", inOpen, guardInLen);
+          requireLength("CDLTHRUSTING", "inHigh", inHigh, guardInLen);
+          requireLength("CDLTHRUSTING", "inLow", inLow, guardInLen);
+          requireLength("CDLTHRUSTING", "inClose", inClose, guardInLen);
+          requireLength("CDLTHRUSTING", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLTHRUSTING_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -62254,7 +63929,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLDOJI
@@ -62270,6 +63948,14 @@ class Core {
                                    double inClose[],
                                    int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLTRISTAR_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLTRISTAR", "inOpen", inOpen, guardInLen);
+          requireLength("CDLTRISTAR", "inHigh", inHigh, guardInLen);
+          requireLength("CDLTRISTAR", "inLow", inLow, guardInLen);
+          requireLength("CDLTRISTAR", "inClose", inClose, guardInLen);
+          requireLength("CDLTRISTAR", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLTRISTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -62310,7 +63996,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLDOJI
@@ -62326,6 +64015,14 @@ class Core {
                                    float inClose[],
                                    int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLTRISTAR_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLTRISTAR", "inOpen", inOpen, guardInLen);
+          requireLength("CDLTRISTAR", "inHigh", inHigh, guardInLen);
+          requireLength("CDLTRISTAR", "inLow", inLow, guardInLen);
+          requireLength("CDLTRISTAR", "inClose", inClose, guardInLen);
+          requireLength("CDLTRISTAR", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLTRISTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -62989,7 +64686,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLHARAMI
@@ -63004,6 +64704,14 @@ class Core {
                                         double inClose[],
                                         int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLUNIQUE3RIVER_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLUNIQUE3RIVER", "inOpen", inOpen, guardInLen);
+          requireLength("CDLUNIQUE3RIVER", "inHigh", inHigh, guardInLen);
+          requireLength("CDLUNIQUE3RIVER", "inLow", inLow, guardInLen);
+          requireLength("CDLUNIQUE3RIVER", "inClose", inClose, guardInLen);
+          requireLength("CDLUNIQUE3RIVER", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLUNIQUE3RIVER_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -63045,7 +64753,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLHARAMI
@@ -63060,6 +64771,14 @@ class Core {
                                         float inClose[],
                                         int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLUNIQUE3RIVER_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLUNIQUE3RIVER", "inOpen", inOpen, guardInLen);
+          requireLength("CDLUNIQUE3RIVER", "inHigh", inHigh, guardInLen);
+          requireLength("CDLUNIQUE3RIVER", "inLow", inLow, guardInLen);
+          requireLength("CDLUNIQUE3RIVER", "inClose", inClose, guardInLen);
+          requireLength("CDLUNIQUE3RIVER", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLUNIQUE3RIVER_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -63796,7 +65515,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDL2CROWS
@@ -63810,6 +65532,14 @@ class Core {
                                            double inClose[],
                                            int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLUPSIDEGAP2CROWS_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLUPSIDEGAP2CROWS", "inOpen", inOpen, guardInLen);
+          requireLength("CDLUPSIDEGAP2CROWS", "inHigh", inHigh, guardInLen);
+          requireLength("CDLUPSIDEGAP2CROWS", "inLow", inLow, guardInLen);
+          requireLength("CDLUPSIDEGAP2CROWS", "inClose", inClose, guardInLen);
+          requireLength("CDLUPSIDEGAP2CROWS", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLUPSIDEGAP2CROWS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -63852,7 +65582,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDL2CROWS
@@ -63866,6 +65599,14 @@ class Core {
                                            float inClose[],
                                            int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLUPSIDEGAP2CROWS_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLUPSIDEGAP2CROWS", "inOpen", inOpen, guardInLen);
+          requireLength("CDLUPSIDEGAP2CROWS", "inHigh", inHigh, guardInLen);
+          requireLength("CDLUPSIDEGAP2CROWS", "inLow", inLow, guardInLen);
+          requireLength("CDLUPSIDEGAP2CROWS", "inClose", inClose, guardInLen);
+          requireLength("CDLUPSIDEGAP2CROWS", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLUPSIDEGAP2CROWS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -64538,7 +66279,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLGAPSIDESIDEWHITE
@@ -64553,6 +66297,12 @@ class Core {
                                             double inClose[],
                                             int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLXSIDEGAP3METHODS_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLXSIDEGAP3METHODS", "inOpen", inOpen, guardInLen);
+          requireLength("CDLXSIDEGAP3METHODS", "inClose", inClose, guardInLen);
+          requireLength("CDLXSIDEGAP3METHODS", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLXSIDEGAP3METHODS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -64595,7 +66345,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CDLGAPSIDESIDEWHITE
@@ -64610,6 +66363,12 @@ class Core {
                                             float inClose[],
                                             int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CDLXSIDEGAP3METHODS_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CDLXSIDEGAP3METHODS", "inOpen", inOpen, guardInLen);
+          requireLength("CDLXSIDEGAP3METHODS", "inClose", inClose, guardInLen);
+          requireLength("CDLXSIDEGAP3METHODS", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CDLXSIDEGAP3METHODS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -65032,7 +66791,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#FLOOR
@@ -65042,6 +66804,11 @@ class Core {
                              double inReal[],
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CEIL_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CEIL", "inReal", inReal, guardInLen);
+          requireLength("CEIL", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CEIL_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -65076,7 +66843,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#FLOOR
@@ -65086,6 +66856,11 @@ class Core {
                              float inReal[],
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CEIL_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CEIL", "inReal", inReal, guardInLen);
+          requireLength("CEIL", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CEIL_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -65644,7 +67419,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#AD
@@ -65661,6 +67439,14 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CMF_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CMF", "inHigh", inHigh, guardInLen);
+          requireLength("CMF", "inLow", inLow, guardInLen);
+          requireLength("CMF", "inClose", inClose, guardInLen);
+          requireLength("CMF", "inVolume", inVolume, guardInLen);
+          requireLength("CMF", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CMF_Internal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -65726,7 +67512,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#AD
@@ -65743,6 +67532,14 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CMF_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CMF", "inHigh", inHigh, guardInLen);
+          requireLength("CMF", "inLow", inLow, guardInLen);
+          requireLength("CMF", "inClose", inClose, guardInLen);
+          requireLength("CMF", "inVolume", inVolume, guardInLen);
+          requireLength("CMF", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CMF_Internal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -66558,7 +68355,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#RSI
@@ -66569,6 +68369,11 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CMO_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CMO", "inReal", inReal, guardInLen);
+          requireLength("CMO", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CMO_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -66611,7 +68416,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#RSI
@@ -66622,6 +68430,11 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CMO_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CMO", "inReal", inReal, guardInLen);
+          requireLength("CMO", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CMO_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -67340,7 +69153,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CMO
@@ -67352,6 +69168,11 @@ class Core {
                              int optInTimePeriod,
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CMOU_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CMOU", "inReal", inReal, guardInLen);
+          requireLength("CMOU", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CMOU_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -67394,7 +69215,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CMO
@@ -67406,6 +69230,11 @@ class Core {
                              int optInTimePeriod,
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CMOU_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CMOU", "inReal", inReal, guardInLen);
+          requireLength("CMOU", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CMOU_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -68096,7 +69925,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#BETA
@@ -68110,6 +69942,12 @@ class Core {
                                int optInTimePeriod,
                                double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CORREL_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CORREL", "inReal0", inReal0, guardInLen);
+          requireLength("CORREL", "inReal1", inReal1, guardInLen);
+          requireLength("CORREL", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CORREL_Internal(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -68153,7 +69991,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#BETA
@@ -68167,6 +70008,12 @@ class Core {
                                int optInTimePeriod,
                                double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, CORREL_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("CORREL", "inReal0", inReal0, guardInLen);
+          requireLength("CORREL", "inReal1", inReal1, guardInLen);
+          requireLength("CORREL", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = CORREL_Internal(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -68704,7 +70551,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ACOS
@@ -68717,6 +70567,11 @@ class Core {
                             double inReal[],
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, COS_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("COS", "inReal", inReal, guardInLen);
+          requireLength("COS", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = COS_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -68751,7 +70606,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ACOS
@@ -68764,6 +70622,11 @@ class Core {
                             float inReal[],
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, COS_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("COS", "inReal", inReal, guardInLen);
+          requireLength("COS", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = COS_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -69087,7 +70950,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#SINH
@@ -69099,6 +70965,11 @@ class Core {
                              double inReal[],
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, COSH_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("COSH", "inReal", inReal, guardInLen);
+          requireLength("COSH", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = COSH_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -69133,7 +71004,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#SINH
@@ -69145,6 +71019,11 @@ class Core {
                              float inReal[],
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, COSH_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("COSH", "inReal", inReal, guardInLen);
+          requireLength("COSH", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = COSH_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -69682,7 +71561,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#EMA
@@ -69695,6 +71577,11 @@ class Core {
                              int optInTimePeriod,
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, DEMA_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("DEMA", "inReal", inReal, guardInLen);
+          requireLength("DEMA", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = DEMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -69735,7 +71622,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#EMA
@@ -69748,6 +71638,11 @@ class Core {
                              int optInTimePeriod,
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, DEMA_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("DEMA", "inReal", inReal, guardInLen);
+          requireLength("DEMA", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = DEMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -70233,7 +72128,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MULT
@@ -70246,6 +72144,12 @@ class Core {
                             double inReal1[],
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, DIV_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("DIV", "inReal0", inReal0, guardInLen);
+          requireLength("DIV", "inReal1", inReal1, guardInLen);
+          requireLength("DIV", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = DIV_Internal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
@@ -70285,7 +72189,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MULT
@@ -70298,6 +72205,12 @@ class Core {
                             float inReal1[],
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, DIV_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("DIV", "inReal0", inReal0, guardInLen);
+          requireLength("DIV", "inReal1", inReal1, guardInLen);
+          requireLength("DIV", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = DIV_Internal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
@@ -71098,7 +73011,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ADX
@@ -71117,6 +73033,13 @@ class Core {
                            int optInTimePeriod,
                            double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, DX_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("DX", "inHigh", inHigh, guardInLen);
+          requireLength("DX", "inLow", inLow, guardInLen);
+          requireLength("DX", "inClose", inClose, guardInLen);
+          requireLength("DX", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = DX_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -71162,7 +73085,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ADX
@@ -71181,6 +73107,13 @@ class Core {
                            int optInTimePeriod,
                            double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, DX_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("DX", "inHigh", inHigh, guardInLen);
+          requireLength("DX", "inLow", inLow, guardInLen);
+          requireLength("DX", "inClose", inClose, guardInLen);
+          requireLength("DX", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = DX_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -72101,7 +74034,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#AD
@@ -72117,6 +74053,12 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, EFI_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("EFI", "inClose", inClose, guardInLen);
+          requireLength("EFI", "inVolume", inVolume, guardInLen);
+          requireLength("EFI", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = EFI_Internal(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -72166,7 +74108,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#AD
@@ -72182,6 +74127,12 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, EFI_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("EFI", "inClose", inClose, guardInLen);
+          requireLength("EFI", "inVolume", inVolume, guardInLen);
+          requireLength("EFI", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = EFI_Internal(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -72865,7 +74816,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#SMA
@@ -72881,6 +74835,11 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, EMA_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("EMA", "inReal", inReal, guardInLen);
+          requireLength("EMA", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = EMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -72924,7 +74883,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#SMA
@@ -72940,6 +74902,11 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, EMA_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("EMA", "inReal", inReal, guardInLen);
+          requireLength("EMA", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = EMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -73361,7 +75328,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#LN
@@ -73372,6 +75342,11 @@ class Core {
                             double inReal[],
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, EXP_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("EXP", "inReal", inReal, guardInLen);
+          requireLength("EXP", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = EXP_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -73406,7 +75381,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#LN
@@ -73417,6 +75395,11 @@ class Core {
                             float inReal[],
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, EXP_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("EXP", "inReal", inReal, guardInLen);
+          requireLength("EXP", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = EXP_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -73740,7 +75723,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CEIL
@@ -73750,6 +75736,11 @@ class Core {
                               double inReal[],
                               double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, FLOOR_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("FLOOR", "inReal", inReal, guardInLen);
+          requireLength("FLOOR", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = FLOOR_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -73784,7 +75775,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CEIL
@@ -73794,6 +75788,11 @@ class Core {
                               float inReal[],
                               double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, FLOOR_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("FLOOR", "inReal", inReal, guardInLen);
+          requireLength("FLOOR", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = FLOOR_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -74518,7 +76517,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#WMA
@@ -74532,6 +76534,11 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, HMA_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("HMA", "inReal", inReal, guardInLen);
+          requireLength("HMA", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = HMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -74586,7 +76593,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#WMA
@@ -74600,6 +76610,11 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, HMA_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("HMA", "inReal", inReal, guardInLen);
+          requireLength("HMA", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = HMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -76099,7 +78114,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#HT_DCPHASE
@@ -76114,6 +78132,11 @@ class Core {
                                     double inReal[],
                                     double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, HT_DCPERIOD_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("HT_DCPERIOD", "inReal", inReal, guardInLen);
+          requireLength("HT_DCPERIOD", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = HT_DCPERIOD_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -76145,7 +78168,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#HT_DCPHASE
@@ -76160,6 +78186,11 @@ class Core {
                                     float inReal[],
                                     double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, HT_DCPERIOD_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("HT_DCPERIOD", "inReal", inReal, guardInLen);
+          requireLength("HT_DCPERIOD", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = HT_DCPERIOD_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -77937,7 +79968,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#HT_DCPERIOD
@@ -77953,6 +79987,11 @@ class Core {
                                    double inReal[],
                                    double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, HT_DCPHASE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("HT_DCPHASE", "inReal", inReal, guardInLen);
+          requireLength("HT_DCPHASE", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = HT_DCPHASE_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -77986,7 +80025,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#HT_DCPERIOD
@@ -78002,6 +80044,11 @@ class Core {
                                    float inReal[],
                                    double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, HT_DCPHASE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("HT_DCPHASE", "inReal", inReal, guardInLen);
+          requireLength("HT_DCPHASE", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = HT_DCPHASE_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -79838,7 +81885,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#HT_DCPERIOD
@@ -79854,6 +81904,12 @@ class Core {
                                   double outInPhase[],
                                   double outQuadrature[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, HT_PHASOR_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("HT_PHASOR", "inReal", inReal, guardInLen);
+          requireLength("HT_PHASOR", "outInPhase", outInPhase, guardOutLen);
+          requireLength("HT_PHASOR", "outQuadrature", outQuadrature, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = HT_PHASOR_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
@@ -79891,7 +81947,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#HT_DCPERIOD
@@ -79907,6 +81966,12 @@ class Core {
                                   double outInPhase[],
                                   double outQuadrature[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, HT_PHASOR_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("HT_PHASOR", "inReal", inReal, guardInLen);
+          requireLength("HT_PHASOR", "outInPhase", outInPhase, guardOutLen);
+          requireLength("HT_PHASOR", "outQuadrature", outQuadrature, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = HT_PHASOR_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
@@ -81723,7 +83788,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#HT_DCPHASE
@@ -81738,6 +83806,12 @@ class Core {
                                 double outSine[],
                                 double outLeadSine[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, HT_SINE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("HT_SINE", "inReal", inReal, guardInLen);
+          requireLength("HT_SINE", "outSine", outSine, guardOutLen);
+          requireLength("HT_SINE", "outLeadSine", outLeadSine, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = HT_SINE_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine);
@@ -81772,7 +83846,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#HT_DCPHASE
@@ -81787,6 +83864,12 @@ class Core {
                                 double outSine[],
                                 double outLeadSine[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, HT_SINE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("HT_SINE", "inReal", inReal, guardInLen);
+          requireLength("HT_SINE", "outSine", outSine, guardOutLen);
+          requireLength("HT_SINE", "outLeadSine", outLeadSine, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = HT_SINE_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine);
@@ -83717,7 +85800,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#HT_DCPERIOD
@@ -83730,6 +85816,11 @@ class Core {
                                      double inReal[],
                                      double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, HT_TRENDLINE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("HT_TRENDLINE", "inReal", inReal, guardInLen);
+          requireLength("HT_TRENDLINE", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = HT_TRENDLINE_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -83761,7 +85852,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#HT_DCPERIOD
@@ -83774,6 +85868,11 @@ class Core {
                                      float inReal[],
                                      double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, HT_TRENDLINE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("HT_TRENDLINE", "inReal", inReal, guardInLen);
+          requireLength("HT_TRENDLINE", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = HT_TRENDLINE_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -85817,7 +87916,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#HT_TRENDLINE
@@ -85831,6 +87933,11 @@ class Core {
                                      double inReal[],
                                      int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, HT_TRENDMODE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("HT_TRENDMODE", "inReal", inReal, guardInLen);
+          requireLength("HT_TRENDMODE", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = HT_TRENDMODE_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger);
@@ -85863,7 +87970,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#HT_TRENDLINE
@@ -85877,6 +87987,11 @@ class Core {
                                      float inReal[],
                                      int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, HT_TRENDMODE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("HT_TRENDMODE", "inReal", inReal, guardInLen);
+          requireLength("HT_TRENDMODE", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = HT_TRENDMODE_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger);
@@ -87408,7 +89523,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#RSI
@@ -87420,6 +89538,12 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, IMI_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("IMI", "inOpen", inOpen, guardInLen);
+          requireLength("IMI", "inClose", inClose, guardInLen);
+          requireLength("IMI", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = IMI_Internal(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -87459,7 +89583,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#RSI
@@ -87471,6 +89598,12 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, IMI_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("IMI", "inOpen", inOpen, guardInLen);
+          requireLength("IMI", "inClose", inClose, guardInLen);
+          requireLength("IMI", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = IMI_Internal(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -88204,7 +90337,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MAMA
@@ -88217,6 +90353,11 @@ class Core {
                              int optInTimePeriod,
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, KAMA_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("KAMA", "inReal", inReal, guardInLen);
+          requireLength("KAMA", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = KAMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -88262,7 +90403,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MAMA
@@ -88275,6 +90419,11 @@ class Core {
                              int optInTimePeriod,
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, KAMA_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("KAMA", "inReal", inReal, guardInLen);
+          requireLength("KAMA", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = KAMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -89004,7 +91153,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#LINEARREG_SLOPE
@@ -89018,6 +91170,11 @@ class Core {
                                   int optInTimePeriod,
                                   double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, LINEARREG_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("LINEARREG", "inReal", inReal, guardInLen);
+          requireLength("LINEARREG", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = LINEARREG_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -89051,7 +91208,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#LINEARREG_SLOPE
@@ -89065,6 +91225,11 @@ class Core {
                                   int optInTimePeriod,
                                   double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, LINEARREG_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("LINEARREG", "inReal", inReal, guardInLen);
+          requireLength("LINEARREG", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = LINEARREG_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -89681,7 +91846,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#LINEARREG
@@ -89695,6 +91863,11 @@ class Core {
                                         int optInTimePeriod,
                                         double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, LINEARREG_ANGLE_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("LINEARREG_ANGLE", "inReal", inReal, guardInLen);
+          requireLength("LINEARREG_ANGLE", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = LINEARREG_ANGLE_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -89733,7 +91906,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#LINEARREG
@@ -89747,6 +91923,11 @@ class Core {
                                         int optInTimePeriod,
                                         double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, LINEARREG_ANGLE_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("LINEARREG_ANGLE", "inReal", inReal, guardInLen);
+          requireLength("LINEARREG_ANGLE", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = LINEARREG_ANGLE_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -90356,7 +92537,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#LINEARREG
@@ -90370,6 +92554,11 @@ class Core {
                                             int optInTimePeriod,
                                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, LINEARREG_INTERCEPT_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("LINEARREG_INTERCEPT", "inReal", inReal, guardInLen);
+          requireLength("LINEARREG_INTERCEPT", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = LINEARREG_INTERCEPT_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -90409,7 +92598,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#LINEARREG
@@ -90423,6 +92615,11 @@ class Core {
                                             int optInTimePeriod,
                                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, LINEARREG_INTERCEPT_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("LINEARREG_INTERCEPT", "inReal", inReal, guardInLen);
+          requireLength("LINEARREG_INTERCEPT", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = LINEARREG_INTERCEPT_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -91027,7 +93224,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#LINEARREG
@@ -91041,6 +93241,11 @@ class Core {
                                         int optInTimePeriod,
                                         double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, LINEARREG_SLOPE_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("LINEARREG_SLOPE", "inReal", inReal, guardInLen);
+          requireLength("LINEARREG_SLOPE", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = LINEARREG_SLOPE_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -91081,7 +93286,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#LINEARREG
@@ -91095,6 +93303,11 @@ class Core {
                                         int optInTimePeriod,
                                         double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, LINEARREG_SLOPE_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("LINEARREG_SLOPE", "inReal", inReal, guardInLen);
+          requireLength("LINEARREG_SLOPE", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = LINEARREG_SLOPE_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -91557,7 +93770,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#LOG10
@@ -91569,6 +93785,11 @@ class Core {
                            double inReal[],
                            double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, LN_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("LN", "inReal", inReal, guardInLen);
+          requireLength("LN", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = LN_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -91607,7 +93828,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#LOG10
@@ -91619,6 +93843,11 @@ class Core {
                            float inReal[],
                            double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, LN_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("LN", "inReal", inReal, guardInLen);
+          requireLength("LN", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = LN_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -91946,7 +94175,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#LN
@@ -91957,6 +94189,11 @@ class Core {
                               double inReal[],
                               double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, LOG10_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("LOG10", "inReal", inReal, guardInLen);
+          requireLength("LOG10", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = LOG10_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -91995,7 +94232,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#LN
@@ -92006,6 +94246,11 @@ class Core {
                               float inReal[],
                               double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, LOG10_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("LOG10", "inReal", inReal, guardInLen);
+          requireLength("LOG10", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = LOG10_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -92515,7 +94760,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#SMA
@@ -92536,6 +94784,11 @@ class Core {
                            MAType optInMAType,
                            double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MA_Lookback(optInTimePeriod, optInMAType));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MA", "inReal", inReal, guardInLen);
+          requireLength("MA", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MA_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
@@ -92583,7 +94836,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#SMA
@@ -92604,6 +94860,11 @@ class Core {
                            MAType optInMAType,
                            double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MA_Lookback(optInTimePeriod, optInMAType));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MA", "inReal", inReal, guardInLen);
+          requireLength("MA", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MA_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
@@ -93777,7 +96038,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MACDEXT
@@ -93795,6 +96059,13 @@ class Core {
                              double outMACDSignal[],
                              double outMACDHist[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MACD", "inReal", inReal, guardInLen);
+          requireLength("MACD", "outMACD", outMACD, guardOutLen);
+          requireLength("MACD", "outMACDSignal", outMACDSignal, guardOutLen);
+          requireLength("MACD", "outMACDHist", outMACDHist, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MACD_Internal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
@@ -93846,7 +96117,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MACDEXT
@@ -93864,6 +96138,13 @@ class Core {
                              double outMACDSignal[],
                              double outMACDHist[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MACD", "inReal", inReal, guardInLen);
+          requireLength("MACD", "outMACD", outMACD, guardOutLen);
+          requireLength("MACD", "outMACDSignal", outMACDSignal, guardOutLen);
+          requireLength("MACD", "outMACDHist", outMACDHist, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MACD_Internal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
@@ -94772,7 +97053,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MACD
@@ -94795,6 +97079,13 @@ class Core {
                                 double outMACDSignal[],
                                 double outMACDHist[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MACDEXT", "inReal", inReal, guardInLen);
+          requireLength("MACDEXT", "outMACD", outMACD, guardOutLen);
+          requireLength("MACDEXT", "outMACDSignal", outMACDSignal, guardOutLen);
+          requireLength("MACDEXT", "outMACDHist", outMACDHist, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MACDEXT_Internal(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
@@ -94860,7 +97151,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MACD
@@ -94883,6 +97177,13 @@ class Core {
                                 double outMACDSignal[],
                                 double outMACDHist[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MACDEXT", "inReal", inReal, guardInLen);
+          requireLength("MACDEXT", "outMACD", outMACD, guardOutLen);
+          requireLength("MACDEXT", "outMACDSignal", outMACDSignal, guardOutLen);
+          requireLength("MACDEXT", "outMACDHist", outMACDHist, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MACDEXT_Internal(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
@@ -95731,7 +98032,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MACD
@@ -95747,6 +98051,13 @@ class Core {
                                 double outMACDSignal[],
                                 double outMACDHist[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MACDFIX_Lookback(optInSignalPeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MACDFIX", "inReal", inReal, guardInLen);
+          requireLength("MACDFIX", "outMACD", outMACD, guardOutLen);
+          requireLength("MACDFIX", "outMACDSignal", outMACDSignal, guardOutLen);
+          requireLength("MACDFIX", "outMACDHist", outMACDHist, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MACDFIX_Internal(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
@@ -95794,7 +98105,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MACD
@@ -95810,6 +98124,13 @@ class Core {
                                 double outMACDSignal[],
                                 double outMACDHist[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MACDFIX_Lookback(optInSignalPeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MACDFIX", "inReal", inReal, guardInLen);
+          requireLength("MACDFIX", "outMACD", outMACD, guardOutLen);
+          requireLength("MACDFIX", "outMACDSignal", outMACDSignal, guardOutLen);
+          requireLength("MACDFIX", "outMACDHist", outMACDHist, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MACDFIX_Internal(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
@@ -97092,7 +99413,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MA
@@ -97107,6 +99431,12 @@ class Core {
                              double outMAMA[],
                              double outFAMA[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MAMA_Lookback(optInFastLimit, optInSlowLimit));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MAMA", "inReal", inReal, guardInLen);
+          requireLength("MAMA", "outMAMA", outMAMA, guardOutLen);
+          requireLength("MAMA", "outFAMA", outFAMA, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MAMA_Internal(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
@@ -97152,7 +99482,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MA
@@ -97167,6 +99500,12 @@ class Core {
                              double outMAMA[],
                              double outFAMA[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MAMA_Lookback(optInFastLimit, optInSlowLimit));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MAMA", "inReal", inReal, guardInLen);
+          requireLength("MAMA", "outMAMA", outMAMA, guardOutLen);
+          requireLength("MAMA", "outFAMA", outFAMA, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MAMA_Internal(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
@@ -98401,7 +100740,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#AD
@@ -98417,6 +100759,13 @@ class Core {
                                  double inVolume[],
                                  double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MARKETFI_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MARKETFI", "inHigh", inHigh, guardInLen);
+          requireLength("MARKETFI", "inLow", inLow, guardInLen);
+          requireLength("MARKETFI", "inVolume", inVolume, guardInLen);
+          requireLength("MARKETFI", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MARKETFI_Internal(startIdx, endIdx, inHigh, inLow, inVolume, outBegIdx, outNBElement, outReal);
@@ -98463,7 +100812,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#AD
@@ -98479,6 +100831,13 @@ class Core {
                                  float inVolume[],
                                  double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MARKETFI_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MARKETFI", "inHigh", inHigh, guardInLen);
+          requireLength("MARKETFI", "inLow", inLow, guardInLen);
+          requireLength("MARKETFI", "inVolume", inVolume, guardInLen);
+          requireLength("MARKETFI", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MARKETFI_Internal(startIdx, endIdx, inHigh, inLow, inVolume, outBegIdx, outNBElement, outReal);
@@ -99304,7 +101663,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MA
@@ -99321,6 +101683,12 @@ class Core {
                              MAType optInMAType,
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MAVP", "inReal", inReal, guardInLen);
+          requireLength("MAVP", "inPeriods", inPeriods, guardInLen);
+          requireLength("MAVP", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MAVP_Internal(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
@@ -99369,7 +101737,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MA
@@ -99386,6 +101757,12 @@ class Core {
                              MAType optInMAType,
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MAVP", "inReal", inReal, guardInLen);
+          requireLength("MAVP", "inPeriods", inPeriods, guardInLen);
+          requireLength("MAVP", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MAVP_Internal(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
@@ -100059,7 +102436,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MIN
@@ -100072,6 +102452,11 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MAX_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MAX", "inReal", inReal, guardInLen);
+          requireLength("MAX", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MAX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -100108,7 +102493,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MIN
@@ -100121,6 +102509,11 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MAX_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MAX", "inReal", inReal, guardInLen);
+          requireLength("MAX", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MAX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -100708,7 +103101,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MAX
@@ -100722,6 +103118,11 @@ class Core {
                                  int optInTimePeriod,
                                  int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MAXINDEX_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MAXINDEX", "inReal", inReal, guardInLen);
+          requireLength("MAXINDEX", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MAXINDEX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
@@ -100764,7 +103165,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MAX
@@ -100778,6 +103182,11 @@ class Core {
                                  int optInTimePeriod,
                                  int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MAXINDEX_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MAXINDEX", "inReal", inReal, guardInLen);
+          requireLength("MAXINDEX", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MAXINDEX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
@@ -101249,7 +103658,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MIDPRICE
@@ -101263,6 +103675,12 @@ class Core {
                                  double inLow[],
                                  double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MEDPRICE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MEDPRICE", "inHigh", inHigh, guardInLen);
+          requireLength("MEDPRICE", "inLow", inLow, guardInLen);
+          requireLength("MEDPRICE", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MEDPRICE_Internal(startIdx, endIdx, inHigh, inLow, outBegIdx, outNBElement, outReal);
@@ -101298,7 +103716,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MIDPRICE
@@ -101312,6 +103733,12 @@ class Core {
                                  float inLow[],
                                  double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MEDPRICE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MEDPRICE", "inHigh", inHigh, guardInLen);
+          requireLength("MEDPRICE", "inLow", inLow, guardInLen);
+          requireLength("MEDPRICE", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MEDPRICE_Internal(startIdx, endIdx, inHigh, inLow, outBegIdx, outNBElement, outReal);
@@ -101888,7 +104315,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#RSI
@@ -101904,6 +104334,14 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MFI_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MFI", "inHigh", inHigh, guardInLen);
+          requireLength("MFI", "inLow", inLow, guardInLen);
+          requireLength("MFI", "inClose", inClose, guardInLen);
+          requireLength("MFI", "inVolume", inVolume, guardInLen);
+          requireLength("MFI", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MFI_Internal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -101948,7 +104386,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#RSI
@@ -101964,6 +104405,14 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MFI_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MFI", "inHigh", inHigh, guardInLen);
+          requireLength("MFI", "inLow", inLow, guardInLen);
+          requireLength("MFI", "inClose", inClose, guardInLen);
+          requireLength("MFI", "inVolume", inVolume, guardInLen);
+          requireLength("MFI", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MFI_Internal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -102818,7 +105267,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MIDPRICE
@@ -102831,6 +105283,11 @@ class Core {
                                  int optInTimePeriod,
                                  double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MIDPOINT_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MIDPOINT", "inReal", inReal, guardInLen);
+          requireLength("MIDPOINT", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MIDPOINT_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -102868,7 +105325,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MIDPRICE
@@ -102881,6 +105341,11 @@ class Core {
                                  int optInTimePeriod,
                                  double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MIDPOINT_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MIDPOINT", "inReal", inReal, guardInLen);
+          requireLength("MIDPOINT", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MIDPOINT_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -103727,7 +106192,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MIDPOINT
@@ -103740,6 +106208,12 @@ class Core {
                                  int optInTimePeriod,
                                  double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MIDPRICE_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MIDPRICE", "inHigh", inHigh, guardInLen);
+          requireLength("MIDPRICE", "inLow", inLow, guardInLen);
+          requireLength("MIDPRICE", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MIDPRICE_Internal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -103779,7 +106253,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MIDPOINT
@@ -103792,6 +106269,12 @@ class Core {
                                  int optInTimePeriod,
                                  double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MIDPRICE_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MIDPRICE", "inHigh", inHigh, guardInLen);
+          requireLength("MIDPRICE", "inLow", inLow, guardInLen);
+          requireLength("MIDPRICE", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MIDPRICE_Internal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -104570,7 +107053,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MAX
@@ -104583,6 +107069,11 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MIN_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MIN", "inReal", inReal, guardInLen);
+          requireLength("MIN", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MIN_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -104618,7 +107109,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MAX
@@ -104631,6 +107125,11 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MIN_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MIN", "inReal", inReal, guardInLen);
+          requireLength("MIN", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MIN_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -105216,7 +107715,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MIN
@@ -105230,6 +107732,11 @@ class Core {
                                  int optInTimePeriod,
                                  int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MININDEX_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MININDEX", "inReal", inReal, guardInLen);
+          requireLength("MININDEX", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MININDEX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
@@ -105272,7 +107779,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MIN
@@ -105286,6 +107796,11 @@ class Core {
                                  int optInTimePeriod,
                                  int outInteger[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MININDEX_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MININDEX", "inReal", inReal, guardInLen);
+          requireLength("MININDEX", "outInteger", outInteger, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MININDEX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
@@ -106043,7 +108558,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MIN
@@ -106059,6 +108577,12 @@ class Core {
                                double outMin[],
                                double outMax[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MINMAX_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MINMAX", "inReal", inReal, guardInLen);
+          requireLength("MINMAX", "outMin", outMin, guardOutLen);
+          requireLength("MINMAX", "outMax", outMax, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MINMAX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax);
@@ -106094,7 +108618,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MIN
@@ -106110,6 +108637,12 @@ class Core {
                                double outMin[],
                                double outMax[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MINMAX_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MINMAX", "inReal", inReal, guardInLen);
+          requireLength("MINMAX", "outMin", outMin, guardOutLen);
+          requireLength("MINMAX", "outMax", outMax, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MINMAX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax);
@@ -106836,7 +109369,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MINMAX
@@ -106852,6 +109388,12 @@ class Core {
                                     int outMinIdx[],
                                     int outMaxIdx[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MINMAXINDEX_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MINMAXINDEX", "inReal", inReal, guardInLen);
+          requireLength("MINMAXINDEX", "outMinIdx", outMinIdx, guardOutLen);
+          requireLength("MINMAXINDEX", "outMaxIdx", outMaxIdx, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MINMAXINDEX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx);
@@ -106894,7 +109436,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MINMAX
@@ -106910,6 +109455,12 @@ class Core {
                                     int outMinIdx[],
                                     int outMaxIdx[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MINMAXINDEX_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MINMAXINDEX", "inReal", inReal, guardInLen);
+          requireLength("MINMAXINDEX", "outMinIdx", outMinIdx, guardOutLen);
+          requireLength("MINMAXINDEX", "outMaxIdx", outMaxIdx, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MINMAXINDEX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx);
@@ -107951,7 +110502,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#PLUS_DI
@@ -107969,6 +110523,13 @@ class Core {
                                  int optInTimePeriod,
                                  double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MINUS_DI_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MINUS_DI", "inHigh", inHigh, guardInLen);
+          requireLength("MINUS_DI", "inLow", inLow, guardInLen);
+          requireLength("MINUS_DI", "inClose", inClose, guardInLen);
+          requireLength("MINUS_DI", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MINUS_DI_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -108013,7 +110574,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#PLUS_DI
@@ -108031,6 +110595,13 @@ class Core {
                                  int optInTimePeriod,
                                  double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MINUS_DI_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MINUS_DI", "inHigh", inHigh, guardInLen);
+          requireLength("MINUS_DI", "inLow", inLow, guardInLen);
+          requireLength("MINUS_DI", "inClose", inClose, guardInLen);
+          requireLength("MINUS_DI", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MINUS_DI_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -109221,7 +111792,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#PLUS_DM
@@ -109238,6 +111812,12 @@ class Core {
                                  int optInTimePeriod,
                                  double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MINUS_DM_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MINUS_DM", "inHigh", inHigh, guardInLen);
+          requireLength("MINUS_DM", "inLow", inLow, guardInLen);
+          requireLength("MINUS_DM", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MINUS_DM_Internal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -109280,7 +111860,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#PLUS_DM
@@ -109297,6 +111880,12 @@ class Core {
                                  int optInTimePeriod,
                                  double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MINUS_DM_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MINUS_DM", "inHigh", inHigh, guardInLen);
+          requireLength("MINUS_DM", "inLow", inLow, guardInLen);
+          requireLength("MINUS_DM", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MINUS_DM_Internal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -110068,7 +112657,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ROC
@@ -110082,6 +112674,11 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MOM_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MOM", "inReal", inReal, guardInLen);
+          requireLength("MOM", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MOM_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -110119,7 +112716,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ROC
@@ -110133,6 +112733,11 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MOM_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MOM", "inReal", inReal, guardInLen);
+          requireLength("MOM", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MOM_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -110559,7 +113164,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ADD
@@ -110572,6 +113180,12 @@ class Core {
                              double inReal1[],
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MULT_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MULT", "inReal0", inReal0, guardInLen);
+          requireLength("MULT", "inReal1", inReal1, guardInLen);
+          requireLength("MULT", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MULT_Internal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
@@ -110607,7 +113221,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ADD
@@ -110620,6 +113237,12 @@ class Core {
                              float inReal1[],
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, MULT_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("MULT", "inReal0", inReal0, guardInLen);
+          requireLength("MULT", "inReal1", inReal1, guardInLen);
+          requireLength("MULT", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = MULT_Internal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
@@ -111277,7 +113900,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ATR
@@ -111292,6 +113918,13 @@ class Core {
                              int optInTimePeriod,
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, NATR_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("NATR", "inHigh", inHigh, guardInLen);
+          requireLength("NATR", "inLow", inLow, guardInLen);
+          requireLength("NATR", "inClose", inClose, guardInLen);
+          requireLength("NATR", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = NATR_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -111334,7 +113967,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ATR
@@ -111349,6 +113985,13 @@ class Core {
                              int optInTimePeriod,
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, NATR_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("NATR", "inHigh", inHigh, guardInLen);
+          requireLength("NATR", "inLow", inLow, guardInLen);
+          requireLength("NATR", "inClose", inClose, guardInLen);
+          requireLength("NATR", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = NATR_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -111999,7 +114642,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         */
        public OutRange NVI( int startIdx,
@@ -112008,6 +114654,12 @@ class Core {
                             double inVolume[],
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, NVI_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("NVI", "inClose", inClose, guardInLen);
+          requireLength("NVI", "inVolume", inVolume, guardInLen);
+          requireLength("NVI", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = NVI_Internal(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
@@ -112056,7 +114708,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         */
        public OutRange NVI( int startIdx,
@@ -112065,6 +114720,12 @@ class Core {
                             float inVolume[],
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, NVI_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("NVI", "inClose", inClose, guardInLen);
+          requireLength("NVI", "inVolume", inVolume, guardInLen);
+          requireLength("NVI", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = NVI_Internal(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
@@ -112512,7 +115173,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         */
        public OutRange OBV( int startIdx,
@@ -112521,6 +115185,12 @@ class Core {
                             double inVolume[],
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, OBV_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("OBV", "inReal", inReal, guardInLen);
+          requireLength("OBV", "inVolume", inVolume, guardInLen);
+          requireLength("OBV", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = OBV_Internal(startIdx, endIdx, inReal, inVolume, outBegIdx, outNBElement, outReal);
@@ -112557,7 +115227,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         */
        public OutRange OBV( int startIdx,
@@ -112566,6 +115239,12 @@ class Core {
                             float inVolume[],
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, OBV_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("OBV", "inReal", inReal, guardInLen);
+          requireLength("OBV", "inVolume", inVolume, guardInLen);
+          requireLength("OBV", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = OBV_Internal(startIdx, endIdx, inReal, inVolume, outBegIdx, outNBElement, outReal);
@@ -113434,7 +116113,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MINUS_DI
@@ -113452,6 +116134,13 @@ class Core {
                                 int optInTimePeriod,
                                 double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, PLUS_DI_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("PLUS_DI", "inHigh", inHigh, guardInLen);
+          requireLength("PLUS_DI", "inLow", inLow, guardInLen);
+          requireLength("PLUS_DI", "inClose", inClose, guardInLen);
+          requireLength("PLUS_DI", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = PLUS_DI_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -113500,7 +116189,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MINUS_DI
@@ -113518,6 +116210,13 @@ class Core {
                                 int optInTimePeriod,
                                 double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, PLUS_DI_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("PLUS_DI", "inHigh", inHigh, guardInLen);
+          requireLength("PLUS_DI", "inLow", inLow, guardInLen);
+          requireLength("PLUS_DI", "inClose", inClose, guardInLen);
+          requireLength("PLUS_DI", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = PLUS_DI_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -114708,7 +117407,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MINUS_DM
@@ -114725,6 +117427,12 @@ class Core {
                                 int optInTimePeriod,
                                 double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, PLUS_DM_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("PLUS_DM", "inHigh", inHigh, guardInLen);
+          requireLength("PLUS_DM", "inLow", inLow, guardInLen);
+          requireLength("PLUS_DM", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = PLUS_DM_Internal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -114766,7 +117474,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MINUS_DM
@@ -114783,6 +117494,12 @@ class Core {
                                 int optInTimePeriod,
                                 double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, PLUS_DM_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("PLUS_DM", "inHigh", inHigh, guardInLen);
+          requireLength("PLUS_DM", "inLow", inLow, guardInLen);
+          requireLength("PLUS_DM", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = PLUS_DM_Internal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -115625,7 +118342,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#APO
@@ -115640,6 +118360,11 @@ class Core {
                             MAType optInMAType,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("PPO", "inReal", inReal, guardInLen);
+          requireLength("PPO", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = PPO_Internal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
@@ -115690,7 +118415,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#APO
@@ -115705,6 +118433,11 @@ class Core {
                             MAType optInMAType,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("PPO", "inReal", inReal, guardInLen);
+          requireLength("PPO", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = PPO_Internal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
@@ -116238,7 +118971,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         */
        public OutRange PVI( int startIdx,
@@ -116247,6 +118983,12 @@ class Core {
                             double inVolume[],
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, PVI_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("PVI", "inClose", inClose, guardInLen);
+          requireLength("PVI", "inVolume", inVolume, guardInLen);
+          requireLength("PVI", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = PVI_Internal(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
@@ -116295,7 +119037,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         */
        public OutRange PVI( int startIdx,
@@ -116304,6 +119049,12 @@ class Core {
                             float inVolume[],
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, PVI_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("PVI", "inClose", inClose, guardInLen);
+          requireLength("PVI", "inVolume", inVolume, guardInLen);
+          requireLength("PVI", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = PVI_Internal(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
@@ -116871,7 +119622,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#PPO
@@ -116886,6 +119640,11 @@ class Core {
                             MAType optInMAType,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("PVO", "inVolume", inVolume, guardInLen);
+          requireLength("PVO", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = PVO_Internal(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
@@ -116938,7 +119697,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#PPO
@@ -116953,6 +119715,11 @@ class Core {
                             MAType optInMAType,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("PVO", "inVolume", inVolume, guardInLen);
+          requireLength("PVO", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = PVO_Internal(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
@@ -117529,7 +120296,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CMO
@@ -117544,6 +120314,12 @@ class Core {
                                int optInTimePeriod,
                                double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, QSTICK_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("QSTICK", "inOpen", inOpen, guardInLen);
+          requireLength("QSTICK", "inClose", inClose, guardInLen);
+          requireLength("QSTICK", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = QSTICK_Internal(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -117587,7 +120363,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CMO
@@ -117602,6 +120381,12 @@ class Core {
                                int optInTimePeriod,
                                double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, QSTICK_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("QSTICK", "inOpen", inOpen, guardInLen);
+          requireLength("QSTICK", "inClose", inClose, guardInLen);
+          requireLength("QSTICK", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = QSTICK_Internal(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -118145,7 +120930,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MOM
@@ -118159,6 +120947,11 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, ROC_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ROC", "inReal", inReal, guardInLen);
+          requireLength("ROC", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = ROC_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -118197,7 +120990,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MOM
@@ -118211,6 +121007,11 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, ROC_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ROC", "inReal", inReal, guardInLen);
+          requireLength("ROC", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = ROC_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -118735,7 +121536,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ROC
@@ -118749,6 +121553,11 @@ class Core {
                              int optInTimePeriod,
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, ROCP_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ROCP", "inReal", inReal, guardInLen);
+          requireLength("ROCP", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = ROCP_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -118786,7 +121595,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ROC
@@ -118800,6 +121612,11 @@ class Core {
                              int optInTimePeriod,
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, ROCP_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ROCP", "inReal", inReal, guardInLen);
+          requireLength("ROCP", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = ROCP_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -119326,7 +122143,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ROC
@@ -119340,6 +122160,11 @@ class Core {
                              int optInTimePeriod,
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, ROCR_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ROCR", "inReal", inReal, guardInLen);
+          requireLength("ROCR", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = ROCR_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -119378,7 +122203,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ROC
@@ -119392,6 +122220,11 @@ class Core {
                              int optInTimePeriod,
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, ROCR_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ROCR", "inReal", inReal, guardInLen);
+          requireLength("ROCR", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = ROCR_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -119919,7 +122752,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ROCR
@@ -119933,6 +122769,11 @@ class Core {
                                 int optInTimePeriod,
                                 double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, ROCR100_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ROCR100", "inReal", inReal, guardInLen);
+          requireLength("ROCR100", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = ROCR100_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -119972,7 +122813,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ROCR
@@ -119986,6 +122830,11 @@ class Core {
                                 int optInTimePeriod,
                                 double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, ROCR100_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ROCR100", "inReal", inReal, guardInLen);
+          requireLength("ROCR100", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = ROCR100_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -120703,7 +123552,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CMO
@@ -120715,6 +123567,11 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, RSI_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("RSI", "inReal", inReal, guardInLen);
+          requireLength("RSI", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = RSI_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -120768,7 +123625,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#CMO
@@ -120780,6 +123640,11 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, RSI_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("RSI", "inReal", inReal, guardInLen);
+          requireLength("RSI", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = RSI_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -121704,7 +124569,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#SAREXT
@@ -121719,6 +124587,12 @@ class Core {
                             double optInMaximum,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, SAR_Lookback(optInAcceleration, optInMaximum));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SAR", "inHigh", inHigh, guardInLen);
+          requireLength("SAR", "inLow", inLow, guardInLen);
+          requireLength("SAR", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = SAR_Internal(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal);
@@ -121763,7 +124637,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#SAREXT
@@ -121778,6 +124655,12 @@ class Core {
                             double optInMaximum,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, SAR_Lookback(optInAcceleration, optInMaximum));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SAR", "inHigh", inHigh, guardInLen);
+          requireLength("SAR", "inLow", inLow, guardInLen);
+          requireLength("SAR", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = SAR_Internal(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal);
@@ -123103,7 +125986,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#SAR
@@ -123123,6 +126009,12 @@ class Core {
                                double optInAccelerationMaxShort,
                                double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SAREXT", "inHigh", inHigh, guardInLen);
+          requireLength("SAREXT", "inLow", inLow, guardInLen);
+          requireLength("SAREXT", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = SAREXT_Internal(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal);
@@ -123178,7 +126070,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#SAR
@@ -123198,6 +126093,12 @@ class Core {
                                double optInAccelerationMaxShort,
                                double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SAREXT", "inHigh", inHigh, guardInLen);
+          requireLength("SAREXT", "inLow", inLow, guardInLen);
+          requireLength("SAREXT", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = SAREXT_Internal(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal);
@@ -124025,7 +126926,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#COS
@@ -124037,6 +126941,11 @@ class Core {
                             double inReal[],
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, SIN_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SIN", "inReal", inReal, guardInLen);
+          requireLength("SIN", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = SIN_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -124071,7 +126980,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#COS
@@ -124083,6 +126995,11 @@ class Core {
                             float inReal[],
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, SIN_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SIN", "inReal", inReal, guardInLen);
+          requireLength("SIN", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = SIN_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -124406,7 +127323,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#COSH
@@ -124417,6 +127337,11 @@ class Core {
                              double inReal[],
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, SINH_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SINH", "inReal", inReal, guardInLen);
+          requireLength("SINH", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = SINH_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -124451,7 +127376,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#COSH
@@ -124462,6 +127390,11 @@ class Core {
                              float inReal[],
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, SINH_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SINH", "inReal", inReal, guardInLen);
+          requireLength("SINH", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = SINH_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -124884,7 +127817,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#EMA
@@ -124899,6 +127835,11 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, SMA_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SMA", "inReal", inReal, guardInLen);
+          requireLength("SMA", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = SMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -124939,7 +127880,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#EMA
@@ -124954,6 +127898,11 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, SMA_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SMA", "inReal", inReal, guardInLen);
+          requireLength("SMA", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = SMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -125375,7 +128324,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         */
        public OutRange SQRT( int startIdx,
@@ -125383,6 +128335,11 @@ class Core {
                              double inReal[],
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, SQRT_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SQRT", "inReal", inReal, guardInLen);
+          requireLength("SQRT", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = SQRT_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -125421,7 +128378,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         */
        public OutRange SQRT( int startIdx,
@@ -125429,6 +128389,11 @@ class Core {
                              float inReal[],
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, SQRT_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SQRT", "inReal", inReal, guardInLen);
+          requireLength("SQRT", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = SQRT_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -125847,7 +128812,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#VAR
@@ -125861,6 +128829,11 @@ class Core {
                                double optInNbDev,
                                double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, STDDEV_Lookback(optInTimePeriod, optInNbDev));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("STDDEV", "inReal", inReal, guardInLen);
+          requireLength("STDDEV", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = STDDEV_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
@@ -125903,7 +128876,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#VAR
@@ -125917,6 +128893,11 @@ class Core {
                                double optInNbDev,
                                double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, STDDEV_Lookback(optInTimePeriod, optInNbDev));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("STDDEV", "inReal", inReal, guardInLen);
+          requireLength("STDDEV", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = STDDEV_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
@@ -126757,7 +129738,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#STOCHF
@@ -126777,6 +129761,14 @@ class Core {
                               double outSlowK[],
                               double outSlowD[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("STOCH", "inHigh", inHigh, guardInLen);
+          requireLength("STOCH", "inLow", inLow, guardInLen);
+          requireLength("STOCH", "inClose", inClose, guardInLen);
+          requireLength("STOCH", "outSlowK", outSlowK, guardOutLen);
+          requireLength("STOCH", "outSlowD", outSlowD, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = STOCH_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD);
@@ -126840,7 +129832,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#STOCHF
@@ -126860,6 +129855,14 @@ class Core {
                               double outSlowK[],
                               double outSlowD[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("STOCH", "inHigh", inHigh, guardInLen);
+          requireLength("STOCH", "inLow", inLow, guardInLen);
+          requireLength("STOCH", "inClose", inClose, guardInLen);
+          requireLength("STOCH", "outSlowK", outSlowK, guardOutLen);
+          requireLength("STOCH", "outSlowD", outSlowD, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = STOCH_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD);
@@ -128015,7 +131018,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#STOCH
@@ -128033,6 +131039,14 @@ class Core {
                                double outFastK[],
                                double outFastD[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("STOCHF", "inHigh", inHigh, guardInLen);
+          requireLength("STOCHF", "inLow", inLow, guardInLen);
+          requireLength("STOCHF", "inClose", inClose, guardInLen);
+          requireLength("STOCHF", "outFastK", outFastK, guardOutLen);
+          requireLength("STOCHF", "outFastD", outFastD, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = STOCHF_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
@@ -128087,7 +131101,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#STOCH
@@ -128105,6 +131122,14 @@ class Core {
                                double outFastK[],
                                double outFastD[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("STOCHF", "inHigh", inHigh, guardInLen);
+          requireLength("STOCHF", "inLow", inLow, guardInLen);
+          requireLength("STOCHF", "inClose", inClose, guardInLen);
+          requireLength("STOCHF", "outFastK", outFastK, guardOutLen);
+          requireLength("STOCHF", "outFastD", outFastD, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = STOCHF_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
@@ -129036,7 +132061,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#RSI
@@ -129054,6 +132082,12 @@ class Core {
                                  double outFastK[],
                                  double outFastD[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("STOCHRSI", "inReal", inReal, guardInLen);
+          requireLength("STOCHRSI", "outFastK", outFastK, guardOutLen);
+          requireLength("STOCHRSI", "outFastD", outFastD, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = STOCHRSI_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
@@ -129110,7 +132144,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#RSI
@@ -129128,6 +132165,12 @@ class Core {
                                  double outFastK[],
                                  double outFastD[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("STOCHRSI", "inReal", inReal, guardInLen);
+          requireLength("STOCHRSI", "outFastK", outFastK, guardOutLen);
+          requireLength("STOCHRSI", "outFastD", outFastD, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = STOCHRSI_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
@@ -129618,7 +132661,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ADD
@@ -129631,6 +132677,12 @@ class Core {
                             double inReal1[],
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, SUB_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SUB", "inReal0", inReal0, guardInLen);
+          requireLength("SUB", "inReal1", inReal1, guardInLen);
+          requireLength("SUB", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = SUB_Internal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
@@ -129666,7 +132718,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ADD
@@ -129679,6 +132734,12 @@ class Core {
                             float inReal1[],
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, SUB_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SUB", "inReal0", inReal0, guardInLen);
+          requireLength("SUB", "inReal1", inReal1, guardInLen);
+          requireLength("SUB", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = SUB_Internal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
@@ -130095,7 +133156,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#SMA
@@ -130106,6 +133170,11 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, SUM_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SUM", "inReal", inReal, guardInLen);
+          requireLength("SUM", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = SUM_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -130142,7 +133211,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#SMA
@@ -130153,6 +133225,11 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, SUM_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("SUM", "inReal", inReal, guardInLen);
+          requireLength("SUM", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = SUM_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -130874,7 +133951,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#EMA
@@ -130889,6 +133969,11 @@ class Core {
                            double optInVFactor,
                            double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, T3_Lookback(optInTimePeriod, optInVFactor));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("T3", "inReal", inReal, guardInLen);
+          requireLength("T3", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = T3_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal);
@@ -130935,7 +134020,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#EMA
@@ -130950,6 +134038,11 @@ class Core {
                            double optInVFactor,
                            double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, T3_Lookback(optInTimePeriod, optInVFactor));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("T3", "inReal", inReal, guardInLen);
+          requireLength("T3", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = T3_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal);
@@ -131504,7 +134597,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ATAN
@@ -131517,6 +134613,11 @@ class Core {
                             double inReal[],
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, TAN_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("TAN", "inReal", inReal, guardInLen);
+          requireLength("TAN", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = TAN_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -131551,7 +134652,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ATAN
@@ -131564,6 +134668,11 @@ class Core {
                             float inReal[],
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, TAN_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("TAN", "inReal", inReal, guardInLen);
+          requireLength("TAN", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = TAN_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -131886,7 +134995,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#SINH
@@ -131898,6 +135010,11 @@ class Core {
                              double inReal[],
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, TANH_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("TANH", "inReal", inReal, guardInLen);
+          requireLength("TANH", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = TANH_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -131931,7 +135048,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#SINH
@@ -131943,6 +135063,11 @@ class Core {
                              float inReal[],
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, TANH_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("TANH", "inReal", inReal, guardInLen);
+          requireLength("TANH", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = TANH_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
@@ -132519,7 +135644,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#EMA
@@ -132532,6 +135660,11 @@ class Core {
                              int optInTimePeriod,
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, TEMA_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("TEMA", "inReal", inReal, guardInLen);
+          requireLength("TEMA", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = TEMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -132573,7 +135706,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#EMA
@@ -132586,6 +135722,11 @@ class Core {
                              int optInTimePeriod,
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, TEMA_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("TEMA", "inReal", inReal, guardInLen);
+          requireLength("TEMA", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = TEMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -133186,7 +136327,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ATR
@@ -133199,6 +136343,13 @@ class Core {
                                double inClose[],
                                double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, TRANGE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("TRANGE", "inHigh", inHigh, guardInLen);
+          requireLength("TRANGE", "inLow", inLow, guardInLen);
+          requireLength("TRANGE", "inClose", inClose, guardInLen);
+          requireLength("TRANGE", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = TRANGE_Internal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
@@ -133241,7 +136392,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ATR
@@ -133254,6 +136408,13 @@ class Core {
                                float inClose[],
                                double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, TRANGE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("TRANGE", "inHigh", inHigh, guardInLen);
+          requireLength("TRANGE", "inLow", inLow, guardInLen);
+          requireLength("TRANGE", "inClose", inClose, guardInLen);
+          requireLength("TRANGE", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = TRANGE_Internal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
@@ -134048,7 +137209,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#SMA
@@ -134061,6 +137225,11 @@ class Core {
                               int optInTimePeriod,
                               double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, TRIMA_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("TRIMA", "inReal", inReal, guardInLen);
+          requireLength("TRIMA", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = TRIMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -134104,7 +137273,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#SMA
@@ -134117,6 +137289,11 @@ class Core {
                               int optInTimePeriod,
                               double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, TRIMA_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("TRIMA", "inReal", inReal, guardInLen);
+          requireLength("TRIMA", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = TRIMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -135189,7 +138366,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#EMA
@@ -135203,6 +138383,11 @@ class Core {
                              int optInTimePeriod,
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, TRIX_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("TRIX", "inReal", inReal, guardInLen);
+          requireLength("TRIX", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = TRIX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -135246,7 +138431,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#EMA
@@ -135260,6 +138448,11 @@ class Core {
                              int optInTimePeriod,
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, TRIX_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("TRIX", "inReal", inReal, guardInLen);
+          requireLength("TRIX", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = TRIX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -135867,7 +139060,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#LINEARREG
@@ -135881,6 +139077,11 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, TSF_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("TSF", "inReal", inReal, guardInLen);
+          requireLength("TSF", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = TSF_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -135918,7 +139119,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#LINEARREG
@@ -135932,6 +139136,11 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, TSF_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("TSF", "inReal", inReal, guardInLen);
+          requireLength("TSF", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = TSF_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -136413,7 +139622,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MEDPRICE
@@ -136427,6 +139639,13 @@ class Core {
                                  double inClose[],
                                  double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, TYPPRICE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("TYPPRICE", "inHigh", inHigh, guardInLen);
+          requireLength("TYPPRICE", "inLow", inLow, guardInLen);
+          requireLength("TYPPRICE", "inClose", inClose, guardInLen);
+          requireLength("TYPPRICE", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = TYPPRICE_Internal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
@@ -136463,7 +139682,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#MEDPRICE
@@ -136477,6 +139699,13 @@ class Core {
                                  float inClose[],
                                  double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, TYPPRICE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("TYPPRICE", "inHigh", inHigh, guardInLen);
+          requireLength("TYPPRICE", "inLow", inLow, guardInLen);
+          requireLength("TYPPRICE", "inClose", inClose, guardInLen);
+          requireLength("TYPPRICE", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = TYPPRICE_Internal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
@@ -137258,7 +140487,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ATR
@@ -137275,6 +140507,13 @@ class Core {
                                int optInTimePeriod3,
                                double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ULTOSC", "inHigh", inHigh, guardInLen);
+          requireLength("ULTOSC", "inLow", inLow, guardInLen);
+          requireLength("ULTOSC", "inClose", inClose, guardInLen);
+          requireLength("ULTOSC", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = ULTOSC_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal);
@@ -137327,7 +140566,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#ATR
@@ -137344,6 +140586,13 @@ class Core {
                                int optInTimePeriod3,
                                double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ULTOSC", "inHigh", inHigh, guardInLen);
+          requireLength("ULTOSC", "inLow", inLow, guardInLen);
+          requireLength("ULTOSC", "inClose", inClose, guardInLen);
+          requireLength("ULTOSC", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = ULTOSC_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal);
@@ -138306,7 +141555,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#STDDEV
@@ -138318,6 +141570,11 @@ class Core {
                             double optInNbDev,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, VAR_Lookback(optInTimePeriod, optInNbDev));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("VAR", "inReal", inReal, guardInLen);
+          requireLength("VAR", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = VAR_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
@@ -138362,7 +141619,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#STDDEV
@@ -138374,6 +141634,11 @@ class Core {
                             double optInNbDev,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, VAR_Lookback(optInTimePeriod, optInNbDev));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("VAR", "inReal", inReal, guardInLen);
+          requireLength("VAR", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = VAR_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
@@ -139163,7 +142428,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#SMA
@@ -139178,6 +142446,12 @@ class Core {
                              int optInTimePeriod,
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, VWMA_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("VWMA", "inReal", inReal, guardInLen);
+          requireLength("VWMA", "inVolume", inVolume, guardInLen);
+          requireLength("VWMA", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = VWMA_Internal(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -139228,7 +142502,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#SMA
@@ -139243,6 +142520,12 @@ class Core {
                              int optInTimePeriod,
                              double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, VWMA_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("VWMA", "inReal", inReal, guardInLen);
+          requireLength("VWMA", "inVolume", inVolume, guardInLen);
+          requireLength("VWMA", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = VWMA_Internal(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -139865,7 +143148,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#AD
@@ -139881,6 +143167,13 @@ class Core {
                             double inClose[],
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, WAD_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("WAD", "inHigh", inHigh, guardInLen);
+          requireLength("WAD", "inLow", inLow, guardInLen);
+          requireLength("WAD", "inClose", inClose, guardInLen);
+          requireLength("WAD", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = WAD_Internal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
@@ -139927,7 +143220,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#AD
@@ -139943,6 +143239,13 @@ class Core {
                             float inClose[],
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, WAD_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("WAD", "inHigh", inHigh, guardInLen);
+          requireLength("WAD", "inLow", inLow, guardInLen);
+          requireLength("WAD", "inClose", inClose, guardInLen);
+          requireLength("WAD", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = WAD_Internal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
@@ -140376,7 +143679,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#TYPPRICE
@@ -140390,6 +143696,13 @@ class Core {
                                  double inClose[],
                                  double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, WCLPRICE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("WCLPRICE", "inHigh", inHigh, guardInLen);
+          requireLength("WCLPRICE", "inLow", inLow, guardInLen);
+          requireLength("WCLPRICE", "inClose", inClose, guardInLen);
+          requireLength("WCLPRICE", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = WCLPRICE_Internal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
@@ -140426,7 +143739,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#TYPPRICE
@@ -140440,6 +143756,13 @@ class Core {
                                  float inClose[],
                                  double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, WCLPRICE_Lookback());
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("WCLPRICE", "inHigh", inHigh, guardInLen);
+          requireLength("WCLPRICE", "inLow", inLow, guardInLen);
+          requireLength("WCLPRICE", "inClose", inClose, guardInLen);
+          requireLength("WCLPRICE", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = WCLPRICE_Internal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
@@ -141108,7 +144431,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#STOCH
@@ -141123,6 +144449,13 @@ class Core {
                               int optInTimePeriod,
                               double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, WILLR_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("WILLR", "inHigh", inHigh, guardInLen);
+          requireLength("WILLR", "inLow", inLow, guardInLen);
+          requireLength("WILLR", "inClose", inClose, guardInLen);
+          requireLength("WILLR", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = WILLR_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -141163,7 +144496,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#STOCH
@@ -141178,6 +144514,13 @@ class Core {
                               int optInTimePeriod,
                               double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, WILLR_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("WILLR", "inHigh", inHigh, guardInLen);
+          requireLength("WILLR", "inLow", inLow, guardInLen);
+          requireLength("WILLR", "inClose", inClose, guardInLen);
+          requireLength("WILLR", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = WILLR_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -141947,7 +145290,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#SMA
@@ -141962,6 +145308,11 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, WMA_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("WMA", "inReal", inReal, guardInLen);
+          requireLength("WMA", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = WMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
@@ -142003,7 +145354,10 @@ class Core {
         * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
         *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
         * @throws IllegalArgumentException if an optional parameter is outside its
-        *        documented range, or two outputs share one array.
+        *        documented range, two outputs share one array, or an array is too short
+        *        for the range requested — an input that does not reach {@code endIdx}, or
+        *        an output that cannot hold the values produced. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
         * @throws NullPointerException if any input or output array is null.
         *
         * @see Core#SMA
@@ -142018,6 +145372,11 @@ class Core {
                             int optInTimePeriod,
                             double outReal[] )
        {
+          int guardStart = clampedStart(startIdx, endIdx, WMA_Lookback(optInTimePeriod));
+          int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+          int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("WMA", "inReal", inReal, guardInLen);
+          requireLength("WMA", "outReal", outReal, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
           RetCode retCode = WMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);

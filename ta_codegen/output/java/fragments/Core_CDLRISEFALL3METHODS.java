@@ -266,7 +266,10 @@
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
     *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
     * @throws IllegalArgumentException if an optional parameter is outside its
-    *        documented range, or two outputs share one array.
+    *        documented range, two outputs share one array, or an array is too short
+    *        for the range requested — an input that does not reach {@code endIdx}, or
+    *        an output that cannot hold the values produced. Checked before anything is
+    *        written, so a rejected call leaves every buffer untouched.
     * @throws NullPointerException if any input or output array is null.
     *
     * @see Core#CDLXSIDEGAP3METHODS
@@ -281,6 +284,14 @@
                                         double inClose[],
                                         int outInteger[] )
    {
+      int guardStart = clampedStart(startIdx, endIdx, CDLRISEFALL3METHODS_Lookback());
+      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      requireLength("CDLRISEFALL3METHODS", "inOpen", inOpen, guardInLen);
+      requireLength("CDLRISEFALL3METHODS", "inHigh", inHigh, guardInLen);
+      requireLength("CDLRISEFALL3METHODS", "inLow", inLow, guardInLen);
+      requireLength("CDLRISEFALL3METHODS", "inClose", inClose, guardInLen);
+      requireLength("CDLRISEFALL3METHODS", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = CDLRISEFALL3METHODS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
@@ -325,7 +336,10 @@
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
     *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
     * @throws IllegalArgumentException if an optional parameter is outside its
-    *        documented range, or two outputs share one array.
+    *        documented range, two outputs share one array, or an array is too short
+    *        for the range requested — an input that does not reach {@code endIdx}, or
+    *        an output that cannot hold the values produced. Checked before anything is
+    *        written, so a rejected call leaves every buffer untouched.
     * @throws NullPointerException if any input or output array is null.
     *
     * @see Core#CDLXSIDEGAP3METHODS
@@ -340,6 +354,14 @@
                                         float inClose[],
                                         int outInteger[] )
    {
+      int guardStart = clampedStart(startIdx, endIdx, CDLRISEFALL3METHODS_Lookback());
+      int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
+      int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      requireLength("CDLRISEFALL3METHODS", "inOpen", inOpen, guardInLen);
+      requireLength("CDLRISEFALL3METHODS", "inHigh", inHigh, guardInLen);
+      requireLength("CDLRISEFALL3METHODS", "inLow", inLow, guardInLen);
+      requireLength("CDLRISEFALL3METHODS", "inClose", inClose, guardInLen);
+      requireLength("CDLRISEFALL3METHODS", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       RetCode retCode = CDLRISEFALL3METHODS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
