@@ -3007,6 +3007,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "/* Private function, not in public API. */\n{}\n{{", open_internal_signature(func));
     let _ = writeln!(o, "   struct TA_{n}_Stream *sp;");
     let _ = writeln!(o, "   int k, cp, lookbackTotal, subStart;");
+    let _ = writeln!(o, "   double cpReal;");
     let _ = writeln!(o, "   TA_RetCode retCode;");
     let _ = writeln!(o, "\n   if( !stream ) return TA_BAD_PARAM;");
     let _ = writeln!(o, "   *stream = NULL;");
@@ -3088,9 +3089,10 @@ fn emit_period_bank(
     let _ = writeln!(o, "      }}");
     let _ = writeln!(o, "   }}");
     // Current output: the last history bar's clamped period selects the slot.
-    let _ = writeln!(o, "\n   cp = (int)({period}[historyLen - 1]);");
-    let _ = writeln!(o, "   if( cp < {min} ) cp = {min};");
-    let _ = writeln!(o, "   else if( cp > {max} ) cp = {max};");
+    let _ = writeln!(o, "\n   cpReal = {period}[historyLen - 1];");
+    let _ = writeln!(o, "   if( !(cpReal >= {min}) ) cp = {min};");
+    let _ = writeln!(o, "   else if( cpReal > {max} ) cp = {max};");
+    let _ = writeln!(o, "   else cp = (int)cpReal;");
     let _ = writeln!(o, "   *{out} = sp->scratch[cp - {min}];");
     let _ = writeln!(o, "\n   *stream = sp;");
     let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
@@ -3109,6 +3111,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "{}\n{{", open_and_fill_signature(func));
     let _ = writeln!(o, "   struct TA_{n}_Stream *sp;");
     let _ = writeln!(o, "   int k, cp, lookbackTotal, t;");
+    let _ = writeln!(o, "   double cpReal;");
     let _ = writeln!(o, "   TA_RetCode retCode;");
     let _ = writeln!(o, "\n   if( !stream ) return TA_BAD_PARAM;");
     let _ = writeln!(o, "   *stream = NULL;");
@@ -3188,17 +3191,19 @@ fn emit_period_bank(
     let _ = writeln!(o, "      }}");
     let _ = writeln!(o, "   }}");
     // First output bar (lookbackTotal), then replay the remaining history.
-    let _ = writeln!(o, "\n   cp = (int)({period}[lookbackTotal]);");
-    let _ = writeln!(o, "   if( cp < {min} ) cp = {min};");
-    let _ = writeln!(o, "   else if( cp > {max} ) cp = {max};");
+    let _ = writeln!(o, "\n   cpReal = {period}[lookbackTotal];");
+    let _ = writeln!(o, "   if( !(cpReal >= {min}) ) cp = {min};");
+    let _ = writeln!(o, "   else if( cpReal > {max} ) cp = {max};");
+    let _ = writeln!(o, "   else cp = (int)cpReal;");
     let _ = writeln!(o, "   {out}[0] = sp->scratch[cp - {min}];");
     let _ = writeln!(o, "\n   for( t = lookbackTotal + 1; t < historyLen; t++ )");
     let _ = writeln!(o, "   {{");
     let _ = writeln!(o, "      for( k = 0; k < sp->nBank; k++ )");
     let _ = writeln!(o, "         {pre}_Update( sp->bank[k], {price}[t], &sp->scratch[k] );");
-    let _ = writeln!(o, "      cp = (int)({period}[t]);");
-    let _ = writeln!(o, "      if( cp < {min} ) cp = {min};");
-    let _ = writeln!(o, "      else if( cp > {max} ) cp = {max};");
+    let _ = writeln!(o, "      cpReal = {period}[t];");
+    let _ = writeln!(o, "      if( !(cpReal >= {min}) ) cp = {min};");
+    let _ = writeln!(o, "      else if( cpReal > {max} ) cp = {max};");
+    let _ = writeln!(o, "      else cp = (int)cpReal;");
     let _ = writeln!(o, "      {out}[t - lookbackTotal] = sp->scratch[cp - {min}];");
     let _ = writeln!(o, "   }}");
     let _ = writeln!(o, "\n   *outBegIdx = lookbackTotal;");
@@ -3209,15 +3214,17 @@ fn emit_period_bank(
     // --- Update -------------------------------------------------------------
     let _ = writeln!(o, "{}\n{{", update_signature(func));
     let _ = writeln!(o, "   int k, cp;");
+    let _ = writeln!(o, "   double cpReal;");
     let _ = writeln!(o, "   if( !stream || !{out} ) return TA_BAD_PARAM;");
     // inPeriods is checked here too: a non-finite period would reach `(int)`, and
     // the conversion of NaN or an infinity to int is undefined behaviour.
     o.push_str(&finite_bar_check(func, "   ", "TA_BAD_PARAM"));
     let _ = writeln!(o, "   for( k = 0; k < stream->nBank; k++ )");
     let _ = writeln!(o, "      {pre}_Update( stream->bank[k], {price}, &stream->scratch[k] );");
-    let _ = writeln!(o, "   cp = (int){period};");
-    let _ = writeln!(o, "   if( cp < stream->{min} ) cp = stream->{min};");
-    let _ = writeln!(o, "   else if( cp > stream->{max} ) cp = stream->{max};");
+    let _ = writeln!(o, "   cpReal = {period};");
+    let _ = writeln!(o, "   if( !(cpReal >= stream->{min}) ) cp = stream->{min};");
+    let _ = writeln!(o, "   else if( cpReal > stream->{max} ) cp = stream->{max};");
+    let _ = writeln!(o, "   else cp = (int)cpReal;");
     let _ = writeln!(o, "   *{out} = stream->scratch[cp - stream->{min}];");
     let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
 
@@ -3226,11 +3233,13 @@ fn emit_period_bank(
     // output for this bar, and peeking is non-committing per sub-handle.
     let _ = writeln!(o, "{}\n{{", peek_signature(func));
     let _ = writeln!(o, "   int cp;");
+    let _ = writeln!(o, "   double cpReal;");
     let _ = writeln!(o, "   if( !stream || !{out} ) return TA_BAD_PARAM;");
     o.push_str(&finite_bar_check(func, "   ", "TA_BAD_PARAM"));
-    let _ = writeln!(o, "   cp = (int){period};");
-    let _ = writeln!(o, "   if( cp < stream->{min} ) cp = stream->{min};");
-    let _ = writeln!(o, "   else if( cp > stream->{max} ) cp = stream->{max};");
+    let _ = writeln!(o, "   cpReal = {period};");
+    let _ = writeln!(o, "   if( !(cpReal >= stream->{min}) ) cp = stream->{min};");
+    let _ = writeln!(o, "   else if( cpReal > stream->{max} ) cp = stream->{max};");
+    let _ = writeln!(o, "   else cp = (int)cpReal;");
     let _ = writeln!(
         o,
         "   {pre}_Peek( stream->bank[cp - stream->{min}], {price}, {out} );"

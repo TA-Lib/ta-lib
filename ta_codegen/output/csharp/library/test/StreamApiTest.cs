@@ -620,7 +620,7 @@ public static class StreamApiTest
     /// more useful.</para>
     /// <para>The warm-up history handed to <c>Open</c>/<c>OpenAndFill</c> is
     /// deliberately NOT checked: it is an input array, and the library does not
-    /// scan input arrays. Its effect on the output is unspecified — see
+    /// scan input arrays. Passing a non-finite one is undefined behaviour — see
     /// <c>docs/error-handling-spec.md</c> rule N-5.</para>
     /// <para>Coverage is by stream TIER, not by function count. The check is emitted
     /// from one place, but into the entry points of five different tiers: SMA is

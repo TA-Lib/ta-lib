@@ -104,6 +104,9 @@ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
    int firstOut;
    int tempInt;
    int curPeriod;
+   double tempPeriod;
+   double minPeriodReal;
+   double maxPeriodReal;
    int firstOccurrence;
    int lastOccurrence;
    int bucketStart;
@@ -244,15 +247,32 @@ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
       minUsed = 1;
    }
    maxUsed = 1;
+   /* Both bounds widened once, outside the loop. In the C backend, left to the
+    * compiler, only the first of the two is hoisted.
+    */
+   minPeriodReal = optInMinPeriod;
+   maxPeriodReal = optInMaxPeriod;
    for( i = 0; i < outputSize; i += 1 )
    {
-      tempInt = (int)inPeriods[startIdx + i];
-      if( tempInt < optInMinPeriod )
+      /* Clamp in the real domain, then narrow -- the order matters in the C
+       * backend, and only there. C leaves an out-of-range narrowing undefined
+       * and x86 lands EVERY such value on INT_MIN, so clamping afterwards pulls
+       * a huge POSITIVE period down to the minimum. Java, C# and Rust saturate
+       * to their maximum instead, so they were already right and this form
+       * simply keeps them so.
+       * `!(x >= min)` rather than `x < min`: both plain comparisons are false
+       * for NaN, so only the inverted spelling catches it.
+       */
+      tempPeriod = inPeriods[startIdx + i];
+      if( !(tempPeriod >= minPeriodReal) )
       {
          tempInt = optInMinPeriod;
-      } else if( tempInt > optInMaxPeriod )
+      } else if( tempPeriod > maxPeriodReal )
       {
          tempInt = optInMaxPeriod;
+      } else 
+      {
+         tempInt = (int)tempPeriod;
       }
       if( tempInt < 1 )
       {
@@ -461,6 +481,9 @@ TA_RetCode TA_S_MAVP( int    startIdx,
    int firstOut;
    int tempInt;
    int curPeriod;
+   double tempPeriod;
+   double minPeriodReal;
+   double maxPeriodReal;
    int firstOccurrence;
    int lastOccurrence;
    int bucketStart;
@@ -568,15 +591,20 @@ TA_RetCode TA_S_MAVP( int    startIdx,
       minUsed = 1;
    }
    maxUsed = 1;
+   minPeriodReal = optInMinPeriod;
+   maxPeriodReal = optInMaxPeriod;
    for( i = 0; i < outputSize; i += 1 )
    {
-      tempInt = (int)(double)inPeriods[startIdx + i];
-      if( tempInt < optInMinPeriod )
+      tempPeriod = (double)inPeriods[startIdx + i];
+      if( !(tempPeriod >= minPeriodReal) )
       {
          tempInt = optInMinPeriod;
-      } else if( tempInt > optInMaxPeriod )
+      } else if( tempPeriod > maxPeriodReal )
       {
          tempInt = optInMaxPeriod;
+      } else 
+      {
+         tempInt = (int)tempPeriod;
       }
       if( tempInt < 1 )
       {
@@ -728,6 +756,7 @@ TA_RetCode TA_MAVP_OpenInternal( struct TA_MAVP_Stream **stream, const double in
 {
    struct TA_MAVP_Stream *sp;
    int k, cp, lookbackTotal, subStart;
+   double cpReal;
    TA_RetCode retCode;
 
    if( !stream ) return TA_BAD_PARAM;
@@ -776,9 +805,10 @@ TA_RetCode TA_MAVP_OpenInternal( struct TA_MAVP_Stream **stream, const double in
       }
    }
 
-   cp = (int)(inPeriods[historyLen - 1]);
-   if( cp < optInMinPeriod ) cp = optInMinPeriod;
-   else if( cp > optInMaxPeriod ) cp = optInMaxPeriod;
+   cpReal = inPeriods[historyLen - 1];
+   if( !(cpReal >= optInMinPeriod) ) cp = optInMinPeriod;
+   else if( cpReal > optInMaxPeriod ) cp = optInMaxPeriod;
+   else cp = (int)cpReal;
    *outReal = sp->scratch[cp - optInMinPeriod];
 
    *stream = sp;
@@ -799,6 +829,7 @@ TA_LIB_API TA_RetCode TA_MAVP_OpenAndFill( TA_MAVP_Stream **stream, const double
 {
    struct TA_MAVP_Stream *sp;
    int k, cp, lookbackTotal, t;
+   double cpReal;
    TA_RetCode retCode;
 
    if( !stream ) return TA_BAD_PARAM;
@@ -848,18 +879,20 @@ TA_LIB_API TA_RetCode TA_MAVP_OpenAndFill( TA_MAVP_Stream **stream, const double
       }
    }
 
-   cp = (int)(inPeriods[lookbackTotal]);
-   if( cp < optInMinPeriod ) cp = optInMinPeriod;
-   else if( cp > optInMaxPeriod ) cp = optInMaxPeriod;
+   cpReal = inPeriods[lookbackTotal];
+   if( !(cpReal >= optInMinPeriod) ) cp = optInMinPeriod;
+   else if( cpReal > optInMaxPeriod ) cp = optInMaxPeriod;
+   else cp = (int)cpReal;
    outReal[0] = sp->scratch[cp - optInMinPeriod];
 
    for( t = lookbackTotal + 1; t < historyLen; t++ )
    {
       for( k = 0; k < sp->nBank; k++ )
          TA_MA_Update( sp->bank[k], inReal[t], &sp->scratch[k] );
-      cp = (int)(inPeriods[t]);
-      if( cp < optInMinPeriod ) cp = optInMinPeriod;
-      else if( cp > optInMaxPeriod ) cp = optInMaxPeriod;
+      cpReal = inPeriods[t];
+      if( !(cpReal >= optInMinPeriod) ) cp = optInMinPeriod;
+      else if( cpReal > optInMaxPeriod ) cp = optInMaxPeriod;
+      else cp = (int)cpReal;
       outReal[t - lookbackTotal] = sp->scratch[cp - optInMinPeriod];
    }
 
@@ -872,13 +905,15 @@ TA_LIB_API TA_RetCode TA_MAVP_OpenAndFill( TA_MAVP_Stream **stream, const double
 TA_LIB_API TA_RetCode TA_MAVP_Update( TA_MAVP_Stream *stream, double inReal, double inPeriods, double *outReal )
 {
    int k, cp;
+   double cpReal;
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) || !TA_IS_FINITE( inPeriods ) ) return TA_BAD_PARAM;
    for( k = 0; k < stream->nBank; k++ )
       TA_MA_Update( stream->bank[k], inReal, &stream->scratch[k] );
-   cp = (int)inPeriods;
-   if( cp < stream->optInMinPeriod ) cp = stream->optInMinPeriod;
-   else if( cp > stream->optInMaxPeriod ) cp = stream->optInMaxPeriod;
+   cpReal = inPeriods;
+   if( !(cpReal >= stream->optInMinPeriod) ) cp = stream->optInMinPeriod;
+   else if( cpReal > stream->optInMaxPeriod ) cp = stream->optInMaxPeriod;
+   else cp = (int)cpReal;
    *outReal = stream->scratch[cp - stream->optInMinPeriod];
    return TA_SUCCESS;
 }
@@ -886,11 +921,13 @@ TA_LIB_API TA_RetCode TA_MAVP_Update( TA_MAVP_Stream *stream, double inReal, dou
 TA_LIB_API TA_RetCode TA_MAVP_Peek( const TA_MAVP_Stream *stream, double inReal, double inPeriods, double *outReal )
 {
    int cp;
+   double cpReal;
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) || !TA_IS_FINITE( inPeriods ) ) return TA_BAD_PARAM;
-   cp = (int)inPeriods;
-   if( cp < stream->optInMinPeriod ) cp = stream->optInMinPeriod;
-   else if( cp > stream->optInMaxPeriod ) cp = stream->optInMaxPeriod;
+   cpReal = inPeriods;
+   if( !(cpReal >= stream->optInMinPeriod) ) cp = stream->optInMinPeriod;
+   else if( cpReal > stream->optInMaxPeriod ) cp = stream->optInMaxPeriod;
+   else cp = (int)cpReal;
    TA_MA_Peek( stream->bank[cp - stream->optInMinPeriod], inReal, outReal );
    return TA_SUCCESS;
 }

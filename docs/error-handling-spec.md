@@ -108,32 +108,21 @@ backends.
 
 ---
 
-## Part 1 — Normal behaviour, and what is simply unspecified
+## Part 1 — Normal behaviour, and the one undefined case
 
 The conditions most often mistaken for failures. None of them is reported as one.
-N-5 is the only row that is *unspecified* rather than defined: the library
-neither detects it nor promises anything about the behaviour that follows.
+N-5 is the only row that is *undefined* rather than defined: the library
+neither detects it nor promises anything.
 
 **The finite/non-finite line runs between arrays and single values**, not between
 tiers.
 
-An **array** is never scanned, and the reasoning is worth keeping because it is
-what makes N-5 a position rather than an omission. Scanning one before the main
-loop is a whole extra pass over memory that loop is about to walk again —
-measured at ≈0.3 ns per bar per array, a corpus median of 22% of a stream `Open`
-and up to 76% of a candlestick `OpenAndFill`. Scanning *inside* the main loop
-would be cheaper but buys a worse contract: a rejection partway through, with the
-output already half written. Neither price is worth paying to characterise an
-input the caller is better placed to keep clean, so the library does not, and
-says so.
-
-**"Unspecified" is stronger than "you get NaN out".** For most functions a
-non-finite element does propagate to the output and nothing worse happens. But
-MAVP reads its period series through `(int)inPeriods[...]`, and a float-to-int
-conversion of a value outside the integer range is *undefined* in C — the
-sanitizer build aborts on it. That is true of the batch call and has been all
-along; it is simply no longer hidden in the streaming tier. So the rule promises
-nothing about behaviour, not just nothing about values.
+An **array** is never scanned. Scanning one before the main loop is a whole extra
+pass over memory that loop is about to walk again — measured at ≈0.3 ns per bar
+per array, a corpus median of 22% of a stream `Open` and up to 76% of a
+candlestick `OpenAndFill`. Scanning *inside* the main loop would be cheaper but
+buys a worse contract: a rejection partway through, output half written. Neither
+price is worth paying for an input the caller is better placed to keep clean.
 
 A **single value** is always verified: every bar handed to
 `Update` or `Peek` (rule U-3), and every real optional parameter, in both tiers
@@ -149,14 +138,14 @@ tree.
 | N-2 | Anywhere outside the reported output range | Not written. The library never pads, and never emits a fill value. |
 | N-3 | An optional parameter set to its **default sentinel** | The documented default is substituted, then validated like any other value. |
 | N-4 | An output buffer that **is** an input buffer (whole-buffer, in place) | Allowed, in the batch tier. Several bodies are written for it. |
-| N-5 | A **non-finite value in an input array** | **Unspecified behaviour** — not merely an unspecified value. Not detected, not rejected, and nothing is promised. See the note below before assuming "it just returns NaN". |
+| N-5 | A **non-finite value in an input array** | **Undefined behaviour.** Not detected, not rejected, nothing promised. Do not do it. |
 | N-6 | A **negative** candlestick `factor` | Legal. It does not "never match" — it makes the comparison unconditionally true. |
 | N-7 | The set-all / restore-all **wildcards**, where a setter documents one | Legal on those setters, and rejected on the ones that name a single target (rule G-1). |
 | N-8 | **Peeking** a forming bar, any number of times | Never advances the stream and never writes the handle. It can still be *rejected* (U-3), and a rejected peek changes nothing either. |
 
 Part 1 is not a checklist — these behaviours are pinned by the value gates and
 the cross-language hash, over the whole corpus, on every run. N-5 is the
-exception, and deliberately so: it is unspecified precisely so that nothing has
+exception, and deliberately so: it is undefined precisely so that nothing has
 to hold it.
 
 ---

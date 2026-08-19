@@ -152,6 +152,9 @@ impl Core {
         let mut firstOut: usize = 0_usize;
         let mut tempInt: i32 = 0_i32;
         let mut curPeriod: usize = 0_usize;
+        let mut tempPeriod: f64 = 0.0_f64;
+        let mut minPeriodReal: f64 = 0.0_f64;
+        let mut maxPeriodReal: f64 = 0.0_f64;
         let mut firstOccurrence: usize = 0_usize;
         let mut lastOccurrence: usize = 0_usize;
         let mut bucketStart: usize = 0_usize;
@@ -234,14 +237,28 @@ impl Core {
             minUsed = 1;
         }
         maxUsed = 1;
+        // Both bounds widened once, outside the loop. In the C backend, left to the
+        // compiler, only the first of the two is hoisted.
+        minPeriodReal = ((optInMinPeriod) as f64);
+        maxPeriodReal = ((optInMaxPeriod) as f64);
         // for( i = 0; i < outputSize; i += 1 )
         i = 0;
         while i < outputSize {
-            tempInt = (inPeriods[startIdx + i]) as i32;
-            if tempInt < optInMinPeriod {
+            // Clamp in the real domain, then narrow -- the order matters in the C
+            // backend, and only there. C leaves an out-of-range narrowing undefined
+            // and x86 lands EVERY such value on INT_MIN, so clamping afterwards pulls
+            // a huge POSITIVE period down to the minimum. Java, C# and Rust saturate
+            // to their maximum instead, so they were already right and this form
+            // simply keeps them so.
+            // `!(x >= min)` rather than `x < min`: both plain comparisons are false
+            // for NaN, so only the inverted spelling catches it.
+            tempPeriod = inPeriods[startIdx + i];
+            if !(tempPeriod >= minPeriodReal) {
                 tempInt = optInMinPeriod;
-            } else if tempInt > optInMaxPeriod {
+            } else if tempPeriod > maxPeriodReal {
                 tempInt = optInMaxPeriod;
+            } else {
+                tempInt = (tempPeriod) as i32;
             }
             if tempInt < 1 {
                 tempInt = 1;

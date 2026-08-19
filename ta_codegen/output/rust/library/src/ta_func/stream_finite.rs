@@ -11,8 +11,8 @@
 //!
 //! An input ARRAY is never scanned, in either tier — including the warm-up
 //! history handed to `_Open` / `_OpenAndFill`. Keeping one free of NaN and
-//! infinities is the caller's responsibility and the effect is unspecified; see
-//! `docs/error-handling-spec.md`, rule N-5.
+//! infinities is the caller's responsibility; passing a non-finite one is
+//! undefined behaviour. See `docs/error-handling-spec.md`, rule N-5.
 //!
 //! A SINGLE VALUE is always checked, because it is one comparison, and for the
 //! streaming tier it earns that cost twice over: batch is handed a series,

@@ -76,6 +76,9 @@
       int firstOut = 0;
       int tempInt = 0;
       int curPeriod = 0;
+      double tempPeriod = 0;
+      double minPeriodReal = 0;
+      double maxPeriodReal = 0;
       int firstOccurrence = 0;
       int lastOccurrence = 0;
       int bucketStart = 0;
@@ -183,12 +186,28 @@
          minUsed = 1;
       }
       maxUsed = 1;
+      /* Both bounds widened once, outside the loop. In the C backend, left to the
+       * compiler, only the first of the two is hoisted.
+       */
+      minPeriodReal = optInMinPeriod;
+      maxPeriodReal = optInMaxPeriod;
       for( i = 0; i < outputSize; i += 1 ) {
-         tempInt = (int)inPeriods[startIdx + i];
-         if( tempInt < optInMinPeriod ) {
+         /* Clamp in the real domain, then narrow -- the order matters in the C
+          * backend, and only there. C leaves an out-of-range narrowing undefined
+          * and x86 lands EVERY such value on INT_MIN, so clamping afterwards pulls
+          * a huge POSITIVE period down to the minimum. Java, C# and Rust saturate
+          * to their maximum instead, so they were already right and this form
+          * simply keeps them so.
+          * `!(x >= min)` rather than `x < min`: both plain comparisons are false
+          * for NaN, so only the inverted spelling catches it.
+          */
+         tempPeriod = inPeriods[startIdx + i];
+         if( !(tempPeriod >= minPeriodReal) ) {
             tempInt = optInMinPeriod;
-         } else if( tempInt > optInMaxPeriod ) {
+         } else if( tempPeriod > maxPeriodReal ) {
             tempInt = optInMaxPeriod;
+         } else {
+            tempInt = (int)tempPeriod;
          }
          if( tempInt < 1 ) {
             tempInt = 1;
@@ -342,6 +361,9 @@
       int firstOut = 0;
       int tempInt = 0;
       int curPeriod = 0;
+      double tempPeriod = 0;
+      double minPeriodReal = 0;
+      double maxPeriodReal = 0;
       int firstOccurrence = 0;
       int lastOccurrence = 0;
       int bucketStart = 0;
@@ -416,12 +438,16 @@
          minUsed = 1;
       }
       maxUsed = 1;
+      minPeriodReal = optInMinPeriod;
+      maxPeriodReal = optInMaxPeriod;
       for( i = 0; i < outputSize; i += 1 ) {
-         tempInt = (int)(double)inPeriods[startIdx + i];
-         if( tempInt < optInMinPeriod ) {
+         tempPeriod = (double)inPeriods[startIdx + i];
+         if( !(tempPeriod >= minPeriodReal) ) {
             tempInt = optInMinPeriod;
-         } else if( tempInt > optInMaxPeriod ) {
+         } else if( tempPeriod > maxPeriodReal ) {
             tempInt = optInMaxPeriod;
+         } else {
+            tempInt = (int)tempPeriod;
          }
          if( tempInt < 1 ) {
             tempInt = 1;

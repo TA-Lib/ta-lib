@@ -204,6 +204,21 @@ ErrorNumber test_func_mavp( TA_History *history )
    errNb = mvRunShapeMatrix( "const-clamp-down", history, 2, 30 );
    if( errNb != TA_TEST_PASS ) return errNb;
 
+   /* Shape: periods too large for an int. FINITE, so inside the documented
+    * input domain -- N-5's "undefined" covers non-finite elements only, and
+    * these are ordinary doubles the caller may legitimately pass.
+    *
+    * This is the shape that pins the clamp ORDER. Narrowing before clamping is
+    * undefined in C and on x86 delivers INT_MIN for any value that does not
+    * fit, so every period here would clamp DOWN to minPeriod instead of up to
+    * maxPeriod -- while Java, C# and Rust saturate and clamp up. Without this
+    * shape the whole fix can be reverted with every gate still green, and the
+    * four backends can disagree without anything noticing. */
+   for( i = 0; i < MV_DATA_SIZE; i++ )
+      mvPeriods[i] = ( i % 3 == 0 ) ? 1e18 : ( ( i % 3 == 1 ) ? 2147483648.0 : 3e9 );
+   errNb = mvRunShapeMatrix( "unrepresentable-periods", history, 2, 30 );
+   if( errNb != TA_TEST_PASS ) return errNb;
+
    /* Shape: two contiguous blocks (block copies, and a hole of unused
     * periods between the two). The boundary sits at bar 200 so it stays
     * past every type's lookback at maxPeriod 30 — a boundary below the
@@ -466,14 +481,24 @@ static ErrorNumber mvWidestExpressibleBand( void )
    return TA_TEST_PASS;
 }
 
-/* Clamp a raw period value exactly like the implementation does. */
+/* Clamp a raw period value exactly like the implementation does.
+ *
+ * Clamps in the REAL domain, then narrows -- the same order the implementation
+ * uses, and it is load-bearing here rather than cosmetic. Narrowing first is
+ * undefined in C for a value the int cannot hold, and on x86 every such value
+ * lands on INT_MIN, so a period of 1e18 would clamp to the MINIMUM. Writing the
+ * oracle the old way would pin that wrong answer and read as a failure of the
+ * implementation.
+ */
 static int mvClamp( TA_Real raw, int minPeriod, int maxPeriod )
 {
-   int p = (int)raw;
-   if( p < minPeriod )
+   int p;
+   if( !(raw >= minPeriod) )
       p = minPeriod;
-   else if( p > maxPeriod )
+   else if( raw > maxPeriod )
       p = maxPeriod;
+   else
+      p = (int)raw;
    return p;
 }
 

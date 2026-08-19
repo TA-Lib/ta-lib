@@ -95,7 +95,7 @@ The difference is the retained state. Batch computes and forgets, so a NaN reach
 
 This covers every bar value at update/peek, and a real optional parameter that is NaN — which a plain range check lets through, since `x < min` and `x > max` are both false for NaN.
 
-It does **not** cover the warm-up history, or any other input **array**. Arrays are never scanned: keeping one free of NaN and infinities is the caller's responsibility, and the effect of a non-finite element on the output is unspecified.
+It does **not** cover the warm-up history, or any other input **array**. Arrays are never scanned: keeping one free of NaN and infinities is the caller's responsibility. Passing a non-finite one is **undefined behaviour** — nothing is promised.
 
 ## Discovering streamable functions
 

@@ -39,6 +39,7 @@ TA_RetCode mavp(int startIdx, int endIdx,
    double outReal[])
 {
    int i, lookbackTotal, outputSize, firstOut, tempInt, curPeriod;
+   double tempPeriod, minPeriodReal, maxPeriodReal;
    int firstOccurrence, lastOccurrence, bucketStart, bucketEnd;
    int minUsed, maxUsed;
    int *localPeriodArray;
@@ -151,13 +152,29 @@ TA_RetCode mavp(int startIdx, int endIdx,
    if( minUsed < 1 )
       minUsed = 1;
    maxUsed = 1;
+   /* Both bounds widened once, outside the loop. In the C backend, left to the
+    * compiler, only the first of the two is hoisted.
+    */
+   minPeriodReal = optInMinPeriod;
+   maxPeriodReal = optInMaxPeriod;
    for( i=0; i < outputSize; i++ )
    {
-      tempInt = (int)(inPeriods[startIdx+i]);
-      if( tempInt < optInMinPeriod )
+      /* Clamp in the real domain, then narrow -- the order matters in the C
+       * backend, and only there. C leaves an out-of-range narrowing undefined
+       * and x86 lands EVERY such value on INT_MIN, so clamping afterwards pulls
+       * a huge POSITIVE period down to the minimum. Java, C# and Rust saturate
+       * to their maximum instead, so they were already right and this form
+       * simply keeps them so.
+       * `!(x >= min)` rather than `x < min`: both plain comparisons are false
+       * for NaN, so only the inverted spelling catches it.
+       */
+      tempPeriod = inPeriods[startIdx+i];
+      if( !(tempPeriod >= minPeriodReal) )
          tempInt = optInMinPeriod;
-      else if( tempInt > optInMaxPeriod )
+      else if( tempPeriod > maxPeriodReal )
          tempInt = optInMaxPeriod;
+      else
+         tempInt = (int)tempPeriod;
       if( tempInt < 1 )
          tempInt = 1;
       localPeriodArray[i] = tempInt;

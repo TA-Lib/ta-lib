@@ -179,9 +179,8 @@ Notes that make this precise:
   batch and streaming tiers.
 
   An **input array** is never scanned, in either tier. Keeping an array free of
-  NaN and ±Inf is the caller's responsibility, and the effect of a non-finite
-  element on the output is **unspecified** — see `docs/error-handling-spec.md`
-  rule N-5. A scan is a whole extra pass over caller-owned memory: measured at
+  NaN and ±Inf is the caller's responsibility; passing a non-finite one is
+  **undefined behaviour** — see `docs/error-handling-spec.md` rule N-5. A scan is a whole extra pass over caller-owned memory: measured at
   ≈0.3 ns per bar per array, which is a corpus median of **22% of `Open`** and up
   to 76% of a candlestick `OpenAndFill`. Folding it into the main loop instead
   would trade that for a worse contract — a rejection partway through a fill,
