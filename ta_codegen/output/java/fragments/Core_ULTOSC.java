@@ -55,17 +55,17 @@
       return SMA_Lookback(maxPeriod) + 1 ;
 
    }
-   RetCode ULTOSC_Internal( int startIdx,
-                            int endIdx,
-                            double inHigh[],
-                            double inLow[],
-                            double inClose[],
-                            int optInTimePeriod1,
-                            int optInTimePeriod2,
-                            int optInTimePeriod3,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
+   RetCode ULTOSC_Body( int startIdx,
+                        int endIdx,
+                        double inHigh[],
+                        double inLow[],
+                        double inClose[],
+                        int optInTimePeriod1,
+                        int optInTimePeriod2,
+                        int optInTimePeriod3,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       double a1Total = 0;
       double a2Total = 0;
@@ -294,17 +294,17 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode ULTOSC_Internal( int startIdx,
-                            int endIdx,
-                            float inHigh[],
-                            float inLow[],
-                            float inClose[],
-                            int optInTimePeriod1,
-                            int optInTimePeriod2,
-                            int optInTimePeriod3,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
+   RetCode ULTOSC_Body( int startIdx,
+                        int endIdx,
+                        float inHigh[],
+                        float inLow[],
+                        float inClose[],
+                        int optInTimePeriod1,
+                        int optInTimePeriod2,
+                        int optInTimePeriod3,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       double a1Total = 0;
       double a2Total = 0;
@@ -560,6 +560,7 @@
                            int optInTimePeriod3,
                            double outReal[] )
    {
+      requireIndexRange("ULTOSC", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -569,11 +570,34 @@
       requireLength("ULTOSC", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ULTOSC_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ULTOSC_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ULTOSC", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode ULTOSC_Internal( int startIdx,
+                            int endIdx,
+                            double inHigh[],
+                            double inLow[],
+                            double inClose[],
+                            int optInTimePeriod1,
+                            int optInTimePeriod2,
+                            int optInTimePeriod3,
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            double outReal[] )
+   {
+      try {
+         return ULTOSC_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Ultimate Oscillator: momentum indicator combining
@@ -643,6 +667,7 @@
                            int optInTimePeriod3,
                            double outReal[] )
    {
+      requireIndexRange("ULTOSC", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -652,11 +677,34 @@
       requireLength("ULTOSC", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ULTOSC_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ULTOSC_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ULTOSC", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode ULTOSC_Internal( int startIdx,
+                            int endIdx,
+                            float inHigh[],
+                            float inLow[],
+                            float inClose[],
+                            int optInTimePeriod1,
+                            int optInTimePeriod2,
+                            int optInTimePeriod3,
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            double outReal[] )
+   {
+      try {
+         return ULTOSC_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -781,7 +829,7 @@
        */
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("ULTOSC update: BadParam");
+            throw new TaLibArgumentException("ULTOSC update: BadParam", RetCode.BadParam);
          core.ULTOSC_StreamStep(this, inHigh, inLow, inClose);
          return this.cur_outReal;
       }
@@ -797,7 +845,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("ULTOSC peek: BadParam");
+            throw new TaLibArgumentException("ULTOSC peek: BadParam", RetCode.BadParam);
          ULTOSC_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new ULTOSC_Stream(this);
@@ -996,7 +1044,7 @@
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       if( optInTimePeriod3 < 1 ) return RetCode.InternalError;
       term_closeMinusTrueLow = new double[optInTimePeriod3];
@@ -1181,13 +1229,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("ULTOSC openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("ULTOSC openAndFill: internal error");
+         throw new TaLibStateException("ULTOSC openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("ULTOSC openAndFill: " + retCode);
+      throw new TaLibArgumentException("ULTOSC openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind ULTOSC_Open (composition seam). */
    ULTOSC_Stream ULTOSC_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
@@ -1197,13 +1245,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("ULTOSC open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("ULTOSC open: internal error");
+         throw new TaLibStateException("ULTOSC open: internal error", retCode);
       }
-      throw new IllegalArgumentException("ULTOSC open: " + retCode);
+      throw new TaLibArgumentException("ULTOSC open: " + retCode, retCode);
    }
    /**
     * Open a live ULTOSC stream over the warm-up history; the handle's
@@ -1238,11 +1286,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("ULTOSC openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("ULTOSC openAndFill: internal error");
+         throw new TaLibStateException("ULTOSC openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("ULTOSC openAndFill: " + retCode);
+      throw new TaLibArgumentException("ULTOSC openAndFill: " + retCode, retCode);
    }

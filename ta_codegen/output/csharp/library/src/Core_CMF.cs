@@ -77,16 +77,16 @@ public partial class Core
       return optInTimePeriod - 1 ;
 
    }
-   internal RetCode CMF( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inHigh,
-                         ReadOnlySpan<double> inLow,
-                         ReadOnlySpan<double> inClose,
-                         ReadOnlySpan<double> inVolume,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode CMF_Body( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<double> inHigh,
+                              ReadOnlySpan<double> inLow,
+                              ReadOnlySpan<double> inClose,
+                              ReadOnlySpan<double> inVolume,
+                              int optInTimePeriod,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -215,16 +215,16 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode CMF( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inHigh,
-                         ReadOnlySpan<float> inLow,
-                         ReadOnlySpan<float> inClose,
-                         ReadOnlySpan<float> inVolume,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode CMF_Body( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<float> inHigh,
+                              ReadOnlySpan<float> inLow,
+                              ReadOnlySpan<float> inClose,
+                              ReadOnlySpan<float> inVolume,
+                              int optInTimePeriod,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -409,11 +409,30 @@ public partial class Core
       RequireLength("CMF", "inClose", inClose.Length, guardInLen);
       RequireLength("CMF", "inVolume", inVolume.Length, guardInLen);
       RequireLength("CMF", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = CMF(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = CMF_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("CMF", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode CMF( int startIdx,
+                         int endIdx,
+                         ReadOnlySpan<double> inHigh,
+                         ReadOnlySpan<double> inLow,
+                         ReadOnlySpan<double> inClose,
+                         ReadOnlySpan<double> inVolume,
+                         int optInTimePeriod,
+                         out int outBegIdx,
+                         out int outNBElement,
+                         Span<double> outReal )
+   {
+      try {
+         return CMF_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Chaikin Money Flow: over a trailing window of <c>optInTimePeriod</c> bars,
@@ -506,11 +525,30 @@ public partial class Core
       RequireLength("CMF", "inClose", inClose.Length, guardInLen);
       RequireLength("CMF", "inVolume", inVolume.Length, guardInLen);
       RequireLength("CMF", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = CMF(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = CMF_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("CMF", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode CMF( int startIdx,
+                         int endIdx,
+                         ReadOnlySpan<float> inHigh,
+                         ReadOnlySpan<float> inLow,
+                         ReadOnlySpan<float> inClose,
+                         ReadOnlySpan<float> inVolume,
+                         int optInTimePeriod,
+                         out int outBegIdx,
+                         out int outNBElement,
+                         Span<double> outReal )
+   {
+      try {
+         return CMF_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -757,7 +795,7 @@ public partial class Core
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       if( optInTimePeriod < 1 ) return RetCode.InternalError;
       mfv_flow = new double[optInTimePeriod];
@@ -918,10 +956,10 @@ public partial class Core
    /// span cannot be null.</exception>
    public CMF_Stream CMF_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInTimePeriod )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
-      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
       return CMF_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod);
    }
 
@@ -954,10 +992,10 @@ public partial class Core
    /// output.</exception>
    public CMF_Stream CMF_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInTimePeriod, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
-      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
       CMF_Stream sp = new CMF_Stream(this);
       RetCode retCode = CMF_OpenAndFillBody(sp, inHigh, inLow, inClose, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

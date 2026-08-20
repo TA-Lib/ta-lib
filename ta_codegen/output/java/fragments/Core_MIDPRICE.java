@@ -41,14 +41,14 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode MIDPRICE_Internal( int startIdx,
-                              int endIdx,
-                              double inHigh[],
-                              double inLow[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
+   RetCode MIDPRICE_Body( int startIdx,
+                          int endIdx,
+                          double inHigh[],
+                          double inLow[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       double[] sufHighest;
       int sufHighest_Idx = 0;
@@ -231,14 +231,14 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode MIDPRICE_Internal( int startIdx,
-                              int endIdx,
-                              float inHigh[],
-                              float inLow[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
+   RetCode MIDPRICE_Body( int startIdx,
+                          int endIdx,
+                          float inHigh[],
+                          float inLow[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       double[] sufHighest;
       int sufHighest_Idx = 0;
@@ -423,6 +423,7 @@
                              int optInTimePeriod,
                              double outReal[] )
    {
+      requireIndexRange("MIDPRICE", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, MIDPRICE_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -431,11 +432,31 @@
       requireLength("MIDPRICE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MIDPRICE_Internal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MIDPRICE_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MIDPRICE", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode MIDPRICE_Internal( int startIdx,
+                              int endIdx,
+                              double inHigh[],
+                              double inLow[],
+                              int optInTimePeriod,
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outReal[] )
+   {
+      try {
+         return MIDPRICE_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Midpoint of the price range over a rolling window: the average of the
@@ -488,6 +509,7 @@
                              int optInTimePeriod,
                              double outReal[] )
    {
+      requireIndexRange("MIDPRICE", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, MIDPRICE_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -496,11 +518,31 @@
       requireLength("MIDPRICE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MIDPRICE_Internal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MIDPRICE_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MIDPRICE", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode MIDPRICE_Internal( int startIdx,
+                              int endIdx,
+                              float inHigh[],
+                              float inLow[],
+                              int optInTimePeriod,
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outReal[] )
+   {
+      try {
+         return MIDPRICE_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -606,7 +648,7 @@
        */
       public double update( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new IllegalArgumentException("MIDPRICE update: BadParam");
+            throw new TaLibArgumentException("MIDPRICE update: BadParam", RetCode.BadParam);
          core.MIDPRICE_StreamStep(this, inHigh, inLow);
          return this.cur_outReal;
       }
@@ -622,7 +664,7 @@
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new IllegalArgumentException("MIDPRICE peek: BadParam");
+            throw new TaLibArgumentException("MIDPRICE peek: BadParam", RetCode.BadParam);
          MIDPRICE_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new MIDPRICE_Stream(this);
@@ -747,7 +789,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Proceed with the calculation for the requested range.
        * Note that this algorithm allows the input and
@@ -874,13 +916,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MIDPRICE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MIDPRICE openAndFill: internal error");
+         throw new TaLibStateException("MIDPRICE openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("MIDPRICE openAndFill: " + retCode);
+      throw new TaLibArgumentException("MIDPRICE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind MIDPRICE_Open (composition seam). */
    MIDPRICE_Stream MIDPRICE_OpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
@@ -890,13 +932,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MIDPRICE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MIDPRICE open: internal error");
+         throw new TaLibStateException("MIDPRICE open: internal error", retCode);
       }
-      throw new IllegalArgumentException("MIDPRICE open: " + retCode);
+      throw new TaLibArgumentException("MIDPRICE open: " + retCode, retCode);
    }
    /**
     * Open a live MIDPRICE stream over the warm-up history; the handle's
@@ -931,11 +973,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MIDPRICE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MIDPRICE openAndFill: internal error");
+         throw new TaLibStateException("MIDPRICE openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("MIDPRICE openAndFill: " + retCode);
+      throw new TaLibArgumentException("MIDPRICE openAndFill: " + retCode, retCode);
    }

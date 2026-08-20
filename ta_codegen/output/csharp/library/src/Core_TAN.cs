@@ -69,12 +69,12 @@ public partial class Core
       return 0 ;
 
    }
-   internal RetCode TAN( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inReal,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode TAN_Body( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<double> inReal,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -96,12 +96,12 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode TAN( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inReal,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode TAN_Body( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<float> inReal,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -168,11 +168,26 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("TAN", "inReal", inReal.Length, guardInLen);
       RequireLength("TAN", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = TAN(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = TAN_Body(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("TAN", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode TAN( int startIdx,
+                         int endIdx,
+                         ReadOnlySpan<double> inReal,
+                         out int outBegIdx,
+                         out int outNBElement,
+                         Span<double> outReal )
+   {
+      try {
+         return TAN_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Vector trigonometric tangent: applies tan() element-wise to each input
@@ -228,11 +243,26 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("TAN", "inReal", inReal.Length, guardInLen);
       RequireLength("TAN", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = TAN(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = TAN_Body(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("TAN", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode TAN( int startIdx,
+                         int endIdx,
+                         ReadOnlySpan<float> inReal,
+                         out int outBegIdx,
+                         out int outNBElement,
+                         Span<double> outReal )
+   {
+      try {
+         return TAN_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -426,7 +456,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public TAN_Stream TAN_Open( ReadOnlySpan<double> inReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return TAN_OpenInternal(inReal, 0);
    }
 
@@ -454,7 +484,7 @@ public partial class Core
    /// output.</exception>
    public TAN_Stream TAN_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       TAN_Stream sp = new TAN_Stream(this);
       RetCode retCode = TAN_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

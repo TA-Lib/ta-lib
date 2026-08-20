@@ -45,7 +45,10 @@ namespace TALib;
 /// <c>lookback + 1</c> bars. This is the one routine, data-dependent way an
 /// open fails, which is why it has its own type: it is catchable separately
 /// from the programming errors (a parameter out of range, two outputs sharing
-/// one array) that arrive as a plain <see cref="ArgumentException"/>.</para>
+/// one array) that arrive as a plain <see cref="ArgumentException"/>. It stays an
+/// <see cref="ArgumentException"/> by inheritance, so an existing <c>catch</c>
+/// keeps working, and it reports <see cref="RetCode.InsufficientHistory"/>
+/// through <see cref="ITaLibFailure.RetCode"/>.</para>
 /// <para>It is knowable in advance: query the matching <c>*_Lookback</c> method
 /// and feed one more bar than it returns.</para>
 /// <para>Deliberately not serializable. Stream handles are not serializable
@@ -54,13 +57,13 @@ namespace TALib;
 /// <c>SerializationInfo</c> constructor here would be an obsolete API
 /// (SYSLIB0051) that this project builds as an error.</para>
 /// </remarks>
-public sealed class InsufficientHistoryException : ArgumentException
+public sealed class InsufficientHistoryException : TaLibArgumentException
 {
     /// <summary>Create the exception with a message.</summary>
     /// <param name="message">What was too short, carrying the
     /// <c>"&lt;NAME&gt; open: "</c> prefix the other language bindings use.</param>
     public InsufficientHistoryException(string message)
-        : base(message)
+        : base(message, RetCode.InsufficientHistory)
     {
     }
 
@@ -69,7 +72,7 @@ public sealed class InsufficientHistoryException : ArgumentException
     /// <param name="message">What was too short.</param>
     /// <param name="paramName">The parameter that was too short.</param>
     public InsufficientHistoryException(string message, string? paramName)
-        : base(message, paramName)
+        : base(message, paramName, RetCode.InsufficientHistory)
     {
     }
 
@@ -78,7 +81,7 @@ public sealed class InsufficientHistoryException : ArgumentException
     /// <param name="message">What was too short.</param>
     /// <param name="innerException">The underlying cause.</param>
     public InsufficientHistoryException(string message, Exception? innerException)
-        : base(message, innerException)
+        : base(message, innerException, RetCode.InsufficientHistory)
     {
     }
 }

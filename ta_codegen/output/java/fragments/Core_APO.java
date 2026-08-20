@@ -55,15 +55,15 @@
       return MA_Lookback(Math.max(optInSlowPeriod, optInFastPeriod), optInMAType) ;
 
    }
-   RetCode APO_Internal( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         int optInFastPeriod,
-                         int optInSlowPeriod,
-                         MAType optInMAType,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode APO_Body( int startIdx,
+                     int endIdx,
+                     double inReal[],
+                     int optInFastPeriod,
+                     int optInSlowPeriod,
+                     MAType optInMAType,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       double[] tempBuffer;
       RetCode retCode;
@@ -120,12 +120,18 @@
          optInFastPeriod = tempInteger;
       }
       /* Calculate the fast MA into the tempBuffer. */
-      retCode = MA_Internal(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
+      OutRange _xr0 = MA(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, tempBuffer);
+      fastBeg.value = _xr0.begIdx();
+      fastNb.value = _xr0.count();
+      retCode = RetCode.Success;
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
       /* Calculate the slow MA into the output. */
-      retCode = MA_Internal(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      OutRange _xr1 = MA(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outReal);
+      outBegIdx.value = _xr1.begIdx();
+      outNBElement.value = _xr1.count();
+      retCode = RetCode.Success;
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -140,15 +146,15 @@
       }
       return RetCode.Success ;
    }
-   RetCode APO_Internal( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         int optInFastPeriod,
-                         int optInSlowPeriod,
-                         MAType optInMAType,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode APO_Body( int startIdx,
+                     int endIdx,
+                     float inReal[],
+                     int optInFastPeriod,
+                     int optInSlowPeriod,
+                     MAType optInMAType,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       double[] tempBuffer;
       RetCode retCode;
@@ -187,11 +193,17 @@
          optInSlowPeriod = optInFastPeriod;
          optInFastPeriod = tempInteger;
       }
-      retCode = MA_Internal(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
+      OutRange _xr0 = MA(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, tempBuffer);
+      fastBeg.value = _xr0.begIdx();
+      fastNb.value = _xr0.count();
+      retCode = RetCode.Success;
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
-      retCode = MA_Internal(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      OutRange _xr1 = MA(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outReal);
+      outBegIdx.value = _xr1.begIdx();
+      outNBElement.value = _xr1.count();
+      retCode = RetCode.Success;
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -263,6 +275,8 @@
                         MAType optInMAType,
                         double outReal[] )
    {
+      requireIndexRange("APO", startIdx, endIdx);
+      requireArgument("APO", "optInMAType", optInMAType);
       int guardStart = clampedStart(startIdx, endIdx, APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -270,11 +284,32 @@
       requireLength("APO", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = APO_Internal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      RetCode retCode = APO_Body(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("APO", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode APO_Internal( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInFastPeriod,
+                         int optInSlowPeriod,
+                         MAType optInMAType,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      try {
+         return APO_Body(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Absolute Price Oscillator: the difference between a fast and a slow moving
@@ -341,6 +376,8 @@
                         MAType optInMAType,
                         double outReal[] )
    {
+      requireIndexRange("APO", startIdx, endIdx);
+      requireArgument("APO", "optInMAType", optInMAType);
       int guardStart = clampedStart(startIdx, endIdx, APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -348,11 +385,32 @@
       requireLength("APO", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = APO_Internal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      RetCode retCode = APO_Body(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("APO", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode APO_Internal( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInFastPeriod,
+                         int optInSlowPeriod,
+                         MAType optInMAType,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      try {
+         return APO_Body(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -438,7 +496,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("APO update: BadParam");
+            throw new TaLibArgumentException("APO update: BadParam", RetCode.BadParam);
          core.APO_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -454,7 +512,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("APO peek: BadParam");
+            throw new TaLibArgumentException("APO peek: BadParam", RetCode.BadParam);
          APO_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new APO_Stream(this);
@@ -525,7 +583,7 @@
          optInMAType = MAType.EMA;
       }
       if( historyLen < APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.InsufficientHistory;
       }
       double[] sc_outReal = outStride == 1 ? outReal : new double[historyLen];
       /* Nothing to produce: the range is shorter than the lookback. Return before
@@ -543,7 +601,7 @@
       if( MA_Lookback(Math.max(optInSlowPeriod, optInFastPeriod), optInMAType) > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Allocate an intermediate buffer. */
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
@@ -583,7 +641,7 @@
       }
       /* Capture the live producer state + sub handles. */
       if( outNBElement.value < 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.InsufficientHistory;
       }
       sp.optInFastPeriod = optInFastPeriod;
       sp.optInSlowPeriod = optInSlowPeriod;
@@ -619,13 +677,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("APO openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("APO openAndFill: internal error");
+         throw new TaLibStateException("APO openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("APO openAndFill: " + retCode);
+      throw new TaLibArgumentException("APO openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind APO_Open (composition seam). */
    APO_Stream APO_OpenInternal( double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
@@ -635,13 +693,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("APO open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("APO open: internal error");
+         throw new TaLibStateException("APO open: internal error", retCode);
       }
-      throw new IllegalArgumentException("APO open: " + retCode);
+      throw new TaLibArgumentException("APO open: " + retCode, retCode);
    }
    /**
     * Open a live APO stream over the warm-up history; the handle's
@@ -676,11 +734,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("APO openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("APO openAndFill: internal error");
+         throw new TaLibStateException("APO openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("APO openAndFill: " + retCode);
+      throw new TaLibArgumentException("APO openAndFill: " + retCode, retCode);
    }

@@ -69,12 +69,12 @@ public partial class Core
       return 0 ;
 
    }
-   internal RetCode ACOS( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<double> inReal,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
+   internal RetCode ACOS_Body( int startIdx,
+                               int endIdx,
+                               ReadOnlySpan<double> inReal,
+                               out int outBegIdx,
+                               out int outNBElement,
+                               Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -96,12 +96,12 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode ACOS( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<float> inReal,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
+   internal RetCode ACOS_Body( int startIdx,
+                               int endIdx,
+                               ReadOnlySpan<float> inReal,
+                               out int outBegIdx,
+                               out int outNBElement,
+                               Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -171,11 +171,26 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("ACOS", "inReal", inReal.Length, guardInLen);
       RequireLength("ACOS", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = ACOS(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ACOS_Body(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ACOS", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode ACOS( int startIdx,
+                          int endIdx,
+                          ReadOnlySpan<double> inReal,
+                          out int outBegIdx,
+                          out int outNBElement,
+                          Span<double> outReal )
+   {
+      try {
+         return ACOS_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Vector trigonometric arc cosine: applies acos() to each input value. A
@@ -234,11 +249,26 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("ACOS", "inReal", inReal.Length, guardInLen);
       RequireLength("ACOS", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = ACOS(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ACOS_Body(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ACOS", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode ACOS( int startIdx,
+                          int endIdx,
+                          ReadOnlySpan<float> inReal,
+                          out int outBegIdx,
+                          out int outNBElement,
+                          Span<double> outReal )
+   {
+      try {
+         return ACOS_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -432,7 +462,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public ACOS_Stream ACOS_Open( ReadOnlySpan<double> inReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return ACOS_OpenInternal(inReal, 0);
    }
 
@@ -460,7 +490,7 @@ public partial class Core
    /// output.</exception>
    public ACOS_Stream ACOS_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       ACOS_Stream sp = new ACOS_Stream(this);
       RetCode retCode = ACOS_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

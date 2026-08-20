@@ -28,15 +28,15 @@
       return 2 ;
 
    }
-   RetCode CDLENGULFING_Internal( int startIdx,
-                                  int endIdx,
-                                  double inOpen[],
-                                  double inHigh[],
-                                  double inLow[],
-                                  double inClose[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  int outInteger[] )
+   RetCode CDLENGULFING_Body( int startIdx,
+                              int endIdx,
+                              double inOpen[],
+                              double inHigh[],
+                              double inLow[],
+                              double inClose[],
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              int outInteger[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -97,15 +97,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode CDLENGULFING_Internal( int startIdx,
-                                  int endIdx,
-                                  float inOpen[],
-                                  float inHigh[],
-                                  float inLow[],
-                                  float inClose[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  int outInteger[] )
+   RetCode CDLENGULFING_Body( int startIdx,
+                              int endIdx,
+                              float inOpen[],
+                              float inHigh[],
+                              float inLow[],
+                              float inClose[],
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              int outInteger[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -197,6 +197,7 @@
                                  double inClose[],
                                  int outInteger[] )
    {
+      requireIndexRange("CDLENGULFING", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CDLENGULFING_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -205,11 +206,32 @@
       requireLength("CDLENGULFING", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLENGULFING_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLENGULFING_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLENGULFING", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode CDLENGULFING_Internal( int startIdx,
+                                  int endIdx,
+                                  double inOpen[],
+                                  double inHigh[],
+                                  double inLow[],
+                                  double inClose[],
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  int outInteger[] )
+   {
+      try {
+         return CDLENGULFING_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * A two-candle reversal pattern where the second candle's real body engulfs
@@ -268,6 +290,7 @@
                                  float inClose[],
                                  int outInteger[] )
    {
+      requireIndexRange("CDLENGULFING", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CDLENGULFING_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -276,11 +299,32 @@
       requireLength("CDLENGULFING", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLENGULFING_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLENGULFING_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLENGULFING", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode CDLENGULFING_Internal( int startIdx,
+                                  int endIdx,
+                                  float inOpen[],
+                                  float inHigh[],
+                                  float inLow[],
+                                  float inClose[],
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  int outInteger[] )
+   {
+      try {
+         return CDLENGULFING_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -346,7 +390,7 @@
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("CDLENGULFING update: BadParam");
+            throw new TaLibArgumentException("CDLENGULFING update: BadParam", RetCode.BadParam);
          core.CDLENGULFING_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outInteger;
       }
@@ -360,7 +404,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("CDLENGULFING peek: BadParam");
+            throw new TaLibArgumentException("CDLENGULFING peek: BadParam", RetCode.BadParam);
          CDLENGULFING_Stream scratch = new CDLENGULFING_Stream(this);
          core.CDLENGULFING_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
@@ -426,7 +470,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -492,13 +536,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLENGULFING openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLENGULFING openAndFill: internal error");
+         throw new TaLibStateException("CDLENGULFING openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLENGULFING openAndFill: " + retCode);
+      throw new TaLibArgumentException("CDLENGULFING openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind CDLENGULFING_Open (composition seam). */
    CDLENGULFING_Stream CDLENGULFING_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -508,13 +552,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLENGULFING open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLENGULFING open: internal error");
+         throw new TaLibStateException("CDLENGULFING open: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLENGULFING open: " + retCode);
+      throw new TaLibArgumentException("CDLENGULFING open: " + retCode, retCode);
    }
    /**
     * Open a live CDLENGULFING stream over the warm-up history; the handle's
@@ -549,11 +593,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLENGULFING openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLENGULFING openAndFill: internal error");
+         throw new TaLibStateException("CDLENGULFING openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLENGULFING openAndFill: " + retCode);
+      throw new TaLibArgumentException("CDLENGULFING openAndFill: " + retCode, retCode);
    }

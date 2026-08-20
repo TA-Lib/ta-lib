@@ -29,15 +29,15 @@
       return 0 ;
 
    }
-   RetCode AD_Internal( int startIdx,
-                        int endIdx,
-                        double inHigh[],
-                        double inLow[],
-                        double inClose[],
-                        double inVolume[],
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode AD_Body( int startIdx,
+                    int endIdx,
+                    double inHigh[],
+                    double inLow[],
+                    double inClose[],
+                    double inVolume[],
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       int nbBar = 0;
       int currentBar = 0;
@@ -88,15 +88,15 @@
       }
       return RetCode.Success ;
    }
-   RetCode AD_Internal( int startIdx,
-                        int endIdx,
-                        float inHigh[],
-                        float inLow[],
-                        float inClose[],
-                        float inVolume[],
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode AD_Body( int startIdx,
+                    int endIdx,
+                    float inHigh[],
+                    float inLow[],
+                    float inClose[],
+                    float inVolume[],
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       int nbBar = 0;
       int currentBar = 0;
@@ -181,6 +181,7 @@
                        double inVolume[],
                        double outReal[] )
    {
+      requireIndexRange("AD", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, AD_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -191,11 +192,32 @@
       requireLength("AD", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AD_Internal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = AD_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("AD", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode AD_Internal( int startIdx,
+                        int endIdx,
+                        double inHigh[],
+                        double inLow[],
+                        double inClose[],
+                        double inVolume[],
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
+   {
+      try {
+         return AD_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Chaikin Accumulation/Distribution Line, a cumulative volume-flow
@@ -249,6 +271,7 @@
                        float inVolume[],
                        double outReal[] )
    {
+      requireIndexRange("AD", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, AD_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -259,11 +282,32 @@
       requireLength("AD", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AD_Internal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = AD_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("AD", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode AD_Internal( int startIdx,
+                        int endIdx,
+                        float inHigh[],
+                        float inLow[],
+                        float inClose[],
+                        float inVolume[],
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
+   {
+      try {
+         return AD_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -326,7 +370,7 @@
        */
       public double update( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new IllegalArgumentException("AD update: BadParam");
+            throw new TaLibArgumentException("AD update: BadParam", RetCode.BadParam);
          core.AD_StreamStep(this, inHigh, inLow, inClose, inVolume);
          return this.cur_outReal;
       }
@@ -340,7 +384,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new IllegalArgumentException("AD peek: BadParam");
+            throw new TaLibArgumentException("AD peek: BadParam", RetCode.BadParam);
          AD_Stream scratch = new AD_Stream(this);
          core.AD_StreamStep(scratch, inHigh, inLow, inClose, inVolume);
          return scratch.cur_outReal;
@@ -460,13 +504,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("AD openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("AD openAndFill: internal error");
+         throw new TaLibStateException("AD openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("AD openAndFill: " + retCode);
+      throw new TaLibArgumentException("AD openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind AD_Open (composition seam). */
    AD_Stream AD_OpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx )
@@ -476,13 +520,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("AD open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("AD open: internal error");
+         throw new TaLibStateException("AD open: internal error", retCode);
       }
-      throw new IllegalArgumentException("AD open: " + retCode);
+      throw new TaLibArgumentException("AD open: " + retCode, retCode);
    }
    /**
     * Open a live AD stream over the warm-up history; the handle's
@@ -517,11 +561,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("AD openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("AD openAndFill: internal error");
+         throw new TaLibStateException("AD openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("AD openAndFill: " + retCode);
+      throw new TaLibArgumentException("AD openAndFill: " + retCode, retCode);
    }

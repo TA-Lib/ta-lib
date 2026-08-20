@@ -30,13 +30,13 @@
       return 0 ;
 
    }
-   RetCode OBV_Internal( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         double inVolume[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode OBV_Body( int startIdx,
+                     int endIdx,
+                     double inReal[],
+                     double inVolume[],
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -66,13 +66,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode OBV_Internal( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         float inVolume[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode OBV_Body( int startIdx,
+                     int endIdx,
+                     float inReal[],
+                     float inVolume[],
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -143,6 +143,7 @@
                         double inVolume[],
                         double outReal[] )
    {
+      requireIndexRange("OBV", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, OBV_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -151,11 +152,30 @@
       requireLength("OBV", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = OBV_Internal(startIdx, endIdx, inReal, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = OBV_Body(startIdx, endIdx, inReal, inVolume, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("OBV", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode OBV_Internal( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         double inVolume[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      try {
+         return OBV_Body(startIdx, endIdx, inReal, inVolume, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * On Balance Volume: a running cumulative total of volume, added on up-price
@@ -201,6 +221,7 @@
                         float inVolume[],
                         double outReal[] )
    {
+      requireIndexRange("OBV", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, OBV_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -209,11 +230,30 @@
       requireLength("OBV", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = OBV_Internal(startIdx, endIdx, inReal, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = OBV_Body(startIdx, endIdx, inReal, inVolume, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("OBV", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode OBV_Internal( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         float inVolume[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      try {
+         return OBV_Body(startIdx, endIdx, inReal, inVolume, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -279,7 +319,7 @@
        */
       public double update( double inReal, double inVolume ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
-            throw new IllegalArgumentException("OBV update: BadParam");
+            throw new TaLibArgumentException("OBV update: BadParam", RetCode.BadParam);
          core.OBV_StreamStep(this, inReal, inVolume);
          return this.cur_outReal;
       }
@@ -293,7 +333,7 @@
        */
       public double peek( double inReal, double inVolume ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
-            throw new IllegalArgumentException("OBV peek: BadParam");
+            throw new TaLibArgumentException("OBV peek: BadParam", RetCode.BadParam);
          OBV_Stream scratch = new OBV_Stream(this);
          core.OBV_StreamStep(scratch, inReal, inVolume);
          return scratch.cur_outReal;
@@ -390,13 +430,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("OBV openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("OBV openAndFill: internal error");
+         throw new TaLibStateException("OBV openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("OBV openAndFill: " + retCode);
+      throw new TaLibArgumentException("OBV openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind OBV_Open (composition seam). */
    OBV_Stream OBV_OpenInternal( double inReal[], double inVolume[], int startIdx )
@@ -406,13 +446,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("OBV open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("OBV open: internal error");
+         throw new TaLibStateException("OBV open: internal error", retCode);
       }
-      throw new IllegalArgumentException("OBV open: " + retCode);
+      throw new TaLibArgumentException("OBV open: " + retCode, retCode);
    }
    /**
     * Open a live OBV stream over the warm-up history; the handle's
@@ -447,11 +487,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("OBV openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("OBV openAndFill: internal error");
+         throw new TaLibStateException("OBV openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("OBV openAndFill: " + retCode);
+      throw new TaLibArgumentException("OBV openAndFill: " + retCode, retCode);
    }

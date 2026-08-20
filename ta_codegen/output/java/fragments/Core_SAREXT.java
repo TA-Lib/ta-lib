@@ -91,21 +91,21 @@
       return 1 ;
 
    }
-   RetCode SAREXT_Internal( int startIdx,
-                            int endIdx,
-                            double inHigh[],
-                            double inLow[],
-                            double optInStartValue,
-                            double optInOffsetOnReverse,
-                            double optInAccelerationInitLong,
-                            double optInAccelerationLong,
-                            double optInAccelerationMaxLong,
-                            double optInAccelerationInitShort,
-                            double optInAccelerationShort,
-                            double optInAccelerationMaxShort,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
+   RetCode SAREXT_Body( int startIdx,
+                        int endIdx,
+                        double inHigh[],
+                        double inLow[],
+                        double optInStartValue,
+                        double optInOffsetOnReverse,
+                        double optInAccelerationInitLong,
+                        double optInAccelerationLong,
+                        double optInAccelerationMaxLong,
+                        double optInAccelerationInitShort,
+                        double optInAccelerationShort,
+                        double optInAccelerationMaxShort,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       RetCode retCode;
       int isLong = 0;
@@ -268,7 +268,10 @@
           * (ep is just used as a temp buffer here, the name
           *  of the parameter is not significant).
           */
-         retCode = MINUS_DM_Internal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
+         OutRange _xr0 = MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, ep_temp);
+         tempInt.value = _xr0.begIdx();
+         tempInt.value = _xr0.count();
+         retCode = RetCode.Success;
          if( ep_temp[0] > 0 ) {
             isLong = 0;
          } else {
@@ -440,21 +443,21 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode SAREXT_Internal( int startIdx,
-                            int endIdx,
-                            float inHigh[],
-                            float inLow[],
-                            double optInStartValue,
-                            double optInOffsetOnReverse,
-                            double optInAccelerationInitLong,
-                            double optInAccelerationLong,
-                            double optInAccelerationMaxLong,
-                            double optInAccelerationInitShort,
-                            double optInAccelerationShort,
-                            double optInAccelerationMaxShort,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
+   RetCode SAREXT_Body( int startIdx,
+                        int endIdx,
+                        float inHigh[],
+                        float inLow[],
+                        double optInStartValue,
+                        double optInOffsetOnReverse,
+                        double optInAccelerationInitLong,
+                        double optInAccelerationLong,
+                        double optInAccelerationMaxLong,
+                        double optInAccelerationInitShort,
+                        double optInAccelerationShort,
+                        double optInAccelerationMaxShort,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       RetCode retCode;
       int isLong = 0;
@@ -541,7 +544,10 @@
          optInAccelerationShort = optInAccelerationMaxShort;
       }
       if( optInStartValue == 0 ) {
-         retCode = MINUS_DM_Internal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
+         OutRange _xr0 = MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, ep_temp);
+         tempInt.value = _xr0.begIdx();
+         tempInt.value = _xr0.count();
+         retCode = RetCode.Success;
          if( ep_temp[0] > 0 ) {
             isLong = 0;
          } else {
@@ -739,6 +745,7 @@
                            double optInAccelerationMaxShort,
                            double outReal[] )
    {
+      requireIndexRange("SAREXT", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -747,11 +754,38 @@
       requireLength("SAREXT", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SAREXT_Internal(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SAREXT_Body(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("SAREXT", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode SAREXT_Internal( int startIdx,
+                            int endIdx,
+                            double inHigh[],
+                            double inLow[],
+                            double optInStartValue,
+                            double optInOffsetOnReverse,
+                            double optInAccelerationInitLong,
+                            double optInAccelerationLong,
+                            double optInAccelerationMaxLong,
+                            double optInAccelerationInitShort,
+                            double optInAccelerationShort,
+                            double optInAccelerationMaxShort,
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            double outReal[] )
+   {
+      try {
+         return SAREXT_Body(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Extended Parabolic SAR (stop and reverse) giving the caller full control
@@ -827,6 +861,7 @@
                            double optInAccelerationMaxShort,
                            double outReal[] )
    {
+      requireIndexRange("SAREXT", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -835,11 +870,38 @@
       requireLength("SAREXT", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SAREXT_Internal(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SAREXT_Body(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("SAREXT", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode SAREXT_Internal( int startIdx,
+                            int endIdx,
+                            float inHigh[],
+                            float inLow[],
+                            double optInStartValue,
+                            double optInOffsetOnReverse,
+                            double optInAccelerationInitLong,
+                            double optInAccelerationLong,
+                            double optInAccelerationMaxLong,
+                            double optInAccelerationInitShort,
+                            double optInAccelerationShort,
+                            double optInAccelerationMaxShort,
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            double outReal[] )
+   {
+      try {
+         return SAREXT_Body(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -944,7 +1006,7 @@
        */
       public double update( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new IllegalArgumentException("SAREXT update: BadParam");
+            throw new TaLibArgumentException("SAREXT update: BadParam", RetCode.BadParam);
          core.SAREXT_StreamStep(this, inHigh, inLow);
          return this.cur_outReal;
       }
@@ -958,7 +1020,7 @@
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new IllegalArgumentException("SAREXT peek: BadParam");
+            throw new TaLibArgumentException("SAREXT peek: BadParam", RetCode.BadParam);
          SAREXT_Stream scratch = new SAREXT_Stream(this);
          core.SAREXT_StreamStep(scratch, inHigh, inLow);
          return scratch.cur_outReal;
@@ -1239,7 +1301,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Check if the acceleration factors are being defined by the user.
        * Make sure the acceleration and maximum are coherent.
@@ -1270,7 +1332,10 @@
           * (ep is just used as a temp buffer here, the name
           *  of the parameter is not significant).
           */
-         retCode = MINUS_DM_Internal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
+         OutRange _xr0 = MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, ep_temp);
+         tempInt.value = _xr0.begIdx();
+         tempInt.value = _xr0.count();
+         retCode = RetCode.Success;
          if( ep_temp[0] > 0 ) {
             isLong = 0;
          } else {
@@ -1485,13 +1550,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("SAREXT openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("SAREXT openAndFill: internal error");
+         throw new TaLibStateException("SAREXT openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("SAREXT openAndFill: " + retCode);
+      throw new TaLibArgumentException("SAREXT openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind SAREXT_Open (composition seam). */
    SAREXT_Stream SAREXT_OpenInternal( double inHigh[], double inLow[], int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
@@ -1501,13 +1566,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("SAREXT open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("SAREXT open: internal error");
+         throw new TaLibStateException("SAREXT open: internal error", retCode);
       }
-      throw new IllegalArgumentException("SAREXT open: " + retCode);
+      throw new TaLibArgumentException("SAREXT open: " + retCode, retCode);
    }
    /**
     * Open a live SAREXT stream over the warm-up history; the handle's
@@ -1542,11 +1607,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("SAREXT openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("SAREXT openAndFill: internal error");
+         throw new TaLibStateException("SAREXT openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("SAREXT openAndFill: " + retCode);
+      throw new TaLibArgumentException("SAREXT openAndFill: " + retCode, retCode);
    }

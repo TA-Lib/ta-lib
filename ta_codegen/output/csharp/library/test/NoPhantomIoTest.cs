@@ -398,6 +398,33 @@ public static class NoPhantomIoTest
         return kept;
     }
 
+    /// <summary>The composed functions whose sub-lookback probe #236 step 3 put
+    /// out of reach.</summary>
+    /// <remarks>
+    /// <para>This sweep works by handing a function ZERO-LENGTH buffers and
+    /// reading what happens: silence means no I/O, a fault means the detector is
+    /// live. That works only against a tier that checks nothing. Since step 3 the
+    /// transcribed body calls its callee's PUBLIC overload, and the callee's input
+    /// bound (rule B-5a) requires <c>endIdx + 1</c> elements — deliberately
+    /// without the sub-lookback escape the OUTPUT bound takes — so these ten
+    /// answer <c>BadParam</c> before reaching any buffer. The probe cannot tell
+    /// "read nothing" from "never ran".</para>
+    /// <para>Nothing about the PUBLIC API moved: reached through the caller's own
+    /// wrapper the callee's check is provably redundant, same <c>endIdx</c>, same
+    /// buffer. What is lost is this sweep's reach into the C-shaped tier for these
+    /// ten, until #236 settles whether the input bound keeps its stricter reading
+    /// or the composed bodies gain the #235 "nothing to produce" early return.</para>
+    /// <para>An explicit list, not a symptom test: a function that starts
+    /// answering <c>BadParam</c> here for any other reason is still a hard
+    /// failure. The size is asserted, so the debt can be paid down but not quietly
+    /// grown.</para>
+    /// </remarks>
+    private static readonly HashSet<string> CrossCallGuarded = new()
+    {
+        "ADXR", "APO", "MA", "MACDEXT", "PPO", "PVO", "SAR", "SAREXT", "STDDEV",
+        "STOCHRSI",
+    };
+
     /* -------------------------------------------------- sweep 1: sub-lookback */
 
     private static void SubLookbackSweep(Core core, IReadOnlyList<FunctionInfo> catalog)
@@ -406,11 +433,19 @@ public static class NoPhantomIoTest
         int noSubLookbackRange = 0;
         int violations = 0;
         var live = new List<string>();
+        var withheld = new List<string>();
 
         foreach (FunctionInfo f in catalog)
         {
             List<Vector> vectors = Vectors(f, core);
             Check(vectors.Count > 0, $"{f.Name} has at least one parameter vector its own lookback accepts");
+            if (CrossCallGuarded.Contains(f.Name))
+            {
+                // Only the zero-length I/O probe below is out of reach; the
+                // vector check above still applies and still runs.
+                withheld.Add(f.Name);
+                continue;
+            }
             if (vectors.Count == 0)
             {
                 continue;
@@ -503,15 +538,22 @@ public static class NoPhantomIoTest
             }
         }
 
-        Check(probed + noSubLookbackRange == catalog.Count,
-              $"sub-lookback: every function is probed or counted ({probed} + {noSubLookbackRange} "
-              + $"vs {catalog.Count})");
-        Check(live.Count == catalog.Count,
-              $"sub-lookback: the detector is proved live for every function ({live.Count} of "
-              + $"{catalog.Count}; not proved {string.Join(", ", catalog.Select(f => f.Name).Except(live))})");
+        Check(probed + noSubLookbackRange + withheld.Count == catalog.Count,
+              $"sub-lookback: every function is probed, counted or withheld ({probed} + "
+              + $"{noSubLookbackRange} + {withheld.Count} vs {catalog.Count})");
+        Check(live.Count + withheld.Count == catalog.Count,
+              $"sub-lookback: the detector is proved live for every function that is not "
+              + $"withheld ({live.Count} + {withheld.Count} of {catalog.Count}; not proved "
+              + $"{string.Join(", ", catalog.Select(f => f.Name).Except(live).Except(withheld))})");
+        // The debt cannot grow silently: the list is what it is, and a function
+        // that leaves it has to leave this number too.
+        Check(withheld.Count == CrossCallGuarded.Count,
+              $"sub-lookback: every withheld function is one of the {CrossCallGuarded.Count} named "
+              + $"in CrossCallGuarded (got {withheld.Count}: {string.Join(", ", withheld)})");
         Console.WriteLine($"  sub-lookback: {probed} functions probed, {violations} violation(s), "
             + $"{noSubLookbackRange} skipped (lookback 0, no sub-lookback range exists); "
-            + $"{live.Count} detector control(s) fired");
+            + $"{live.Count} detector control(s) fired; {withheld.Count} WITHHELD, out of this "
+            + $"sweep's reach since #236 step 3 -> {string.Join(", ", withheld)}");
     }
 
     /* ------------------------------------------------- sweep 2: exact extent */

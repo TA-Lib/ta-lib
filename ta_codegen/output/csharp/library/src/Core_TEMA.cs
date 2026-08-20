@@ -88,13 +88,13 @@ public partial class Core
       return retValue * 3 ;
 
    }
-   internal RetCode TEMA( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<double> inReal,
-                          int optInTimePeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
+   internal RetCode TEMA_Body( int startIdx,
+                               int endIdx,
+                               ReadOnlySpan<double> inReal,
+                               int optInTimePeriod,
+                               out int outBegIdx,
+                               out int outNBElement,
+                               Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -267,13 +267,13 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode TEMA( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<float> inReal,
-                          int optInTimePeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
+   internal RetCode TEMA_Body( int startIdx,
+                               int endIdx,
+                               ReadOnlySpan<float> inReal,
+                               int optInTimePeriod,
+                               out int outBegIdx,
+                               out int outNBElement,
+                               Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -420,11 +420,27 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("TEMA", "inReal", inReal.Length, guardInLen);
       RequireLength("TEMA", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = TEMA(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = TEMA_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("TEMA", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode TEMA( int startIdx,
+                          int endIdx,
+                          ReadOnlySpan<double> inReal,
+                          int optInTimePeriod,
+                          out int outBegIdx,
+                          out int outNBElement,
+                          Span<double> outReal )
+   {
+      try {
+         return TEMA_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Triple Exponential Moving Average: a smoothed price overlay built from
@@ -486,11 +502,27 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("TEMA", "inReal", inReal.Length, guardInLen);
       RequireLength("TEMA", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = TEMA(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = TEMA_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("TEMA", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode TEMA( int startIdx,
+                          int endIdx,
+                          ReadOnlySpan<float> inReal,
+                          int optInTimePeriod,
+                          out int outBegIdx,
+                          out int outNBElement,
+                          Span<double> outReal )
+   {
+      try {
+         return TEMA_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -651,7 +683,7 @@ public partial class Core
       }
       if( optInTimePeriod == 1 ) {
          if( historyLen < TEMA_Lookback(optInTimePeriod) + 1 ) {
-            return RetCode.OutOfRangeEndIndex;
+            return RetCode.InsufficientHistory;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.prevEMA1 = 0.0;
@@ -705,7 +737,7 @@ public partial class Core
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* The three EMA are computed in a single lockstep pass: each new
        * EMA1 value is immediately fed into EMA2, and each new EMA2 value
@@ -872,7 +904,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public TEMA_Stream TEMA_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return TEMA_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -902,7 +934,7 @@ public partial class Core
    /// output.</exception>
    public TEMA_Stream TEMA_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       TEMA_Stream sp = new TEMA_Stream(this);
       RetCode retCode = TEMA_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

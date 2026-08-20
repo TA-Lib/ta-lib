@@ -42,13 +42,13 @@
       return emaLookback * 3 + ROCR_Lookback(1) ;
 
    }
-   RetCode TRIX_Internal( int startIdx,
-                          int endIdx,
-                          double inReal[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode TRIX_Body( int startIdx,
+                      int endIdx,
+                      double inReal[],
+                      int optInTimePeriod,
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       double prevEMA1 = 0;
       double prevEMA2 = 0;
@@ -170,13 +170,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode TRIX_Internal( int startIdx,
-                          int endIdx,
-                          float inReal[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode TRIX_Body( int startIdx,
+                      int endIdx,
+                      float inReal[],
+                      int optInTimePeriod,
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       double prevEMA1 = 0;
       double prevEMA2 = 0;
@@ -315,6 +315,7 @@
                          int optInTimePeriod,
                          double outReal[] )
    {
+      requireIndexRange("TRIX", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, TRIX_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -322,11 +323,30 @@
       requireLength("TRIX", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TRIX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TRIX_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("TRIX", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode TRIX_Internal( int startIdx,
+                          int endIdx,
+                          double inReal[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+   {
+      try {
+         return TRIX_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * 1-day Rate-Of-Change of a triple-smoothed EMA of the input. Momentum
@@ -384,6 +404,7 @@
                          int optInTimePeriod,
                          double outReal[] )
    {
+      requireIndexRange("TRIX", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, TRIX_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -391,11 +412,30 @@
       requireLength("TRIX", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TRIX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TRIX_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("TRIX", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode TRIX_Internal( int startIdx,
+                          int endIdx,
+                          float inReal[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+   {
+      try {
+         return TRIX_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -470,7 +510,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("TRIX update: BadParam");
+            throw new TaLibArgumentException("TRIX update: BadParam", RetCode.BadParam);
          core.TRIX_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -484,7 +524,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("TRIX peek: BadParam");
+            throw new TaLibArgumentException("TRIX peek: BadParam", RetCode.BadParam);
          TRIX_Stream scratch = new TRIX_Stream(this);
          core.TRIX_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -557,7 +597,7 @@
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Single lockstep pass: EMA1 feeds EMA2 feeds EMA3, output is the
        * roc() of consecutive EMA3 values. Output element j is the TRIX
@@ -677,13 +717,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("TRIX openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TRIX openAndFill: internal error");
+         throw new TaLibStateException("TRIX openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("TRIX openAndFill: " + retCode);
+      throw new TaLibArgumentException("TRIX openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind TRIX_Open (composition seam). */
    TRIX_Stream TRIX_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -693,13 +733,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("TRIX open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TRIX open: internal error");
+         throw new TaLibStateException("TRIX open: internal error", retCode);
       }
-      throw new IllegalArgumentException("TRIX open: " + retCode);
+      throw new TaLibArgumentException("TRIX open: " + retCode, retCode);
    }
    /**
     * Open a live TRIX stream over the warm-up history; the handle's
@@ -734,11 +774,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("TRIX openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TRIX openAndFill: internal error");
+         throw new TaLibStateException("TRIX openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("TRIX openAndFill: " + retCode);
+      throw new TaLibArgumentException("TRIX openAndFill: " + retCode, retCode);
    }

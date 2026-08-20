@@ -73,14 +73,14 @@ public partial class Core
       return 0 ;
 
    }
-   internal RetCode TYPPRICE( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<double> inHigh,
-                              ReadOnlySpan<double> inLow,
-                              ReadOnlySpan<double> inClose,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outReal )
+   internal RetCode TYPPRICE_Body( int startIdx,
+                                   int endIdx,
+                                   ReadOnlySpan<double> inHigh,
+                                   ReadOnlySpan<double> inLow,
+                                   ReadOnlySpan<double> inClose,
+                                   out int outBegIdx,
+                                   out int outNBElement,
+                                   Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -104,14 +104,14 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode TYPPRICE( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<float> inHigh,
-                              ReadOnlySpan<float> inLow,
-                              ReadOnlySpan<float> inClose,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outReal )
+   internal RetCode TYPPRICE_Body( int startIdx,
+                                   int endIdx,
+                                   ReadOnlySpan<float> inHigh,
+                                   ReadOnlySpan<float> inLow,
+                                   ReadOnlySpan<float> inClose,
+                                   out int outBegIdx,
+                                   out int outNBElement,
+                                   Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -185,11 +185,28 @@ public partial class Core
       RequireLength("TYPPRICE", "inLow", inLow.Length, guardInLen);
       RequireLength("TYPPRICE", "inClose", inClose.Length, guardInLen);
       RequireLength("TYPPRICE", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = TYPPRICE(startIdx, endIdx, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = TYPPRICE_Body(startIdx, endIdx, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("TYPPRICE", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode TYPPRICE( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<double> inHigh,
+                              ReadOnlySpan<double> inLow,
+                              ReadOnlySpan<double> inClose,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
+   {
+      try {
+         return TYPPRICE_Body(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Typical Price: the average of the high, low, and close of each bar. A
@@ -251,11 +268,28 @@ public partial class Core
       RequireLength("TYPPRICE", "inLow", inLow.Length, guardInLen);
       RequireLength("TYPPRICE", "inClose", inClose.Length, guardInLen);
       RequireLength("TYPPRICE", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = TYPPRICE(startIdx, endIdx, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = TYPPRICE_Body(startIdx, endIdx, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("TYPPRICE", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode TYPPRICE( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<float> inHigh,
+                              ReadOnlySpan<float> inLow,
+                              ReadOnlySpan<float> inClose,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
+   {
+      try {
+         return TYPPRICE_Body(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -459,9 +493,9 @@ public partial class Core
    /// span cannot be null.</exception>
    public TYPPRICE_Stream TYPPRICE_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       return TYPPRICE_OpenInternal(inHigh, inLow, inClose, 0);
    }
 
@@ -491,9 +525,9 @@ public partial class Core
    /// output.</exception>
    public TYPPRICE_Stream TYPPRICE_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       TYPPRICE_Stream sp = new TYPPRICE_Stream(this);
       RetCode retCode = TYPPRICE_OpenAndFillBody(sp, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

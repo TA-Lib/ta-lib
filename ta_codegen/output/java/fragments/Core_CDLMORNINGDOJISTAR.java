@@ -44,16 +44,16 @@
       return Math.max(Math.max(BodyDoji_avgPeriod, BodyLong_avgPeriod), BodyShort_avgPeriod) + 2 ;
 
    }
-   RetCode CDLMORNINGDOJISTAR_Internal( int startIdx,
-                                        int endIdx,
-                                        double inOpen[],
-                                        double inHigh[],
-                                        double inLow[],
-                                        double inClose[],
-                                        double optInPenetration,
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
+   RetCode CDLMORNINGDOJISTAR_Body( int startIdx,
+                                    int endIdx,
+                                    double inOpen[],
+                                    double inHigh[],
+                                    double inLow[],
+                                    double inClose[],
+                                    double optInPenetration,
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -167,16 +167,16 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode CDLMORNINGDOJISTAR_Internal( int startIdx,
-                                        int endIdx,
-                                        float inOpen[],
-                                        float inHigh[],
-                                        float inLow[],
-                                        float inClose[],
-                                        double optInPenetration,
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
+   RetCode CDLMORNINGDOJISTAR_Body( int startIdx,
+                                    int endIdx,
+                                    float inOpen[],
+                                    float inHigh[],
+                                    float inLow[],
+                                    float inClose[],
+                                    double optInPenetration,
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -316,6 +316,7 @@
                                        double optInPenetration,
                                        int outInteger[] )
    {
+      requireIndexRange("CDLMORNINGDOJISTAR", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CDLMORNINGDOJISTAR_Lookback(optInPenetration));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -326,11 +327,33 @@
       requireLength("CDLMORNINGDOJISTAR", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLMORNINGDOJISTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLMORNINGDOJISTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLMORNINGDOJISTAR", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode CDLMORNINGDOJISTAR_Internal( int startIdx,
+                                        int endIdx,
+                                        double inOpen[],
+                                        double inHigh[],
+                                        double inLow[],
+                                        double inClose[],
+                                        double optInPenetration,
+                                        MInteger outBegIdx,
+                                        MInteger outNBElement,
+                                        int outInteger[] )
+   {
+      try {
+         return CDLMORNINGDOJISTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * A three-candle bullish reversal pattern: a long black candle, then a doji
@@ -394,6 +417,7 @@
                                        double optInPenetration,
                                        int outInteger[] )
    {
+      requireIndexRange("CDLMORNINGDOJISTAR", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CDLMORNINGDOJISTAR_Lookback(optInPenetration));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -404,11 +428,33 @@
       requireLength("CDLMORNINGDOJISTAR", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLMORNINGDOJISTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLMORNINGDOJISTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLMORNINGDOJISTAR", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode CDLMORNINGDOJISTAR_Internal( int startIdx,
+                                        int endIdx,
+                                        float inOpen[],
+                                        float inHigh[],
+                                        float inLow[],
+                                        float inClose[],
+                                        double optInPenetration,
+                                        MInteger outBegIdx,
+                                        MInteger outNBElement,
+                                        int outInteger[] )
+   {
+      try {
+         return CDLMORNINGDOJISTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -573,7 +619,7 @@
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("CDLMORNINGDOJISTAR update: BadParam");
+            throw new TaLibArgumentException("CDLMORNINGDOJISTAR update: BadParam", RetCode.BadParam);
          core.CDLMORNINGDOJISTAR_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outInteger;
       }
@@ -589,7 +635,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("CDLMORNINGDOJISTAR peek: BadParam");
+            throw new TaLibArgumentException("CDLMORNINGDOJISTAR peek: BadParam", RetCode.BadParam);
          CDLMORNINGDOJISTAR_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new CDLMORNINGDOJISTAR_Stream(this);
@@ -727,7 +773,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -881,13 +927,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLMORNINGDOJISTAR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLMORNINGDOJISTAR openAndFill: internal error");
+         throw new TaLibStateException("CDLMORNINGDOJISTAR openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLMORNINGDOJISTAR openAndFill: " + retCode);
+      throw new TaLibArgumentException("CDLMORNINGDOJISTAR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind CDLMORNINGDOJISTAR_Open (composition seam). */
    CDLMORNINGDOJISTAR_Stream CDLMORNINGDOJISTAR_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
@@ -897,13 +943,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLMORNINGDOJISTAR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLMORNINGDOJISTAR open: internal error");
+         throw new TaLibStateException("CDLMORNINGDOJISTAR open: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLMORNINGDOJISTAR open: " + retCode);
+      throw new TaLibArgumentException("CDLMORNINGDOJISTAR open: " + retCode, retCode);
    }
    /**
     * Open a live CDLMORNINGDOJISTAR stream over the warm-up history; the handle's
@@ -938,11 +984,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLMORNINGDOJISTAR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLMORNINGDOJISTAR openAndFill: internal error");
+         throw new TaLibStateException("CDLMORNINGDOJISTAR openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLMORNINGDOJISTAR openAndFill: " + retCode);
+      throw new TaLibArgumentException("CDLMORNINGDOJISTAR openAndFill: " + retCode, retCode);
    }

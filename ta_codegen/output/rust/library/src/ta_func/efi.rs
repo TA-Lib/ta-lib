@@ -509,7 +509,7 @@ impl Core {
             if startIdx > endIdx {
                 (*outBegIdx) = 0;
                 (*outNBElement) = 0;
-                return Err(RetCode::BadParam);
+                return Err(RetCode::InsufficientHistory);
             }
             // No smoothing at a period of 1: the output is the raw Force Index.
             // Explicit for the reason spelled out in ema.c -- at period 1 optInK_1 is
@@ -586,7 +586,7 @@ impl Core {
             if startIdx > endIdx {
                 (*outBegIdx) = 0;
                 (*outNBElement) = 0;
-                return Err(RetCode::BadParam);
+                return Err(RetCode::InsufficientHistory);
             }
             // No smoothing at a period of 1: the output is the raw Force Index.
             // Explicit for the reason spelled out in ema.c -- at period 1 optInK_1 is
@@ -662,8 +662,10 @@ impl Core {
     ///
     /// # Errors
     ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    /// [`RetCode::InsufficientHistory`] when the history holds fewer than
+    /// `lookback + 1` bars — the one failure here worth retrying, since another
+    /// bar fixes it. [`RetCode::BadParam`] when a parameter is out of range, an
+    /// input is empty, or input lengths differ.
     ///
     /// ```
     /// use ta_lib::Core;

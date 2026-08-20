@@ -46,15 +46,15 @@
       }
 
    }
-   RetCode PLUS_DI_Internal( int startIdx,
-                             int endIdx,
-                             double inHigh[],
-                             double inLow[],
-                             double inClose[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
+   RetCode PLUS_DI_Body( int startIdx,
+                         int endIdx,
+                         double inHigh[],
+                         double inLow[],
+                         double inClose[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -371,15 +371,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode PLUS_DI_Internal( int startIdx,
-                             int endIdx,
-                             float inHigh[],
-                             float inLow[],
-                             float inClose[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
+   RetCode PLUS_DI_Body( int startIdx,
+                         int endIdx,
+                         float inHigh[],
+                         float inLow[],
+                         float inClose[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -627,6 +627,7 @@
                             int optInTimePeriod,
                             double outReal[] )
    {
+      requireIndexRange("PLUS_DI", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, PLUS_DI_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -636,11 +637,32 @@
       requireLength("PLUS_DI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = PLUS_DI_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = PLUS_DI_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("PLUS_DI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode PLUS_DI_Internal( int startIdx,
+                             int endIdx,
+                             double inHigh[],
+                             double inLow[],
+                             double inClose[],
+                             int optInTimePeriod,
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             double outReal[] )
+   {
+      try {
+         return PLUS_DI_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Plus Directional Indicator: the Wilder-smoothed positive directional
@@ -707,6 +729,7 @@
                             int optInTimePeriod,
                             double outReal[] )
    {
+      requireIndexRange("PLUS_DI", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, PLUS_DI_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -716,11 +739,32 @@
       requireLength("PLUS_DI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = PLUS_DI_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = PLUS_DI_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("PLUS_DI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode PLUS_DI_Internal( int startIdx,
+                             int endIdx,
+                             float inHigh[],
+                             float inLow[],
+                             float inClose[],
+                             int optInTimePeriod,
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             double outReal[] )
+   {
+      try {
+         return PLUS_DI_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -807,7 +851,7 @@
        */
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("PLUS_DI update: BadParam");
+            throw new TaLibArgumentException("PLUS_DI update: BadParam", RetCode.BadParam);
          core.PLUS_DI_StreamStep(this, inHigh, inLow, inClose);
          return this.cur_outReal;
       }
@@ -821,7 +865,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("PLUS_DI peek: BadParam");
+            throw new TaLibArgumentException("PLUS_DI peek: BadParam", RetCode.BadParam);
          PLUS_DI_Stream scratch = new PLUS_DI_Stream(this);
          core.PLUS_DI_StreamStep(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
@@ -1052,7 +1096,7 @@
          if( startIdx > endIdx ) {
             outBegIdx.value = 0;
             outNBElement.value = 0;
-            return RetCode.OutOfRangeEndIndex ;
+            return RetCode.InsufficientHistory ;
          }
          /* Indicate where the next output should be put
           * in the outReal.
@@ -1236,7 +1280,7 @@
          if( startIdx > endIdx ) {
             outBegIdx.value = 0;
             outNBElement.value = 0;
-            return RetCode.OutOfRangeEndIndex ;
+            return RetCode.InsufficientHistory ;
          }
          /* Indicate where the next output should be put
           * in the outReal.
@@ -1411,13 +1455,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("PLUS_DI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("PLUS_DI openAndFill: internal error");
+         throw new TaLibStateException("PLUS_DI openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("PLUS_DI openAndFill: " + retCode);
+      throw new TaLibArgumentException("PLUS_DI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind PLUS_DI_Open (composition seam). */
    PLUS_DI_Stream PLUS_DI_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -1427,13 +1471,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("PLUS_DI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("PLUS_DI open: internal error");
+         throw new TaLibStateException("PLUS_DI open: internal error", retCode);
       }
-      throw new IllegalArgumentException("PLUS_DI open: " + retCode);
+      throw new TaLibArgumentException("PLUS_DI open: " + retCode, retCode);
    }
    /**
     * Open a live PLUS_DI stream over the warm-up history; the handle's
@@ -1468,11 +1512,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("PLUS_DI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("PLUS_DI openAndFill: internal error");
+         throw new TaLibStateException("PLUS_DI openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("PLUS_DI openAndFill: " + retCode);
+      throw new TaLibArgumentException("PLUS_DI openAndFill: " + retCode, retCode);
    }

@@ -320,7 +320,7 @@ static TA_RetCode TA_EMA_OpenCore( struct TA_EMA_Stream **stream, const double i
 
    if( optInTimePeriod == 1 )
    {
-      if( historyLen < TA_EMA_Lookback( optInTimePeriod ) + 1 ) return TA_BAD_PARAM;
+      if( historyLen < TA_EMA_Lookback( optInTimePeriod ) + 1 ) return TA_INSUFFICIENT_HISTORY;
       sp = (struct TA_EMA_Stream *)TA_Malloc( sizeof(*sp) );
       if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
@@ -370,7 +370,7 @@ static TA_RetCode TA_EMA_OpenCore( struct TA_EMA_Stream **stream, const double i
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       *outBegIdx= startIdx;
       /* Do the EMA calculation using tight loops. */

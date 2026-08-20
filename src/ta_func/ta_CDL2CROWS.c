@@ -354,7 +354,7 @@ static TA_RetCode TA_CDL2CROWS_OpenCore( struct TA_CDL2CROWS_Stream **stream, co
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */

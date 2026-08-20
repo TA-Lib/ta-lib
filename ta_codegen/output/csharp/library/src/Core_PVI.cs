@@ -72,13 +72,13 @@ public partial class Core
       return 0 ;
 
    }
-   internal RetCode PVI( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inClose,
-                         ReadOnlySpan<double> inVolume,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode PVI_Body( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<double> inClose,
+                              ReadOnlySpan<double> inVolume,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -139,13 +139,13 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode PVI( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inClose,
-                         ReadOnlySpan<float> inVolume,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode PVI_Body( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<float> inClose,
+                              ReadOnlySpan<float> inVolume,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -248,11 +248,27 @@ public partial class Core
       RequireLength("PVI", "inClose", inClose.Length, guardInLen);
       RequireLength("PVI", "inVolume", inVolume.Length, guardInLen);
       RequireLength("PVI", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = PVI(startIdx, endIdx, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = PVI_Body(startIdx, endIdx, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("PVI", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode PVI( int startIdx,
+                         int endIdx,
+                         ReadOnlySpan<double> inClose,
+                         ReadOnlySpan<double> inVolume,
+                         out int outBegIdx,
+                         out int outNBElement,
+                         Span<double> outReal )
+   {
+      try {
+         return PVI_Body(startIdx, endIdx, inClose, inVolume, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Positive Volume Index: a running cumulative index that changes only on
@@ -323,11 +339,27 @@ public partial class Core
       RequireLength("PVI", "inClose", inClose.Length, guardInLen);
       RequireLength("PVI", "inVolume", inVolume.Length, guardInLen);
       RequireLength("PVI", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = PVI(startIdx, endIdx, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = PVI_Body(startIdx, endIdx, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("PVI", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode PVI( int startIdx,
+                         int endIdx,
+                         ReadOnlySpan<float> inClose,
+                         ReadOnlySpan<float> inVolume,
+                         out int outBegIdx,
+                         out int outNBElement,
+                         Span<double> outReal )
+   {
+      try {
+         return PVI_Body(startIdx, endIdx, inClose, inVolume, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -607,8 +639,8 @@ public partial class Core
    /// span cannot be null.</exception>
    public PVI_Stream PVI_Open( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume )
    {
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
-      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
       return PVI_OpenInternal(inClose, inVolume, 0);
    }
 
@@ -637,8 +669,8 @@ public partial class Core
    /// output.</exception>
    public PVI_Stream PVI_OpenAndFill( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, Span<double> outReal )
    {
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
-      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
       PVI_Stream sp = new PVI_Stream(this);
       RetCode retCode = PVI_OpenAndFillBody(sp, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

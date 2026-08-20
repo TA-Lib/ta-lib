@@ -492,7 +492,7 @@ static TA_RetCode TA_AROONOSC_OpenCore( struct TA_AROONOSC_Stream **stream, cons
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       /* Proceed with the calculation for the requested range.
        * Note that this algorithm allows the input and

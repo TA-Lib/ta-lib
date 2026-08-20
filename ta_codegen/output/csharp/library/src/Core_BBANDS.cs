@@ -134,18 +134,18 @@ public partial class Core
       return (maLookback > stddevLookback) ? maLookback : stddevLookback ;
 
    }
-   internal RetCode BBANDS( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<double> inReal,
-                            int optInTimePeriod,
-                            double optInNbDevUp,
-                            double optInNbDevDn,
-                            MAType optInMAType,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outRealUpperBand,
-                            Span<double> outRealMiddleBand,
-                            Span<double> outRealLowerBand )
+   internal RetCode BBANDS_Body( int startIdx,
+                                 int endIdx,
+                                 ReadOnlySpan<double> inReal,
+                                 int optInTimePeriod,
+                                 double optInNbDevUp,
+                                 double optInNbDevDn,
+                                 MAType optInMAType,
+                                 out int outBegIdx,
+                                 out int outNBElement,
+                                 Span<double> outRealUpperBand,
+                                 Span<double> outRealMiddleBand,
+                                 Span<double> outRealLowerBand )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -364,7 +364,10 @@ public partial class Core
       tempBuffer1 = new double[(int)((endIdx - startIdx + 1) * 1)];
       tempBuffer2 = new double[(int)((endIdx - startIdx + 1) * 1)];
       /* Calculate the middle band moving average. */
-      retCode = MA(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, tempBuffer1);
+      OutRange _xr0 = MA(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, tempBuffer1);
+      outBegIdx = _xr0.BegIdx;
+      outNBElement = _xr0.Count;
+      retCode = RetCode.Success;
       if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
          outNBElement = 0;
          return retCode ;
@@ -372,7 +375,10 @@ public partial class Core
       /* Remember where the moving average begins, to realign it below. */
       maBegIdx = (int)outBegIdx;
       /* Calculate the Standard Deviation into tempBuffer2. */
-      retCode = STDDEV((int)outBegIdx, endIdx, inReal, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, tempBuffer2);
+      OutRange _xr1 = STDDEV((int)outBegIdx, endIdx, inReal, optInTimePeriod, 1.0, tempBuffer2);
+      outBegIdx = _xr1.BegIdx;
+      outNBElement = _xr1.Count;
+      retCode = RetCode.Success;
       if( retCode != RetCode.Success ) {
          outNBElement = 0;
          return retCode ;
@@ -409,18 +415,18 @@ public partial class Core
       }
       return RetCode.Success ;
    }
-   internal RetCode BBANDS( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<float> inReal,
-                            int optInTimePeriod,
-                            double optInNbDevUp,
-                            double optInNbDevDn,
-                            MAType optInMAType,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outRealUpperBand,
-                            Span<double> outRealMiddleBand,
-                            Span<double> outRealLowerBand )
+   internal RetCode BBANDS_Body( int startIdx,
+                                 int endIdx,
+                                 ReadOnlySpan<float> inReal,
+                                 int optInTimePeriod,
+                                 double optInNbDevUp,
+                                 double optInNbDevDn,
+                                 MAType optInMAType,
+                                 out int outBegIdx,
+                                 out int outNBElement,
+                                 Span<double> outRealUpperBand,
+                                 Span<double> outRealMiddleBand,
+                                 Span<double> outRealLowerBand )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -580,13 +586,19 @@ public partial class Core
       }
       tempBuffer1 = new double[(int)((endIdx - startIdx + 1) * 1)];
       tempBuffer2 = new double[(int)((endIdx - startIdx + 1) * 1)];
-      retCode = MA(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, tempBuffer1);
+      OutRange _xr0 = MA(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, tempBuffer1);
+      outBegIdx = _xr0.BegIdx;
+      outNBElement = _xr0.Count;
+      retCode = RetCode.Success;
       if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
          outNBElement = 0;
          return retCode ;
       }
       maBegIdx = (int)outBegIdx;
-      retCode = STDDEV((int)outBegIdx, endIdx, inReal, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, tempBuffer2);
+      OutRange _xr1 = STDDEV((int)outBegIdx, endIdx, inReal, optInTimePeriod, 1.0, tempBuffer2);
+      outBegIdx = _xr1.BegIdx;
+      outNBElement = _xr1.Count;
+      retCode = RetCode.Success;
       if( retCode != RetCode.Success ) {
          outNBElement = 0;
          return retCode ;
@@ -698,11 +710,32 @@ public partial class Core
       RequireLength("BBANDS", "outRealUpperBand", outRealUpperBand.Length, guardOutLen);
       RequireLength("BBANDS", "outRealMiddleBand", outRealMiddleBand.Length, guardOutLen);
       RequireLength("BBANDS", "outRealLowerBand", outRealLowerBand.Length, guardOutLen);
-      RetCode retCode = BBANDS(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out int outBegIdx, out int outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+      RetCode retCode = BBANDS_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out int outBegIdx, out int outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
       if( retCode != RetCode.Success ) {
          throw Failure("BBANDS", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode BBANDS( int startIdx,
+                            int endIdx,
+                            ReadOnlySpan<double> inReal,
+                            int optInTimePeriod,
+                            double optInNbDevUp,
+                            double optInNbDevDn,
+                            MAType optInMAType,
+                            out int outBegIdx,
+                            out int outNBElement,
+                            Span<double> outRealUpperBand,
+                            Span<double> outRealMiddleBand,
+                            Span<double> outRealLowerBand )
+   {
+      try {
+         return BBANDS_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out outBegIdx, out outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Bollinger Bands: a moving-average middle band with upper and lower bands
@@ -795,11 +828,32 @@ public partial class Core
       RequireLength("BBANDS", "outRealUpperBand", outRealUpperBand.Length, guardOutLen);
       RequireLength("BBANDS", "outRealMiddleBand", outRealMiddleBand.Length, guardOutLen);
       RequireLength("BBANDS", "outRealLowerBand", outRealLowerBand.Length, guardOutLen);
-      RetCode retCode = BBANDS(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out int outBegIdx, out int outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+      RetCode retCode = BBANDS_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out int outBegIdx, out int outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
       if( retCode != RetCode.Success ) {
          throw Failure("BBANDS", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode BBANDS( int startIdx,
+                            int endIdx,
+                            ReadOnlySpan<float> inReal,
+                            int optInTimePeriod,
+                            double optInNbDevUp,
+                            double optInNbDevDn,
+                            MAType optInMAType,
+                            out int outBegIdx,
+                            out int outNBElement,
+                            Span<double> outRealUpperBand,
+                            Span<double> outRealMiddleBand,
+                            Span<double> outRealLowerBand )
+   {
+      try {
+         return BBANDS_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out outBegIdx, out outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -1028,7 +1082,7 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( historyLen < BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.InsufficientHistory;
       }
       Span<double> sc_outRealUpperBand = outStride == 1 ? outRealUpperBand : new double[historyLen];
       Span<double> sc_outRealMiddleBand = outStride == 1 ? outRealMiddleBand : new double[historyLen];
@@ -1056,7 +1110,7 @@ public partial class Core
       if( BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       tempBuffer1 = new double[(int)((endIdx - startIdx + 1) * 1)];
       tempBuffer2 = new double[(int)((endIdx - startIdx + 1) * 1)];
@@ -1112,7 +1166,7 @@ public partial class Core
       }
       /* Capture the live producer state + sub handles. */
       if( outNBElement < 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.InsufficientHistory;
       }
       sp.optInTimePeriod = optInTimePeriod;
       sp.optInNbDevUp = optInNbDevUp;
@@ -1196,7 +1250,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public BBANDS_Stream BBANDS_Open( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return BBANDS_OpenInternal(inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
    }
 
@@ -1236,7 +1290,7 @@ public partial class Core
    /// output.</exception>
    public BBANDS_Stream BBANDS_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, Span<double> outRealUpperBand, Span<double> outRealMiddleBand, Span<double> outRealLowerBand )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       BBANDS_Stream sp = new BBANDS_Stream(this);
       RetCode retCode = BBANDS_OpenAndFillBody(sp, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out int outBegIdx, out int outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

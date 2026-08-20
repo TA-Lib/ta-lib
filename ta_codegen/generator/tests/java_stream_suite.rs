@@ -76,13 +76,19 @@ fn test_java_sma_ring_stream_section() {
     // Step is a package-private Core method writing the cur_ field.
     assert!(s.contains("void SMA_StreamStep( SMA_Stream sp, double inReal )"));
     assert!(s.contains("sp.cur_outReal ="));
-    // Open body: early-success no-data guard maps to the in-band
-    // insufficient-history signal; the wrapper types it.
-    assert!(s.contains("return RetCode.OutOfRangeEndIndex ;"));
+    // Open body: the early-success no-data guard maps to InsufficientHistory,
+    // which the wrapper types. It used to BORROW OutOfRangeEndIndex in band,
+    // which also meant a history LONGER than MAX_INDEX + 1 -- the only other
+    // producer of that code -- surfaced as "history shorter than lookback + 1".
+    assert!(s.contains("return RetCode.InsufficientHistory ;"));
+    assert!(!s.contains("return RetCode.OutOfRangeEndIndex ;"),
+            "the borrowed in-band code is gone from the open body");
     // The message names the function as the metadata registry spells it, with
     // no C `TA_` prefix (that is C's namespacing, meaningless on a classpath).
     assert!(s.contains("throw new InsufficientHistoryException(\"SMA open:"));
-    assert!(s.contains("throw new IllegalStateException(\"SMA open: internal error\");"));
+    // Carrying, not a plain JDK type: the code has to be recoverable from every
+    // failure the library raises, on this ladder as much as the batch one.
+    assert!(s.contains("throw new TaLibStateException(\"SMA open: internal error\", retCode);"));
     assert!(!s.contains("\"TA_SMA open:"), "no C-namespaced prefix survives");
     // OpenAndFill: aliasing guard (Java is the one managed backend where
     // out == in compiles) and the batch output tail.

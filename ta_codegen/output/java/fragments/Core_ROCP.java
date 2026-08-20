@@ -34,13 +34,13 @@
       return optInTimePeriod ;
 
    }
-   RetCode ROCP_Internal( int startIdx,
-                          int endIdx,
-                          double inReal[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode ROCP_Body( int startIdx,
+                      int endIdx,
+                      double inReal[],
+                      int optInTimePeriod,
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -118,13 +118,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode ROCP_Internal( int startIdx,
-                          int endIdx,
-                          float inReal[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode ROCP_Body( int startIdx,
+                      int endIdx,
+                      float inReal[],
+                      int optInTimePeriod,
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -212,6 +212,7 @@
                          int optInTimePeriod,
                          double outReal[] )
    {
+      requireIndexRange("ROCP", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, ROCP_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -219,11 +220,30 @@
       requireLength("ROCP", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ROCP_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ROCP_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ROCP", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode ROCP_Internal( int startIdx,
+                          int endIdx,
+                          double inReal[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+   {
+      try {
+         return ROCP_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Rate of change expressed as a fraction of the price optInTimePeriod bars
@@ -275,6 +295,7 @@
                          int optInTimePeriod,
                          double outReal[] )
    {
+      requireIndexRange("ROCP", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, ROCP_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -282,11 +303,30 @@
       requireLength("ROCP", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ROCP_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ROCP_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ROCP", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode ROCP_Internal( int startIdx,
+                          int endIdx,
+                          float inReal[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+   {
+      try {
+         return ROCP_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -362,7 +402,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("ROCP update: BadParam");
+            throw new TaLibArgumentException("ROCP update: BadParam", RetCode.BadParam);
          core.ROCP_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -376,7 +416,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("ROCP peek: BadParam");
+            throw new TaLibArgumentException("ROCP peek: BadParam", RetCode.BadParam);
          ROCP_Stream scratch = new ROCP_Stream(this);
          core.ROCP_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -477,7 +517,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Calculate Rate of change Ratio: (price / prevPrice) */
       outIdx = 0;
@@ -536,13 +576,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("ROCP openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("ROCP openAndFill: internal error");
+         throw new TaLibStateException("ROCP openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("ROCP openAndFill: " + retCode);
+      throw new TaLibArgumentException("ROCP openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind ROCP_Open (composition seam). */
    ROCP_Stream ROCP_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -552,13 +592,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("ROCP open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("ROCP open: internal error");
+         throw new TaLibStateException("ROCP open: internal error", retCode);
       }
-      throw new IllegalArgumentException("ROCP open: " + retCode);
+      throw new TaLibArgumentException("ROCP open: " + retCode, retCode);
    }
    /**
     * Open a live ROCP stream over the warm-up history; the handle's
@@ -593,11 +633,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("ROCP openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("ROCP openAndFill: internal error");
+         throw new TaLibStateException("ROCP openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("ROCP openAndFill: " + retCode);
+      throw new TaLibArgumentException("ROCP openAndFill: " + retCode, retCode);
    }

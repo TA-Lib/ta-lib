@@ -46,15 +46,15 @@
       }
 
    }
-   RetCode MINUS_DI_Internal( int startIdx,
-                              int endIdx,
-                              double inHigh[],
-                              double inLow[],
-                              double inClose[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
+   RetCode MINUS_DI_Body( int startIdx,
+                          int endIdx,
+                          double inHigh[],
+                          double inLow[],
+                          double inClose[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -371,15 +371,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode MINUS_DI_Internal( int startIdx,
-                              int endIdx,
-                              float inHigh[],
-                              float inLow[],
-                              float inClose[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
+   RetCode MINUS_DI_Body( int startIdx,
+                          int endIdx,
+                          float inHigh[],
+                          float inLow[],
+                          float inClose[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -623,6 +623,7 @@
                              int optInTimePeriod,
                              double outReal[] )
    {
+      requireIndexRange("MINUS_DI", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, MINUS_DI_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -632,11 +633,32 @@
       requireLength("MINUS_DI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MINUS_DI_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MINUS_DI_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MINUS_DI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode MINUS_DI_Internal( int startIdx,
+                              int endIdx,
+                              double inHigh[],
+                              double inLow[],
+                              double inClose[],
+                              int optInTimePeriod,
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outReal[] )
+   {
+      try {
+         return MINUS_DI_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Wilder's Minus Directional Indicator: the Wilder-smoothed downward
@@ -699,6 +721,7 @@
                              int optInTimePeriod,
                              double outReal[] )
    {
+      requireIndexRange("MINUS_DI", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, MINUS_DI_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -708,11 +731,32 @@
       requireLength("MINUS_DI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MINUS_DI_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MINUS_DI_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MINUS_DI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode MINUS_DI_Internal( int startIdx,
+                              int endIdx,
+                              float inHigh[],
+                              float inLow[],
+                              float inClose[],
+                              int optInTimePeriod,
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outReal[] )
+   {
+      try {
+         return MINUS_DI_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -799,7 +843,7 @@
        */
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("MINUS_DI update: BadParam");
+            throw new TaLibArgumentException("MINUS_DI update: BadParam", RetCode.BadParam);
          core.MINUS_DI_StreamStep(this, inHigh, inLow, inClose);
          return this.cur_outReal;
       }
@@ -813,7 +857,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("MINUS_DI peek: BadParam");
+            throw new TaLibArgumentException("MINUS_DI peek: BadParam", RetCode.BadParam);
          MINUS_DI_Stream scratch = new MINUS_DI_Stream(this);
          core.MINUS_DI_StreamStep(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
@@ -1044,7 +1088,7 @@
          if( startIdx > endIdx ) {
             outBegIdx.value = 0;
             outNBElement.value = 0;
-            return RetCode.OutOfRangeEndIndex ;
+            return RetCode.InsufficientHistory ;
          }
          /* Indicate where the next output should be put
           * in the outReal.
@@ -1228,7 +1272,7 @@
          if( startIdx > endIdx ) {
             outBegIdx.value = 0;
             outNBElement.value = 0;
-            return RetCode.OutOfRangeEndIndex ;
+            return RetCode.InsufficientHistory ;
          }
          /* Indicate where the next output should be put
           * in the outReal.
@@ -1403,13 +1447,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MINUS_DI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MINUS_DI openAndFill: internal error");
+         throw new TaLibStateException("MINUS_DI openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("MINUS_DI openAndFill: " + retCode);
+      throw new TaLibArgumentException("MINUS_DI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind MINUS_DI_Open (composition seam). */
    MINUS_DI_Stream MINUS_DI_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -1419,13 +1463,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MINUS_DI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MINUS_DI open: internal error");
+         throw new TaLibStateException("MINUS_DI open: internal error", retCode);
       }
-      throw new IllegalArgumentException("MINUS_DI open: " + retCode);
+      throw new TaLibArgumentException("MINUS_DI open: " + retCode, retCode);
    }
    /**
     * Open a live MINUS_DI stream over the warm-up history; the handle's
@@ -1460,11 +1504,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MINUS_DI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MINUS_DI openAndFill: internal error");
+         throw new TaLibStateException("MINUS_DI openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("MINUS_DI openAndFill: " + retCode);
+      throw new TaLibArgumentException("MINUS_DI openAndFill: " + retCode, retCode);
    }

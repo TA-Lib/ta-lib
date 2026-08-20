@@ -427,7 +427,7 @@ static TA_RetCode TA_CORREL_OpenCore( struct TA_CORREL_Stream **stream, const do
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       *outBegIdx= startIdx;
       trailingIdx = startIdx - lookbackTotal;

@@ -42,15 +42,15 @@
       return EMA_Lookback(26) + EMA_Lookback(optInSignalPeriod) ;
 
    }
-   RetCode MACDFIX_Internal( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             int optInSignalPeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outMACD[],
-                             double outMACDSignal[],
-                             double outMACDHist[] )
+   RetCode MACDFIX_Body( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInSignalPeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outMACD[],
+                         double outMACDSignal[],
+                         double outMACDHist[] )
    {
       double prevFast = 0;
       double prevSlow = 0;
@@ -223,15 +223,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode MACDFIX_Internal( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             int optInSignalPeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outMACD[],
-                             double outMACDSignal[],
-                             double outMACDHist[] )
+   RetCode MACDFIX_Body( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInSignalPeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outMACD[],
+                         double outMACDSignal[],
+                         double outMACDHist[] )
    {
       double prevFast = 0;
       double prevSlow = 0;
@@ -402,6 +402,7 @@
                             double outMACDSignal[],
                             double outMACDHist[] )
    {
+      requireIndexRange("MACDFIX", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, MACDFIX_Lookback(optInSignalPeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -411,11 +412,32 @@
       requireLength("MACDFIX", "outMACDHist", outMACDHist, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MACDFIX_Internal(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+      RetCode retCode = MACDFIX_Body(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
       if( retCode != RetCode.Success ) {
          throw failure("MACDFIX", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode MACDFIX_Internal( int startIdx,
+                             int endIdx,
+                             double inReal[],
+                             int optInSignalPeriod,
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             double outMACD[],
+                             double outMACDSignal[],
+                             double outMACDHist[] )
+   {
+      try {
+         return MACDFIX_Body(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * MACD with the fast/slow EMAs fixed to the classic 12/26 periods (with the
@@ -479,6 +501,7 @@
                             double outMACDSignal[],
                             double outMACDHist[] )
    {
+      requireIndexRange("MACDFIX", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, MACDFIX_Lookback(optInSignalPeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -488,11 +511,32 @@
       requireLength("MACDFIX", "outMACDHist", outMACDHist, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MACDFIX_Internal(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+      RetCode retCode = MACDFIX_Body(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
       if( retCode != RetCode.Success ) {
          throw failure("MACDFIX", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode MACDFIX_Internal( int startIdx,
+                             int endIdx,
+                             float inReal[],
+                             int optInSignalPeriod,
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             double outMACD[],
+                             double outMACDSignal[],
+                             double outMACDHist[] )
+   {
+      try {
+         return MACDFIX_Body(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -596,7 +640,7 @@
        */
       public Value update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("MACDFIX update: BadParam");
+            throw new TaLibArgumentException("MACDFIX update: BadParam", RetCode.BadParam);
          core.MACDFIX_StreamStep(this, inReal);
          this.cachedValue = new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
          return this.cachedValue;
@@ -611,7 +655,7 @@
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("MACDFIX peek: BadParam");
+            throw new TaLibArgumentException("MACDFIX peek: BadParam", RetCode.BadParam);
          MACDFIX_Stream scratch = new MACDFIX_Stream(this);
          core.MACDFIX_StreamStep(scratch, inReal);
          return new Value(scratch.cur_outMACD, scratch.cur_outMACDSignal, scratch.cur_outMACDHist);
@@ -714,7 +758,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Everything is computed in a single lockstep pass: each bar
        * advances the fast and slow EMA (two independent recursions),
@@ -863,13 +907,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MACDFIX openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MACDFIX openAndFill: internal error");
+         throw new TaLibStateException("MACDFIX openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("MACDFIX openAndFill: " + retCode);
+      throw new TaLibArgumentException("MACDFIX openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind MACDFIX_Open (composition seam). */
    MACDFIX_Stream MACDFIX_OpenInternal( double inReal[], int startIdx, int optInSignalPeriod )
@@ -879,13 +923,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MACDFIX open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MACDFIX open: internal error");
+         throw new TaLibStateException("MACDFIX open: internal error", retCode);
       }
-      throw new IllegalArgumentException("MACDFIX open: " + retCode);
+      throw new TaLibArgumentException("MACDFIX open: " + retCode, retCode);
    }
    /**
     * Open a live MACDFIX stream over the warm-up history; the handle's
@@ -920,11 +964,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MACDFIX openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MACDFIX openAndFill: internal error");
+         throw new TaLibStateException("MACDFIX openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("MACDFIX openAndFill: " + retCode);
+      throw new TaLibArgumentException("MACDFIX openAndFill: " + retCode, retCode);
    }

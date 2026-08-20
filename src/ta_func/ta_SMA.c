@@ -299,7 +299,7 @@ static TA_RetCode TA_SMA_OpenCore( struct TA_SMA_Stream **stream, const double i
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       /* Do the MA calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */

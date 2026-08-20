@@ -520,7 +520,7 @@ static TA_RetCode TA_CMF_OpenCore( struct TA_CMF_Stream **stream, const double i
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx )
       {
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
       if( (int)optInTimePeriod > (int)(sizeof(local_mfv_flow)/sizeof(double)) )

@@ -84,13 +84,13 @@ public partial class Core
       return optInTimePeriod ;
 
    }
-   internal RetCode CMOU( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<double> inReal,
-                          int optInTimePeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
+   internal RetCode CMOU_Body( int startIdx,
+                               int endIdx,
+                               ReadOnlySpan<double> inReal,
+                               int optInTimePeriod,
+                               out int outBegIdx,
+                               out int outNBElement,
+                               Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -218,13 +218,13 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode CMOU( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<float> inReal,
-                          int optInTimePeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
+   internal RetCode CMOU_Body( int startIdx,
+                               int endIdx,
+                               ReadOnlySpan<float> inReal,
+                               int optInTimePeriod,
+                               out int outBegIdx,
+                               out int outNBElement,
+                               Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -372,11 +372,27 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("CMOU", "inReal", inReal.Length, guardInLen);
       RequireLength("CMOU", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = CMOU(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = CMOU_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("CMOU", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode CMOU( int startIdx,
+                          int endIdx,
+                          ReadOnlySpan<double> inReal,
+                          int optInTimePeriod,
+                          out int outBegIdx,
+                          out int outNBElement,
+                          Span<double> outReal )
+   {
+      try {
+         return CMOU_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Chande Momentum Oscillator: Tushar Chande's original momentum oscillator,
@@ -441,11 +457,27 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("CMOU", "inReal", inReal.Length, guardInLen);
       RequireLength("CMOU", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = CMOU(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = CMOU_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("CMOU", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode CMOU( int startIdx,
+                          int endIdx,
+                          ReadOnlySpan<float> inReal,
+                          int optInTimePeriod,
+                          out int outBegIdx,
+                          out int outNBElement,
+                          Span<double> outReal )
+   {
+      try {
+         return CMOU_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -671,7 +703,7 @@ public partial class Core
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Accumulate the up/down sums over the first window: the optInTimePeriod
        * changes ending at startIdx (prices inReal[startIdx-optInTimePeriod ..
@@ -831,7 +863,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public CMOU_Stream CMOU_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return CMOU_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -861,7 +893,7 @@ public partial class Core
    /// output.</exception>
    public CMOU_Stream CMOU_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       CMOU_Stream sp = new CMOU_Stream(this);
       RetCode retCode = CMOU_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

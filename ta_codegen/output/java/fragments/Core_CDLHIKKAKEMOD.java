@@ -35,15 +35,15 @@
       return Math.max(1, Near_avgPeriod) + 5 ;
 
    }
-   RetCode CDLHIKKAKEMOD_Internal( int startIdx,
-                                   int endIdx,
-                                   double inOpen[],
-                                   double inHigh[],
-                                   double inLow[],
-                                   double inClose[],
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   int outInteger[] )
+   RetCode CDLHIKKAKEMOD_Body( int startIdx,
+                               int endIdx,
+                               double inOpen[],
+                               double inHigh[],
+                               double inLow[],
+                               double inClose[],
+                               MInteger outBegIdx,
+                               MInteger outNBElement,
+                               int outInteger[] )
    {
       double NearPeriodTotal = 0;
       int i = 0;
@@ -171,15 +171,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode CDLHIKKAKEMOD_Internal( int startIdx,
-                                   int endIdx,
-                                   float inOpen[],
-                                   float inHigh[],
-                                   float inLow[],
-                                   float inClose[],
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   int outInteger[] )
+   RetCode CDLHIKKAKEMOD_Body( int startIdx,
+                               int endIdx,
+                               float inOpen[],
+                               float inHigh[],
+                               float inLow[],
+                               float inClose[],
+                               MInteger outBegIdx,
+                               MInteger outNBElement,
+                               int outInteger[] )
    {
       double NearPeriodTotal = 0;
       int i = 0;
@@ -312,6 +312,7 @@
                                   double inClose[],
                                   int outInteger[] )
    {
+      requireIndexRange("CDLHIKKAKEMOD", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CDLHIKKAKEMOD_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -322,11 +323,32 @@
       requireLength("CDLHIKKAKEMOD", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLHIKKAKEMOD_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLHIKKAKEMOD_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLHIKKAKEMOD", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode CDLHIKKAKEMOD_Internal( int startIdx,
+                                   int endIdx,
+                                   double inOpen[],
+                                   double inHigh[],
+                                   double inLow[],
+                                   double inClose[],
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   int outInteger[] )
+   {
+      try {
+         return CDLHIKKAKEMOD_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * A four-candle pattern: two successively narrower inside bars, then a
@@ -381,6 +403,7 @@
                                   float inClose[],
                                   int outInteger[] )
    {
+      requireIndexRange("CDLHIKKAKEMOD", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CDLHIKKAKEMOD_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -391,11 +414,32 @@
       requireLength("CDLHIKKAKEMOD", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLHIKKAKEMOD_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLHIKKAKEMOD_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLHIKKAKEMOD", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode CDLHIKKAKEMOD_Internal( int startIdx,
+                                   int endIdx,
+                                   float inOpen[],
+                                   float inHigh[],
+                                   float inLow[],
+                                   float inClose[],
+                                   MInteger outBegIdx,
+                                   MInteger outNBElement,
+                                   int outInteger[] )
+   {
+      try {
+         return CDLHIKKAKEMOD_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -525,7 +569,7 @@
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("CDLHIKKAKEMOD update: BadParam");
+            throw new TaLibArgumentException("CDLHIKKAKEMOD update: BadParam", RetCode.BadParam);
          core.CDLHIKKAKEMOD_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outInteger;
       }
@@ -539,7 +583,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("CDLHIKKAKEMOD peek: BadParam");
+            throw new TaLibArgumentException("CDLHIKKAKEMOD peek: BadParam", RetCode.BadParam);
          CDLHIKKAKEMOD_Stream scratch = new CDLHIKKAKEMOD_Stream(this);
          core.CDLHIKKAKEMOD_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
@@ -646,7 +690,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -796,13 +840,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLHIKKAKEMOD openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLHIKKAKEMOD openAndFill: internal error");
+         throw new TaLibStateException("CDLHIKKAKEMOD openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLHIKKAKEMOD openAndFill: " + retCode);
+      throw new TaLibArgumentException("CDLHIKKAKEMOD openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind CDLHIKKAKEMOD_Open (composition seam). */
    CDLHIKKAKEMOD_Stream CDLHIKKAKEMOD_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -812,13 +856,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLHIKKAKEMOD open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLHIKKAKEMOD open: internal error");
+         throw new TaLibStateException("CDLHIKKAKEMOD open: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLHIKKAKEMOD open: " + retCode);
+      throw new TaLibArgumentException("CDLHIKKAKEMOD open: " + retCode, retCode);
    }
    /**
     * Open a live CDLHIKKAKEMOD stream over the warm-up history; the handle's
@@ -853,11 +897,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLHIKKAKEMOD openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLHIKKAKEMOD openAndFill: internal error");
+         throw new TaLibStateException("CDLHIKKAKEMOD openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLHIKKAKEMOD openAndFill: " + retCode);
+      throw new TaLibArgumentException("CDLHIKKAKEMOD openAndFill: " + retCode, retCode);
    }

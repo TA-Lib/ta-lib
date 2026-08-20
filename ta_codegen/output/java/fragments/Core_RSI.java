@@ -40,13 +40,13 @@
       return retValue ;
 
    }
-   RetCode RSI_Internal( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode RSI_Body( int startIdx,
+                     int endIdx,
+                     double inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -220,13 +220,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode RSI_Internal( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode RSI_Body( int startIdx,
+                     int endIdx,
+                     float inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -403,6 +403,7 @@
                         int optInTimePeriod,
                         double outReal[] )
    {
+      requireIndexRange("RSI", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, RSI_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -410,11 +411,30 @@
       requireLength("RSI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = RSI_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = RSI_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("RSI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode RSI_Internal( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      try {
+         return RSI_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Wilder's Relative Strength Index, a momentum oscillator bounded 0-100 from
@@ -480,6 +500,7 @@
                         int optInTimePeriod,
                         double outReal[] )
    {
+      requireIndexRange("RSI", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, RSI_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -487,11 +508,30 @@
       requireLength("RSI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = RSI_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = RSI_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("RSI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode RSI_Internal( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      try {
+         return RSI_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -563,7 +603,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("RSI update: BadParam");
+            throw new TaLibArgumentException("RSI update: BadParam", RetCode.BadParam);
          core.RSI_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -577,7 +617,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("RSI peek: BadParam");
+            throw new TaLibArgumentException("RSI peek: BadParam", RetCode.BadParam);
          RSI_Stream scratch = new RSI_Stream(this);
          core.RSI_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -655,7 +695,7 @@
       }
       if( optInTimePeriod == 1 ) {
          if( historyLen < RSI_Lookback(optInTimePeriod) + 1 ) {
-            return RetCode.OutOfRangeEndIndex;
+            return RetCode.InsufficientHistory;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.prevGain = 0.0;
@@ -696,7 +736,7 @@
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outIdx = 0;
       /* Index into the output. */
@@ -838,13 +878,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("RSI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("RSI openAndFill: internal error");
+         throw new TaLibStateException("RSI openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("RSI openAndFill: " + retCode);
+      throw new TaLibArgumentException("RSI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind RSI_Open (composition seam). */
    RSI_Stream RSI_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -854,13 +894,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("RSI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("RSI open: internal error");
+         throw new TaLibStateException("RSI open: internal error", retCode);
       }
-      throw new IllegalArgumentException("RSI open: " + retCode);
+      throw new TaLibArgumentException("RSI open: " + retCode, retCode);
    }
    /**
     * Open a live RSI stream over the warm-up history; the handle's
@@ -895,11 +935,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("RSI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("RSI openAndFill: internal error");
+         throw new TaLibStateException("RSI openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("RSI openAndFill: " + retCode);
+      throw new TaLibArgumentException("RSI openAndFill: " + retCode, retCode);
    }

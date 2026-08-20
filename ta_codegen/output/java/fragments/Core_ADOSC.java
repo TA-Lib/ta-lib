@@ -49,17 +49,17 @@
       return EMA_Lookback(slowestPeriod) ;
 
    }
-   RetCode ADOSC_Internal( int startIdx,
-                           int endIdx,
-                           double inHigh[],
-                           double inLow[],
-                           double inClose[],
-                           double inVolume[],
-                           int optInFastPeriod,
-                           int optInSlowPeriod,
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outReal[] )
+   RetCode ADOSC_Body( int startIdx,
+                       int endIdx,
+                       double inHigh[],
+                       double inLow[],
+                       double inClose[],
+                       double inVolume[],
+                       int optInFastPeriod,
+                       int optInSlowPeriod,
+                       MInteger outBegIdx,
+                       MInteger outNBElement,
+                       double outReal[] )
    {
       int today = 0;
       int outIdx = 0;
@@ -193,17 +193,17 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode ADOSC_Internal( int startIdx,
-                           int endIdx,
-                           float inHigh[],
-                           float inLow[],
-                           float inClose[],
-                           float inVolume[],
-                           int optInFastPeriod,
-                           int optInSlowPeriod,
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outReal[] )
+   RetCode ADOSC_Body( int startIdx,
+                       int endIdx,
+                       float inHigh[],
+                       float inLow[],
+                       float inClose[],
+                       float inVolume[],
+                       int optInFastPeriod,
+                       int optInSlowPeriod,
+                       MInteger outBegIdx,
+                       MInteger outNBElement,
+                       double outReal[] )
    {
       int today = 0;
       int outIdx = 0;
@@ -354,6 +354,7 @@
                           int optInSlowPeriod,
                           double outReal[] )
    {
+      requireIndexRange("ADOSC", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, ADOSC_Lookback(optInFastPeriod, optInSlowPeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -364,11 +365,34 @@
       requireLength("ADOSC", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ADOSC_Internal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ADOSC_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ADOSC", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode ADOSC_Internal( int startIdx,
+                           int endIdx,
+                           double inHigh[],
+                           double inLow[],
+                           double inClose[],
+                           double inVolume[],
+                           int optInFastPeriod,
+                           int optInSlowPeriod,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
+   {
+      try {
+         return ADOSC_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Chaikin A/D Oscillator: the difference between a fast and a slow EMA of
@@ -431,6 +455,7 @@
                           int optInSlowPeriod,
                           double outReal[] )
    {
+      requireIndexRange("ADOSC", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, ADOSC_Lookback(optInFastPeriod, optInSlowPeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -441,11 +466,34 @@
       requireLength("ADOSC", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ADOSC_Internal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ADOSC_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ADOSC", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode ADOSC_Internal( int startIdx,
+                           int endIdx,
+                           float inHigh[],
+                           float inLow[],
+                           float inClose[],
+                           float inVolume[],
+                           int optInFastPeriod,
+                           int optInSlowPeriod,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
+   {
+      try {
+         return ADOSC_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -532,7 +580,7 @@
        */
       public double update( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new IllegalArgumentException("ADOSC update: BadParam");
+            throw new TaLibArgumentException("ADOSC update: BadParam", RetCode.BadParam);
          core.ADOSC_StreamStep(this, inHigh, inLow, inClose, inVolume);
          return this.cur_outReal;
       }
@@ -546,7 +594,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new IllegalArgumentException("ADOSC peek: BadParam");
+            throw new TaLibArgumentException("ADOSC peek: BadParam", RetCode.BadParam);
          ADOSC_Stream scratch = new ADOSC_Stream(this);
          core.ADOSC_StreamStep(scratch, inHigh, inLow, inClose, inVolume);
          return scratch.cur_outReal;
@@ -661,7 +709,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outBegIdx.value = startIdx;
       today = startIdx - lookbackTotal;
@@ -759,13 +807,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("ADOSC openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("ADOSC openAndFill: internal error");
+         throw new TaLibStateException("ADOSC openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("ADOSC openAndFill: " + retCode);
+      throw new TaLibArgumentException("ADOSC openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind ADOSC_Open (composition seam). */
    ADOSC_Stream ADOSC_OpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod )
@@ -775,13 +823,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("ADOSC open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("ADOSC open: internal error");
+         throw new TaLibStateException("ADOSC open: internal error", retCode);
       }
-      throw new IllegalArgumentException("ADOSC open: " + retCode);
+      throw new TaLibArgumentException("ADOSC open: " + retCode, retCode);
    }
    /**
     * Open a live ADOSC stream over the warm-up history; the handle's
@@ -816,11 +864,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("ADOSC openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("ADOSC openAndFill: internal error");
+         throw new TaLibStateException("ADOSC openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("ADOSC openAndFill: " + retCode);
+      throw new TaLibArgumentException("ADOSC openAndFill: " + retCode, retCode);
    }

@@ -444,7 +444,7 @@ static TA_RetCode TA_MINMAXINDEX_OpenCore( struct TA_MINMAXINDEX_Stream **stream
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       /* Proceed with the calculation for the requested range.
        * (The integer outputs can never share the real input's buffer —

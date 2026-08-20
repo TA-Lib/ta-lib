@@ -76,13 +76,13 @@ public partial class Core
       return optInTimePeriod - 1 ;
 
    }
-   internal RetCode AVGDEV( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<double> inReal,
-                            int optInTimePeriod,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outReal )
+   internal RetCode AVGDEV_Body( int startIdx,
+                                 int endIdx,
+                                 ReadOnlySpan<double> inReal,
+                                 int optInTimePeriod,
+                                 out int outBegIdx,
+                                 out int outNBElement,
+                                 Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -136,13 +136,13 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode AVGDEV( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<float> inReal,
-                            int optInTimePeriod,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outReal )
+   internal RetCode AVGDEV_Body( int startIdx,
+                                 int endIdx,
+                                 ReadOnlySpan<float> inReal,
+                                 int optInTimePeriod,
+                                 out int outBegIdx,
+                                 out int outNBElement,
+                                 Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -244,11 +244,27 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("AVGDEV", "inReal", inReal.Length, guardInLen);
       RequireLength("AVGDEV", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = AVGDEV(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = AVGDEV_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("AVGDEV", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode AVGDEV( int startIdx,
+                            int endIdx,
+                            ReadOnlySpan<double> inReal,
+                            int optInTimePeriod,
+                            out int outBegIdx,
+                            out int outNBElement,
+                            Span<double> outReal )
+   {
+      try {
+         return AVGDEV_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Rolling average absolute deviation of a series from its own simple moving
@@ -309,11 +325,27 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("AVGDEV", "inReal", inReal.Length, guardInLen);
       RequireLength("AVGDEV", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = AVGDEV(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = AVGDEV_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("AVGDEV", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode AVGDEV( int startIdx,
+                            int endIdx,
+                            ReadOnlySpan<float> inReal,
+                            int optInTimePeriod,
+                            out int outBegIdx,
+                            out int outNBElement,
+                            Span<double> outReal )
+   {
+      try {
+         return AVGDEV_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -485,7 +517,7 @@ public partial class Core
       if( today > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Process the initial DM and TR */
       outBegIdx = today;
@@ -584,7 +616,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public AVGDEV_Stream AVGDEV_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return AVGDEV_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -614,7 +646,7 @@ public partial class Core
    /// output.</exception>
    public AVGDEV_Stream AVGDEV_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       AVGDEV_Stream sp = new AVGDEV_Stream(this);
       RetCode retCode = AVGDEV_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

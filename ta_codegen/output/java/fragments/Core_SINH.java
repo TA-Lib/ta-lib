@@ -25,12 +25,12 @@
       return 0 ;
 
    }
-   RetCode SINH_Internal( int startIdx,
-                          int endIdx,
-                          double inReal[],
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode SINH_Body( int startIdx,
+                      int endIdx,
+                      double inReal[],
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -47,12 +47,12 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode SINH_Internal( int startIdx,
-                          int endIdx,
-                          float inReal[],
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode SINH_Body( int startIdx,
+                      int endIdx,
+                      float inReal[],
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -110,6 +110,7 @@
                          double inReal[],
                          double outReal[] )
    {
+      requireIndexRange("SINH", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, SINH_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -117,11 +118,29 @@
       requireLength("SINH", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SINH_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SINH_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("SINH", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode SINH_Internal( int startIdx,
+                          int endIdx,
+                          double inReal[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+   {
+      try {
+         return SINH_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Element-wise hyperbolic sine of the input series. A vector math transform
@@ -167,6 +186,7 @@
                          float inReal[],
                          double outReal[] )
    {
+      requireIndexRange("SINH", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, SINH_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -174,11 +194,29 @@
       requireLength("SINH", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SINH_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SINH_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("SINH", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode SINH_Internal( int startIdx,
+                          int endIdx,
+                          float inReal[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+   {
+      try {
+         return SINH_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -238,7 +276,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("SINH update: BadParam");
+            throw new TaLibArgumentException("SINH update: BadParam", RetCode.BadParam);
          core.SINH_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -252,7 +290,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("SINH peek: BadParam");
+            throw new TaLibArgumentException("SINH peek: BadParam", RetCode.BadParam);
          SINH_Stream scratch = new SINH_Stream(this);
          core.SINH_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -326,13 +364,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("SINH openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("SINH openAndFill: internal error");
+         throw new TaLibStateException("SINH openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("SINH openAndFill: " + retCode);
+      throw new TaLibArgumentException("SINH openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind SINH_Open (composition seam). */
    SINH_Stream SINH_OpenInternal( double inReal[], int startIdx )
@@ -342,13 +380,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("SINH open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("SINH open: internal error");
+         throw new TaLibStateException("SINH open: internal error", retCode);
       }
-      throw new IllegalArgumentException("SINH open: " + retCode);
+      throw new TaLibArgumentException("SINH open: " + retCode, retCode);
    }
    /**
     * Open a live SINH stream over the warm-up history; the handle's
@@ -383,11 +421,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("SINH openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("SINH openAndFill: internal error");
+         throw new TaLibStateException("SINH openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("SINH openAndFill: " + retCode);
+      throw new TaLibArgumentException("SINH openAndFill: " + retCode, retCode);
    }

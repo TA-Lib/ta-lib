@@ -30,15 +30,15 @@
       return ShadowVeryShort_avgPeriod + 4 ;
 
    }
-   RetCode CDLLADDERBOTTOM_Internal( int startIdx,
-                                     int endIdx,
-                                     double inOpen[],
-                                     double inHigh[],
-                                     double inLow[],
-                                     double inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outInteger[] )
+   RetCode CDLLADDERBOTTOM_Body( int startIdx,
+                                 int endIdx,
+                                 double inOpen[],
+                                 double inHigh[],
+                                 double inLow[],
+                                 double inClose[],
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 int outInteger[] )
    {
       double ShadowVeryShortPeriodTotal = 0;
       int i = 0;
@@ -121,15 +121,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode CDLLADDERBOTTOM_Internal( int startIdx,
-                                     int endIdx,
-                                     float inOpen[],
-                                     float inHigh[],
-                                     float inLow[],
-                                     float inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outInteger[] )
+   RetCode CDLLADDERBOTTOM_Body( int startIdx,
+                                 int endIdx,
+                                 float inOpen[],
+                                 float inHigh[],
+                                 float inLow[],
+                                 float inClose[],
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 int outInteger[] )
    {
       double ShadowVeryShortPeriodTotal = 0;
       int i = 0;
@@ -230,6 +230,7 @@
                                     double inClose[],
                                     int outInteger[] )
    {
+      requireIndexRange("CDLLADDERBOTTOM", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CDLLADDERBOTTOM_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -240,11 +241,32 @@
       requireLength("CDLLADDERBOTTOM", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLLADDERBOTTOM_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLLADDERBOTTOM_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLLADDERBOTTOM", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode CDLLADDERBOTTOM_Internal( int startIdx,
+                                     int endIdx,
+                                     double inOpen[],
+                                     double inHigh[],
+                                     double inLow[],
+                                     double inClose[],
+                                     MInteger outBegIdx,
+                                     MInteger outNBElement,
+                                     int outInteger[] )
+   {
+      try {
+         return CDLLADDERBOTTOM_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Five-candle bullish reversal pattern: three consecutively lower black
@@ -302,6 +324,7 @@
                                     float inClose[],
                                     int outInteger[] )
    {
+      requireIndexRange("CDLLADDERBOTTOM", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CDLLADDERBOTTOM_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -312,11 +335,32 @@
       requireLength("CDLLADDERBOTTOM", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLLADDERBOTTOM_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLLADDERBOTTOM_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLLADDERBOTTOM", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode CDLLADDERBOTTOM_Internal( int startIdx,
+                                     int endIdx,
+                                     float inOpen[],
+                                     float inHigh[],
+                                     float inLow[],
+                                     float inClose[],
+                                     MInteger outBegIdx,
+                                     MInteger outNBElement,
+                                     int outInteger[] )
+   {
+      try {
+         return CDLLADDERBOTTOM_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -434,7 +478,7 @@
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("CDLLADDERBOTTOM update: BadParam");
+            throw new TaLibArgumentException("CDLLADDERBOTTOM update: BadParam", RetCode.BadParam);
          core.CDLLADDERBOTTOM_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outInteger;
       }
@@ -448,7 +492,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("CDLLADDERBOTTOM peek: BadParam");
+            throw new TaLibArgumentException("CDLLADDERBOTTOM peek: BadParam", RetCode.BadParam);
          CDLLADDERBOTTOM_Stream scratch = new CDLLADDERBOTTOM_Stream(this);
          core.CDLLADDERBOTTOM_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
@@ -545,7 +589,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -654,13 +698,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLLADDERBOTTOM openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLLADDERBOTTOM openAndFill: internal error");
+         throw new TaLibStateException("CDLLADDERBOTTOM openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLLADDERBOTTOM openAndFill: " + retCode);
+      throw new TaLibArgumentException("CDLLADDERBOTTOM openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind CDLLADDERBOTTOM_Open (composition seam). */
    CDLLADDERBOTTOM_Stream CDLLADDERBOTTOM_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -670,13 +714,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLLADDERBOTTOM open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLLADDERBOTTOM open: internal error");
+         throw new TaLibStateException("CDLLADDERBOTTOM open: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLLADDERBOTTOM open: " + retCode);
+      throw new TaLibArgumentException("CDLLADDERBOTTOM open: " + retCode, retCode);
    }
    /**
     * Open a live CDLLADDERBOTTOM stream over the warm-up history; the handle's
@@ -711,11 +755,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLLADDERBOTTOM openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLLADDERBOTTOM openAndFill: internal error");
+         throw new TaLibStateException("CDLLADDERBOTTOM openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLLADDERBOTTOM openAndFill: " + retCode);
+      throw new TaLibArgumentException("CDLLADDERBOTTOM openAndFill: " + retCode, retCode);
    }

@@ -425,7 +425,7 @@ static TA_RetCode TA_EFI_OpenCore( struct TA_EFI_Stream **stream, const double i
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       /* No smoothing at a period of 1: the output is the raw Force Index.
        * Explicit for the reason spelled out in ema.c -- at period 1 optInK_1 is
@@ -513,7 +513,7 @@ static TA_RetCode TA_EFI_OpenCore( struct TA_EFI_Stream **stream, const double i
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       /* No smoothing at a period of 1: the output is the raw Force Index.
        * Explicit for the reason spelled out in ema.c -- at period 1 optInK_1 is

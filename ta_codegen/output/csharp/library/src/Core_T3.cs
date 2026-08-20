@@ -100,14 +100,14 @@ public partial class Core
       return 6 * (optInTimePeriod - 1) + this.unstablePeriod[(int)FuncUnstId.T3] ;
 
    }
-   internal RetCode T3( int startIdx,
-                        int endIdx,
-                        ReadOnlySpan<double> inReal,
-                        int optInTimePeriod,
-                        double optInVFactor,
-                        out int outBegIdx,
-                        out int outNBElement,
-                        Span<double> outReal )
+   internal RetCode T3_Body( int startIdx,
+                             int endIdx,
+                             ReadOnlySpan<double> inReal,
+                             int optInTimePeriod,
+                             double optInVFactor,
+                             out int outBegIdx,
+                             out int outNBElement,
+                             Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -278,14 +278,14 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode T3( int startIdx,
-                        int endIdx,
-                        ReadOnlySpan<float> inReal,
-                        int optInTimePeriod,
-                        double optInVFactor,
-                        out int outBegIdx,
-                        out int outNBElement,
-                        Span<double> outReal )
+   internal RetCode T3_Body( int startIdx,
+                             int endIdx,
+                             ReadOnlySpan<float> inReal,
+                             int optInTimePeriod,
+                             double optInVFactor,
+                             out int outBegIdx,
+                             out int outNBElement,
+                             Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -477,11 +477,28 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("T3", "inReal", inReal.Length, guardInLen);
       RequireLength("T3", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = T3(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = T3_Body(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("T3", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode T3( int startIdx,
+                        int endIdx,
+                        ReadOnlySpan<double> inReal,
+                        int optInTimePeriod,
+                        double optInVFactor,
+                        out int outBegIdx,
+                        out int outNBElement,
+                        Span<double> outReal )
+   {
+      try {
+         return T3_Body(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Tillson's T3: a low-lag moving average built from six chained EMAs,
@@ -549,11 +566,28 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("T3", "inReal", inReal.Length, guardInLen);
       RequireLength("T3", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = T3(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = T3_Body(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("T3", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode T3( int startIdx,
+                        int endIdx,
+                        ReadOnlySpan<float> inReal,
+                        int optInTimePeriod,
+                        double optInVFactor,
+                        out int outBegIdx,
+                        out int outNBElement,
+                        Span<double> outReal )
+   {
+      try {
+         return T3_Body(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -756,7 +790,7 @@ public partial class Core
       }
       if( optInTimePeriod == 1 ) {
          if( historyLen < T3_Lookback(optInTimePeriod, optInVFactor) + 1 ) {
-            return RetCode.OutOfRangeEndIndex;
+            return RetCode.InsufficientHistory;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.optInVFactor = optInVFactor;
@@ -809,7 +843,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outNBElement = 0;
          outBegIdx = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outBegIdx = startIdx;
       today = startIdx - lookbackTotal;
@@ -982,7 +1016,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public T3_Stream T3_Open( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInVFactor )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return T3_OpenInternal(inReal, 0, optInTimePeriod, optInVFactor);
    }
 
@@ -1014,7 +1048,7 @@ public partial class Core
    /// output.</exception>
    public T3_Stream T3_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInVFactor, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       T3_Stream sp = new T3_Stream(this);
       RetCode retCode = T3_OpenAndFillBody(sp, inReal, optInTimePeriod, optInVFactor, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

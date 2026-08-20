@@ -91,15 +91,15 @@ public partial class Core
       }
 
    }
-   internal RetCode PLUS_DI( int startIdx,
-                             int endIdx,
-                             ReadOnlySpan<double> inHigh,
-                             ReadOnlySpan<double> inLow,
-                             ReadOnlySpan<double> inClose,
-                             int optInTimePeriod,
-                             out int outBegIdx,
-                             out int outNBElement,
-                             Span<double> outReal )
+   internal RetCode PLUS_DI_Body( int startIdx,
+                                  int endIdx,
+                                  ReadOnlySpan<double> inHigh,
+                                  ReadOnlySpan<double> inLow,
+                                  ReadOnlySpan<double> inClose,
+                                  int optInTimePeriod,
+                                  out int outBegIdx,
+                                  out int outNBElement,
+                                  Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -421,15 +421,15 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode PLUS_DI( int startIdx,
-                             int endIdx,
-                             ReadOnlySpan<float> inHigh,
-                             ReadOnlySpan<float> inLow,
-                             ReadOnlySpan<float> inClose,
-                             int optInTimePeriod,
-                             out int outBegIdx,
-                             out int outNBElement,
-                             Span<double> outReal )
+   internal RetCode PLUS_DI_Body( int startIdx,
+                                  int endIdx,
+                                  ReadOnlySpan<float> inHigh,
+                                  ReadOnlySpan<float> inLow,
+                                  ReadOnlySpan<float> inClose,
+                                  int optInTimePeriod,
+                                  out int outBegIdx,
+                                  out int outNBElement,
+                                  Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -683,11 +683,29 @@ public partial class Core
       RequireLength("PLUS_DI", "inLow", inLow.Length, guardInLen);
       RequireLength("PLUS_DI", "inClose", inClose.Length, guardInLen);
       RequireLength("PLUS_DI", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = PLUS_DI(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = PLUS_DI_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("PLUS_DI", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode PLUS_DI( int startIdx,
+                             int endIdx,
+                             ReadOnlySpan<double> inHigh,
+                             ReadOnlySpan<double> inLow,
+                             ReadOnlySpan<double> inClose,
+                             int optInTimePeriod,
+                             out int outBegIdx,
+                             out int outNBElement,
+                             Span<double> outReal )
+   {
+      try {
+         return PLUS_DI_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Plus Directional Indicator: the Wilder-smoothed positive directional
@@ -761,11 +779,29 @@ public partial class Core
       RequireLength("PLUS_DI", "inLow", inLow.Length, guardInLen);
       RequireLength("PLUS_DI", "inClose", inClose.Length, guardInLen);
       RequireLength("PLUS_DI", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = PLUS_DI(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = PLUS_DI_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("PLUS_DI", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode PLUS_DI( int startIdx,
+                             int endIdx,
+                             ReadOnlySpan<float> inHigh,
+                             ReadOnlySpan<float> inLow,
+                             ReadOnlySpan<float> inClose,
+                             int optInTimePeriod,
+                             out int outBegIdx,
+                             out int outNBElement,
+                             Span<double> outReal )
+   {
+      try {
+         return PLUS_DI_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -1113,7 +1149,7 @@ public partial class Core
          if( startIdx > endIdx ) {
             outBegIdx = 0;
             outNBElement = 0;
-            return RetCode.OutOfRangeEndIndex ;
+            return RetCode.InsufficientHistory ;
          }
          /* Indicate where the next output should be put
           * in the outReal.
@@ -1297,7 +1333,7 @@ public partial class Core
          if( startIdx > endIdx ) {
             outBegIdx = 0;
             outNBElement = 0;
-            return RetCode.OutOfRangeEndIndex ;
+            return RetCode.InsufficientHistory ;
          }
          /* Indicate where the next output should be put
           * in the outReal.
@@ -1511,9 +1547,9 @@ public partial class Core
    /// span cannot be null.</exception>
    public PLUS_DI_Stream PLUS_DI_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       return PLUS_DI_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
 
@@ -1545,9 +1581,9 @@ public partial class Core
    /// output.</exception>
    public PLUS_DI_Stream PLUS_DI_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       PLUS_DI_Stream sp = new PLUS_DI_Stream(this);
       RetCode retCode = PLUS_DI_OpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

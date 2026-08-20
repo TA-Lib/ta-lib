@@ -433,11 +433,16 @@ fn test_ma_java_cross_calls() {
         j.contains("EMA_Lookback("),
         "Java: MA should call EMA_Lookback"
     );
-    // Bare cross-indicator calls resolve to the guarded internal core, which
-    // keeps the C-shaped MInteger out-params — going through the public
-    // OutRange wrapper would allocate a throwaway MInteger pair per call.
-    assert!(j.contains("SMA_Internal("), "Java: MA should call SMA_Internal");
-    assert!(j.contains("EMA_Internal("), "Java: MA should call EMA_Internal");
+    // Bare cross-indicator calls resolve to the callee's PUBLIC entry point
+    // (#236 step 3), which returns an OutRange rather than writing the C-shaped
+    // MInteger out-params. `= SMA(` anchors the call site so the dispatch arms
+    // cannot substring-shadow one another.
+    assert!(j.contains("= SMA("), "Java: MA should call the public SMA");
+    assert!(j.contains("= EMA("), "Java: MA should call the public EMA");
+    assert!(
+        !j.contains("SMA_Internal(") && !j.contains("EMA_Internal("),
+        "Java: MA must not call a callee's C-shaped tier"
+    );
     assert!(
         !j.contains("smaUnguardedInternal(") && !j.contains("emaUnguardedInternal("),
         "Java: MA must not call the unguarded cores"
@@ -583,7 +588,7 @@ fn test_java_synth_private_omits_validation() {
     let (func, enums) = load_synth("synth4");
     let out = generate_all(&func, &enums);
 
-    let private = extract_section(&out.java, "RetCode SYNTH4_Private(", "RetCode SYNTH4_Internal(");
+    let private = extract_section(&out.java, "RetCode SYNTH4_Private(", "RetCode SYNTH4_Body(");
     assert!(
         !private.contains("OutOfRangeStartIndex"),
         "Java SYNTH4_Private should NOT have start index validation"
@@ -5461,11 +5466,12 @@ fn java_ma_cross_indicator_calls() {
     let out = generate_all(&func, &enums);
     let j = &out.java;
 
-    // Anchor the call site so demaInternal(/temaInternal( (adjacent dispatch
-    // arms) cannot substring-shadow the EMA arm.
+    // Anchor the call site so the adjacent dispatch arms cannot substring-shadow
+    // the EMA one. The callee is the PUBLIC entry point since #236 step 3, and
+    // the range it returns is bound to the caller's out-params.
     assert!(
-        j.contains("= EMA_Internal("),
-        "Java MA should call EMA_Internal(): {j}"
+        j.contains("= EMA("),
+        "Java MA should call the public EMA(): {j}"
     );
     assert!(
         j.contains("= EMA_Lookback("),
@@ -5486,13 +5492,16 @@ fn java_stochrsi_cross_indicator_calls() {
     // STOCHRSI composes RSI and STOCHF, and must call BOTH. `contains_call`
     // rather than `contains`: `RSI_Lookback(` is a suffix of STOCHRSI's own
     // `STOCHRSI_Lookback(`, so a plain substring test cannot fail here.
+    // Anchored on the ASSIGNMENT, not the bare name: `RSI(` occurs inside
+    // STOCHRSI's own javadoc and inside `STOCHRSI(`, so `contains_call(j, "RSI")`
+    // is satisfied by text that is not a call at all and cannot fail.
     assert!(
-        contains_call(j, "RSI_Internal") && contains_call(j, "RSI_Lookback"),
-        "Java STOCHRSI should call RSI_Internal and RSI_Lookback: {j}"
+        j.contains("= RSI(") && contains_call(j, "RSI_Lookback"),
+        "Java STOCHRSI should call the public RSI and RSI_Lookback: {j}"
     );
     assert!(
-        contains_call(j, "STOCHF_Internal") && contains_call(j, "STOCHF_Lookback"),
-        "Java STOCHRSI should call STOCHF_Internal and STOCHF_Lookback: {j}"
+        j.contains("= STOCHF(") && contains_call(j, "STOCHF_Lookback"),
+        "Java STOCHRSI should call the public STOCHF and STOCHF_Lookback: {j}"
     );
 }
 
@@ -7533,7 +7542,14 @@ fn test_c_mavp_period_bank() {
     let upd = s.split("TA_MAVP_Update").nth(1).unwrap();
     let upd = &upd[..upd.find("TA_MAVP_Peek").unwrap_or(upd.len())];
     assert!(upd.contains("for( k = 0; k < stream->nBank; k++ )") && upd.contains("TA_MA_Update( stream->bank[k], inReal, &stream->scratch[k] );"), "advances the whole bank in lockstep");
-    assert!(upd.contains("if( cp < stream->optInMinPeriod ) cp = stream->optInMinPeriod;"), "clamps the per-bar period");
+    // The clamp compares in the REAL domain and narrows only once inside the
+    // window (35a35d4b4): `(int)cpReal` on a value already known to be within
+    // [min, max] cannot overflow, where narrowing first and clamping after
+    // turned a huge positive period into the minimum.
+    assert!(upd.contains("if( !(cpReal >= stream->optInMinPeriod) ) cp = stream->optInMinPeriod;")
+            && upd.contains("else if( cpReal > stream->optInMaxPeriod ) cp = stream->optInMaxPeriod;")
+            && upd.contains("else cp = (int)cpReal;"),
+            "clamps the per-bar period in the real domain, then narrows");
     assert!(upd.contains("*outReal = stream->scratch[cp - stream->optInMinPeriod];"), "outputs the selected slot");
     // Peek: only the selected slot (non-committing).
     let peek = s.split("TA_MAVP_Peek").nth(1).unwrap();
@@ -8778,9 +8794,14 @@ fn rust_negative_capable_cast_gets_signed_local() {
     let (func, enums) = load_indicator("mavp");
     let out = generate_all(&func, &enums);
     for needle in [
-        "let mut tempInt: i32",                    // cast-fed local is signed
-        "tempInt = (inPeriods[startIdx + i]) as i32;", // true negative preserved
-        "if tempInt < optInMinPeriod {",           // clamps stay signed compares
+        "let mut tempInt: i32",             // cast-fed local is signed
+        // The narrowing happens in the else arm of the real-domain clamp
+        // (35a35d4b4), on a value already inside [min, max]; the two clamp arms
+        // assign the bounds directly and never narrow.
+        "tempPeriod = inPeriods[startIdx + i];",
+        "if !(tempPeriod >= minPeriodReal) {",  // NaN-catching spelling
+        "tempInt = (tempPeriod) as i32;",       // narrowed only once in range
+        "if tempInt < 1 {",                     // clamps stay signed compares
     ] {
         assert!(out.rust.contains(needle), "MAVP Rust missing `{needle}`:\n{}", out.rust);
     }

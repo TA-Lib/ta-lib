@@ -80,13 +80,13 @@ public partial class Core
       return optInTimePeriod - 1 ;
 
    }
-   internal RetCode MAX( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inReal,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode MAX_Body( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<double> inReal,
+                              int optInTimePeriod,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -233,13 +233,13 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode MAX( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inReal,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode MAX_Body( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<float> inReal,
+                              int optInTimePeriod,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -394,11 +394,27 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("MAX", "inReal", inReal.Length, guardInLen);
       RequireLength("MAX", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = MAX(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MAX_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MAX", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode MAX( int startIdx,
+                         int endIdx,
+                         ReadOnlySpan<double> inReal,
+                         int optInTimePeriod,
+                         out int outBegIdx,
+                         out int outNBElement,
+                         Span<double> outReal )
+   {
+      try {
+         return MAX_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Highest input value over a rolling window of the last optInTimePeriod
@@ -457,11 +473,27 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("MAX", "inReal", inReal.Length, guardInLen);
       RequireLength("MAX", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = MAX(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MAX_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MAX", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode MAX( int startIdx,
+                         int endIdx,
+                         ReadOnlySpan<float> inReal,
+                         int optInTimePeriod,
+                         out int outBegIdx,
+                         out int outNBElement,
+                         Span<double> outReal )
+   {
+      try {
+         return MAX_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -668,7 +700,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Proceed with the calculation for the requested range.
        * Note that this algorithm allows the input and
@@ -803,7 +835,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public MAX_Stream MAX_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return MAX_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -834,7 +866,7 @@ public partial class Core
    /// output.</exception>
    public MAX_Stream MAX_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       MAX_Stream sp = new MAX_Stream(this);
       RetCode retCode = MAX_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

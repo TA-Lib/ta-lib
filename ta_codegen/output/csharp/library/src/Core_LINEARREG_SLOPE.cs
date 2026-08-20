@@ -81,13 +81,13 @@ public partial class Core
       return optInTimePeriod - 1 ;
 
    }
-   internal RetCode LINEARREG_SLOPE( int startIdx,
-                                     int endIdx,
-                                     ReadOnlySpan<double> inReal,
-                                     int optInTimePeriod,
-                                     out int outBegIdx,
-                                     out int outNBElement,
-                                     Span<double> outReal )
+   internal RetCode LINEARREG_SLOPE_Body( int startIdx,
+                                          int endIdx,
+                                          ReadOnlySpan<double> inReal,
+                                          int optInTimePeriod,
+                                          out int outBegIdx,
+                                          out int outNBElement,
+                                          Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -186,13 +186,13 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode LINEARREG_SLOPE( int startIdx,
-                                     int endIdx,
-                                     ReadOnlySpan<float> inReal,
-                                     int optInTimePeriod,
-                                     out int outBegIdx,
-                                     out int outNBElement,
-                                     Span<double> outReal )
+   internal RetCode LINEARREG_SLOPE_Body( int startIdx,
+                                          int endIdx,
+                                          ReadOnlySpan<float> inReal,
+                                          int optInTimePeriod,
+                                          out int outBegIdx,
+                                          out int outNBElement,
+                                          Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -310,11 +310,27 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("LINEARREG_SLOPE", "inReal", inReal.Length, guardInLen);
       RequireLength("LINEARREG_SLOPE", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = LINEARREG_SLOPE(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = LINEARREG_SLOPE_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("LINEARREG_SLOPE", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode LINEARREG_SLOPE( int startIdx,
+                                     int endIdx,
+                                     ReadOnlySpan<double> inReal,
+                                     int optInTimePeriod,
+                                     out int outBegIdx,
+                                     out int outNBElement,
+                                     Span<double> outReal )
+   {
+      try {
+         return LINEARREG_SLOPE_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Slope 'm' of the least-squares best-fit line (y = b + m*x) over the last
@@ -377,11 +393,27 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("LINEARREG_SLOPE", "inReal", inReal.Length, guardInLen);
       RequireLength("LINEARREG_SLOPE", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = LINEARREG_SLOPE(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = LINEARREG_SLOPE_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("LINEARREG_SLOPE", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode LINEARREG_SLOPE( int startIdx,
+                                     int endIdx,
+                                     ReadOnlySpan<float> inReal,
+                                     int optInTimePeriod,
+                                     out int outBegIdx,
+                                     out int outNBElement,
+                                     Span<double> outReal )
+   {
+      try {
+         return LINEARREG_SLOPE_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -588,7 +620,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outIdx = 0;
       /* Index into the output. */
@@ -715,7 +747,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public LINEARREG_SLOPE_Stream LINEARREG_SLOPE_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return LINEARREG_SLOPE_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -747,7 +779,7 @@ public partial class Core
    /// output.</exception>
    public LINEARREG_SLOPE_Stream LINEARREG_SLOPE_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       LINEARREG_SLOPE_Stream sp = new LINEARREG_SLOPE_Stream(this);
       RetCode retCode = LINEARREG_SLOPE_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

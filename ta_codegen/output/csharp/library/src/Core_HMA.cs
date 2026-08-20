@@ -84,13 +84,13 @@ public partial class Core
       return WMA_Lookback(optInTimePeriod) + WMA_Lookback(sqrtPeriod) ;
 
    }
-   internal RetCode HMA( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inReal,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode HMA_Body( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<double> inReal,
+                              int optInTimePeriod,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -325,13 +325,13 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode HMA( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inReal,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode HMA_Body( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<float> inReal,
+                              int optInTimePeriod,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -569,11 +569,27 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("HMA", "inReal", inReal.Length, guardInLen);
       RequireLength("HMA", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = HMA(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = HMA_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("HMA", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode HMA( int startIdx,
+                         int endIdx,
+                         ReadOnlySpan<double> inReal,
+                         int optInTimePeriod,
+                         out int outBegIdx,
+                         out int outNBElement,
+                         Span<double> outReal )
+   {
+      try {
+         return HMA_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Hull Moving Average, published by Alan Hull in 2005: a moving average
@@ -649,11 +665,27 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("HMA", "inReal", inReal.Length, guardInLen);
       RequireLength("HMA", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = HMA(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = HMA_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("HMA", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode HMA( int startIdx,
+                         int endIdx,
+                         ReadOnlySpan<float> inReal,
+                         int optInTimePeriod,
+                         out int outBegIdx,
+                         out int outNBElement,
+                         Span<double> outReal )
+   {
+      try {
+         return HMA_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -952,7 +984,7 @@ public partial class Core
       }
       if( optInTimePeriod == 1 ) {
          if( historyLen < HMA_Lookback(optInTimePeriod) + 1 ) {
-            return RetCode.OutOfRangeEndIndex;
+            return RetCode.InsufficientHistory;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.dividerFull = 0.0;
@@ -1060,7 +1092,7 @@ public partial class Core
          if( startIdx > endIdx ) {
             outBegIdx = 0;
             outNBElement = 0;
-            return RetCode.OutOfRangeEndIndex ;
+            return RetCode.InsufficientHistory ;
          }
          /* The two price WMAs are anchored where the first de-lagged value is
           * needed: lookbackSqrt bars before the first requested output.
@@ -1207,7 +1239,7 @@ public partial class Core
          if( startIdx > endIdx ) {
             outBegIdx = 0;
             outNBElement = 0;
-            return RetCode.OutOfRangeEndIndex ;
+            return RetCode.InsufficientHistory ;
          }
          /* The two price WMAs are anchored where the first de-lagged value is
           * needed: lookbackSqrt bars before the first requested output.
@@ -1437,7 +1469,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public HMA_Stream HMA_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return HMA_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -1468,7 +1500,7 @@ public partial class Core
    /// output.</exception>
    public HMA_Stream HMA_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       HMA_Stream sp = new HMA_Stream(this);
       RetCode retCode = HMA_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

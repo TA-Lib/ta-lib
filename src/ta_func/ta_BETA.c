@@ -608,7 +608,7 @@ static TA_RetCode TA_BETA_OpenCore( struct TA_BETA_Stream **stream, const double
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       /* Consume first input. */
       trailingIdx = startIdx - nbInitialElementNeeded;

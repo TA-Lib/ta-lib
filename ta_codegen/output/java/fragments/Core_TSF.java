@@ -37,13 +37,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode TSF_Internal( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode TSF_Body( int startIdx,
+                     int endIdx,
+                     double inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -143,13 +143,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode TSF_Internal( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode TSF_Body( int startIdx,
+                     int endIdx,
+                     float inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -263,6 +263,7 @@
                         int optInTimePeriod,
                         double outReal[] )
    {
+      requireIndexRange("TSF", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, TSF_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -270,11 +271,30 @@
       requireLength("TSF", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TSF_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TSF_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("TSF", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode TSF_Internal( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      try {
+         return TSF_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Time Series Forecast: fits a least-squares linear regression line over the
@@ -326,6 +346,7 @@
                         int optInTimePeriod,
                         double outReal[] )
    {
+      requireIndexRange("TSF", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, TSF_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -333,11 +354,30 @@
       requireLength("TSF", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TSF_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TSF_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("TSF", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode TSF_Internal( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      try {
+         return TSF_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -428,7 +468,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("TSF update: BadParam");
+            throw new TaLibArgumentException("TSF update: BadParam", RetCode.BadParam);
          core.TSF_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -442,7 +482,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("TSF peek: BadParam");
+            throw new TaLibArgumentException("TSF peek: BadParam", RetCode.BadParam);
          TSF_Stream scratch = new TSF_Stream(this);
          core.TSF_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -538,7 +578,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outIdx = 0;
       /* Index into the output. */
@@ -630,13 +670,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("TSF openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TSF openAndFill: internal error");
+         throw new TaLibStateException("TSF openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("TSF openAndFill: " + retCode);
+      throw new TaLibArgumentException("TSF openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind TSF_Open (composition seam). */
    TSF_Stream TSF_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -646,13 +686,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("TSF open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TSF open: internal error");
+         throw new TaLibStateException("TSF open: internal error", retCode);
       }
-      throw new IllegalArgumentException("TSF open: " + retCode);
+      throw new TaLibArgumentException("TSF open: " + retCode, retCode);
    }
    /**
     * Open a live TSF stream over the warm-up history; the handle's
@@ -687,11 +727,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("TSF openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TSF openAndFill: internal error");
+         throw new TaLibStateException("TSF openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("TSF openAndFill: " + retCode);
+      throw new TaLibArgumentException("TSF openAndFill: " + retCode, retCode);
    }

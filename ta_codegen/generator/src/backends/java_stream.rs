@@ -26,7 +26,7 @@
 //!   `OpenBody` the batch body's reject returns stay plain `RetCode` (no throw
 //!   statements ever cross the shared renderer — its `expr_stmt` hook skips
 //!   bare identifiers); the early-SUCCESS no-data/seed-boundary returns are
-//!   mapped in-band to `OutOfRangeEndIndex` so the thin wrapper can type the
+//!   mapped to `InsufficientHistory` so the thin wrapper can type the
 //!   one routine, data-dependent condition as `InsufficientHistoryException`
 //!   (an `IllegalArgumentException` subclass). `InternalError` (capture
 //!   invariant) becomes `IllegalStateException`; every other reject a plain
@@ -715,7 +715,7 @@ fn emit_handle_class_with_members(
     // Set once, by openAndFill only — the range of the warm-up values that call
     // wrote into the caller's output arrays. A plain open fills nothing and so
     // keeps `EMPTY`, which cannot collide with a real fill: openAndFill returns
-    // OutOfRangeEndIndex (→ InsufficientHistoryException) when the history is
+    // InsufficientHistory (→ InsufficientHistoryException) when the history is
     // shorter than lookback + 1, so a successful one always writes ≥ 1 value.
     let _ = writeln!(o, "      OutRange fillRange = OutRange.EMPTY;");
     let _ = writeln!(o, "\n      {class}( Core core ) {{ this.core = core; }}");
@@ -900,7 +900,7 @@ fn finite_bar_check(func: &FuncDef, indent: &str, what: &str) -> String {
     let n = base_name(func);
     let conds: Vec<String> = bars.iter().map(|b| format!("!Double.isFinite({b})")).collect();
     format!(
-        "{indent}if( {} )\n{indent}   throw new IllegalArgumentException(\"{n} {what}: BadParam\");\n",
+        "{indent}if( {} )\n{indent}   throw new TaLibArgumentException(\"{n} {what}: BadParam\", RetCode.BadParam);\n",
         conds.join(" || ")
     )
 }
@@ -1154,14 +1154,14 @@ fn emit_extrema_rebase(o: &mut String, model: &StreamModel, indent: usize) {
 // ---------------------------------------------------------------------------
 
 /// Map a batch return-code variable for the open body. Early SUCCESS returns
-/// (the no-data guard AND the Metastock seed-boundary return) become the
-/// in-band insufficient-history signal `OutOfRangeEndIndex` — the wrapper
-/// types it as `InsufficientHistoryException`. Everything else passes through
-/// (BAD_PARAM / ALLOC_ERR / INTERNAL_ERROR render natively; `retCode` locals
-/// propagate a failed cross-call).
+/// (the no-data guard AND the Metastock seed-boundary return) become
+/// `InsufficientHistory` — the wrapper types it as
+/// `InsufficientHistoryException`. Everything else passes through (BAD_PARAM /
+/// ALLOC_ERR / INTERNAL_ERROR render natively; `retCode` locals propagate a
+/// failed cross-call).
 fn map_open_return(v: &str) -> String {
     match v {
-        "SUCCESS" | "TA_SUCCESS" => "OutOfRangeEndIndex".to_string(),
+        "SUCCESS" | "TA_SUCCESS" => "InsufficientHistory".to_string(),
         other => other.to_string(),
     }
 }
@@ -1551,7 +1551,7 @@ fn emit_identity_fast_path(
     let lb_call = format!("{base}_Lookback({})", lb_args.join(", "));
     let _ = writeln!(o, "      if( {cond} ) {{");
     let _ = writeln!(o, "         if( historyLen < {lb_call} + 1 ) {{");
-    let _ = writeln!(o, "            return RetCode.OutOfRangeEndIndex;");
+    let _ = writeln!(o, "            return RetCode.InsufficientHistory;");
     let _ = writeln!(o, "         }}");
     // Identity state: params captured, everything else deterministic defaults
     // (1-slot buffers keep the transition's cap-0 guard well-defined).
@@ -1870,16 +1870,19 @@ fn emit_reject_conversion(o: &mut String, func: &FuncDef, what: &str) {
     let _ = writeln!(o, "      if( retCode == RetCode.Success ) {{");
     let _ = writeln!(o, "         return sp;");
     let _ = writeln!(o, "      }}");
-    let _ = writeln!(o, "      if( retCode == RetCode.OutOfRangeEndIndex ) {{");
+    let _ = writeln!(o, "      if( retCode == RetCode.InsufficientHistory ) {{");
     let _ = writeln!(
         o,
         "         throw new InsufficientHistoryException(\"{n} {what}: history shorter than lookback + 1\");"
     );
     let _ = writeln!(o, "      }}");
     let _ = writeln!(o, "      if( retCode == RetCode.InternalError ) {{");
-    let _ = writeln!(o, "         throw new IllegalStateException(\"{n} {what}: internal error\");");
+    let _ = writeln!(o, "         throw new TaLibStateException(\"{n} {what}: internal error\", retCode);");
     let _ = writeln!(o, "      }}");
-    let _ = writeln!(o, "      throw new IllegalArgumentException(\"{n} {what}: \" + retCode);");
+    // Carrying, like every other failure the library raises: the code has to be
+    // recoverable from the thrown object on THIS ladder too, or "total" is a
+    // claim about the batch tier wearing the name of the whole library (#236).
+    let _ = writeln!(o, "      throw new TaLibArgumentException(\"{n} {what}: \" + retCode, retCode);");
 }
 
 /// `openInternal` (composition seam), the public `<base>Open`, and the public
@@ -2358,14 +2361,14 @@ fn emit_dispatch(
         // — the documented stable "<NAME> open:" contract requires the reject
         // to carry this function's name.
         let _ = writeln!(o, "      if( historyLen < {lb_call} + 1 ) {{");
-        let _ = writeln!(o, "         return RetCode.OutOfRangeEndIndex;");
+        let _ = writeln!(o, "         return RetCode.InsufficientHistory;");
         let _ = writeln!(o, "      }}");
         if let Some(idp) = &dp.identity {
             // The identity path FIRST (batch order — it applies to every arm).
             let cond = render_predicate(&idp.condition, &ctx, registry, helpers);
             let _ = writeln!(o, "      if( {cond} ) {{");
             let _ = writeln!(o, "         if( historyLen < {lb_call} + 1 ) {{");
-            let _ = writeln!(o, "            return RetCode.OutOfRangeEndIndex;");
+            let _ = writeln!(o, "            return RetCode.InsufficientHistory;");
             let _ = writeln!(o, "         }}");
             for p in &func.optional_inputs {
                 let _ = writeln!(o, "         sp.{0} = {0};", p.name);
@@ -2387,7 +2390,7 @@ fn emit_dispatch(
                         // batch( startIdx, .. ) begins at max(startIdx, lookback).
                         let _ = writeln!(o, "         if( startIdx > fillLb ) fillLb = startIdx;");
                         let _ = writeln!(o, "         if( historyLen < fillLb + 1 ) {{");
-                        let _ = writeln!(o, "            return RetCode.OutOfRangeEndIndex;");
+                        let _ = writeln!(o, "            return RetCode.InsufficientHistory;");
                         let _ = writeln!(o, "         }}");
                     }
                     let _ = writeln!(o, "         outBegIdx.value = fillLb;");
@@ -2613,7 +2616,7 @@ fn emit_period_bank(
     // carry the callee's message prefix, not this function's (stable-prefix
     // contract; the Fill body below has the equivalent check).
     let _ = writeln!(o, "      if( historyLen < {own_lb_call} + 1 ) {{");
-    let _ = writeln!(o, "         return RetCode.OutOfRangeEndIndex;");
+    let _ = writeln!(o, "         return RetCode.InsufficientHistory;");
     let _ = writeln!(o, "      }}");
     let _ = writeln!(
         o,
@@ -2657,7 +2660,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "      }}");
     let _ = writeln!(o, "      int lookbackTotal = {callee_base}_Lookback({lb_args});");
     let _ = writeln!(o, "      if( historyLen < lookbackTotal + 1 ) {{");
-    let _ = writeln!(o, "         return RetCode.OutOfRangeEndIndex;");
+    let _ = writeln!(o, "         return RetCode.InsufficientHistory;");
     let _ = writeln!(o, "      }}");
     let _ = writeln!(o, "      int nBank = {max} - {min} + 1;");
     let _ = writeln!(o, "      /* Seed each sub at the first output bar (lookbackTotal), NOT the last. */");
@@ -3101,7 +3104,7 @@ fn emit_composed_open(
             func.optional_inputs.iter().map(|p| p.name.clone()).collect();
         let lb_call = format!("{}_Lookback({})", base_name(func), lb_args.join(", "));
         let _ = writeln!(o, "      if( historyLen < {lb_call} + 1 ) {{");
-        let _ = writeln!(o, "         return RetCode.OutOfRangeEndIndex;");
+        let _ = writeln!(o, "         return RetCode.InsufficientHistory;");
         let _ = writeln!(o, "      }}");
     }
     emit_extras_and_candle(o, func, &combined, registry, helpers, counter, stream_fma);
@@ -3247,7 +3250,7 @@ fn emit_composed_open(
     // --- capture ------------------------------------------------------------
     let _ = writeln!(o, "      /* Capture the live producer state + sub handles. */");
     let _ = writeln!(o, "      if( outNBElement.value < 1 ) {{");
-    let _ = writeln!(o, "         return RetCode.OutOfRangeEndIndex;");
+    let _ = writeln!(o, "         return RetCode.InsufficientHistory;");
     let _ = writeln!(o, "      }}");
     // Lag rings: seed from the tail of the still-live intermediate array (its
     // batch `free()` renders as a no-op in Java, so no withheld-free dance).

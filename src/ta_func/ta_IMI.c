@@ -306,7 +306,7 @@ static TA_RetCode TA_IMI_OpenCore( struct TA_IMI_Stream **stream, const double i
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       *outBegIdx= startIdx;
       while( startIdx <= endIdx )

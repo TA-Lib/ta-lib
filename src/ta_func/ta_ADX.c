@@ -965,7 +965,7 @@ static TA_RetCode TA_ADX_OpenCore( struct TA_ADX_Stream **stream, const double i
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       /* Indicate where the next output should be put
        * in the outReal.

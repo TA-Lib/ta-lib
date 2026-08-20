@@ -79,14 +79,14 @@ public partial class Core
       return optInTimePeriod - 1 ;
 
    }
-   internal RetCode VWMA( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<double> inReal,
-                          ReadOnlySpan<double> inVolume,
-                          int optInTimePeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
+   internal RetCode VWMA_Body( int startIdx,
+                               int endIdx,
+                               ReadOnlySpan<double> inReal,
+                               ReadOnlySpan<double> inVolume,
+                               int optInTimePeriod,
+                               out int outBegIdx,
+                               out int outNBElement,
+                               Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -194,14 +194,14 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode VWMA( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<float> inReal,
-                          ReadOnlySpan<float> inVolume,
-                          int optInTimePeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
+   internal RetCode VWMA_Body( int startIdx,
+                               int endIdx,
+                               ReadOnlySpan<float> inReal,
+                               ReadOnlySpan<float> inVolume,
+                               int optInTimePeriod,
+                               out int outBegIdx,
+                               out int outNBElement,
+                               Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -341,11 +341,28 @@ public partial class Core
       RequireLength("VWMA", "inReal", inReal.Length, guardInLen);
       RequireLength("VWMA", "inVolume", inVolume.Length, guardInLen);
       RequireLength("VWMA", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = VWMA(startIdx, endIdx, inReal, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = VWMA_Body(startIdx, endIdx, inReal, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("VWMA", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode VWMA( int startIdx,
+                          int endIdx,
+                          ReadOnlySpan<double> inReal,
+                          ReadOnlySpan<double> inVolume,
+                          int optInTimePeriod,
+                          out int outBegIdx,
+                          out int outNBElement,
+                          Span<double> outReal )
+   {
+      try {
+         return VWMA_Body(startIdx, endIdx, inReal, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Volume Weighted Moving Average: the mean price over a trailing window of
@@ -419,11 +436,28 @@ public partial class Core
       RequireLength("VWMA", "inReal", inReal.Length, guardInLen);
       RequireLength("VWMA", "inVolume", inVolume.Length, guardInLen);
       RequireLength("VWMA", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = VWMA(startIdx, endIdx, inReal, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = VWMA_Body(startIdx, endIdx, inReal, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("VWMA", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode VWMA( int startIdx,
+                          int endIdx,
+                          ReadOnlySpan<float> inReal,
+                          ReadOnlySpan<float> inVolume,
+                          int optInTimePeriod,
+                          out int outBegIdx,
+                          out int outNBElement,
+                          Span<double> outReal )
+   {
+      try {
+         return VWMA_Body(startIdx, endIdx, inReal, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -637,7 +671,7 @@ public partial class Core
       }
       if( optInTimePeriod == 1 ) {
          if( historyLen < VWMA_Lookback(optInTimePeriod) + 1 ) {
-            return RetCode.OutOfRangeEndIndex;
+            return RetCode.InsufficientHistory;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.sumPV = 0.0;
@@ -675,7 +709,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Add-up the initial period, except for the last value.
        *
@@ -812,8 +846,8 @@ public partial class Core
    /// span cannot be null.</exception>
    public VWMA_Stream VWMA_Open( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int optInTimePeriod )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
+      if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
       return VWMA_OpenInternal(inReal, inVolume, 0, optInTimePeriod);
    }
 
@@ -845,8 +879,8 @@ public partial class Core
    /// output.</exception>
    public VWMA_Stream VWMA_OpenAndFill( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int optInTimePeriod, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
+      if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
       VWMA_Stream sp = new VWMA_Stream(this);
       RetCode retCode = VWMA_OpenAndFillBody(sp, inReal, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

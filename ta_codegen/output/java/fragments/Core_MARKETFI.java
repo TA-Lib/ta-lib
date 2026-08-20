@@ -28,14 +28,14 @@
       return 0 ;
 
    }
-   RetCode MARKETFI_Internal( int startIdx,
-                              int endIdx,
-                              double inHigh[],
-                              double inLow[],
-                              double inVolume[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
+   RetCode MARKETFI_Body( int startIdx,
+                          int endIdx,
+                          double inHigh[],
+                          double inLow[],
+                          double inVolume[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -81,14 +81,14 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode MARKETFI_Internal( int startIdx,
-                              int endIdx,
-                              float inHigh[],
-                              float inLow[],
-                              float inVolume[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
+   RetCode MARKETFI_Body( int startIdx,
+                          int endIdx,
+                          float inHigh[],
+                          float inLow[],
+                          float inVolume[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -168,6 +168,7 @@
                              double inVolume[],
                              double outReal[] )
    {
+      requireIndexRange("MARKETFI", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, MARKETFI_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -177,11 +178,31 @@
       requireLength("MARKETFI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MARKETFI_Internal(startIdx, endIdx, inHigh, inLow, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MARKETFI_Body(startIdx, endIdx, inHigh, inLow, inVolume, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MARKETFI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode MARKETFI_Internal( int startIdx,
+                              int endIdx,
+                              double inHigh[],
+                              double inLow[],
+                              double inVolume[],
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outReal[] )
+   {
+      try {
+         return MARKETFI_Body(startIdx, endIdx, inHigh, inLow, inVolume, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Bill Williams' Market Facilitation Index (*Trading Chaos*, 1995): the
@@ -244,6 +265,7 @@
                              float inVolume[],
                              double outReal[] )
    {
+      requireIndexRange("MARKETFI", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, MARKETFI_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -253,11 +275,31 @@
       requireLength("MARKETFI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MARKETFI_Internal(startIdx, endIdx, inHigh, inLow, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MARKETFI_Body(startIdx, endIdx, inHigh, inLow, inVolume, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MARKETFI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode MARKETFI_Internal( int startIdx,
+                              int endIdx,
+                              float inHigh[],
+                              float inLow[],
+                              float inVolume[],
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outReal[] )
+   {
+      try {
+         return MARKETFI_Body(startIdx, endIdx, inHigh, inLow, inVolume, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -317,7 +359,7 @@
        */
       public double update( double inHigh, double inLow, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inVolume) )
-            throw new IllegalArgumentException("MARKETFI update: BadParam");
+            throw new TaLibArgumentException("MARKETFI update: BadParam", RetCode.BadParam);
          core.MARKETFI_StreamStep(this, inHigh, inLow, inVolume);
          return this.cur_outReal;
       }
@@ -331,7 +373,7 @@
        */
       public double peek( double inHigh, double inLow, double inVolume ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inVolume) )
-            throw new IllegalArgumentException("MARKETFI peek: BadParam");
+            throw new TaLibArgumentException("MARKETFI peek: BadParam", RetCode.BadParam);
          MARKETFI_Stream scratch = new MARKETFI_Stream(this);
          core.MARKETFI_StreamStep(scratch, inHigh, inLow, inVolume);
          return scratch.cur_outReal;
@@ -448,13 +490,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MARKETFI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MARKETFI openAndFill: internal error");
+         throw new TaLibStateException("MARKETFI openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("MARKETFI openAndFill: " + retCode);
+      throw new TaLibArgumentException("MARKETFI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind MARKETFI_Open (composition seam). */
    MARKETFI_Stream MARKETFI_OpenInternal( double inHigh[], double inLow[], double inVolume[], int startIdx )
@@ -464,13 +506,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MARKETFI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MARKETFI open: internal error");
+         throw new TaLibStateException("MARKETFI open: internal error", retCode);
       }
-      throw new IllegalArgumentException("MARKETFI open: " + retCode);
+      throw new TaLibArgumentException("MARKETFI open: " + retCode, retCode);
    }
    /**
     * Open a live MARKETFI stream over the warm-up history; the handle's
@@ -505,11 +547,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MARKETFI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MARKETFI openAndFill: internal error");
+         throw new TaLibStateException("MARKETFI openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("MARKETFI openAndFill: " + retCode);
+      throw new TaLibArgumentException("MARKETFI openAndFill: " + retCode, retCode);
    }

@@ -29,15 +29,15 @@
       return Equal_avgPeriod + 1 ;
 
    }
-   RetCode CDLMATCHINGLOW_Internal( int startIdx,
-                                    int endIdx,
-                                    double inOpen[],
-                                    double inHigh[],
-                                    double inLow[],
-                                    double inClose[],
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    int outInteger[] )
+   RetCode CDLMATCHINGLOW_Body( int startIdx,
+                                int endIdx,
+                                double inOpen[],
+                                double inHigh[],
+                                double inLow[],
+                                double inClose[],
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                int outInteger[] )
    {
       double EqualPeriodTotal = 0;
       int i = 0;
@@ -109,15 +109,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode CDLMATCHINGLOW_Internal( int startIdx,
-                                    int endIdx,
-                                    float inOpen[],
-                                    float inHigh[],
-                                    float inLow[],
-                                    float inClose[],
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    int outInteger[] )
+   RetCode CDLMATCHINGLOW_Body( int startIdx,
+                                int endIdx,
+                                float inOpen[],
+                                float inHigh[],
+                                float inLow[],
+                                float inClose[],
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                int outInteger[] )
    {
       double EqualPeriodTotal = 0;
       int i = 0;
@@ -219,6 +219,7 @@
                                    double inClose[],
                                    int outInteger[] )
    {
+      requireIndexRange("CDLMATCHINGLOW", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CDLMATCHINGLOW_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -229,11 +230,32 @@
       requireLength("CDLMATCHINGLOW", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLMATCHINGLOW_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLMATCHINGLOW_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLMATCHINGLOW", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode CDLMATCHINGLOW_Internal( int startIdx,
+                                    int endIdx,
+                                    double inOpen[],
+                                    double inHigh[],
+                                    double inLow[],
+                                    double inClose[],
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    int outInteger[] )
+   {
+      try {
+         return CDLMATCHINGLOW_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * A two-candle pattern of two consecutive black (bearish) candles with equal
@@ -292,6 +314,7 @@
                                    float inClose[],
                                    int outInteger[] )
    {
+      requireIndexRange("CDLMATCHINGLOW", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CDLMATCHINGLOW_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -302,11 +325,32 @@
       requireLength("CDLMATCHINGLOW", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLMATCHINGLOW_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLMATCHINGLOW_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLMATCHINGLOW", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode CDLMATCHINGLOW_Internal( int startIdx,
+                                    int endIdx,
+                                    float inOpen[],
+                                    float inHigh[],
+                                    float inLow[],
+                                    float inClose[],
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    int outInteger[] )
+   {
+      try {
+         return CDLMATCHINGLOW_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -406,7 +450,7 @@
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("CDLMATCHINGLOW update: BadParam");
+            throw new TaLibArgumentException("CDLMATCHINGLOW update: BadParam", RetCode.BadParam);
          core.CDLMATCHINGLOW_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outInteger;
       }
@@ -420,7 +464,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("CDLMATCHINGLOW peek: BadParam");
+            throw new TaLibArgumentException("CDLMATCHINGLOW peek: BadParam", RetCode.BadParam);
          CDLMATCHINGLOW_Stream scratch = new CDLMATCHINGLOW_Stream(this);
          core.CDLMATCHINGLOW_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
@@ -503,7 +547,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -595,13 +639,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLMATCHINGLOW openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLMATCHINGLOW openAndFill: internal error");
+         throw new TaLibStateException("CDLMATCHINGLOW openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLMATCHINGLOW openAndFill: " + retCode);
+      throw new TaLibArgumentException("CDLMATCHINGLOW openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind CDLMATCHINGLOW_Open (composition seam). */
    CDLMATCHINGLOW_Stream CDLMATCHINGLOW_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -611,13 +655,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLMATCHINGLOW open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLMATCHINGLOW open: internal error");
+         throw new TaLibStateException("CDLMATCHINGLOW open: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLMATCHINGLOW open: " + retCode);
+      throw new TaLibArgumentException("CDLMATCHINGLOW open: " + retCode, retCode);
    }
    /**
     * Open a live CDLMATCHINGLOW stream over the warm-up history; the handle's
@@ -652,11 +696,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLMATCHINGLOW openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLMATCHINGLOW openAndFill: internal error");
+         throw new TaLibStateException("CDLMATCHINGLOW openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLMATCHINGLOW openAndFill: " + retCode);
+      throw new TaLibArgumentException("CDLMATCHINGLOW openAndFill: " + retCode, retCode);
    }

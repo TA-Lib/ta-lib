@@ -69,13 +69,13 @@ public partial class Core
       return 0 ;
 
    }
-   internal RetCode ADD( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inReal0,
-                         ReadOnlySpan<double> inReal1,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode ADD_Body( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<double> inReal0,
+                              ReadOnlySpan<double> inReal1,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -97,13 +97,13 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode ADD( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inReal0,
-                         ReadOnlySpan<float> inReal1,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode ADD_Body( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<float> inReal0,
+                              ReadOnlySpan<float> inReal1,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -173,11 +173,27 @@ public partial class Core
       RequireLength("ADD", "inReal0", inReal0.Length, guardInLen);
       RequireLength("ADD", "inReal1", inReal1.Length, guardInLen);
       RequireLength("ADD", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = ADD(startIdx, endIdx, inReal0, inReal1, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ADD_Body(startIdx, endIdx, inReal0, inReal1, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ADD", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode ADD( int startIdx,
+                         int endIdx,
+                         ReadOnlySpan<double> inReal0,
+                         ReadOnlySpan<double> inReal1,
+                         out int outBegIdx,
+                         out int outNBElement,
+                         Span<double> outReal )
+   {
+      try {
+         return ADD_Body(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Vector arithmetic addition. Outputs the element-wise sum of two input
@@ -236,11 +252,27 @@ public partial class Core
       RequireLength("ADD", "inReal0", inReal0.Length, guardInLen);
       RequireLength("ADD", "inReal1", inReal1.Length, guardInLen);
       RequireLength("ADD", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = ADD(startIdx, endIdx, inReal0, inReal1, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ADD_Body(startIdx, endIdx, inReal0, inReal1, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ADD", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode ADD( int startIdx,
+                         int endIdx,
+                         ReadOnlySpan<float> inReal0,
+                         ReadOnlySpan<float> inReal1,
+                         out int outBegIdx,
+                         out int outNBElement,
+                         Span<double> outReal )
+   {
+      try {
+         return ADD_Body(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -437,8 +469,8 @@ public partial class Core
    /// span cannot be null.</exception>
    public ADD_Stream ADD_Open( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1 )
    {
-      if( inReal0.IsEmpty ) throw new ArgumentException("inReal0 is empty", nameof(inReal0));
-      if( inReal1.IsEmpty ) throw new ArgumentException("inReal1 is empty", nameof(inReal1));
+      if( inReal0.IsEmpty ) throw new TaLibArgumentException("inReal0 is empty", nameof(inReal0), RetCode.BadParam);
+      if( inReal1.IsEmpty ) throw new TaLibArgumentException("inReal1 is empty", nameof(inReal1), RetCode.BadParam);
       return ADD_OpenInternal(inReal0, inReal1, 0);
    }
 
@@ -467,8 +499,8 @@ public partial class Core
    /// output.</exception>
    public ADD_Stream ADD_OpenAndFill( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, Span<double> outReal )
    {
-      if( inReal0.IsEmpty ) throw new ArgumentException("inReal0 is empty", nameof(inReal0));
-      if( inReal1.IsEmpty ) throw new ArgumentException("inReal1 is empty", nameof(inReal1));
+      if( inReal0.IsEmpty ) throw new TaLibArgumentException("inReal0 is empty", nameof(inReal0), RetCode.BadParam);
+      if( inReal1.IsEmpty ) throw new TaLibArgumentException("inReal1 is empty", nameof(inReal1), RetCode.BadParam);
       ADD_Stream sp = new ADD_Stream(this);
       RetCode retCode = ADD_OpenAndFillBody(sp, inReal0, inReal1, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

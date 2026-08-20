@@ -25,12 +25,12 @@
       return 0 ;
 
    }
-   RetCode ASIN_Internal( int startIdx,
-                          int endIdx,
-                          double inReal[],
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode ASIN_Body( int startIdx,
+                      int endIdx,
+                      double inReal[],
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -47,12 +47,12 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode ASIN_Internal( int startIdx,
-                          int endIdx,
-                          float inReal[],
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode ASIN_Body( int startIdx,
+                      int endIdx,
+                      float inReal[],
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -116,6 +116,7 @@
                          double inReal[],
                          double outReal[] )
    {
+      requireIndexRange("ASIN", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, ASIN_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -123,11 +124,29 @@
       requireLength("ASIN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ASIN_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ASIN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ASIN", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode ASIN_Internal( int startIdx,
+                          int endIdx,
+                          double inReal[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+   {
+      try {
+         return ASIN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Element-wise arcsine (inverse sine) of each input value. A vector math
@@ -179,6 +198,7 @@
                          float inReal[],
                          double outReal[] )
    {
+      requireIndexRange("ASIN", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, ASIN_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -186,11 +206,29 @@
       requireLength("ASIN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ASIN_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ASIN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ASIN", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode ASIN_Internal( int startIdx,
+                          int endIdx,
+                          float inReal[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+   {
+      try {
+         return ASIN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -250,7 +288,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("ASIN update: BadParam");
+            throw new TaLibArgumentException("ASIN update: BadParam", RetCode.BadParam);
          core.ASIN_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -264,7 +302,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("ASIN peek: BadParam");
+            throw new TaLibArgumentException("ASIN peek: BadParam", RetCode.BadParam);
          ASIN_Stream scratch = new ASIN_Stream(this);
          core.ASIN_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -338,13 +376,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("ASIN openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("ASIN openAndFill: internal error");
+         throw new TaLibStateException("ASIN openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("ASIN openAndFill: " + retCode);
+      throw new TaLibArgumentException("ASIN openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind ASIN_Open (composition seam). */
    ASIN_Stream ASIN_OpenInternal( double inReal[], int startIdx )
@@ -354,13 +392,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("ASIN open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("ASIN open: internal error");
+         throw new TaLibStateException("ASIN open: internal error", retCode);
       }
-      throw new IllegalArgumentException("ASIN open: " + retCode);
+      throw new TaLibArgumentException("ASIN open: " + retCode, retCode);
    }
    /**
     * Open a live ASIN stream over the warm-up history; the handle's
@@ -395,11 +433,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("ASIN openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("ASIN openAndFill: internal error");
+         throw new TaLibStateException("ASIN openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("ASIN openAndFill: " + retCode);
+      throw new TaLibArgumentException("ASIN openAndFill: " + retCode, retCode);
    }

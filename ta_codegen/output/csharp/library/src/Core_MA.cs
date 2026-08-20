@@ -133,14 +133,14 @@ public partial class Core
       return retValue ;
 
    }
-   internal RetCode MA( int startIdx,
-                        int endIdx,
-                        ReadOnlySpan<double> inReal,
-                        int optInTimePeriod,
-                        MAType optInMAType,
-                        out int outBegIdx,
-                        out int outNBElement,
-                        Span<double> outReal )
+   internal RetCode MA_Body( int startIdx,
+                             int endIdx,
+                             ReadOnlySpan<double> inReal,
+                             int optInTimePeriod,
+                             MAType optInMAType,
+                             out int outBegIdx,
+                             out int outNBElement,
+                             Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -183,37 +183,67 @@ public partial class Core
       switch( optInMAType )
       {
       case MAType.SMA:
-         retCode = SMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         OutRange _xr0 = SMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         outBegIdx = _xr0.BegIdx;
+         outNBElement = _xr0.Count;
+         retCode = RetCode.Success;
          break;
       case MAType.EMA:
-         retCode = EMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         OutRange _xr1 = EMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         outBegIdx = _xr1.BegIdx;
+         outNBElement = _xr1.Count;
+         retCode = RetCode.Success;
          break;
       case MAType.WMA:
-         retCode = WMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         OutRange _xr2 = WMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         outBegIdx = _xr2.BegIdx;
+         outNBElement = _xr2.Count;
+         retCode = RetCode.Success;
          break;
       case MAType.DEMA:
-         retCode = DEMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         OutRange _xr3 = DEMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         outBegIdx = _xr3.BegIdx;
+         outNBElement = _xr3.Count;
+         retCode = RetCode.Success;
          break;
       case MAType.TEMA:
-         retCode = TEMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         OutRange _xr4 = TEMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         outBegIdx = _xr4.BegIdx;
+         outNBElement = _xr4.Count;
+         retCode = RetCode.Success;
          break;
       case MAType.TRIMA:
-         retCode = TRIMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         OutRange _xr5 = TRIMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         outBegIdx = _xr5.BegIdx;
+         outNBElement = _xr5.Count;
+         retCode = RetCode.Success;
          break;
       case MAType.KAMA:
-         retCode = KAMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         OutRange _xr6 = KAMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         outBegIdx = _xr6.BegIdx;
+         outNBElement = _xr6.Count;
+         retCode = RetCode.Success;
          break;
       case MAType.MAMA:
          /* The optInTimePeriod is ignored. FAMA is a nullable output
           * (issue #125): pass NULL to compute only the MAMA line into outReal.
           */
-         retCode = MAMA(startIdx, endIdx, inReal, 0.5, 0.05, out outBegIdx, out outNBElement, outReal, new double[(int)(endIdx - startIdx + 1)]);
+         OutRange _xr7 = MAMA(startIdx, endIdx, inReal, 0.5, 0.05, outReal, new double[(int)(endIdx - startIdx + 1)]);
+         outBegIdx = _xr7.BegIdx;
+         outNBElement = _xr7.Count;
+         retCode = RetCode.Success;
          break;
       case MAType.T3:
-         retCode = T3(startIdx, endIdx, inReal, optInTimePeriod, 0.7, out outBegIdx, out outNBElement, outReal);
+         OutRange _xr8 = T3(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outReal);
+         outBegIdx = _xr8.BegIdx;
+         outNBElement = _xr8.Count;
+         retCode = RetCode.Success;
          break;
       case MAType.HMA:
-         retCode = HMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         OutRange _xr9 = HMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         outBegIdx = _xr9.BegIdx;
+         outNBElement = _xr9.Count;
+         retCode = RetCode.Success;
          break;
       default:
          retCode = RetCode.BadParam;
@@ -221,14 +251,14 @@ public partial class Core
       }
       return retCode ;
    }
-   internal RetCode MA( int startIdx,
-                        int endIdx,
-                        ReadOnlySpan<float> inReal,
-                        int optInTimePeriod,
-                        MAType optInMAType,
-                        out int outBegIdx,
-                        out int outNBElement,
-                        Span<double> outReal )
+   internal RetCode MA_Body( int startIdx,
+                             int endIdx,
+                             ReadOnlySpan<float> inReal,
+                             int optInTimePeriod,
+                             MAType optInMAType,
+                             out int outBegIdx,
+                             out int outNBElement,
+                             Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -264,34 +294,64 @@ public partial class Core
       switch( optInMAType )
       {
       case MAType.SMA:
-         retCode = SMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         OutRange _xr0 = SMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         outBegIdx = _xr0.BegIdx;
+         outNBElement = _xr0.Count;
+         retCode = RetCode.Success;
          break;
       case MAType.EMA:
-         retCode = EMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         OutRange _xr1 = EMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         outBegIdx = _xr1.BegIdx;
+         outNBElement = _xr1.Count;
+         retCode = RetCode.Success;
          break;
       case MAType.WMA:
-         retCode = WMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         OutRange _xr2 = WMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         outBegIdx = _xr2.BegIdx;
+         outNBElement = _xr2.Count;
+         retCode = RetCode.Success;
          break;
       case MAType.DEMA:
-         retCode = DEMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         OutRange _xr3 = DEMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         outBegIdx = _xr3.BegIdx;
+         outNBElement = _xr3.Count;
+         retCode = RetCode.Success;
          break;
       case MAType.TEMA:
-         retCode = TEMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         OutRange _xr4 = TEMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         outBegIdx = _xr4.BegIdx;
+         outNBElement = _xr4.Count;
+         retCode = RetCode.Success;
          break;
       case MAType.TRIMA:
-         retCode = TRIMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         OutRange _xr5 = TRIMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         outBegIdx = _xr5.BegIdx;
+         outNBElement = _xr5.Count;
+         retCode = RetCode.Success;
          break;
       case MAType.KAMA:
-         retCode = KAMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         OutRange _xr6 = KAMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         outBegIdx = _xr6.BegIdx;
+         outNBElement = _xr6.Count;
+         retCode = RetCode.Success;
          break;
       case MAType.MAMA:
-         retCode = MAMA(startIdx, endIdx, inReal, 0.5, 0.05, out outBegIdx, out outNBElement, outReal, new double[(int)(endIdx - startIdx + 1)]);
+         OutRange _xr7 = MAMA(startIdx, endIdx, inReal, 0.5, 0.05, outReal, new double[(int)(endIdx - startIdx + 1)]);
+         outBegIdx = _xr7.BegIdx;
+         outNBElement = _xr7.Count;
+         retCode = RetCode.Success;
          break;
       case MAType.T3:
-         retCode = T3(startIdx, endIdx, inReal, optInTimePeriod, 0.7, out outBegIdx, out outNBElement, outReal);
+         OutRange _xr8 = T3(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outReal);
+         outBegIdx = _xr8.BegIdx;
+         outNBElement = _xr8.Count;
+         retCode = RetCode.Success;
          break;
       case MAType.HMA:
-         retCode = HMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         OutRange _xr9 = HMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         outBegIdx = _xr9.BegIdx;
+         outNBElement = _xr9.Count;
+         retCode = RetCode.Success;
          break;
       default:
          retCode = RetCode.BadParam;
@@ -361,11 +421,28 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("MA", "inReal", inReal.Length, guardInLen);
       RequireLength("MA", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = MA(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MA_Body(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MA", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode MA( int startIdx,
+                        int endIdx,
+                        ReadOnlySpan<double> inReal,
+                        int optInTimePeriod,
+                        MAType optInMAType,
+                        out int outBegIdx,
+                        out int outNBElement,
+                        Span<double> outReal )
+   {
+      try {
+         return MA_Body(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Generic moving-average dispatcher that forwards the job to the MA
@@ -435,11 +512,28 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("MA", "inReal", inReal.Length, guardInLen);
       RequireLength("MA", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = MA(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MA_Body(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MA", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode MA( int startIdx,
+                        int endIdx,
+                        ReadOnlySpan<float> inReal,
+                        int optInTimePeriod,
+                        MAType optInMAType,
+                        out int outBegIdx,
+                        out int outNBElement,
+                        Span<double> outReal )
+   {
+      try {
+         return MA_Body(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -753,11 +847,11 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( historyLen < MA_Lookback(optInTimePeriod, optInMAType) + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.InsufficientHistory;
       }
       if( optInTimePeriod == 1 || optInMAType == MAType.DISABLED ) {
          if( historyLen < MA_Lookback(optInTimePeriod, optInMAType) + 1 ) {
-            return RetCode.OutOfRangeEndIndex;
+            return RetCode.InsufficientHistory;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.optInMAType = optInMAType;
@@ -860,11 +954,11 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( historyLen < MA_Lookback(optInTimePeriod, optInMAType) + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.InsufficientHistory;
       }
       if( optInTimePeriod == 1 || optInMAType == MAType.DISABLED ) {
          if( historyLen < MA_Lookback(optInTimePeriod, optInMAType) + 1 ) {
-            return RetCode.OutOfRangeEndIndex;
+            return RetCode.InsufficientHistory;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.optInMAType = optInMAType;
@@ -990,11 +1084,11 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( historyLen < MA_Lookback(optInTimePeriod, optInMAType) + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.InsufficientHistory;
       }
       if( optInTimePeriod == 1 || optInMAType == MAType.DISABLED ) {
          if( historyLen < MA_Lookback(optInTimePeriod, optInMAType) + 1 ) {
-            return RetCode.OutOfRangeEndIndex;
+            return RetCode.InsufficientHistory;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.optInMAType = optInMAType;
@@ -1002,7 +1096,7 @@ public partial class Core
          int fillLb = MA_Lookback(optInTimePeriod, optInMAType);
          if( startIdx > fillLb ) fillLb = startIdx;
          if( historyLen < fillLb + 1 ) {
-            return RetCode.OutOfRangeEndIndex;
+            return RetCode.InsufficientHistory;
          }
          outBegIdx = fillLb;
          outNBElement = historyLen - fillLb;
@@ -1114,7 +1208,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public MA_Stream MA_Open( ReadOnlySpan<double> inReal, int optInTimePeriod, MAType optInMAType )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return MA_OpenInternal(inReal, 0, optInTimePeriod, optInMAType);
    }
 
@@ -1146,7 +1240,7 @@ public partial class Core
    /// output.</exception>
    public MA_Stream MA_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, MAType optInMAType, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       MA_Stream sp = new MA_Stream(this);
       RetCode retCode = MA_OpenAndFillBody(sp, inReal, optInTimePeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

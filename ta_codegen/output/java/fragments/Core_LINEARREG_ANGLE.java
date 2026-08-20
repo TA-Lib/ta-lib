@@ -40,13 +40,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode LINEARREG_ANGLE_Internal( int startIdx,
-                                     int endIdx,
-                                     double inReal[],
-                                     int optInTimePeriod,
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     double outReal[] )
+   RetCode LINEARREG_ANGLE_Body( int startIdx,
+                                 int endIdx,
+                                 double inReal[],
+                                 int optInTimePeriod,
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -143,13 +143,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode LINEARREG_ANGLE_Internal( int startIdx,
-                                     int endIdx,
-                                     float inReal[],
-                                     int optInTimePeriod,
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     double outReal[] )
+   RetCode LINEARREG_ANGLE_Body( int startIdx,
+                                 int endIdx,
+                                 float inReal[],
+                                 int optInTimePeriod,
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -261,6 +261,7 @@
                                     int optInTimePeriod,
                                     double outReal[] )
    {
+      requireIndexRange("LINEARREG_ANGLE", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, LINEARREG_ANGLE_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -268,11 +269,30 @@
       requireLength("LINEARREG_ANGLE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = LINEARREG_ANGLE_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LINEARREG_ANGLE_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("LINEARREG_ANGLE", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode LINEARREG_ANGLE_Internal( int startIdx,
+                                     int endIdx,
+                                     double inReal[],
+                                     int optInTimePeriod,
+                                     MInteger outBegIdx,
+                                     MInteger outNBElement,
+                                     double outReal[] )
+   {
+      try {
+         return LINEARREG_ANGLE_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * The angle, in degrees, of the least-squares best-fit line over the last N
@@ -325,6 +345,7 @@
                                     int optInTimePeriod,
                                     double outReal[] )
    {
+      requireIndexRange("LINEARREG_ANGLE", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, LINEARREG_ANGLE_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -332,11 +353,30 @@
       requireLength("LINEARREG_ANGLE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = LINEARREG_ANGLE_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LINEARREG_ANGLE_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("LINEARREG_ANGLE", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode LINEARREG_ANGLE_Internal( int startIdx,
+                                     int endIdx,
+                                     float inReal[],
+                                     int optInTimePeriod,
+                                     MInteger outBegIdx,
+                                     MInteger outNBElement,
+                                     double outReal[] )
+   {
+      try {
+         return LINEARREG_ANGLE_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -427,7 +467,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("LINEARREG_ANGLE update: BadParam");
+            throw new TaLibArgumentException("LINEARREG_ANGLE update: BadParam", RetCode.BadParam);
          core.LINEARREG_ANGLE_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -441,7 +481,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("LINEARREG_ANGLE peek: BadParam");
+            throw new TaLibArgumentException("LINEARREG_ANGLE peek: BadParam", RetCode.BadParam);
          LINEARREG_ANGLE_Stream scratch = new LINEARREG_ANGLE_Stream(this);
          core.LINEARREG_ANGLE_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -534,7 +574,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outIdx = 0;
       /* Index into the output. */
@@ -624,13 +664,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("LINEARREG_ANGLE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("LINEARREG_ANGLE openAndFill: internal error");
+         throw new TaLibStateException("LINEARREG_ANGLE openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("LINEARREG_ANGLE openAndFill: " + retCode);
+      throw new TaLibArgumentException("LINEARREG_ANGLE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind LINEARREG_ANGLE_Open (composition seam). */
    LINEARREG_ANGLE_Stream LINEARREG_ANGLE_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -640,13 +680,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("LINEARREG_ANGLE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("LINEARREG_ANGLE open: internal error");
+         throw new TaLibStateException("LINEARREG_ANGLE open: internal error", retCode);
       }
-      throw new IllegalArgumentException("LINEARREG_ANGLE open: " + retCode);
+      throw new TaLibArgumentException("LINEARREG_ANGLE open: " + retCode, retCode);
    }
    /**
     * Open a live LINEARREG_ANGLE stream over the warm-up history; the handle's
@@ -681,11 +721,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("LINEARREG_ANGLE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("LINEARREG_ANGLE openAndFill: internal error");
+         throw new TaLibStateException("LINEARREG_ANGLE openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("LINEARREG_ANGLE openAndFill: " + retCode);
+      throw new TaLibArgumentException("LINEARREG_ANGLE openAndFill: " + retCode, retCode);
    }

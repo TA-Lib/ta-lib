@@ -70,15 +70,15 @@ public partial class Core
       return 3 ;
 
    }
-   internal RetCode CDL3OUTSIDE( int startIdx,
-                                 int endIdx,
-                                 ReadOnlySpan<double> inOpen,
-                                 ReadOnlySpan<double> inHigh,
-                                 ReadOnlySpan<double> inLow,
-                                 ReadOnlySpan<double> inClose,
-                                 out int outBegIdx,
-                                 out int outNBElement,
-                                 Span<int> outInteger )
+   internal RetCode CDL3OUTSIDE_Body( int startIdx,
+                                      int endIdx,
+                                      ReadOnlySpan<double> inOpen,
+                                      ReadOnlySpan<double> inHigh,
+                                      ReadOnlySpan<double> inLow,
+                                      ReadOnlySpan<double> inClose,
+                                      out int outBegIdx,
+                                      out int outNBElement,
+                                      Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -137,15 +137,15 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CDL3OUTSIDE( int startIdx,
-                                 int endIdx,
-                                 ReadOnlySpan<float> inOpen,
-                                 ReadOnlySpan<float> inHigh,
-                                 ReadOnlySpan<float> inLow,
-                                 ReadOnlySpan<float> inClose,
-                                 out int outBegIdx,
-                                 out int outNBElement,
-                                 Span<int> outInteger )
+   internal RetCode CDL3OUTSIDE_Body( int startIdx,
+                                      int endIdx,
+                                      ReadOnlySpan<float> inOpen,
+                                      ReadOnlySpan<float> inHigh,
+                                      ReadOnlySpan<float> inLow,
+                                      ReadOnlySpan<float> inClose,
+                                      out int outBegIdx,
+                                      out int outNBElement,
+                                      Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -239,11 +239,29 @@ public partial class Core
       RequireLength("CDL3OUTSIDE", "inOpen", inOpen.Length, guardInLen);
       RequireLength("CDL3OUTSIDE", "inClose", inClose.Length, guardInLen);
       RequireLength("CDL3OUTSIDE", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDL3OUTSIDE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDL3OUTSIDE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDL3OUTSIDE", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode CDL3OUTSIDE( int startIdx,
+                                 int endIdx,
+                                 ReadOnlySpan<double> inOpen,
+                                 ReadOnlySpan<double> inHigh,
+                                 ReadOnlySpan<double> inLow,
+                                 ReadOnlySpan<double> inClose,
+                                 out int outBegIdx,
+                                 out int outNBElement,
+                                 Span<int> outInteger )
+   {
+      try {
+         return CDL3OUTSIDE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outInteger);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// A three-candle pattern: an engulfing pair (candle 2's body fully engulfs
@@ -309,11 +327,29 @@ public partial class Core
       RequireLength("CDL3OUTSIDE", "inOpen", inOpen.Length, guardInLen);
       RequireLength("CDL3OUTSIDE", "inClose", inClose.Length, guardInLen);
       RequireLength("CDL3OUTSIDE", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDL3OUTSIDE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDL3OUTSIDE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDL3OUTSIDE", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode CDL3OUTSIDE( int startIdx,
+                                 int endIdx,
+                                 ReadOnlySpan<float> inOpen,
+                                 ReadOnlySpan<float> inHigh,
+                                 ReadOnlySpan<float> inLow,
+                                 ReadOnlySpan<float> inClose,
+                                 out int outBegIdx,
+                                 out int outNBElement,
+                                 Span<int> outInteger )
+   {
+      try {
+         return CDL3OUTSIDE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outInteger);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -483,7 +519,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -583,10 +619,10 @@ public partial class Core
    /// span cannot be null.</exception>
    public CDL3OUTSIDE_Stream CDL3OUTSIDE_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inOpen.IsEmpty ) throw new TaLibArgumentException("inOpen is empty", nameof(inOpen), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       return CDL3OUTSIDE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
@@ -620,10 +656,10 @@ public partial class Core
    /// output.</exception>
    public CDL3OUTSIDE_Stream CDL3OUTSIDE_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
-      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inOpen.IsEmpty ) throw new TaLibArgumentException("inOpen is empty", nameof(inOpen), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       CDL3OUTSIDE_Stream sp = new CDL3OUTSIDE_Stream(this);
       RetCode retCode = CDL3OUTSIDE_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

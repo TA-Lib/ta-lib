@@ -85,13 +85,13 @@ public partial class Core
       return emaLookback * 3 + ROCR_Lookback(1) ;
 
    }
-   internal RetCode TRIX( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<double> inReal,
-                          int optInTimePeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
+   internal RetCode TRIX_Body( int startIdx,
+                               int endIdx,
+                               ReadOnlySpan<double> inReal,
+                               int optInTimePeriod,
+                               out int outBegIdx,
+                               out int outNBElement,
+                               Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -218,13 +218,13 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode TRIX( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<float> inReal,
-                          int optInTimePeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
+   internal RetCode TRIX_Body( int startIdx,
+                               int endIdx,
+                               ReadOnlySpan<float> inReal,
+                               int optInTimePeriod,
+                               out int outBegIdx,
+                               out int outNBElement,
+                               Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -368,11 +368,27 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("TRIX", "inReal", inReal.Length, guardInLen);
       RequireLength("TRIX", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = TRIX(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = TRIX_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("TRIX", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode TRIX( int startIdx,
+                          int endIdx,
+                          ReadOnlySpan<double> inReal,
+                          int optInTimePeriod,
+                          out int outBegIdx,
+                          out int outNBElement,
+                          Span<double> outReal )
+   {
+      try {
+         return TRIX_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// 1-day Rate-Of-Change of a triple-smoothed EMA of the input. Momentum
@@ -436,11 +452,27 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("TRIX", "inReal", inReal.Length, guardInLen);
       RequireLength("TRIX", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = TRIX(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = TRIX_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("TRIX", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode TRIX( int startIdx,
+                          int endIdx,
+                          ReadOnlySpan<float> inReal,
+                          int optInTimePeriod,
+                          out int outBegIdx,
+                          out int outNBElement,
+                          Span<double> outReal )
+   {
+      try {
+         return TRIX_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -613,7 +645,7 @@ public partial class Core
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Single lockstep pass: EMA1 feeds EMA2 feeds EMA3, output is the
        * roc() of consecutive EMA3 values. Output element j is the TRIX
@@ -770,7 +802,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public TRIX_Stream TRIX_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return TRIX_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -800,7 +832,7 @@ public partial class Core
    /// output.</exception>
    public TRIX_Stream TRIX_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       TRIX_Stream sp = new TRIX_Stream(this);
       RetCode retCode = TRIX_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

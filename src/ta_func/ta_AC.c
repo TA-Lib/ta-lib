@@ -618,7 +618,7 @@ static TA_RetCode TA_AC_OpenCore( struct TA_AC_Stream **stream, const double inH
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       /* Allocate a circular buffer equal to the requested signal period. */
       if( optInSignalPeriod < 1 ) return TA_INTERNAL_ERROR(137);

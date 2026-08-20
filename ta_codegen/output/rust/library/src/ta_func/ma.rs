@@ -483,7 +483,7 @@ impl Core {
         let historyLen: usize = inReal.len();
         if optInTimePeriod == 1 || optInMAType == MAType::DISABLED {
             if historyLen < self.MA_Lookback(optInTimePeriod, optInMAType) + 1 {
-                return Err(RetCode::BadParam);
+                return Err(RetCode::InsufficientHistory);
             }
             let state = MA_StreamState { optInTimePeriod, optInMAType, sub: MA_Sub::Identity };
             return Ok((MA_Stream { core: self.clone(), state }, inReal[historyLen - 1]));
@@ -540,8 +540,10 @@ impl Core {
     ///
     /// # Errors
     ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    /// [`RetCode::InsufficientHistory`] when the history holds fewer than
+    /// `lookback + 1` bars — the one failure here worth retrying, since another
+    /// bar fixes it. [`RetCode::BadParam`] when a parameter is out of range, an
+    /// input is empty, or input lengths differ.
     ///
     /// ```
     /// use ta_lib::{Core, MAType};
@@ -583,7 +585,7 @@ impl Core {
         let historyLen: usize = inReal.len();
         if optInTimePeriod == 1 || optInMAType == MAType::DISABLED {
             if historyLen < self.MA_Lookback(optInTimePeriod, optInMAType) + 1 {
-                return Err(RetCode::BadParam);
+                return Err(RetCode::InsufficientHistory);
             }
             let fillLb: usize = self.MA_Lookback(optInTimePeriod, optInMAType);
             let mut fillIdx: usize = 0;
@@ -663,12 +665,12 @@ impl Core {
         let historyLen: usize = inReal.len();
         if optInTimePeriod == 1 || optInMAType == MAType::DISABLED {
             if historyLen < self.MA_Lookback(optInTimePeriod, optInMAType) + 1 {
-                return Err(RetCode::BadParam);
+                return Err(RetCode::InsufficientHistory);
             }
             let fillLb: usize = self.MA_Lookback(optInTimePeriod, optInMAType);
             let fillLb = if startIdx > fillLb { startIdx } else { fillLb };
             if historyLen < fillLb + 1 {
-                return Err(RetCode::BadParam);
+                return Err(RetCode::InsufficientHistory);
             }
             (*outBegIdx) = fillLb;
             (*outNBElement) = historyLen - fillLb;

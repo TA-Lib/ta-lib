@@ -533,11 +533,25 @@ fn render_init_expr(expr: &Expr) -> String {
     }
 }
 
-/// Emit the public, `OutRange`-returning wrapper over one internal core.
+/// Name of the transcribed body: the numerics, and nothing else.
 ///
-/// The wrapper translates the core's `RetCode` into the documented exception
-/// mapping. It is thin: the numerics live entirely in the core (an overload of
-/// the same name carrying the two `out int` params).
+/// C# distinguishes its two PUBLIC-facing tiers by overload — `internal RetCode
+/// <N>(…, out int, out int, …)` beside `public OutRange <N>(…)` — but a third
+/// method with the same signature as the first needs a name of its own. Since
+/// #236 step 3 the C-shaped overload is a shim that converts a thrown failure
+/// back to a code, so that the body's cross-calls can call the public overload
+/// (which the same call site selects, by omitting the two `out int` arguments).
+fn body_name(base: &str) -> String {
+    format!("{base}_Body")
+}
+
+/// Emit the public, `OutRange`-returning wrapper, plus the C-shaped shim beside it.
+///
+/// The wrapper checks the arguments, calls [`body_name`] and translates its
+/// `RetCode` into the documented exception mapping. It is thin: the numerics live
+/// entirely in the body. It calls the BODY and not the shim, so that a
+/// cross-call's rejection propagates as a throw rather than being converted to a
+/// code and re-thrown under this function's name.
 ///
 /// **A short range is not an error.** A valid range shorter than the lookback
 /// returns `Success` with `outNBElement == 0`, which becomes an `OutRange` whose
@@ -548,8 +562,8 @@ fn gen_public_wrapper(
     enums: &HashMap<String, EnumDef>,
 ) -> String {
     let base_name = func.name.clone();
-    let core = base_name.clone();
-    let public_name = core.clone();
+    let core = body_name(&base_name);
+    let public_name = base_name.clone();
 
     // Parameters: same as the core minus the two out-int params.
     let mut params: Vec<String> = vec!["int startIdx".to_string(), "int endIdx".to_string()];
@@ -664,6 +678,52 @@ fn gen_public_wrapper(
     }
     out.push_str("      return new OutRange(outBegIdx, outNBElement);\n");
     out.push_str("   }\n");
+
+    // The C-shaped overload, as a shim: the JSON-RPC server binds here, and
+    // nothing in the shipped library does since the cross-calls moved to the
+    // public overload. The `catch` is not defensive — a sub-function rejection
+    // now arrives as a throw and has to become a code again.
+    //
+    // It calls the BODY, not the public overload: the wrapper's length checks
+    // are a property of the public API, and putting them on this path would
+    // change what the server sees before the harness is pointed at that API.
+    //
+    // `out` parameters are not definitely assigned after a try that threw, so
+    // the catch assigns them — which is also the contract: a rejected call
+    // leaves the reported range at nothing.
+    {
+        let mut core_params = params.clone();
+        let out_at = core_params.len() - func.outputs.len();
+        core_params.insert(out_at, "out int outNBElement".to_string());
+        core_params.insert(out_at, "out int outBegIdx".to_string());
+        let sig_prefix = format!("   internal RetCode {base_name}( ");
+        let indent = " ".repeat(sig_prefix.len());
+        out.push_str(&sig_prefix);
+        for (i, param) in core_params.iter().enumerate() {
+            if i > 0 {
+                out.push_str(&format!(",\n{indent}"));
+            }
+            out.push_str(param);
+        }
+        out.push_str(" )\n   {\n");
+        out.push_str("      try {\n");
+        // The wrapper's arg list DECLARES the two out-locals inline
+        // (`out int outBegIdx`); here they are already parameters, so the shim
+        // passes them through instead of shadowing them.
+        let mut shim_args = args.clone();
+        let a_at = shim_args.len() - func.outputs.len() - 2;
+        shim_args[a_at] = "out outBegIdx".to_string();
+        shim_args[a_at + 1] = "out outNBElement".to_string();
+        let _ = write!(out, "         return {core}(");
+        out.push_str(&shim_args.join(", "));
+        out.push_str(");\n");
+        out.push_str("      } catch (Exception _e) when (_e is ITaLibFailure) {\n");
+        out.push_str("         outBegIdx = 0;\n");
+        out.push_str("         outNBElement = 0;\n");
+        out.push_str("         return ((ITaLibFailure)_e).RetCode;\n");
+        out.push_str("      }\n");
+        out.push_str("   }\n");
+    }
     out
 }
 
@@ -704,7 +764,7 @@ fn gen_func_inner(
     let name = if let Some(n) = name_override {
         n.to_string()
     } else {
-        base_name.clone()
+        body_name(&base_name)
     };
 
     // Build parameter list
@@ -1246,6 +1306,18 @@ impl StatementEmitter for CsStmt<'_> {
 
     fn assign(&self, target: &Expr, value: &Expr, compound: bool, indent: usize) -> String {
         let pad = " ".repeat(indent);
+        // A cross-indicator call answers an `OutRange` and throws (#236 step 3),
+        // so the assigned code is Success by construction.
+        if let Expr::FuncCall(fname, cargs) = value {
+            if self.registry.contains(fname) {
+                if let Some(block) =
+                    render_cross_indicator_call(fname, cargs, indent, self.ctx, self.registry, self.helpers)
+                {
+                    let t = render_assign_target(target, self.ctx, self.registry, self.helpers);
+                    return format!("{block}{pad}{t} = RetCode.Success;\n");
+                }
+            }
+        }
         // Hoist multi-statement helpers from the value expression
         let mut hoisted = Vec::new();
         let mut cnt = self.ctx.inline_counter.get();
@@ -1506,6 +1578,16 @@ impl StatementEmitter for CsStmt<'_> {
 
     fn return_stmt(&self, value: &Option<Expr>, indent: usize) -> String {
         let pad = " ".repeat(indent);
+        // `return macd(...)` -- the tail-call form of a cross-indicator call.
+        if let Some(Expr::FuncCall(fname, cargs)) = value {
+            if self.registry.contains(fname) {
+                if let Some(block) =
+                    render_cross_indicator_call(fname, cargs, indent, self.ctx, self.registry, self.helpers)
+                {
+                    return format!("{block}{pad}return RetCode.Success ;\n");
+                }
+            }
+        }
         match value {
             Some(expr) => {
                 let rendered = render_return_expr(expr, self.ctx, self.registry, self.helpers);
@@ -1628,6 +1710,69 @@ pub(crate) fn render_csharp_switch_label(label: &str, enums: &HashMap<String, En
     }
 }
 
+/// Emit a cross-indicator call to the callee's PUBLIC overload (#236 step 3).
+///
+/// C# distinguishes its two tiers by OVERLOAD, not by name: the C-shaped one
+/// carries `out int outBegIdx, out int outNBElement` and the public one does
+/// not. So dropping those two arguments IS the switch -- there is nothing to
+/// rename. See `render_cross_indicator_call` in the Java backend for why the
+/// out-parameters are found positionally and why the enclosing
+/// `if( retCode != Success )` is left standing.
+fn render_cross_indicator_call(
+    fname: &str,
+    args: &[Expr],
+    indent: usize,
+    ctx: &CsRenderCtx,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+) -> Option<String> {
+    let n_out = registry.callee_outputs(fname).len();
+    if n_out == 0 || args.len() < n_out + 2 {
+        return None;
+    }
+    let split = args.len() - n_out - 2;
+    let pad = " ".repeat(indent);
+    let public = registry.resolve_call(fname, Lang::CSharp);
+
+    let mut call_args: Vec<String> = Vec::new();
+    for a in args[..split].iter().chain(args[split + 2..].iter()) {
+        call_args.push(match a {
+            // NULL for a nullable output the caller discards (#125): the callee
+            // writes it unconditionally, so materialize a throwaway.
+            Expr::Var(n) if n == "NULL" => "new double[(int)(endIdx - startIdx + 1)]".to_string(),
+            _ => render_expr(a, ctx, registry, helpers),
+        });
+    }
+
+    let n = ctx.inline_counter.get();
+    ctx.inline_counter.set(n + 1);
+    let tmp = format!("_xr{n}");
+    let beg = out_meta_target(&args[split], ctx, registry, helpers);
+    let nb = out_meta_target(&args[split + 1], ctx, registry, helpers);
+    Some(format!(
+        "{pad}OutRange {tmp} = {public}({});\n{pad}{beg} = {tmp}.BegIdx;\n{pad}{nb} = {tmp}.Count;\n",
+        call_args.join(", ")
+    ))
+}
+
+/// The `int` an out-parameter argument names, without the `out` the call site
+/// would otherwise render.
+fn out_meta_target(
+    arg: &Expr,
+    ctx: &CsRenderCtx,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+) -> String {
+    match arg {
+        Expr::AddressOf(inner) => match inner.as_ref() {
+            Expr::Var(n) => n.clone(),
+            other => render_expr(other, ctx, registry, helpers),
+        },
+        Expr::Var(n) => n.clone(),
+        other => render_expr(other, ctx, registry, helpers),
+    }
+}
+
 fn render_assign_target(
     expr: &Expr,
     ctx: &CsRenderCtx,
@@ -1660,6 +1805,7 @@ fn render_return_expr(
         return match name.as_str() {
             "SUCCESS" => "RetCode.Success".to_string(),
             "BadParam" => "RetCode.BadParam".to_string(),
+            "InsufficientHistory" => "RetCode.InsufficientHistory".to_string(),
             "OutOfRangeEndIndex" => "RetCode.OutOfRangeEndIndex".to_string(),
             "OutOfRangeStartIndex" => "RetCode.OutOfRangeStartIndex".to_string(),
             _ => render_expr(expr, ctx, registry, helpers),
@@ -2354,15 +2500,33 @@ mod tests {
             "missing seeding prologue"
         );
 
-        // The surviving core validates. Bounded to the double core's own body so
-        // a match inside the float overload cannot stand in for it.
-        let guarded_pos = output.find("internal RetCode SMA( ").unwrap();
-        let guarded_end = output[guarded_pos + 1..]
+        // The BODY validates. Bounded to the double body's own text so a match
+        // inside the float overload cannot stand in for it.
+        let body_pos = output.find("internal RetCode SMA_Body( ").unwrap();
+        let body_end = output[body_pos + 1..]
             .find("   internal RetCode ")
-            .map_or(output.len() - guarded_pos, |i| i + 1);
+            .map_or(output.len() - body_pos, |i| i + 1);
         assert!(
-            output[guarded_pos..guarded_pos + guarded_end].contains("OutOfRangeStartIndex"),
-            "guarded core should contain validation"
+            output[body_pos..body_pos + body_end].contains("OutOfRangeStartIndex"),
+            "the body should contain validation"
+        );
+
+        // The C-shaped OVERLOAD is a shim over it. C# has no suffix to rename —
+        // the two tiers are `internal RetCode SMA(…, out int, out int, …)` beside
+        // `public OutRange SMA(…)` — so the shim keeps the bare name and the body
+        // takes the suffix. Its `catch` is why it exists: since #236 step 3 a
+        // cross-call inside the body calls the callee's public overload, which
+        // throws rather than answering a code.
+        let shim_pos = output.find("   internal RetCode SMA( ").unwrap();
+        let shim = &output[shim_pos..shim_pos + 900];
+        assert!(shim.contains("return SMA_Body("), "the shim must call the body");
+        assert!(
+            shim.contains("when (_e is ITaLibFailure)") && shim.contains("((ITaLibFailure)_e).RetCode"),
+            "the shim must convert a thrown failure back to its code"
+        );
+        assert!(
+            shim.contains("outBegIdx = 0;") && shim.contains("outNBElement = 0;"),
+            "an `out` parameter is not definitely assigned after a try that threw"
         );
 
         // The public surface is OutRange-returning wrappers over those cores,
@@ -2388,13 +2552,24 @@ mod tests {
         let registry = make_registry();
         let output = generate(&func, &enums, &registry, &HelperRegistry::empty());
 
-        assert!(
-            output.contains("out localBegIdx, out localNbElement"),
-            "&localBegIdx must lower to an `out` argument"
-        );
+        // `&localBegIdx` used to lower to `out localBegIdx` at the cross-call.
+        // Since #236 step 3 the two out-parameters are not passed at all — that
+        // omission is what selects the callee's PUBLIC overload — and the range
+        // it returns is bound to the same two locals instead. The `out` lowering
+        // itself is still live, on the streaming sub-opens, which keep the
+        // C-shaped shape because they have no public entry point.
         assert!(
             output.contains("MA(startIdx, endIdx, inReal, minUsed"),
             "cross-call must resolve through the registry's C# naming"
+        );
+        assert!(
+            output.contains("localBegIdx = ") && output.contains(".BegIdx;")
+                && output.contains("localNbElement = ") && output.contains(".Count;"),
+            "the cross-call must bind the returned OutRange to the caller's locals"
+        );
+        assert!(
+            !output.contains("out localBegIdx"),
+            "the out-parameters must be gone from the cross-call, not merely unused"
         );
         assert!(
             !output.contains("if( false )"),

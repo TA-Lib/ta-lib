@@ -83,16 +83,16 @@ public partial class Core
       return Math.Max(BodyShort_avgPeriod, BodyLong_avgPeriod) + 4 ;
 
    }
-   internal RetCode CDLMATHOLD( int startIdx,
-                                int endIdx,
-                                ReadOnlySpan<double> inOpen,
-                                ReadOnlySpan<double> inHigh,
-                                ReadOnlySpan<double> inLow,
-                                ReadOnlySpan<double> inClose,
-                                double optInPenetration,
-                                out int outBegIdx,
-                                out int outNBElement,
-                                Span<int> outInteger )
+   internal RetCode CDLMATHOLD_Body( int startIdx,
+                                     int endIdx,
+                                     ReadOnlySpan<double> inOpen,
+                                     ReadOnlySpan<double> inHigh,
+                                     ReadOnlySpan<double> inLow,
+                                     ReadOnlySpan<double> inClose,
+                                     double optInPenetration,
+                                     out int outBegIdx,
+                                     out int outNBElement,
+                                     Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -212,16 +212,16 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CDLMATHOLD( int startIdx,
-                                int endIdx,
-                                ReadOnlySpan<float> inOpen,
-                                ReadOnlySpan<float> inHigh,
-                                ReadOnlySpan<float> inLow,
-                                ReadOnlySpan<float> inClose,
-                                double optInPenetration,
-                                out int outBegIdx,
-                                out int outNBElement,
-                                Span<int> outInteger )
+   internal RetCode CDLMATHOLD_Body( int startIdx,
+                                     int endIdx,
+                                     ReadOnlySpan<float> inOpen,
+                                     ReadOnlySpan<float> inHigh,
+                                     ReadOnlySpan<float> inLow,
+                                     ReadOnlySpan<float> inClose,
+                                     double optInPenetration,
+                                     out int outBegIdx,
+                                     out int outNBElement,
+                                     Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -361,11 +361,30 @@ public partial class Core
       RequireLength("CDLMATHOLD", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLMATHOLD", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLMATHOLD", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLMATHOLD(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLMATHOLD_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLMATHOLD", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode CDLMATHOLD( int startIdx,
+                                int endIdx,
+                                ReadOnlySpan<double> inOpen,
+                                ReadOnlySpan<double> inHigh,
+                                ReadOnlySpan<double> inLow,
+                                ReadOnlySpan<double> inClose,
+                                double optInPenetration,
+                                out int outBegIdx,
+                                out int outNBElement,
+                                Span<int> outInteger )
+   {
+      try {
+         return CDLMATHOLD_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outInteger);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// A five-candle bullish continuation pattern: a long white candle, an upside
@@ -437,11 +456,30 @@ public partial class Core
       RequireLength("CDLMATHOLD", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLMATHOLD", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLMATHOLD", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLMATHOLD(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLMATHOLD_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLMATHOLD", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode CDLMATHOLD( int startIdx,
+                                int endIdx,
+                                ReadOnlySpan<float> inOpen,
+                                ReadOnlySpan<float> inHigh,
+                                ReadOnlySpan<float> inLow,
+                                ReadOnlySpan<float> inClose,
+                                double optInPenetration,
+                                out int outBegIdx,
+                                out int outNBElement,
+                                Span<int> outInteger )
+   {
+      try {
+         return CDLMATHOLD_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outInteger);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -823,7 +861,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -1038,10 +1076,10 @@ public partial class Core
    /// span cannot be null.</exception>
    public CDLMATHOLD_Stream CDLMATHOLD_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration )
    {
-      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inOpen.IsEmpty ) throw new TaLibArgumentException("inOpen is empty", nameof(inOpen), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       return CDLMATHOLD_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
    }
 
@@ -1075,10 +1113,10 @@ public partial class Core
    /// output.</exception>
    public CDLMATHOLD_Stream CDLMATHOLD_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration, Span<int> outInteger )
    {
-      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inOpen.IsEmpty ) throw new TaLibArgumentException("inOpen is empty", nameof(inOpen), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       CDLMATHOLD_Stream sp = new CDLMATHOLD_Stream(this);
       RetCode retCode = CDLMATHOLD_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

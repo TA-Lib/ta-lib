@@ -25,13 +25,13 @@
       return 0 ;
 
    }
-   RetCode ADD_Internal( int startIdx,
-                         int endIdx,
-                         double inReal0[],
-                         double inReal1[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode ADD_Body( int startIdx,
+                     int endIdx,
+                     double inReal0[],
+                     double inReal1[],
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -48,13 +48,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode ADD_Internal( int startIdx,
-                         int endIdx,
-                         float inReal0[],
-                         float inReal1[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode ADD_Body( int startIdx,
+                     int endIdx,
+                     float inReal0[],
+                     float inReal1[],
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -115,6 +115,7 @@
                         double inReal1[],
                         double outReal[] )
    {
+      requireIndexRange("ADD", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, ADD_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -123,11 +124,30 @@
       requireLength("ADD", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ADD_Internal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ADD_Body(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ADD", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode ADD_Internal( int startIdx,
+                         int endIdx,
+                         double inReal0[],
+                         double inReal1[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      try {
+         return ADD_Body(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Vector arithmetic addition. Outputs the element-wise sum of two input
@@ -176,6 +196,7 @@
                         float inReal1[],
                         double outReal[] )
    {
+      requireIndexRange("ADD", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, ADD_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -184,11 +205,30 @@
       requireLength("ADD", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ADD_Internal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ADD_Body(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ADD", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode ADD_Internal( int startIdx,
+                         int endIdx,
+                         float inReal0[],
+                         float inReal1[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      try {
+         return ADD_Body(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -248,7 +288,7 @@
        */
       public double update( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new IllegalArgumentException("ADD update: BadParam");
+            throw new TaLibArgumentException("ADD update: BadParam", RetCode.BadParam);
          core.ADD_StreamStep(this, inReal0, inReal1);
          return this.cur_outReal;
       }
@@ -262,7 +302,7 @@
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new IllegalArgumentException("ADD peek: BadParam");
+            throw new TaLibArgumentException("ADD peek: BadParam", RetCode.BadParam);
          ADD_Stream scratch = new ADD_Stream(this);
          core.ADD_StreamStep(scratch, inReal0, inReal1);
          return scratch.cur_outReal;
@@ -336,13 +376,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("ADD openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("ADD openAndFill: internal error");
+         throw new TaLibStateException("ADD openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("ADD openAndFill: " + retCode);
+      throw new TaLibArgumentException("ADD openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind ADD_Open (composition seam). */
    ADD_Stream ADD_OpenInternal( double inReal0[], double inReal1[], int startIdx )
@@ -352,13 +392,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("ADD open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("ADD open: internal error");
+         throw new TaLibStateException("ADD open: internal error", retCode);
       }
-      throw new IllegalArgumentException("ADD open: " + retCode);
+      throw new TaLibArgumentException("ADD open: " + retCode, retCode);
    }
    /**
     * Open a live ADD stream over the warm-up history; the handle's
@@ -393,11 +433,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("ADD openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("ADD openAndFill: internal error");
+         throw new TaLibStateException("ADD openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("ADD openAndFill: " + retCode);
+      throw new TaLibArgumentException("ADD openAndFill: " + retCode, retCode);
    }

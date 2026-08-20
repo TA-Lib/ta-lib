@@ -445,7 +445,7 @@ static TA_RetCode TA_CCI_OpenCore( struct TA_CCI_Stream **stream, const double i
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       /* Allocate a circular buffer equal to the requested
        * period.

@@ -48,15 +48,15 @@
       return optInTimePeriod + this.unstablePeriod[FuncUnstId.NATR.ordinal()] ;
 
    }
-   RetCode NATR_Internal( int startIdx,
-                          int endIdx,
-                          double inHigh[],
-                          double inLow[],
-                          double inClose[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode NATR_Body( int startIdx,
+                      int endIdx,
+                      double inHigh[],
+                      double inLow[],
+                      double inClose[],
+                      int optInTimePeriod,
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -256,15 +256,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode NATR_Internal( int startIdx,
-                          int endIdx,
-                          float inHigh[],
-                          float inLow[],
-                          float inClose[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode NATR_Body( int startIdx,
+                      int endIdx,
+                      float inHigh[],
+                      float inLow[],
+                      float inClose[],
+                      int optInTimePeriod,
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -438,6 +438,7 @@
                          int optInTimePeriod,
                          double outReal[] )
    {
+      requireIndexRange("NATR", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, NATR_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -447,11 +448,32 @@
       requireLength("NATR", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = NATR_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = NATR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("NATR", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode NATR_Internal( int startIdx,
+                          int endIdx,
+                          double inHigh[],
+                          double inLow[],
+                          double inClose[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+   {
+      try {
+         return NATR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Average True Range expressed as a percentage of the current close, making
@@ -509,6 +531,7 @@
                          int optInTimePeriod,
                          double outReal[] )
    {
+      requireIndexRange("NATR", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, NATR_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -518,11 +541,32 @@
       requireLength("NATR", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = NATR_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = NATR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("NATR", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode NATR_Internal( int startIdx,
+                          int endIdx,
+                          float inHigh[],
+                          float inLow[],
+                          float inClose[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+   {
+      try {
+         return NATR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -597,7 +641,7 @@
        */
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("NATR update: BadParam");
+            throw new TaLibArgumentException("NATR update: BadParam", RetCode.BadParam);
          core.NATR_StreamStep(this, inHigh, inLow, inClose);
          return this.cur_outReal;
       }
@@ -611,7 +655,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("NATR peek: BadParam");
+            throw new TaLibArgumentException("NATR peek: BadParam", RetCode.BadParam);
          NATR_Stream scratch = new NATR_Stream(this);
          core.NATR_StreamStep(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
@@ -734,7 +778,7 @@
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Period 1 needs no smoothing: the Wilder recursion below degenerates
        * to the raw True Range at every bar (prevATR = (prevATR*0 + TR)/1 = TR).
@@ -906,13 +950,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("NATR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("NATR openAndFill: internal error");
+         throw new TaLibStateException("NATR openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("NATR openAndFill: " + retCode);
+      throw new TaLibArgumentException("NATR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind NATR_Open (composition seam). */
    NATR_Stream NATR_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -922,13 +966,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("NATR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("NATR open: internal error");
+         throw new TaLibStateException("NATR open: internal error", retCode);
       }
-      throw new IllegalArgumentException("NATR open: " + retCode);
+      throw new TaLibArgumentException("NATR open: " + retCode, retCode);
    }
    /**
     * Open a live NATR stream over the warm-up history; the handle's
@@ -963,11 +1007,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("NATR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("NATR openAndFill: internal error");
+         throw new TaLibStateException("NATR openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("NATR openAndFill: " + retCode);
+      throw new TaLibArgumentException("NATR openAndFill: " + retCode, retCode);
    }

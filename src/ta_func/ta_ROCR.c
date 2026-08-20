@@ -331,7 +331,7 @@ static TA_RetCode TA_ROCR_OpenCore( struct TA_ROCR_Stream **stream, const double
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       /* Calculate Rate of change Ratio: (price / prevPrice) */
       outIdx = 0;

@@ -83,12 +83,12 @@ public partial class Core
       return 63 + this.unstablePeriod[(int)FuncUnstId.HT_DCPHASE] ;
 
    }
-   internal RetCode HT_DCPHASE( int startIdx,
-                                int endIdx,
-                                ReadOnlySpan<double> inReal,
-                                out int outBegIdx,
-                                out int outNBElement,
-                                Span<double> outReal )
+   internal RetCode HT_DCPHASE_Body( int startIdx,
+                                     int endIdx,
+                                     ReadOnlySpan<double> inReal,
+                                     out int outBegIdx,
+                                     out int outNBElement,
+                                     Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -496,12 +496,12 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode HT_DCPHASE( int startIdx,
-                                int endIdx,
-                                ReadOnlySpan<float> inReal,
-                                out int outBegIdx,
-                                out int outNBElement,
-                                Span<double> outReal )
+   internal RetCode HT_DCPHASE_Body( int startIdx,
+                                     int endIdx,
+                                     ReadOnlySpan<float> inReal,
+                                     out int outBegIdx,
+                                     out int outNBElement,
+                                     Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -887,11 +887,26 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("HT_DCPHASE", "inReal", inReal.Length, guardInLen);
       RequireLength("HT_DCPHASE", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = HT_DCPHASE(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = HT_DCPHASE_Body(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("HT_DCPHASE", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode HT_DCPHASE( int startIdx,
+                                int endIdx,
+                                ReadOnlySpan<double> inReal,
+                                out int outBegIdx,
+                                out int outNBElement,
+                                Span<double> outReal )
+   {
+      try {
+         return HT_DCPHASE_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Hilbert Transform Dominant Cycle Phase: the instantaneous phase (in
@@ -946,11 +961,26 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("HT_DCPHASE", "inReal", inReal.Length, guardInLen);
       RequireLength("HT_DCPHASE", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = HT_DCPHASE(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = HT_DCPHASE_Body(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("HT_DCPHASE", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode HT_DCPHASE( int startIdx,
+                                int endIdx,
+                                ReadOnlySpan<float> inReal,
+                                out int outBegIdx,
+                                out int outNBElement,
+                                Span<double> outReal )
+   {
+      try {
+         return HT_DCPHASE_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -1611,7 +1641,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outBegIdx = startIdx;
       /* Initialize the price smoother, which is simply a weighted
@@ -2051,7 +2081,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public HT_DCPHASE_Stream HT_DCPHASE_Open( ReadOnlySpan<double> inReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return HT_DCPHASE_OpenInternal(inReal, 0);
    }
 
@@ -2080,7 +2110,7 @@ public partial class Core
    /// output.</exception>
    public HT_DCPHASE_Stream HT_DCPHASE_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       HT_DCPHASE_Stream sp = new HT_DCPHASE_Stream(this);
       RetCode retCode = HT_DCPHASE_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

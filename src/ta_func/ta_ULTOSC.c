@@ -847,7 +847,7 @@ static TA_RetCode TA_ULTOSC_OpenCore( struct TA_ULTOSC_Stream **stream, const do
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx )
       {
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       if( optInTimePeriod3 < 1 ) return TA_INTERNAL_ERROR(137);
       if( (int)optInTimePeriod3 > (int)(sizeof(local_term_closeMinusTrueLow)/sizeof(double)) )

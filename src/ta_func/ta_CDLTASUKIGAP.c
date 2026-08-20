@@ -360,7 +360,7 @@ static TA_RetCode TA_CDLTASUKIGAP_OpenCore( struct TA_CDLTASUKIGAP_Stream **stre
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */

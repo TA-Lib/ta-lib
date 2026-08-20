@@ -471,7 +471,7 @@ static TA_RetCode TA_CDLIDENTICAL3CROWS_OpenCore( struct TA_CDLIDENTICAL3CROWS_S
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */

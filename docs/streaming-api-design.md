@@ -119,9 +119,10 @@ exactly what makes the fill bit-exact (see *Semantic definition*). Because the f
 writes the outputs and *then* reads the input tail to seed the ring, the output arrays
 must not alias the input or each other (the batch-tier aliasing rule, #108).
 
-Rejection is `open`'s, not `batch`'s: too-short history returns `TA_BAD_PARAM` and
-produces no handle (a handle needs a defined value, so short history is an error here,
-not batch's success-with-empty-output).
+Rejection is `open`'s, not `batch`'s: too-short history returns
+`TA_INSUFFICIENT_HISTORY` and produces no handle (a handle needs a defined value, so
+short history is an error here, not batch's success-with-empty-output). It is the
+library's one recoverable condition, and carries its own code for that reason.
 
 ```c
 TA_SMA_Stream *s = NULL;
@@ -290,9 +291,9 @@ TA_LIB_API TA_RetCode TA_SMA_Peek( const TA_SMA_Stream *stream,
 TA_LIB_API TA_RetCode TA_SMA_Close( TA_SMA_Stream *stream );
 ```
 
-**Error model.** `Open` returns `TA_BAD_PARAM` (param out of range, or
-`historyLen < min_history` so no value exists yet) or `TA_ALLOC_ERR`; `*stream`
-is NULL on any failure. The history itself is an input array and is not
+**Error model.** `Open` returns `TA_INSUFFICIENT_HISTORY` (`historyLen <
+min_history`, so no value exists yet), `TA_BAD_PARAM` (param out of range) or
+`TA_ALLOC_ERR`; `*stream` is NULL on any failure. The history itself is an input array and is not
 scanned — see the non-finite bullet above.
 `Update`/`Peek` return `TA_BAD_PARAM` on NULL arguments and on a non-finite bar
 value, leaving the handle untouched in the latter case. `Close(NULL)` is a
@@ -795,8 +796,8 @@ claim in *Motivation* gets measured, not asserted).
    One honest contract nuance came out of RSI/CMO under Metastock: their
    batch emits a seed output and, when continuing, REWINDS and rebuilds
    state — so no bit-exact continuation exists from the seed exit. Open
-   returns `TA_BAD_PARAM` at exactly `lookback+1` in that mode (one more
-   bar is required); the verifier knows statically which functions have a
+   returns `TA_INSUFFICIENT_HISTORY` at exactly `lookback+1` in that mode (one
+   more bar is required); the verifier knows statically which functions have a
    seed boundary and shifts its boundary leg. The remaining members
    (ATR/NATR/MACDEXT/MACDFIX delegate to other functions at period 1,
    DI/DM have a dual unsmoothed loop) belong with the composed tier.

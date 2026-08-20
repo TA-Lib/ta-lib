@@ -488,7 +488,7 @@ static TA_RetCode TA_T3_OpenCore( struct TA_T3_Stream **stream, const double inR
 
    if( optInTimePeriod == 1 )
    {
-      if( historyLen < TA_T3_Lookback( optInTimePeriod, optInVFactor ) + 1 ) return TA_BAD_PARAM;
+      if( historyLen < TA_T3_Lookback( optInTimePeriod, optInVFactor ) + 1 ) return TA_INSUFFICIENT_HISTORY;
       sp = (struct TA_T3_Stream *)TA_Malloc( sizeof(*sp) );
       if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
@@ -559,7 +559,7 @@ static TA_RetCode TA_T3_OpenCore( struct TA_T3_Stream **stream, const double inR
       {
          *outNBElement= 0;
          *outBegIdx= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       *outBegIdx= startIdx;
       today = startIdx - lookbackTotal;

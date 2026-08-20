@@ -669,7 +669,7 @@ static TA_RetCode TA_TRIMA_OpenCore( struct TA_TRIMA_Stream **stream, const doub
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       /* TRIMA Description
        * =================
@@ -910,7 +910,7 @@ static TA_RetCode TA_TRIMA_OpenCore( struct TA_TRIMA_Stream **stream, const doub
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       /* TRIMA Description
        * =================

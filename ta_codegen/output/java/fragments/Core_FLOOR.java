@@ -25,12 +25,12 @@
       return 0 ;
 
    }
-   RetCode FLOOR_Internal( int startIdx,
-                           int endIdx,
-                           double inReal[],
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outReal[] )
+   RetCode FLOOR_Body( int startIdx,
+                       int endIdx,
+                       double inReal[],
+                       MInteger outBegIdx,
+                       MInteger outNBElement,
+                       double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -47,12 +47,12 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode FLOOR_Internal( int startIdx,
-                           int endIdx,
-                           float inReal[],
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outReal[] )
+   RetCode FLOOR_Body( int startIdx,
+                       int endIdx,
+                       float inReal[],
+                       MInteger outBegIdx,
+                       MInteger outNBElement,
+                       double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -109,6 +109,7 @@
                           double inReal[],
                           double outReal[] )
    {
+      requireIndexRange("FLOOR", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, FLOOR_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -116,11 +117,29 @@
       requireLength("FLOOR", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = FLOOR_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = FLOOR_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("FLOOR", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode FLOOR_Internal( int startIdx,
+                           int endIdx,
+                           double inReal[],
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
+   {
+      try {
+         return FLOOR_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Vector floor: rounds each input value down to the nearest integer.
@@ -165,6 +184,7 @@
                           float inReal[],
                           double outReal[] )
    {
+      requireIndexRange("FLOOR", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, FLOOR_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -172,11 +192,29 @@
       requireLength("FLOOR", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = FLOOR_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = FLOOR_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("FLOOR", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode FLOOR_Internal( int startIdx,
+                           int endIdx,
+                           float inReal[],
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
+   {
+      try {
+         return FLOOR_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -236,7 +274,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("FLOOR update: BadParam");
+            throw new TaLibArgumentException("FLOOR update: BadParam", RetCode.BadParam);
          core.FLOOR_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -250,7 +288,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("FLOOR peek: BadParam");
+            throw new TaLibArgumentException("FLOOR peek: BadParam", RetCode.BadParam);
          FLOOR_Stream scratch = new FLOOR_Stream(this);
          core.FLOOR_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -324,13 +362,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("FLOOR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("FLOOR openAndFill: internal error");
+         throw new TaLibStateException("FLOOR openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("FLOOR openAndFill: " + retCode);
+      throw new TaLibArgumentException("FLOOR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind FLOOR_Open (composition seam). */
    FLOOR_Stream FLOOR_OpenInternal( double inReal[], int startIdx )
@@ -340,13 +378,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("FLOOR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("FLOOR open: internal error");
+         throw new TaLibStateException("FLOOR open: internal error", retCode);
       }
-      throw new IllegalArgumentException("FLOOR open: " + retCode);
+      throw new TaLibArgumentException("FLOOR open: " + retCode, retCode);
    }
    /**
     * Open a live FLOOR stream over the warm-up history; the handle's
@@ -381,11 +419,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("FLOOR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("FLOOR openAndFill: internal error");
+         throw new TaLibStateException("FLOOR openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("FLOOR openAndFill: " + retCode);
+      throw new TaLibArgumentException("FLOOR openAndFill: " + retCode, retCode);
    }

@@ -106,17 +106,17 @@ public partial class Core
       return retValue ;
 
    }
-   internal RetCode STOCHRSI( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<double> inReal,
-                              int optInTimePeriod,
-                              int optInFastK_Period,
-                              int optInFastD_Period,
-                              MAType optInFastD_MAType,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outFastK,
-                              Span<double> outFastD )
+   internal RetCode STOCHRSI_Body( int startIdx,
+                                   int endIdx,
+                                   ReadOnlySpan<double> inReal,
+                                   int optInTimePeriod,
+                                   int optInFastK_Period,
+                                   int optInFastD_Period,
+                                   MAType optInFastD_MAType,
+                                   out int outBegIdx,
+                                   out int outNBElement,
+                                   Span<double> outFastK,
+                                   Span<double> outFastD )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -201,13 +201,19 @@ public partial class Core
       outBegIdx = startIdx;
       tempArraySize = endIdx - startIdx + 1 + lookbackSTOCHF;
       tempRSIBuffer = new double[(int)(tempArraySize * 1)];
-      retCode = RSI(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, out outBegIdx1, out outNbElement1, tempRSIBuffer);
+      OutRange _xr0 = RSI(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, tempRSIBuffer);
+      outBegIdx1 = _xr0.BegIdx;
+      outNbElement1 = _xr0.Count;
+      retCode = RetCode.Success;
       if( retCode != RetCode.Success || outNbElement1 == 0 ) {
          outBegIdx = 0;
          outNBElement = 0;
          return retCode ;
       }
-      retCode = STOCHF(0, tempArraySize - 1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx2, out outNBElement, outFastK, outFastD);
+      OutRange _xr1 = STOCHF(0, tempArraySize - 1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outFastK, outFastD);
+      outBegIdx2 = _xr1.BegIdx;
+      outNBElement = _xr1.Count;
+      retCode = RetCode.Success;
       if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
          outBegIdx = 0;
          outNBElement = 0;
@@ -215,17 +221,17 @@ public partial class Core
       }
       return RetCode.Success ;
    }
-   internal RetCode STOCHRSI( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<float> inReal,
-                              int optInTimePeriod,
-                              int optInFastK_Period,
-                              int optInFastD_Period,
-                              MAType optInFastD_MAType,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outFastK,
-                              Span<double> outFastD )
+   internal RetCode STOCHRSI_Body( int startIdx,
+                                   int endIdx,
+                                   ReadOnlySpan<float> inReal,
+                                   int optInTimePeriod,
+                                   int optInFastK_Period,
+                                   int optInFastD_Period,
+                                   MAType optInFastD_MAType,
+                                   out int outBegIdx,
+                                   out int outNBElement,
+                                   Span<double> outFastK,
+                                   Span<double> outFastD )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -281,13 +287,19 @@ public partial class Core
       outBegIdx = startIdx;
       tempArraySize = endIdx - startIdx + 1 + lookbackSTOCHF;
       tempRSIBuffer = new double[(int)(tempArraySize * 1)];
-      retCode = RSI(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, out outBegIdx1, out outNbElement1, tempRSIBuffer);
+      OutRange _xr0 = RSI(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, tempRSIBuffer);
+      outBegIdx1 = _xr0.BegIdx;
+      outNbElement1 = _xr0.Count;
+      retCode = RetCode.Success;
       if( retCode != RetCode.Success || outNbElement1 == 0 ) {
          outBegIdx = 0;
          outNBElement = 0;
          return retCode ;
       }
-      retCode = STOCHF(0, tempArraySize - 1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx2, out outNBElement, outFastK, outFastD);
+      OutRange _xr1 = STOCHF(0, tempArraySize - 1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outFastK, outFastD);
+      outBegIdx2 = _xr1.BegIdx;
+      outNBElement = _xr1.Count;
+      retCode = RetCode.Success;
       if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
          outBegIdx = 0;
          outNBElement = 0;
@@ -369,11 +381,31 @@ public partial class Core
       RequireLength("STOCHRSI", "inReal", inReal.Length, guardInLen);
       RequireLength("STOCHRSI", "outFastK", outFastK.Length, guardOutLen);
       RequireLength("STOCHRSI", "outFastD", outFastD.Length, guardOutLen);
-      RetCode retCode = STOCHRSI(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out int outBegIdx, out int outNBElement, outFastK, outFastD);
+      RetCode retCode = STOCHRSI_Body(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out int outBegIdx, out int outNBElement, outFastK, outFastD);
       if( retCode != RetCode.Success ) {
          throw Failure("STOCHRSI", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode STOCHRSI( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<double> inReal,
+                              int optInTimePeriod,
+                              int optInFastK_Period,
+                              int optInFastD_Period,
+                              MAType optInFastD_MAType,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outFastK,
+                              Span<double> outFastD )
+   {
+      try {
+         return STOCHRSI_Body(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastK, outFastD);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Applies the Fast Stochastic (STOCHF) oscillator to an RSI series instead
@@ -455,11 +487,31 @@ public partial class Core
       RequireLength("STOCHRSI", "inReal", inReal.Length, guardInLen);
       RequireLength("STOCHRSI", "outFastK", outFastK.Length, guardOutLen);
       RequireLength("STOCHRSI", "outFastD", outFastD.Length, guardOutLen);
-      RetCode retCode = STOCHRSI(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out int outBegIdx, out int outNBElement, outFastK, outFastD);
+      RetCode retCode = STOCHRSI_Body(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out int outBegIdx, out int outNBElement, outFastK, outFastD);
       if( retCode != RetCode.Success ) {
          throw Failure("STOCHRSI", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode STOCHRSI( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<float> inReal,
+                              int optInTimePeriod,
+                              int optInFastK_Period,
+                              int optInFastD_Period,
+                              MAType optInFastD_MAType,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outFastK,
+                              Span<double> outFastD )
+   {
+      try {
+         return STOCHRSI_Body(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastK, outFastD);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -673,7 +725,7 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( historyLen < STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType) + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.InsufficientHistory;
       }
       Span<double> sc_outFastK = outStride == 1 ? outFastK : new double[historyLen];
       Span<double> sc_outFastD = outStride == 1 ? outFastD : new double[historyLen];
@@ -713,7 +765,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outBegIdx = startIdx;
       tempArraySize = endIdx - startIdx + 1 + lookbackSTOCHF;
@@ -741,7 +793,7 @@ public partial class Core
       }
       /* Capture the live producer state + sub handles. */
       if( outNBElement < 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.InsufficientHistory;
       }
       sp.optInTimePeriod = optInTimePeriod;
       sp.optInFastK_Period = optInFastK_Period;
@@ -825,7 +877,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public STOCHRSI_Stream STOCHRSI_Open( ReadOnlySpan<double> inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return STOCHRSI_OpenInternal(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
    }
 
@@ -864,7 +916,7 @@ public partial class Core
    /// output.</exception>
    public STOCHRSI_Stream STOCHRSI_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, Span<double> outFastK, Span<double> outFastD )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       STOCHRSI_Stream sp = new STOCHRSI_Stream(this);
       RetCode retCode = STOCHRSI_OpenAndFillBody(sp, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out int outBegIdx, out int outNBElement, outFastK, outFastD);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

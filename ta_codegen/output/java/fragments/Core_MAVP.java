@@ -59,16 +59,16 @@
       return MA_Lookback(optInMaxPeriod, optInMAType) ;
 
    }
-   RetCode MAVP_Internal( int startIdx,
-                          int endIdx,
-                          double inReal[],
-                          double inPeriods[],
-                          int optInMinPeriod,
-                          int optInMaxPeriod,
-                          MAType optInMAType,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode MAVP_Body( int startIdx,
+                      int endIdx,
+                      double inReal[],
+                      double inPeriods[],
+                      int optInMinPeriod,
+                      int optInMaxPeriod,
+                      MAType optInMAType,
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       int i = 0;
       int lookbackTotal = 0;
@@ -257,7 +257,10 @@
          /* Single distinct period: one MA pass, written straight into the
           * destination buffer. Nothing to group or copy.
           */
-         retCode = MA_Internal(startIdx, endIdx, inReal, minUsed, optInMAType, localBegIdx, localNbElement, localFinalArray);
+         OutRange _xr0 = MA(startIdx, endIdx, inReal, minUsed, optInMAType, localFinalArray);
+         localBegIdx.value = _xr0.begIdx();
+         localNbElement.value = _xr0.count();
+         retCode = RetCode.Success;
          if( retCode != RetCode.Success ) {
             if( (finalIsAllocated) != 0 ) {
             }
@@ -309,7 +312,10 @@
                firstOccurrence = sortedIdx[bucketStart];
                lastOccurrence = sortedIdx[bucketEnd - 1];
                /* Calculation of the MA required. */
-               retCode = MA_Internal(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, localBegIdx, localNbElement, localOutputArray);
+               OutRange _xr1 = MA(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, localOutputArray);
+               localBegIdx.value = _xr1.begIdx();
+               localNbElement.value = _xr1.count();
+               retCode = RetCode.Success;
                if( retCode != RetCode.Success ) {
                   if( (finalIsAllocated) != 0 ) {
                   }
@@ -344,16 +350,16 @@
       outNBElement.value = outputSize;
       return RetCode.Success ;
    }
-   RetCode MAVP_Internal( int startIdx,
-                          int endIdx,
-                          float inReal[],
-                          float inPeriods[],
-                          int optInMinPeriod,
-                          int optInMaxPeriod,
-                          MAType optInMAType,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode MAVP_Body( int startIdx,
+                      int endIdx,
+                      float inReal[],
+                      float inPeriods[],
+                      int optInMinPeriod,
+                      int optInMaxPeriod,
+                      MAType optInMAType,
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       int i = 0;
       int lookbackTotal = 0;
@@ -469,7 +475,10 @@
       }
       bucketOfs = new int[(int)((maxUsed - minUsed + 2) * 1)];
       if( minUsed == maxUsed ) {
-         retCode = MA_Internal(startIdx, endIdx, inReal, minUsed, optInMAType, localBegIdx, localNbElement, localFinalArray);
+         OutRange _xr0 = MA(startIdx, endIdx, inReal, minUsed, optInMAType, localFinalArray);
+         localBegIdx.value = _xr0.begIdx();
+         localNbElement.value = _xr0.count();
+         retCode = RetCode.Success;
          if( retCode != RetCode.Success ) {
             if( (finalIsAllocated) != 0 ) {
             }
@@ -499,7 +508,10 @@
             if( bucketEnd > bucketStart ) {
                firstOccurrence = sortedIdx[bucketStart];
                lastOccurrence = sortedIdx[bucketEnd - 1];
-               retCode = MA_Internal(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, localBegIdx, localNbElement, localOutputArray);
+               OutRange _xr1 = MA(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, localOutputArray);
+               localBegIdx.value = _xr1.begIdx();
+               localNbElement.value = _xr1.count();
+               retCode = RetCode.Success;
                if( retCode != RetCode.Success ) {
                   if( (finalIsAllocated) != 0 ) {
                   }
@@ -589,6 +601,8 @@
                          MAType optInMAType,
                          double outReal[] )
    {
+      requireIndexRange("MAVP", startIdx, endIdx);
+      requireArgument("MAVP", "optInMAType", optInMAType);
       int guardStart = clampedStart(startIdx, endIdx, MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -597,11 +611,33 @@
       requireLength("MAVP", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MAVP_Internal(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MAVP_Body(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MAVP", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode MAVP_Internal( int startIdx,
+                          int endIdx,
+                          double inReal[],
+                          double inPeriods[],
+                          int optInMinPeriod,
+                          int optInMaxPeriod,
+                          MAType optInMAType,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+   {
+      try {
+         return MAVP_Body(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Moving average whose period varies per bar, driven by a companion period
@@ -667,6 +703,8 @@
                          MAType optInMAType,
                          double outReal[] )
    {
+      requireIndexRange("MAVP", startIdx, endIdx);
+      requireArgument("MAVP", "optInMAType", optInMAType);
       int guardStart = clampedStart(startIdx, endIdx, MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -675,11 +713,33 @@
       requireLength("MAVP", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MAVP_Internal(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MAVP_Body(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MAVP", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode MAVP_Internal( int startIdx,
+                          int endIdx,
+                          float inReal[],
+                          float inPeriods[],
+                          int optInMinPeriod,
+                          int optInMaxPeriod,
+                          MAType optInMAType,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+   {
+      try {
+         return MAVP_Body(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -767,7 +827,7 @@
        */
       public double update( double inReal, double inPeriods ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inPeriods) )
-            throw new IllegalArgumentException("MAVP update: BadParam");
+            throw new TaLibArgumentException("MAVP update: BadParam", RetCode.BadParam);
          core.MAVP_StreamStep(this, inReal, inPeriods);
          return this.cur_outReal;
       }
@@ -783,7 +843,7 @@
        */
       public double peek( double inReal, double inPeriods ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inPeriods) )
-            throw new IllegalArgumentException("MAVP peek: BadParam");
+            throw new TaLibArgumentException("MAVP peek: BadParam", RetCode.BadParam);
          MAVP_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new MAVP_Stream(this);
@@ -855,7 +915,7 @@
          return RetCode.BadParam;
       }
       if( historyLen < MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType) + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.InsufficientHistory;
       }
       /* Seed EVERY sub at the SHARED max-period lookback, exactly as batch
        * does: it clamps startIdx up to lookback(maxPeriod) and calls the callee
@@ -913,7 +973,7 @@
       }
       int lookbackTotal = MA_Lookback(optInMaxPeriod, optInMAType);
       if( historyLen < lookbackTotal + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.InsufficientHistory;
       }
       int nBank = optInMaxPeriod - optInMinPeriod + 1;
       /* Seed each sub at the first output bar (lookbackTotal), NOT the last. */
@@ -962,13 +1022,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MAVP open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MAVP open: internal error");
+         throw new TaLibStateException("MAVP open: internal error", retCode);
       }
-      throw new IllegalArgumentException("MAVP open: " + retCode);
+      throw new TaLibArgumentException("MAVP open: " + retCode, retCode);
    }
    /**
     * Open a live MAVP stream over the warm-up history; the handle's
@@ -1003,11 +1063,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MAVP openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MAVP openAndFill: internal error");
+         throw new TaLibStateException("MAVP openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("MAVP openAndFill: " + retCode);
+      throw new TaLibArgumentException("MAVP openAndFill: " + retCode, retCode);
    }

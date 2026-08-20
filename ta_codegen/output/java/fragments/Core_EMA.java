@@ -40,13 +40,13 @@
       return optInTimePeriod - 1 + this.unstablePeriod[FuncUnstId.EMA.ordinal()] ;
 
    }
-   RetCode EMA_Internal( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode EMA_Body( int startIdx,
+                     int endIdx,
+                     double inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       double optInK_1 = 0;
       double tempReal = 0;
@@ -142,13 +142,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode EMA_Internal( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode EMA_Body( int startIdx,
+                     int endIdx,
+                     float inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       double optInK_1 = 0;
       double tempReal = 0;
@@ -263,6 +263,7 @@
                         int optInTimePeriod,
                         double outReal[] )
    {
+      requireIndexRange("EMA", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, EMA_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -270,11 +271,30 @@
       requireLength("EMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = EMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = EMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("EMA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode EMA_Internal( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      try {
+         return EMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Exponential moving average that weights recent prices more heavily via a
@@ -334,6 +354,7 @@
                         int optInTimePeriod,
                         double outReal[] )
    {
+      requireIndexRange("EMA", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, EMA_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -341,11 +362,30 @@
       requireLength("EMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = EMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = EMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("EMA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode EMA_Internal( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      try {
+         return EMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -414,7 +454,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("EMA update: BadParam");
+            throw new TaLibArgumentException("EMA update: BadParam", RetCode.BadParam);
          core.EMA_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -428,7 +468,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("EMA peek: BadParam");
+            throw new TaLibArgumentException("EMA peek: BadParam", RetCode.BadParam);
          EMA_Stream scratch = new EMA_Stream(this);
          core.EMA_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -484,7 +524,7 @@
       }
       if( optInTimePeriod == 1 ) {
          if( historyLen < EMA_Lookback(optInTimePeriod) + 1 ) {
-            return RetCode.OutOfRangeEndIndex;
+            return RetCode.InsufficientHistory;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.optInK_1 = 0.0;
@@ -517,7 +557,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outBegIdx.value = startIdx;
       /* Do the EMA calculation using tight loops. */
@@ -591,13 +631,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("EMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("EMA openAndFill: internal error");
+         throw new TaLibStateException("EMA openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("EMA openAndFill: " + retCode);
+      throw new TaLibArgumentException("EMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind EMA_Open (composition seam). */
    EMA_Stream EMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -607,13 +647,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("EMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("EMA open: internal error");
+         throw new TaLibStateException("EMA open: internal error", retCode);
       }
-      throw new IllegalArgumentException("EMA open: " + retCode);
+      throw new TaLibArgumentException("EMA open: " + retCode, retCode);
    }
    /**
     * Open a live EMA stream over the warm-up history; the handle's
@@ -648,11 +688,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("EMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("EMA openAndFill: internal error");
+         throw new TaLibStateException("EMA openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("EMA openAndFill: " + retCode);
+      throw new TaLibArgumentException("EMA openAndFill: " + retCode, retCode);
    }

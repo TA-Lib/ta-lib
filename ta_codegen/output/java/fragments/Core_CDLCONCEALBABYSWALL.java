@@ -29,15 +29,15 @@
       return ShadowVeryShort_avgPeriod + 3 ;
 
    }
-   RetCode CDLCONCEALBABYSWALL_Internal( int startIdx,
-                                         int endIdx,
-                                         double inOpen[],
-                                         double inHigh[],
-                                         double inLow[],
-                                         double inClose[],
-                                         MInteger outBegIdx,
-                                         MInteger outNBElement,
-                                         int outInteger[] )
+   RetCode CDLCONCEALBABYSWALL_Body( int startIdx,
+                                     int endIdx,
+                                     double inOpen[],
+                                     double inHigh[],
+                                     double inLow[],
+                                     double inClose[],
+                                     MInteger outBegIdx,
+                                     MInteger outNBElement,
+                                     int outInteger[] )
    {
       double[] ShadowVeryShortPeriodTotal = new double[4];
       int i = 0;
@@ -129,15 +129,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode CDLCONCEALBABYSWALL_Internal( int startIdx,
-                                         int endIdx,
-                                         float inOpen[],
-                                         float inHigh[],
-                                         float inLow[],
-                                         float inClose[],
-                                         MInteger outBegIdx,
-                                         MInteger outNBElement,
-                                         int outInteger[] )
+   RetCode CDLCONCEALBABYSWALL_Body( int startIdx,
+                                     int endIdx,
+                                     float inOpen[],
+                                     float inHigh[],
+                                     float inLow[],
+                                     float inClose[],
+                                     MInteger outBegIdx,
+                                     MInteger outNBElement,
+                                     int outInteger[] )
    {
       double[] ShadowVeryShortPeriodTotal = new double[4];
       int i = 0;
@@ -242,6 +242,7 @@
                                         double inClose[],
                                         int outInteger[] )
    {
+      requireIndexRange("CDLCONCEALBABYSWALL", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CDLCONCEALBABYSWALL_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -252,11 +253,32 @@
       requireLength("CDLCONCEALBABYSWALL", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLCONCEALBABYSWALL_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLCONCEALBABYSWALL_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLCONCEALBABYSWALL", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode CDLCONCEALBABYSWALL_Internal( int startIdx,
+                                         int endIdx,
+                                         double inOpen[],
+                                         double inHigh[],
+                                         double inLow[],
+                                         double inClose[],
+                                         MInteger outBegIdx,
+                                         MInteger outNBElement,
+                                         int outInteger[] )
+   {
+      try {
+         return CDLCONCEALBABYSWALL_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * A four-candle pattern: two black marubozus, then a black candle that gaps
@@ -311,6 +333,7 @@
                                         float inClose[],
                                         int outInteger[] )
    {
+      requireIndexRange("CDLCONCEALBABYSWALL", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CDLCONCEALBABYSWALL_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -321,11 +344,32 @@
       requireLength("CDLCONCEALBABYSWALL", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLCONCEALBABYSWALL_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLCONCEALBABYSWALL_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLCONCEALBABYSWALL", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode CDLCONCEALBABYSWALL_Internal( int startIdx,
+                                         int endIdx,
+                                         float inOpen[],
+                                         float inHigh[],
+                                         float inLow[],
+                                         float inClose[],
+                                         MInteger outBegIdx,
+                                         MInteger outNBElement,
+                                         int outInteger[] )
+   {
+      try {
+         return CDLCONCEALBABYSWALL_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -493,7 +537,7 @@
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("CDLCONCEALBABYSWALL update: BadParam");
+            throw new TaLibArgumentException("CDLCONCEALBABYSWALL update: BadParam", RetCode.BadParam);
          core.CDLCONCEALBABYSWALL_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outInteger;
       }
@@ -509,7 +553,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("CDLCONCEALBABYSWALL peek: BadParam");
+            throw new TaLibArgumentException("CDLCONCEALBABYSWALL peek: BadParam", RetCode.BadParam);
          CDLCONCEALBABYSWALL_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new CDLCONCEALBABYSWALL_Stream(this);
@@ -626,7 +670,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -764,13 +808,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLCONCEALBABYSWALL openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLCONCEALBABYSWALL openAndFill: internal error");
+         throw new TaLibStateException("CDLCONCEALBABYSWALL openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLCONCEALBABYSWALL openAndFill: " + retCode);
+      throw new TaLibArgumentException("CDLCONCEALBABYSWALL openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind CDLCONCEALBABYSWALL_Open (composition seam). */
    CDLCONCEALBABYSWALL_Stream CDLCONCEALBABYSWALL_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -780,13 +824,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLCONCEALBABYSWALL open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLCONCEALBABYSWALL open: internal error");
+         throw new TaLibStateException("CDLCONCEALBABYSWALL open: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLCONCEALBABYSWALL open: " + retCode);
+      throw new TaLibArgumentException("CDLCONCEALBABYSWALL open: " + retCode, retCode);
    }
    /**
     * Open a live CDLCONCEALBABYSWALL stream over the warm-up history; the handle's
@@ -821,11 +865,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLCONCEALBABYSWALL openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLCONCEALBABYSWALL openAndFill: internal error");
+         throw new TaLibStateException("CDLCONCEALBABYSWALL openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLCONCEALBABYSWALL openAndFill: " + retCode);
+      throw new TaLibArgumentException("CDLCONCEALBABYSWALL openAndFill: " + retCode, retCode);
    }

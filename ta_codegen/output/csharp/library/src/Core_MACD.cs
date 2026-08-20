@@ -113,17 +113,17 @@ public partial class Core
       return EMA_Lookback(optInSlowPeriod) + EMA_Lookback(optInSignalPeriod) ;
 
    }
-   internal RetCode MACD( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<double> inReal,
-                          int optInFastPeriod,
-                          int optInSlowPeriod,
-                          int optInSignalPeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outMACD,
-                          Span<double> outMACDSignal,
-                          Span<double> outMACDHist )
+   internal RetCode MACD_Body( int startIdx,
+                               int endIdx,
+                               ReadOnlySpan<double> inReal,
+                               int optInFastPeriod,
+                               int optInSlowPeriod,
+                               int optInSignalPeriod,
+                               out int outBegIdx,
+                               out int outNBElement,
+                               Span<double> outMACD,
+                               Span<double> outMACDSignal,
+                               Span<double> outMACDHist )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -324,17 +324,17 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode MACD( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<float> inReal,
-                          int optInFastPeriod,
-                          int optInSlowPeriod,
-                          int optInSignalPeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outMACD,
-                          Span<double> outMACDSignal,
-                          Span<double> outMACDHist )
+   internal RetCode MACD_Body( int startIdx,
+                               int endIdx,
+                               ReadOnlySpan<float> inReal,
+                               int optInFastPeriod,
+                               int optInSlowPeriod,
+                               int optInSignalPeriod,
+                               out int outBegIdx,
+                               out int outNBElement,
+                               Span<double> outMACD,
+                               Span<double> outMACDSignal,
+                               Span<double> outMACDHist )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -541,11 +541,31 @@ public partial class Core
       RequireLength("MACD", "outMACD", outMACD.Length, guardOutLen);
       RequireLength("MACD", "outMACDSignal", outMACDSignal.Length, guardOutLen);
       RequireLength("MACD", "outMACDHist", outMACDHist.Length, guardOutLen);
-      RetCode retCode = MACD(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
+      RetCode retCode = MACD_Body(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
       if( retCode != RetCode.Success ) {
          throw Failure("MACD", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode MACD( int startIdx,
+                          int endIdx,
+                          ReadOnlySpan<double> inReal,
+                          int optInFastPeriod,
+                          int optInSlowPeriod,
+                          int optInSignalPeriod,
+                          out int outBegIdx,
+                          out int outNBElement,
+                          Span<double> outMACD,
+                          Span<double> outMACDSignal,
+                          Span<double> outMACDHist )
+   {
+      try {
+         return MACD_Body(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Moving Average Convergence/Divergence: the difference between a fast and a
@@ -624,11 +644,31 @@ public partial class Core
       RequireLength("MACD", "outMACD", outMACD.Length, guardOutLen);
       RequireLength("MACD", "outMACDSignal", outMACDSignal.Length, guardOutLen);
       RequireLength("MACD", "outMACDHist", outMACDHist.Length, guardOutLen);
-      RetCode retCode = MACD(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
+      RetCode retCode = MACD_Body(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
       if( retCode != RetCode.Success ) {
          throw Failure("MACD", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode MACD( int startIdx,
+                          int endIdx,
+                          ReadOnlySpan<float> inReal,
+                          int optInFastPeriod,
+                          int optInSlowPeriod,
+                          int optInSignalPeriod,
+                          out int outBegIdx,
+                          out int outNBElement,
+                          Span<double> outMACD,
+                          Span<double> outMACDSignal,
+                          Span<double> outMACDHist )
+   {
+      try {
+         return MACD_Body(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -886,7 +926,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Everything is computed in a single lockstep pass: each bar
        * advances the fast and slow EMA (two independent recursions),
@@ -1077,7 +1117,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public MACD_Stream MACD_Open( ReadOnlySpan<double> inReal, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return MACD_OpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
    }
 
@@ -1115,7 +1155,7 @@ public partial class Core
    /// output.</exception>
    public MACD_Stream MACD_OpenAndFill( ReadOnlySpan<double> inReal, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       MACD_Stream sp = new MACD_Stream(this);
       RetCode retCode = MACD_OpenAndFillBody(sp, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

@@ -28,13 +28,13 @@
       return 0 ;
 
    }
-   RetCode NVI_Internal( int startIdx,
-                         int endIdx,
-                         double inClose[],
-                         double inVolume[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode NVI_Body( int startIdx,
+                     int endIdx,
+                     double inClose[],
+                     double inVolume[],
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -90,13 +90,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode NVI_Internal( int startIdx,
-                         int endIdx,
-                         float inClose[],
-                         float inVolume[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode NVI_Body( int startIdx,
+                     int endIdx,
+                     float inClose[],
+                     float inVolume[],
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -187,6 +187,7 @@
                         double inVolume[],
                         double outReal[] )
    {
+      requireIndexRange("NVI", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, NVI_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -195,11 +196,30 @@
       requireLength("NVI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = NVI_Internal(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = NVI_Body(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("NVI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode NVI_Internal( int startIdx,
+                         int endIdx,
+                         double inClose[],
+                         double inVolume[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      try {
+         return NVI_Body(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Negative Volume Index: a running cumulative index that changes only on
@@ -257,6 +277,7 @@
                         float inVolume[],
                         double outReal[] )
    {
+      requireIndexRange("NVI", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, NVI_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -265,11 +286,30 @@
       requireLength("NVI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = NVI_Internal(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = NVI_Body(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("NVI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode NVI_Internal( int startIdx,
+                         int endIdx,
+                         float inClose[],
+                         float inVolume[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      try {
+         return NVI_Body(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -341,7 +381,7 @@
        */
       public double update( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new IllegalArgumentException("NVI update: BadParam");
+            throw new TaLibArgumentException("NVI update: BadParam", RetCode.BadParam);
          core.NVI_StreamStep(this, inClose, inVolume);
          return this.cur_outReal;
       }
@@ -355,7 +395,7 @@
        */
       public double peek( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new IllegalArgumentException("NVI peek: BadParam");
+            throw new TaLibArgumentException("NVI peek: BadParam", RetCode.BadParam);
          NVI_Stream scratch = new NVI_Stream(this);
          core.NVI_StreamStep(scratch, inClose, inVolume);
          return scratch.cur_outReal;
@@ -500,13 +540,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("NVI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("NVI openAndFill: internal error");
+         throw new TaLibStateException("NVI openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("NVI openAndFill: " + retCode);
+      throw new TaLibArgumentException("NVI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind NVI_Open (composition seam). */
    NVI_Stream NVI_OpenInternal( double inClose[], double inVolume[], int startIdx )
@@ -516,13 +556,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("NVI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("NVI open: internal error");
+         throw new TaLibStateException("NVI open: internal error", retCode);
       }
-      throw new IllegalArgumentException("NVI open: " + retCode);
+      throw new TaLibArgumentException("NVI open: " + retCode, retCode);
    }
    /**
     * Open a live NVI stream over the warm-up history; the handle's
@@ -557,11 +597,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("NVI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("NVI openAndFill: internal error");
+         throw new TaLibStateException("NVI openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("NVI openAndFill: " + retCode);
+      throw new TaLibArgumentException("NVI openAndFill: " + retCode, retCode);
    }

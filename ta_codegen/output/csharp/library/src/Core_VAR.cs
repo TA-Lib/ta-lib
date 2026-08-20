@@ -88,14 +88,14 @@ public partial class Core
       return optInTimePeriod - 1 ;
 
    }
-   internal RetCode VAR( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inReal,
-                         int optInTimePeriod,
-                         double optInNbDev,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode VAR_Body( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<double> inReal,
+                              int optInTimePeriod,
+                              double optInNbDev,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -250,14 +250,14 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode VAR( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inReal,
-                         int optInTimePeriod,
-                         double optInNbDev,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode VAR_Body( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<float> inReal,
+                              int optInTimePeriod,
+                              double optInNbDev,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -419,11 +419,28 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("VAR", "inReal", inReal.Length, guardInLen);
       RequireLength("VAR", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = VAR(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = VAR_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("VAR", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode VAR( int startIdx,
+                         int endIdx,
+                         ReadOnlySpan<double> inReal,
+                         int optInTimePeriod,
+                         double optInNbDev,
+                         out int outBegIdx,
+                         out int outNBElement,
+                         Span<double> outReal )
+   {
+      try {
+         return VAR_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Rolling population variance of a real series over a given period. Measures
@@ -490,11 +507,28 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("VAR", "inReal", inReal.Length, guardInLen);
       RequireLength("VAR", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = VAR(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = VAR_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("VAR", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode VAR( int startIdx,
+                         int endIdx,
+                         ReadOnlySpan<float> inReal,
+                         int optInTimePeriod,
+                         double optInNbDev,
+                         out int outBegIdx,
+                         out int outNBElement,
+                         Span<double> outReal )
+   {
+      try {
+         return VAR_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -786,7 +820,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       invPeriod = 1.0 / (double)optInTimePeriod;
       /* Measure deviations against a shift near the window: the running sums
@@ -987,7 +1021,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public VAR_Stream VAR_Open( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDev )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return VAR_OpenInternal(inReal, 0, optInTimePeriod, optInNbDev);
    }
 
@@ -1019,7 +1053,7 @@ public partial class Core
    /// output.</exception>
    public VAR_Stream VAR_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDev, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       VAR_Stream sp = new VAR_Stream(this);
       RetCode retCode = VAR_OpenAndFillBody(sp, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

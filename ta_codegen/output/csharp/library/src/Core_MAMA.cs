@@ -110,15 +110,15 @@ public partial class Core
       return 32 + this.unstablePeriod[(int)FuncUnstId.MAMA] ;
 
    }
-   internal RetCode MAMA( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<double> inReal,
-                          double optInFastLimit,
-                          double optInSlowLimit,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outMAMA,
-                          Span<double> outFAMA )
+   internal RetCode MAMA_Body( int startIdx,
+                               int endIdx,
+                               ReadOnlySpan<double> inReal,
+                               double optInFastLimit,
+                               double optInSlowLimit,
+                               out int outBegIdx,
+                               out int outNBElement,
+                               Span<double> outMAMA,
+                               Span<double> outFAMA )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -510,15 +510,15 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode MAMA( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<float> inReal,
-                          double optInFastLimit,
-                          double optInSlowLimit,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outMAMA,
-                          Span<double> outFAMA )
+   internal RetCode MAMA_Body( int startIdx,
+                               int endIdx,
+                               ReadOnlySpan<float> inReal,
+                               double optInFastLimit,
+                               double optInSlowLimit,
+                               out int outBegIdx,
+                               out int outNBElement,
+                               Span<double> outMAMA,
+                               Span<double> outFAMA )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -909,11 +909,29 @@ public partial class Core
       RequireLength("MAMA", "inReal", inReal.Length, guardInLen);
       RequireLength("MAMA", "outMAMA", outMAMA.Length, guardOutLen);
       RequireLength("MAMA", "outFAMA", outFAMA.Length, guardOutLen);
-      RetCode retCode = MAMA(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, out int outBegIdx, out int outNBElement, outMAMA, outFAMA);
+      RetCode retCode = MAMA_Body(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, out int outBegIdx, out int outNBElement, outMAMA, outFAMA);
       if( retCode != RetCode.Success ) {
          throw Failure("MAMA", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode MAMA( int startIdx,
+                          int endIdx,
+                          ReadOnlySpan<double> inReal,
+                          double optInFastLimit,
+                          double optInSlowLimit,
+                          out int outBegIdx,
+                          out int outNBElement,
+                          Span<double> outMAMA,
+                          Span<double> outFAMA )
+   {
+      try {
+         return MAMA_Body(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, out outBegIdx, out outNBElement, outMAMA, outFAMA);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// MESA Adaptive Moving Average: an adaptive EMA whose smoothing factor is
@@ -984,11 +1002,29 @@ public partial class Core
       RequireLength("MAMA", "inReal", inReal.Length, guardInLen);
       RequireLength("MAMA", "outMAMA", outMAMA.Length, guardOutLen);
       RequireLength("MAMA", "outFAMA", outFAMA.Length, guardOutLen);
-      RetCode retCode = MAMA(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, out int outBegIdx, out int outNBElement, outMAMA, outFAMA);
+      RetCode retCode = MAMA_Body(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, out int outBegIdx, out int outNBElement, outMAMA, outFAMA);
       if( retCode != RetCode.Success ) {
          throw Failure("MAMA", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode MAMA( int startIdx,
+                          int endIdx,
+                          ReadOnlySpan<float> inReal,
+                          double optInFastLimit,
+                          double optInSlowLimit,
+                          out int outBegIdx,
+                          out int outNBElement,
+                          Span<double> outMAMA,
+                          Span<double> outFAMA )
+   {
+      try {
+         return MAMA_Body(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, out outBegIdx, out outNBElement, outMAMA, outFAMA);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -1616,7 +1652,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outBegIdx = startIdx;
       /* Initialize the price smoother, which is simply a weighted
@@ -2037,7 +2073,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public MAMA_Stream MAMA_Open( ReadOnlySpan<double> inReal, double optInFastLimit, double optInSlowLimit )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return MAMA_OpenInternal(inReal, 0, optInFastLimit, optInSlowLimit);
    }
 
@@ -2071,7 +2107,7 @@ public partial class Core
    /// output.</exception>
    public MAMA_Stream MAMA_OpenAndFill( ReadOnlySpan<double> inReal, double optInFastLimit, double optInSlowLimit, Span<double> outMAMA, Span<double> outFAMA )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       MAMA_Stream sp = new MAMA_Stream(this);
       RetCode retCode = MAMA_OpenAndFillBody(sp, inReal, optInFastLimit, optInSlowLimit, out int outBegIdx, out int outNBElement, outMAMA, outFAMA);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

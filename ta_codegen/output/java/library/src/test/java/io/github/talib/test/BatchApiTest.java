@@ -50,10 +50,15 @@
 package io.github.talib.test;
 
 import io.github.talib.Core;
+import io.github.talib.InsufficientHistoryException;
 import io.github.talib.MAType;
 import io.github.talib.OutRange;
+import io.github.talib.RetCode;
+import io.github.talib.TaLibFailure;
 
 import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.Set;
 
 /**
  * The batch API's contract: what {@link OutRange} means, and which misuses
@@ -625,6 +630,175 @@ public class BatchApiTest {
         check(new OutRange(3, 7).toString().contains("begIdx"), "OutRange toString names components");
     }
 
+    /**
+     * Every failure carries the code C would have returned, and the mapping back
+     * is TOTAL and LOSSLESS.
+     *
+     * <p>Total: every exception the public API raises implements
+     * {@link TaLibFailure}, including the two conditions C cannot detect (an
+     * absent argument, a buffer too short) and the raw JVM types those used to
+     * be. Anything not covered leaves a caller with a thrown object it cannot
+     * classify, which is the state this replaced.
+     *
+     * <p>Lossless: no two codes share one thrown representation. That is the
+     * half the exception TYPES cannot carry —
+     * {@link IndexOutOfBoundsException} serves both out-of-range index codes and
+     * {@link IllegalStateException} serves both library-side ones — so a check
+     * on the type alone would pass with the two arms of {@code failure()}
+     * swapped.
+     */
+    static void everyFailureCarriesItsCode() {
+        final double[] in = closes(200);
+        final double[] out = new double[200];
+
+        // Lossless, the pair the type cannot separate.
+        checkCode(RetCode.OutOfRangeStartIndex,
+            () -> Core.DEFAULT.SMA(-1, 50, in, 10, out), "negative startIdx carries OutOfRangeStartIndex");
+        checkCode(RetCode.OutOfRangeEndIndex,
+            () -> Core.DEFAULT.SMA(50, 10, in, 10, out), "endIdx < startIdx carries OutOfRangeEndIndex");
+
+        // The rest of the batch tier's vocabulary.
+        checkCode(RetCode.BadParam,
+            () -> Core.DEFAULT.SMA(0, 50, in, 0, out), "an out-of-range period carries BadParam");
+        checkCode(RetCode.BadParam,
+            () -> Core.DEFAULT.MACD(0, 199, in, 12, 26, 9, out, out, new double[200]),
+            "two outputs sharing one array carries BadParam");
+
+        // The two conditions C has no code for. They report the code C answers
+        // for an absent argument it CAN detect, so the mapping stays total.
+        checkCode(RetCode.BadParam,
+            () -> Core.DEFAULT.SMA(0, 199, (double[]) null, 10, out), "a null input carries BadParam");
+        checkCode(RetCode.BadParam,
+            () -> Core.DEFAULT.SMA(0, 199, in, 10, new double[3]), "a short output carries BadParam");
+        checkCode(RetCode.BadParam,
+            () -> Core.DEFAULT.MA(0, 199, in, 10, null, out), "a null enum carries BadParam");
+
+        // Streaming's one recoverable condition, which is why it has a code.
+        checkCode(RetCode.InsufficientHistory,
+            () -> Core.DEFAULT.SMA_Open(Arrays.copyOf(in, Core.DEFAULT.SMA_Lookback(30)), 30),
+            "a short history carries InsufficientHistory");
+
+        // ...and the REST of the streaming tier, which is a separate reject
+        // ladder from the batch one. Totality is a property of every failure the
+        // library raises, not of the tier someone happened to convert first.
+        checkCode(RetCode.BadParam,
+            () -> Core.DEFAULT.SMA_Open(new double[0], 30),
+            "an empty history carries BadParam");
+        checkCode(RetCode.BadParam,
+            () -> Core.DEFAULT.SMA_Open(in, 0),
+            "an out-of-range period on a stream open carries BadParam");
+        checkCode(RetCode.BadParam,
+            () -> Core.DEFAULT.BBANDS_OpenAndFill(in, 20, 2.0, 2.0, MAType.SMA, out, out, new double[200]),
+            "aliased OpenAndFill outputs carry BadParam");
+
+        // ...and it is still an InsufficientHistoryException, so an existing
+        // catch keeps working.
+        checkThrows(InsufficientHistoryException.class,
+            () -> Core.DEFAULT.SMA_Open(Arrays.copyOf(in, Core.DEFAULT.SMA_Lookback(30)), 30),
+            "a short history is still typed");
+
+        // The numbers the cross-language harness compares. Hardcoded, because
+        // asking the enum for its own value would prove nothing.
+        check(RetCode.Success.asCInt() == 0, "Success is 0");
+        check(RetCode.BadParam.asCInt() == 2, "BadParam is 2");
+        check(RetCode.AllocErr.asCInt() == 3, "AllocErr is 3");
+        check(RetCode.OutOfRangeStartIndex.asCInt() == 12, "OutOfRangeStartIndex is 12");
+        check(RetCode.OutOfRangeEndIndex.asCInt() == 13, "OutOfRangeEndIndex is 13");
+        check(RetCode.InsufficientHistory.asCInt() == 17, "InsufficientHistory is 17");
+        check(RetCode.InternalError.asCInt() == 5000, "InternalError is 5000");
+
+        // Non-vacuity: the cases above have to REACH every code the batch and
+        // streaming tiers can produce, or a member could stop being emitted
+        // anywhere and nothing here would move. AllocErr and InternalError are
+        // the two exceptions -- one is unreachable in Java (#178) and the other
+        // needs a corrupted CIRCBUF size -- so they are named rather than
+        // silently excluded.
+        Set<RetCode> expected = EnumSet.of(
+            RetCode.OutOfRangeStartIndex, RetCode.OutOfRangeEndIndex,
+            RetCode.BadParam, RetCode.InsufficientHistory);
+        check(seenCodes.equals(expected),
+              "the probes reached exactly " + expected + " (got " + seenCodes + ")");
+    }
+
+    private static final Set<RetCode> seenCodes = EnumSet.noneOf(RetCode.class);
+
+    /** The call must throw, the throw must carry a code, and it must be this one. */
+    private static void checkCode(RetCode expected, Runnable body, String what) {
+        checks++;
+        try {
+            body.run();
+            failures++;
+            System.out.println("  FAIL: " + what + " (no exception thrown)");
+        } catch (RuntimeException e) {
+            if (!(e instanceof TaLibFailure)) {
+                failures++;
+                System.out.println("  FAIL: " + what + " (" + e.getClass().getName()
+                    + " carries no RetCode)");
+                return;
+            }
+            RetCode got = ((TaLibFailure) e).retCode();
+            if (got != expected) {
+                failures++;
+                System.out.println("  FAIL: " + what + " (carried " + got + ")");
+                return;
+            }
+            seenCodes.add(got);
+        }
+    }
+
+    /**
+     * The index rules are evaluated BEFORE the presence check.
+     *
+     * <p>The specification lists B-1 and B-2 ahead of B-3, and this wrapper used
+     * to run the presence check first, so a negative {@code startIdx} with a null
+     * input reported the null and said nothing about the index
+     * ({@code docs/error-handling-spec.md}, Part 3 item 3). Every case here is
+     * BOTH faults at once; only the order decides which is reported.
+     */
+    static void anIndexFaultOutranksAnAbsentArgument() {
+        final double[] in = closes(200);
+        final double[] out = new double[200];
+
+        checkThrows(IndexOutOfBoundsException.class,
+            () -> Core.DEFAULT.SMA(-1, 50, (double[]) null, 10, out),
+            "a negative startIdx outranks a null input", "startIdx");
+        checkThrows(IndexOutOfBoundsException.class,
+            () -> Core.DEFAULT.SMA(50, 10, in, 10, (double[]) null),
+            "endIdx < startIdx outranks a null output", "endIdx");
+        checkThrows(IndexOutOfBoundsException.class,
+            () -> Core.DEFAULT.SMA(0, Core.MAX_INDEX + 1, (double[]) null, 10, out),
+            "an endIdx above MAX_INDEX outranks a null input", "endIdx");
+
+        // The control, and what makes the three above about ORDER rather than
+        // about the null check having been deleted: with the indices valid, the
+        // null IS the diagnosis.
+        checkThrows(NullPointerException.class,
+            () -> Core.DEFAULT.SMA(0, 199, (double[]) null, 10, out),
+            "a valid range still reports the null", "SMA", "inReal");
+    }
+
+    /**
+     * A null enum parameter is rejected as the absent argument it is, naming the
+     * function and the parameter.
+     *
+     * <p>It used to reach the {@code switch} inside the function's own
+     * {@code _Lookback} and surface as a bare {@link NullPointerException} naming
+     * neither ({@code docs/error-handling-spec.md}, Part 3 item 4). Java is the
+     * only backend where this is expressible at all.
+     */
+    static void aNullEnumIsNamed() {
+        final double[] in = closes(200);
+        final double[] out = new double[200];
+
+        checkThrows(NullPointerException.class,
+            () -> Core.DEFAULT.MA(0, 199, in, 10, null, out),
+            "a null enum names the function and the parameter", "MA", "optInMAType");
+        // ...and it does not outrank the index rules either.
+        checkThrows(IndexOutOfBoundsException.class,
+            () -> Core.DEFAULT.MA(-1, 199, in, 10, null, out),
+            "a negative startIdx outranks a null enum", "startIdx");
+    }
+
     public static void main(String[] args) {
         maxWithKnownOutputs();
         begIdxEqualsLookback();
@@ -648,6 +822,9 @@ public class BatchApiTest {
         noUnguardedTierOnThePublicSurface();
         floatOverloadHasTheSameShape();
         outRangeValueSemantics();
+        everyFailureCarriesItsCode();
+        anIndexFaultOutranksAnAbsentArgument();
+        aNullEnumIsNamed();
 
         if (failures == 0) {
             System.out.println("BatchApiTest: ALL PASS (" + checks + " checks)");

@@ -37,14 +37,14 @@
       return optInTimePeriod ;
 
    }
-   RetCode AROONOSC_Internal( int startIdx,
-                              int endIdx,
-                              double inHigh[],
-                              double inLow[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
+   RetCode AROONOSC_Body( int startIdx,
+                          int endIdx,
+                          double inHigh[],
+                          double inLow[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       double lowest = 0;
       double highest = 0;
@@ -163,14 +163,14 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode AROONOSC_Internal( int startIdx,
-                              int endIdx,
-                              float inHigh[],
-                              float inLow[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
+   RetCode AROONOSC_Body( int startIdx,
+                          int endIdx,
+                          float inHigh[],
+                          float inLow[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       double lowest = 0;
       double highest = 0;
@@ -306,6 +306,7 @@
                              int optInTimePeriod,
                              double outReal[] )
    {
+      requireIndexRange("AROONOSC", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, AROONOSC_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -314,11 +315,31 @@
       requireLength("AROONOSC", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AROONOSC_Internal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = AROONOSC_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("AROONOSC", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode AROONOSC_Internal( int startIdx,
+                              int endIdx,
+                              double inHigh[],
+                              double inLow[],
+                              int optInTimePeriod,
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outReal[] )
+   {
+      try {
+         return AROONOSC_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Aroon Oscillator: AroonUp minus AroonDown over a lookback window. Measures
@@ -376,6 +397,7 @@
                              int optInTimePeriod,
                              double outReal[] )
    {
+      requireIndexRange("AROONOSC", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, AROONOSC_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -384,11 +406,31 @@
       requireLength("AROONOSC", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AROONOSC_Internal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = AROONOSC_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("AROONOSC", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode AROONOSC_Internal( int startIdx,
+                              int endIdx,
+                              float inHigh[],
+                              float inLow[],
+                              int optInTimePeriod,
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outReal[] )
+   {
+      try {
+         return AROONOSC_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -498,7 +540,7 @@
        */
       public double update( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new IllegalArgumentException("AROONOSC update: BadParam");
+            throw new TaLibArgumentException("AROONOSC update: BadParam", RetCode.BadParam);
          core.AROONOSC_StreamStep(this, inHigh, inLow);
          return this.cur_outReal;
       }
@@ -514,7 +556,7 @@
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new IllegalArgumentException("AROONOSC peek: BadParam");
+            throw new TaLibArgumentException("AROONOSC peek: BadParam", RetCode.BadParam);
          AROONOSC_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new AROONOSC_Stream(this);
@@ -654,7 +696,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Proceed with the calculation for the requested range.
        * Note that this algorithm allows the input and
@@ -782,13 +824,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("AROONOSC openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("AROONOSC openAndFill: internal error");
+         throw new TaLibStateException("AROONOSC openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("AROONOSC openAndFill: " + retCode);
+      throw new TaLibArgumentException("AROONOSC openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind AROONOSC_Open (composition seam). */
    AROONOSC_Stream AROONOSC_OpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
@@ -798,13 +840,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("AROONOSC open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("AROONOSC open: internal error");
+         throw new TaLibStateException("AROONOSC open: internal error", retCode);
       }
-      throw new IllegalArgumentException("AROONOSC open: " + retCode);
+      throw new TaLibArgumentException("AROONOSC open: " + retCode, retCode);
    }
    /**
     * Open a live AROONOSC stream over the warm-up history; the handle's
@@ -839,11 +881,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("AROONOSC openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("AROONOSC openAndFill: internal error");
+         throw new TaLibStateException("AROONOSC openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("AROONOSC openAndFill: " + retCode);
+      throw new TaLibArgumentException("AROONOSC openAndFill: " + retCode, retCode);
    }

@@ -1992,8 +1992,15 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
 
         // Build response with correct key names and serialisers per output type.
         s.push_str("        int pos = json_appendf(resp, resp_size, 0,\n");
-        s.push_str("            \"{\\\"retCode\\\":%d,\\\"outBegIdx\\\":%d,\\\"outNBElement\\\":%d,\\\"timing_ns\\\":%ld\",\n");
-        s.push_str("            (int)rc, outBegIdx, outNBElement, elapsed_ns);\n");
+        // `out_len` is the length of the buffer the server handed the call, so the
+        // harness can assert the bound is a MINIMUM against what the server did
+        // rather than against what the harness asked for. C answers MAX_ARRAY_SIZE
+        // because its outputs are file-scope statics -- it has no size to check
+        // against and nothing to gain from an exact one -- so it is always slack,
+        // and reporting that keeps the harness's floor total rather than
+        // exempting a backend from it.
+        s.push_str("            \"{\\\"retCode\\\":%d,\\\"outBegIdx\\\":%d,\\\"outNBElement\\\":%d,\\\"out_len\\\":%d,\\\"timing_ns\\\":%ld\",\n");
+        s.push_str("            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);\n");
         // no_output: ta_bench only reads timing_ns, but serialising a 100k-element
         // array as %.15g costs more than the call being measured. Suppressing the
         // arrays keeps retCode/outBegIdx/outNBElement so the caller can still tell
@@ -2257,19 +2264,16 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("import java.io.*;\n");
     s.push_str("import java.util.*;\n\n");
 
-    // RetCode enum
+    // RetCode enum -- the default-package twin of the shipped
+    // io.github.talib.RetCode. The C number is carried BY THE MEMBER, exactly as
+    // it is there: a `switch` with a `default:` arm reported a member nobody had
+    // added an arm for as TA_INTERNAL_ERROR, on the wire, silently.
     s.push_str("enum RetCode {\n");
-    s.push_str("    Success, BadParam, OutOfRangeStartIndex, OutOfRangeEndIndex, AllocErr, InternalError;\n");
-    s.push_str("    public int toInt() {\n");
-    s.push_str("        switch(this) {\n");
-    s.push_str("            case Success: return 0;\n");
-    s.push_str("            case BadParam: return 2;\n");
-    s.push_str("            case OutOfRangeStartIndex: return 12;\n");
-    s.push_str("            case OutOfRangeEndIndex: return 13;\n");
-    s.push_str("            case AllocErr: return 3;\n");
-    s.push_str("            default: return 5000;\n");
-    s.push_str("        }\n");
-    s.push_str("    }\n");
+    s.push_str("    Success(0), BadParam(2), AllocErr(3), OutOfRangeStartIndex(12),\n");
+    s.push_str("    OutOfRangeEndIndex(13), InsufficientHistory(17), InternalError(5000);\n");
+    s.push_str("    private final int cValue;\n");
+    s.push_str("    RetCode(int cValue) { this.cValue = cValue; }\n");
+    s.push_str("    public int toInt() { return cValue; }\n");
     s.push_str("}\n\n");
 
     // MInteger helper
@@ -2383,12 +2387,13 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("    static RuntimeException failure(String funcName, RetCode retCode) {\n");
     s.push_str("        String where = funcName + \": \";\n");
     s.push_str("        switch (retCode) {\n");
-    s.push_str("            case OutOfRangeStartIndex: return new IndexOutOfBoundsException(where + \"startIdx out of range\");\n");
-    s.push_str("            case OutOfRangeEndIndex: return new IndexOutOfBoundsException(where + \"endIdx out of range\");\n");
-    s.push_str("            case BadParam: return new IllegalArgumentException(where + \"bad parameter\");\n");
-    s.push_str("            case AllocErr: return new IllegalStateException(where + \"allocation failed\");\n");
-    s.push_str("            case InternalError: return new IllegalStateException(where + \"internal error\");\n");
-    s.push_str("            default: return new IllegalStateException(where + retCode);\n");
+    s.push_str("            case OutOfRangeStartIndex: return new TaLibIndexException(where + \"startIdx out of range\", retCode);\n");
+    s.push_str("            case OutOfRangeEndIndex: return new TaLibIndexException(where + \"endIdx out of range\", retCode);\n");
+    s.push_str("            case BadParam: return new TaLibArgumentException(where + \"bad parameter\", retCode);\n");
+    s.push_str("            case AllocErr: return new TaLibStateException(where + \"allocation failed\", retCode);\n");
+    s.push_str("            case InternalError: return new TaLibStateException(where + \"internal error\", retCode);\n");
+    s.push_str("            case InsufficientHistory: return new InsufficientHistoryException(where + \"history shorter than the lookback\");\n");
+    s.push_str("            default: return new TaLibStateException(where + retCode, retCode);\n");
     s.push_str("        }\n");
     s.push_str("    }\n\n");
     // Same for the wrapper's argument checks (#172 C2). The server never calls a
@@ -2410,11 +2415,24 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     }
     s.push_str("    static void checkLength(String funcName, String argName, int actual, int required) {\n");
     s.push_str("        if (actual < 0) {\n");
-    s.push_str("            throw new NullPointerException(funcName + \": \" + argName + \" is null\");\n");
+    s.push_str("            throw new TaLibNullArgumentException(funcName + \": \" + argName + \" is null\", RetCode.BadParam);\n");
     s.push_str("        }\n");
     s.push_str("        if (actual < required) {\n");
-    s.push_str("            throw new IllegalArgumentException(funcName + \": \" + argName\n");
-    s.push_str("                + \" has length \" + actual + \", needs \" + required);\n");
+    s.push_str("            throw new TaLibArgumentException(funcName + \": \" + argName\n");
+    s.push_str("                + \" has length \" + actual + \", needs \" + required, RetCode.BadParam);\n");
+    s.push_str("        }\n");
+    s.push_str("    }\n\n");
+    s.push_str("    static void requireIndexRange(String funcName, int startIdx, int endIdx) {\n");
+    s.push_str("        if (startIdx < 0 || startIdx > MAX_INDEX) {\n");
+    s.push_str("            throw failure(funcName, RetCode.OutOfRangeStartIndex);\n");
+    s.push_str("        }\n");
+    s.push_str("        if (endIdx < 0 || endIdx > MAX_INDEX || endIdx < startIdx) {\n");
+    s.push_str("            throw failure(funcName, RetCode.OutOfRangeEndIndex);\n");
+    s.push_str("        }\n");
+    s.push_str("    }\n\n");
+    s.push_str("    static void requireArgument(String funcName, String argName, Object argument) {\n");
+    s.push_str("        if (argument == null) {\n");
+    s.push_str("            throw new TaLibNullArgumentException(funcName + \": \" + argName + \" is null\", RetCode.BadParam);\n");
     s.push_str("        }\n");
     s.push_str("    }\n\n");
     for func in funcs {
@@ -2818,15 +2836,26 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
 
         // Outputs — one array per output, typed correctly (double[] or int[])
         let outputs = &func.outputs;
+        {
+            let lb_args: Vec<String> =
+                func.optional_inputs.iter().map(|o| o.name.clone()).collect();
+            s.push_str(&doc_produced_extent("        ", "//"));
+            s.push_str(&format!(
+                "        int _lb = core.{func_base}_Lookback({});\n",
+                lb_args.join(", ")
+            ));
+            s.push_str("        int _cs = startIdx > _lb ? startIdx : _lb;\n");
+            s.push_str("        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, \"out_pad\");\n");
+        }
         for (k, out) in outputs.iter().enumerate() {
             let arr_name = format!("outArr{k}");
             if out.param_type == ParamType::Integer {
                 s.push_str(&format!(
-                    "        int[] {arr_name} = new int[endIdx - startIdx + 1];\n"
+                    "        int[] {arr_name} = new int[_outLen];\n"
                 ));
             } else {
                 s.push_str(&format!(
-                    "        double[] {arr_name} = new double[endIdx - startIdx + 1];\n"
+                    "        double[] {arr_name} = new double[_outLen];\n"
                 ));
             }
         }
@@ -2900,7 +2929,10 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             ));
             s.push_str("            }\n");
             s.push_str("            rc = RetCode.Success;\n");
-            s.push_str("        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }\n");
+            // Report the code the open actually raised, not a stand-in. Every
+            // failure the library throws carries it (#236 step 1); anything else
+            // reaching here is not the library's and stays the catch-all.
+            s.push_str("        } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }\n");
         }
         s.push_str("        }\n"); // end bench_iters loop
 
@@ -2967,6 +2999,11 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         s.push_str(
             "        sb.append(\",\\\"outNBElement\\\":\").append(outNBElement.value);\n",
         );
+        // The length the server ACTUALLY allocated. The harness asserts it
+        // EXCEEDS the produced count on the padded leg -- otherwise the
+        // "slack is legal" floor would be testing the harness's own intent, and
+        // an out_pad the server silently ignored would read as coverage.
+        s.push_str("        sb.append(\",\\\"out_len\\\":\").append(_outLen);\n");
         for (k, out) in outputs.iter().enumerate() {
             let arr_name = format!("outArr{k}");
             let key = output_json_key(outputs, k);
@@ -3561,7 +3598,6 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
             "    static string Handle_{}(JsonElement p, int startIdx, int endIdx) {{\n",
             func.name
         ));
-        s.push_str("        int n = endIdx - startIdx + 1;\n");
         s.push_str("        int use_preloaded = GetInt(p, \"use_preloaded\", 0);\n");
         s.push_str("        int bench_iters = GetInt(p, \"iters\", 1);\n");
         s.push_str("        if (bench_iters < 1) bench_iters = 1;\n");
@@ -3636,12 +3672,23 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
             ));
         }
 
-        // Output arrays, typed per output.
+        // Output arrays, typed per output, sized to the produced extent.
+        {
+            let lb_args: Vec<String> =
+                func.optional_inputs.iter().map(|o| o.name.clone()).collect();
+            s.push_str(&doc_produced_extent("        ", "//"));
+            s.push_str(&format!(
+                "        int _lb = core.{base}_Lookback({});\n",
+                lb_args.join(", ")
+            ));
+            s.push_str("        int _cs = startIdx > _lb ? startIdx : _lb;\n");
+            s.push_str("        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, \"out_pad\", 0);\n");
+        }
         for (k, out) in outputs.iter().enumerate() {
             if out.param_type == ParamType::Integer {
-                s.push_str(&format!("        int[] outArr{k} = new int[n];\n"));
+                s.push_str(&format!("        int[] outArr{k} = new int[_outLen];\n"));
             } else {
-                s.push_str(&format!("        double[] outArr{k} = new double[n];\n"));
+                s.push_str(&format!("        double[] outArr{k} = new double[_outLen];\n"));
             }
         }
         s.push_str("        int outBegIdx = 0, outNBElement = 0;\n");
@@ -3724,6 +3771,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
         // 100k-element array nobody reads is ~97% of a bench run's wall clock.
         s.push_str("        var sb = new System.Text.StringBuilder();\n");
         s.push_str("        sb.Append($\"{{\\\"retCode\\\":{(int)rc},\\\"outBegIdx\\\":{outBegIdx},\\\"outNBElement\\\":{outNBElement}\");\n");
+        s.push_str("        sb.Append($\",\\\"out_len\\\":{_outLen}\");\n");
         s.push_str("        if (GetInt(p, \"no_output\", 0) == 0) {\n");
         for (k, out) in outputs.iter().enumerate() {
             let key = output_json_key(outputs, k);
@@ -4308,9 +4356,19 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             s.push_str("            }\n");
         }
 
-        // Allocate output buffers
-        // Size: endIdx - startIdx + 1 is a reasonable upper bound
-        s.push_str("            let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };\n");
+        // Allocate output buffers, sized to the produced extent.
+        {
+            let lb_args: Vec<String> =
+                func.optional_inputs.iter().map(|o| o.name.clone()).collect();
+            s.push_str(&doc_produced_extent("            ", "//"));
+            s.push_str(&format!(
+                "            let _lb = core.{}_Lookback({});\n",
+                func.name,
+                lb_args.join(", ")
+            ));
+            s.push_str("            let _cs = if startIdx > _lb { startIdx } else { _lb };\n");
+            s.push_str("            let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params[\"out_pad\"].as_u64().unwrap_or(0) as usize;\n");
+        }
         let outputs = &func.outputs;
         let mut real_idx = 0usize;
         let mut int_idx = 0usize;
@@ -4462,7 +4520,7 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         // server's `%.15g` — rather than serde_json's `null` (which the test
         // harness's strtod-based array parser cannot advance past, ballooning the
         // element count). Finite values use json_f64_array (serde_json formatting).
-        s.push_str("            let mut resp = format!(\"{{\\\"retCode\\\":{},\\\"outBegIdx\\\":{},\\\"outNBElement\\\":{},\\\"lookback\\\":{},\\\"timing_ns\\\":{}\", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);\n");
+        s.push_str("            let mut resp = format!(\"{{\\\"retCode\\\":{},\\\"outBegIdx\\\":{},\\\"outNBElement\\\":{},\\\"out_len\\\":{},\\\"lookback\\\":{},\\\"timing_ns\\\":{}\", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);\n");
 
         // Add output arrays to response
         real_idx = 0;
@@ -6083,6 +6141,42 @@ pub(crate) fn generate_java_stream_verify(
     s
 }
 
+/// Why the servers size their output buffers to the produced count rather than
+/// the width of the requested range (#236 step 2). One text, three indentations.
+const DOC_PRODUCED_EXTENT: &str = "\
+The output buffers are sized to the count the call actually PRODUCES --\n\
+endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and\n\
+never below one. Not to the width of the requested range: that is the bound the\n\
+managed backends check and the Rust asserts state, and at the range width it was\n\
+slack by exactly the lookback, so no call could ever approach it.\n\
+The pad is there because a bound is a MINIMUM, never an equality. A caller\n\
+re-using a pre-allocated buffer passes a larger one, and that is not an error --\n\
+the reported OutRange is what says which part was written. So the harness sends\n\
+both: the startIdx axis sends no pad (the bound is reachable) while the\n\
+full-range value comparison sends one (slack is legal). Sizing every call one way\n\
+would silently drop the other property.\n\
+FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call\n\
+(the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and\n\
+for a range shorter than the lookback, where the output bound switches off and\n\
+the spec says any length will do, including none. It does not: two EMPTY output\n\
+buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust\n\
+(the empty Vec the server hands each output shares one dangling as_ptr()), and\n\
+accepted by C and Java -- a four-way divergence on a call the specification says\n\
+all four accept. Sizing to zero here would reach it on every multi-output\n\
+function, which is a semantic question, not a harness one. Recorded as\n\
+error-handling-spec Part 3 item 11.\n\
+The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no\n\
+sizes and cannot make the check, so an exact buffer would test nothing there.";
+
+/// [`DOC_PRODUCED_EXTENT`] as an 8-space `//` comment block (Java, C#).
+fn doc_produced_extent(indent: &str, marker: &str) -> String {
+    let mut out = String::new();
+    for line in DOC_PRODUCED_EXTENT.lines() {
+        let _ = writeln!(out, "{indent}{marker} {line}");
+    }
+    out
+}
+
 /// The Java port of `fuzz_data.h` (byte-identical input generation, verified
 /// bit-for-bit against the C original by a differential harness at port time).
 const JAVA_FUZZ: &str = include_str!("../templates/java/FuzzData.java");
@@ -6092,6 +6186,8 @@ const JAVA_FUZZ: &str = include_str!("../templates/java/FuzzData.java");
 /// library's hand-written `InsufficientHistoryException`).
 pub(crate) fn java_server_stream_scaffolding() -> String {
     let mut s = String::new();
+    s.push_str(JAVA_FAILURES);
+    s.push('\n');
     s.push_str(JAVA_IHE);
     s.push('\n');
     s.push_str(JAVA_FUZZ);
@@ -6102,6 +6198,11 @@ pub(crate) fn java_server_stream_scaffolding() -> String {
 /// `InsufficientHistoryException` (template file, per the no-inline-scaffolding
 /// rule in CLAUDE.md).
 const JAVA_IHE: &str = include_str!("../templates/java/InsufficientHistoryException.java");
+
+/// Default-package twins of the shipped `TaLibFailure` interface and the four
+/// exception classes that carry a `RetCode` (#236 step 1). Same rule, same
+/// reason: the spliced wrappers throw these by name.
+const JAVA_FAILURES: &str = include_str!("../templates/java/Failures.java");
 /// The C# server's `ta_abstract` handlers. Fixed source — every answer is read
 /// from the shipped `TALib.Metadata` catalogue, which the server csproj compiles
 /// directly, so there is no second metadata table to drift.

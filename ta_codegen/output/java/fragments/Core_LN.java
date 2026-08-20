@@ -25,12 +25,12 @@
       return 0 ;
 
    }
-   RetCode LN_Internal( int startIdx,
-                        int endIdx,
-                        double inReal[],
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode LN_Body( int startIdx,
+                    int endIdx,
+                    double inReal[],
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -47,12 +47,12 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode LN_Internal( int startIdx,
-                        int endIdx,
-                        float inReal[],
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode LN_Body( int startIdx,
+                    int endIdx,
+                    float inReal[],
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -115,6 +115,7 @@
                        double inReal[],
                        double outReal[] )
    {
+      requireIndexRange("LN", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, LN_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -122,11 +123,29 @@
       requireLength("LN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = LN_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("LN", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode LN_Internal( int startIdx,
+                        int endIdx,
+                        double inReal[],
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
+   {
+      try {
+         return LN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Vector natural logarithm: applies the natural log (base e) elementwise to
@@ -177,6 +196,7 @@
                        float inReal[],
                        double outReal[] )
    {
+      requireIndexRange("LN", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, LN_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -184,11 +204,29 @@
       requireLength("LN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = LN_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("LN", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode LN_Internal( int startIdx,
+                        int endIdx,
+                        float inReal[],
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
+   {
+      try {
+         return LN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -248,7 +286,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("LN update: BadParam");
+            throw new TaLibArgumentException("LN update: BadParam", RetCode.BadParam);
          core.LN_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -262,7 +300,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("LN peek: BadParam");
+            throw new TaLibArgumentException("LN peek: BadParam", RetCode.BadParam);
          LN_Stream scratch = new LN_Stream(this);
          core.LN_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -336,13 +374,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("LN openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("LN openAndFill: internal error");
+         throw new TaLibStateException("LN openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("LN openAndFill: " + retCode);
+      throw new TaLibArgumentException("LN openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind LN_Open (composition seam). */
    LN_Stream LN_OpenInternal( double inReal[], int startIdx )
@@ -352,13 +390,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("LN open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("LN open: internal error");
+         throw new TaLibStateException("LN open: internal error", retCode);
       }
-      throw new IllegalArgumentException("LN open: " + retCode);
+      throw new TaLibArgumentException("LN open: " + retCode, retCode);
    }
    /**
     * Open a live LN stream over the warm-up history; the handle's
@@ -393,11 +431,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("LN openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("LN openAndFill: internal error");
+         throw new TaLibStateException("LN openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("LN openAndFill: " + retCode);
+      throw new TaLibArgumentException("LN openAndFill: " + retCode, retCode);
    }

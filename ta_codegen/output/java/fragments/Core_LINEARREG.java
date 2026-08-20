@@ -37,13 +37,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode LINEARREG_Internal( int startIdx,
-                               int endIdx,
-                               double inReal[],
-                               int optInTimePeriod,
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outReal[] )
+   RetCode LINEARREG_Body( int startIdx,
+                           int endIdx,
+                           double inReal[],
+                           int optInTimePeriod,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -143,13 +143,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode LINEARREG_Internal( int startIdx,
-                               int endIdx,
-                               float inReal[],
-                               int optInTimePeriod,
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outReal[] )
+   RetCode LINEARREG_Body( int startIdx,
+                           int endIdx,
+                           float inReal[],
+                           int optInTimePeriod,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -259,6 +259,7 @@
                               int optInTimePeriod,
                               double outReal[] )
    {
+      requireIndexRange("LINEARREG", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, LINEARREG_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -266,11 +267,30 @@
       requireLength("LINEARREG", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = LINEARREG_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LINEARREG_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("LINEARREG", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode LINEARREG_Internal( int startIdx,
+                               int endIdx,
+                               double inReal[],
+                               int optInTimePeriod,
+                               MInteger outBegIdx,
+                               MInteger outNBElement,
+                               double outReal[] )
+   {
+      try {
+         return LINEARREG_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Least-squares straight-line fit over the last optInTimePeriod bars,
@@ -318,6 +338,7 @@
                               int optInTimePeriod,
                               double outReal[] )
    {
+      requireIndexRange("LINEARREG", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, LINEARREG_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -325,11 +346,30 @@
       requireLength("LINEARREG", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = LINEARREG_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LINEARREG_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("LINEARREG", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode LINEARREG_Internal( int startIdx,
+                               int endIdx,
+                               float inReal[],
+                               int optInTimePeriod,
+                               MInteger outBegIdx,
+                               MInteger outNBElement,
+                               double outReal[] )
+   {
+      try {
+         return LINEARREG_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -420,7 +460,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("LINEARREG update: BadParam");
+            throw new TaLibArgumentException("LINEARREG update: BadParam", RetCode.BadParam);
          core.LINEARREG_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -434,7 +474,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("LINEARREG peek: BadParam");
+            throw new TaLibArgumentException("LINEARREG peek: BadParam", RetCode.BadParam);
          LINEARREG_Stream scratch = new LINEARREG_Stream(this);
          core.LINEARREG_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -530,7 +570,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outIdx = 0;
       /* Index into the output. */
@@ -622,13 +662,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("LINEARREG openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("LINEARREG openAndFill: internal error");
+         throw new TaLibStateException("LINEARREG openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("LINEARREG openAndFill: " + retCode);
+      throw new TaLibArgumentException("LINEARREG openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind LINEARREG_Open (composition seam). */
    LINEARREG_Stream LINEARREG_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -638,13 +678,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("LINEARREG open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("LINEARREG open: internal error");
+         throw new TaLibStateException("LINEARREG open: internal error", retCode);
       }
-      throw new IllegalArgumentException("LINEARREG open: " + retCode);
+      throw new TaLibArgumentException("LINEARREG open: " + retCode, retCode);
    }
    /**
     * Open a live LINEARREG stream over the warm-up history; the handle's
@@ -679,11 +719,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("LINEARREG openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("LINEARREG openAndFill: internal error");
+         throw new TaLibStateException("LINEARREG openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("LINEARREG openAndFill: " + retCode);
+      throw new TaLibArgumentException("LINEARREG openAndFill: " + retCode, retCode);
    }

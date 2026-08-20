@@ -514,7 +514,7 @@ static TA_RetCode TA_MIN_OpenCore( struct TA_MIN_Stream **stream, const double i
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       /* Proceed with the calculation for the requested range.
        * Note that this algorithm allows the input and

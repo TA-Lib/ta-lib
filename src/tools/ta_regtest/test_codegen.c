@@ -168,6 +168,55 @@ static long g_floatSentinelEligible[NUM_LANGUAGES];
 static long g_floatSentinelWithOutput[NUM_LANGUAGES];
 static long g_floatSentinelEnumWithheld = 0;
 
+/* ---- startIdx-axis sweep counters (#236 step 2) ----
+ * Per LANGUAGE, for the same reason as the sentinel counters above: a total
+ * stays green while one server errors on every non-zero-startIdx request,
+ * because the others keep it non-zero.
+ *
+ * `compared` counts (function, range) pairs that reached a real comparison;
+ * `withOutput` counts those that diffed at least one OUTPUT ELEMENT. A pair
+ * where both sides answer "success, zero elements" compares a retCode and
+ * nothing else, so it is `compared` but not coverage — which is exactly the
+ * shape this axis is meant to reach, since a produced count of zero is the one
+ * case where the output bound switches off. */
+static long g_startSweepCompared[NUM_LANGUAGES];
+static long g_startSweepWithOutput[NUM_LANGUAGES];
+/* Pairs withheld because the frozen reference is known-wrong there (see
+ * ref_diverges_on_partial_range). Printed, so the carve-out cannot quietly grow
+ * to swallow the axis. */
+static long g_startSweepSkipped98 = 0;
+/* Calls where the server REPORTED allocating an output buffer larger than the
+ * count it produced. Counted and floored: with the servers sized to the produced
+ * count by default, dropping this would leave the whole harness proving only
+ * that the minimum is accepted, never that anything above it is — and the bound
+ * is a minimum, which is the whole point (a caller re-using a pre-allocated
+ * buffer passes a larger one).
+ *
+ * Read off the server's own `out_len`, not off the pad this file asked for. A
+ * counter incremented beside `outPad = OUT_SLACK_PAD` measures the harness's
+ * intention: set the pad to 0, or break the server's parsing of it, and the
+ * floor stays green over calls that are all exactly sized. */
+static long g_slackCalls[NUM_LANGUAGES];
+/* How much larger. Small on purpose — a big pad is the state this replaced, and
+ * would not distinguish "the bound is a minimum" from "the bound is unchecked". */
+#define OUT_SLACK_PAD 7
+
+/* The reference this leg compares against is `ta_ref_serve`, the frozen
+ * pre-cutover library — and issue #98 fixed two functions whose OLD behaviour it
+ * still has. Both changed what they compute on a PARTIAL range only, so the
+ * divergence is exactly `startIdx > lookback`, which is precisely what the
+ * startIdx axis sends. `--fuzz-064` makes the same carve-out against v0.6.4 (its
+ * `skipped98` counter); this is the same two names for the same reason, and the
+ * cases it withholds are covered against the in-process C library by
+ * `--xlang-hash`, whose golden is not frozen. */
+static int ref_diverges_on_partial_range( const char *name, TA_Integer startIdx,
+                                          TA_Integer lookback )
+{
+    if( startIdx <= lookback )
+        return 0;
+    return strcmp(name, "TRIX") == 0 || strcmp(name, "NATR") == 0;
+}
+
 /* Functions that reached a real value comparison, per language. The closing
  * banner used to read "All N language(s) passed codegen verification" off
  * `langsTested` alone — a count of servers that STARTED, not of anything
@@ -611,6 +660,27 @@ typedef struct {
     int    widenFloatInputs;
     int    sweepFloatLeg;   /* run the float leg per sweep variant (C only) */
 
+    /* Extra elements the server is asked to allocate past the produced count.
+     *
+     * The output bound is a MINIMUM, not an equality — a caller re-using a
+     * pre-allocated buffer passes a larger one, and the reported OutRange is
+     * what says which part was written. Both halves need exercising, and they
+     * pull in opposite directions: sized to the produced count the bound is
+     * reachable at last (#236 step 2), sized larger it proves slack is still
+     * accepted. So the full-range value comparison sends a pad and the
+     * startIdx axis sends none, rather than every call being one or the
+     * other. */
+    int    outPad;
+
+    /* Set once the default full-range pass has shown this language answers this
+     * function at all (a non-error response). Distinguishes "this backend does
+     * not implement it" from "it implements it and broke on this range", which
+     * the edge sweep needs: an error response is silently skipped as an
+     * unsupported function, and with output buffers sized to the produced count
+     * an out-of-bounds write becomes exactly such a response (an
+     * ArrayIndexOutOfBoundsException in Java, a panic-closed pipe in Rust). */
+    int    langSupported;
+
     /* Timing */
     long long c_ref_total_ns;
     long long server_total_ns;
@@ -696,8 +766,8 @@ static int build_json_request(CodegenRangeTestParam *p,
 
     /* Method and startIdx/endIdx */
     pos = codegen_appendf(buf, bufSize, pos,
-        "{\"method\":\"TA_%s\",\"params\":{\"startIdx\":%d,\"endIdx\":%d",
-        fi->name, (int)startIdx, (int)endIdx);
+        "{\"method\":\"TA_%s\",\"params\":{\"startIdx\":%d,\"endIdx\":%d,\"out_pad\":%d",
+        fi->name, (int)startIdx, (int)endIdx, p->outPad);
 
     /* Pre-count real inputs to decide naming convention */
     int totalRealInputs = 0;
@@ -1042,6 +1112,74 @@ static void compare_codegen_output_generic(
  * affects cross-range coherency, which this does not test. */
 #define EDGE_SWEEP_MARGIN 3
 static double parse_ref_baseline(CodegenRangeTestParam *p);  /* defined below */
+
+/* One (startIdx, endIdx) pair, reference against the server under test. Returns
+ * 0 when the caller should stop (the error is already recorded and printed), 1
+ * to carry on -- including when the range was skipped because the reference
+ * itself answered an error. */
+static int edge_compare_one(CodegenRangeTestParam *p, TA_Integer startIdx,
+                            TA_Integer endIdx, int countAsStartSweep)
+{
+    build_json_request(p, startIdx, endIdx);
+
+    /* Reference baseline (ta_ref_serve). */
+    ErrorNumber rref = codegen_pipe_call(p->refCp, p->requestBuf,
+                                         p->responseBuf, JSON_BUF_SIZE);
+    if( rref != TA_TEST_PASS )
+    {
+        printf("EDGE SWEEP [TA_%s]: reference server call failed at (%d,%d)\n",
+               p->funcInfo->name, (int)startIdx, (int)endIdx);
+        p->codegenError = rref;
+        return 0;
+    }
+    if( json_is_error(p->responseBuf) )
+        return 1;  /* function unsupported / errored at this range */
+    parse_ref_baseline(p);
+    TA_Integer refNb = p->lastNbElement;
+
+    /* Language server under test. A crash (e.g. a debug-build arithmetic
+     * overflow) closes the pipe, so the read returns non-PASS here. */
+    ErrorNumber rlang = codegen_pipe_call(p->cp, p->requestBuf,
+                                          p->responseBuf, JSON_BUF_SIZE);
+    if( rlang != TA_TEST_PASS )
+    {
+        printf("CODEGEN EDGE CRASH [TA_%s]: server stopped responding at "
+               "range (%d,%d) -- likely a debug-build arithmetic overflow\n",
+               p->funcInfo->name, (int)startIdx, (int)endIdx);
+        p->codegenError = rlang;
+        return 0;
+    }
+
+    /* The reference answered this exact request, so an error from a server that
+     * answered the same function at the full range is a divergence, not an
+     * unsupported-skip -- and compare_codegen_output_generic returns SILENTLY on
+     * an error response, so without this the interesting failures land in the
+     * one place nothing looks. */
+    if( p->langSupported && json_is_error(p->responseBuf) )
+    {
+        printf("CODEGEN EDGE MISMATCH [TA_%s]: server error at range (%d,%d) "
+               "where the reference produced a result: %.160s\n",
+               p->funcInfo->name, (int)startIdx, (int)endIdx, p->responseBuf);
+        p->codegenError = TA_CODEGEN_RETCODE_MISMATCH;
+        return 0;
+    }
+
+    for( unsigned int o = 0; o < p->funcInfo->nbOutput; o++ )
+        compare_codegen_output_generic(p, o);
+    if( p->codegenError != TA_TEST_PASS )
+    {
+        printf("  (edge range was (%d,%d))\n", (int)startIdx, (int)endIdx);
+        return 0;
+    }
+    if( countAsStartSweep && p->langIndex >= 0 && p->langIndex < (int)NUM_LANGUAGES )
+    {
+        g_startSweepCompared[p->langIndex]++;
+        if( refNb > 0 )
+            g_startSweepWithOutput[p->langIndex]++;
+    }
+    return 1;
+}
+
 static void run_edge_range_sweep(CodegenRangeTestParam *p)
 {
     if( p->codegenError != TA_TEST_PASS )
@@ -1057,42 +1195,69 @@ static void run_edge_range_sweep(CodegenRangeTestParam *p)
 
     p->useLargePeriod = 0;
     for( TA_Integer endIdx = 0; endIdx <= maxEnd; endIdx++ )
+        if( !edge_compare_one(p, 0, endIdx, 0) )
+            return;
+
+    /* ---- The startIdx axis (#236 step 2) ----
+     * Every other server-facing call in this file pins startIdx to 0, and two
+     * things are unreachable there.
+     *
+     * One: a guard that is wrong only when startIdx > 0. No suite and no
+     * cross-language leg could see one -- that is the defect class this axis
+     * exists for, and it is why the pairs below are not all at the lookback
+     * boundary.
+     *
+     * Two: the CLAMP itself. At startIdx <= lookback the call begins at the
+     * lookback and produces fewer values than the range is wide; above it, it
+     * begins where it was asked to and produces exactly the range width. Both
+     * arms of `max(startIdx, lookback)` need a case, and the pair that separates
+     * a correct produced-count bound from a range-width one is the FIRST arm --
+     * which startIdx 0 does reach, but only ever with the whole series, so a
+     * server sizing its buffers to the range width was slack by exactly the
+     * lookback and never approached the bound. Sized to the produced extent
+     * (see the server emitters), each pair below is now a live test of it.
+     *
+     * Comparing ref-vs-server at the SAME (startIdx, endIdx) is valid whatever
+     * the function's range-stability class, so no exemptions are needed here
+     * either: path dependence affects cross-range coherency, which this does
+     * not test. */
     {
-        build_json_request(p, 0, endIdx);
+        TA_Integer N = p->nbBars;
+        TA_Integer pairs[6][2];
+        int nPairs = 0, i, j;
 
-        /* Reference baseline (ta_ref_serve). */
-        ErrorNumber rref = codegen_pipe_call(p->refCp, p->requestBuf,
-                                             p->responseBuf, JSON_BUF_SIZE);
-        if( rref != TA_TEST_PASS )
-        {
-            printf("EDGE SWEEP [TA_%s]: reference server call failed at (0,%d)\n",
-                   p->funcInfo->name, (int)endIdx);
-            p->codegenError = rref;
-            return;
-        }
-        if( json_is_error(p->responseBuf) )
-            continue;  /* function unsupported / errored at this range */
-        parse_ref_baseline(p);
+        pairs[nPairs][0] = lookback > 0 ? lookback - 1 : 0;
+        pairs[nPairs++][1] = N - 1;                   /* just below the clamp */
+        pairs[nPairs][0] = lookback;
+        pairs[nPairs++][1] = N - 1;                   /* exactly at the clamp */
+        pairs[nPairs][0] = lookback + 1;
+        pairs[nPairs++][1] = N - 1;                   /* just above it */
+        pairs[nPairs][0] = N / 2;
+        pairs[nPairs++][1] = N - 1;                   /* mid-series */
+        pairs[nPairs][0] = N - 1;
+        pairs[nPairs++][1] = N - 1;                   /* a single trailing bar */
+        pairs[nPairs][0] = lookback + 1;
+        pairs[nPairs++][1] = lookback + 2;            /* narrow, and not at 0 */
 
-        /* Language server under test. A crash (e.g. a debug-build arithmetic
-         * overflow) closes the pipe, so the read returns non-PASS here. */
-        ErrorNumber rlang = codegen_pipe_call(p->cp, p->requestBuf,
-                                              p->responseBuf, JSON_BUF_SIZE);
-        if( rlang != TA_TEST_PASS )
+        for( i = 0; i < nPairs; i++ )
         {
-            printf("CODEGEN EDGE CRASH [TA_%s]: server stopped responding at "
-                   "range (0,%d) -- likely a debug-build arithmetic overflow\n",
-                   p->funcInfo->name, (int)endIdx);
-            p->codegenError = rlang;
-            return;
-        }
+            TA_Integer sIdx = pairs[i][0], eIdx = pairs[i][1];
+            int dup = 0;
 
-        for( unsigned int o = 0; o < p->funcInfo->nbOutput; o++ )
-            compare_codegen_output_generic(p, o);
-        if( p->codegenError != TA_TEST_PASS )
-        {
-            printf("  (edge range was (0,%d))\n", (int)endIdx);
-            return;
+            if( sIdx < 1 || sIdx > N - 1 || eIdx > N - 1 || eIdx < sIdx )
+                continue;   /* startIdx 0 is the sweep above; the rest is off the series */
+            if( ref_diverges_on_partial_range(p->funcInfo->name, sIdx, lookback) )
+            {
+                g_startSweepSkipped98++;
+                continue;
+            }
+            for( j = 0; j < i; j++ )
+                if( pairs[j][0] == sIdx && pairs[j][1] == eIdx ) { dup = 1; break; }
+            if( dup )
+                continue;
+
+            if( !edge_compare_one(p, sIdx, eIdx, 1) )
+                return;
         }
     }
 }
@@ -1675,6 +1840,9 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
      * both it and the language server under test. Post-cutover this keeps the
      * generated C server diffed against a frozen reference, not against itself.
      * (doRangeTest below still calls the in-process lib for self-coherency.) */
+    /* This leg — the full-range value comparison and its baseline — is the one
+     * that sends an OVER-SIZED output. See CodegenRangeTestParam::outPad. */
+    params.outPad = OUT_SLACK_PAD;
     build_json_request(&params, 0, params.nbBars - 1);
     /* Warmup (discard) then measured baseline call (same request). */
     codegen_pipe_call(params.refCp, params.requestBuf, params.responseBuf, JSON_BUF_SIZE);
@@ -1691,6 +1859,8 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         ctx->failed++;
         return;
     }
+    /* The reference is the frozen pre-cutover server and does not report
+     * `out_len`; only the language server under test does, further down. */
     double c_avg_ns = parse_ref_baseline(&params);
     params.c_ref_total_ns = (long long)c_avg_ns;
     /* Default-period element count, captured for the doRangeTest guard below
@@ -1721,11 +1891,30 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
             compare_codegen_output_generic(&params, outNb);
     }
 
+    /* Back to the produced count for every leg below: the edge sweep and the
+     * startIdx axis are what make the bound reachable, and a pad would undo
+     * exactly that. */
+    params.outPad = 0;
+
+    /* Did the server actually allocate more than it produced? `out_len` is what
+     * it allocated; `lastNbElement` is what it wrote. Counted here, off the
+     * response, so the floor below tests the effect and not this file's
+     * intention. A server that ignored `out_pad` reports the two as equal and
+     * the floor fires. */
+    if( codegenErr == TA_TEST_PASS && !json_is_error(params.responseBuf)
+        && ctx->langIndex >= 0 && ctx->langIndex < (int)NUM_LANGUAGES )
+    {
+        int outLen = json_get_int(params.responseBuf, "out_len");
+        if( outLen > params.lastNbElement )
+            g_slackCalls[ctx->langIndex]++;
+    }
+
     /* Whether the backend supported this function at the default period (non-error
      * response). Used so the large-period pass can flag a server error that appears
      * ONLY at the large period as a real regression, not an unsupported-skip. */
     int defaultSupported = (codegenErr == TA_TEST_PASS)
                            && !json_is_error(params.responseBuf);
+    params.langSupported = defaultSupported;
 
     /* Snapshot server timing from the full-range comparison call. Both c_ref_ns
      * (ta_ref_serve) and s_avg_ns are single full-range JSON-RPC calls measuring
@@ -7111,6 +7300,77 @@ ErrorNumber test_codegen(const TA_History *history,
             }
             sentinelTotal    += g_floatSentinelWithOutput[li];
             sentinelEligible += g_floatSentinelEligible[li];
+        }
+
+        /* Non-vacuity for the startIdx axis (#236 step 2), on the same terms.
+         * It is not gated on `functionFilter`: every shipped function reaches
+         * `run_edge_range_sweep`, and every one of them has at least one legal
+         * (startIdx > 0, endIdx) pair in a 252-bar series, so a language line
+         * reading zero means the pairs stopped being sent — not that the filter
+         * chose badly. `withOutput` rather than `compared`, so a server that
+         * answered every one of them "success, zero elements" is not counted as
+         * having verified anything. */
+        for( unsigned int li = 0; li < NUM_LANGUAGES; li++ )
+        {
+            if( g_startSweepCompared[li] > 0 && g_startSweepWithOutput[li] == 0 )
+            {
+                printf("\nCODEGEN FAILED: the startIdx-axis sweep compared no "
+                       "output element for %s — %ld range(s) reached it and every "
+                       "one produced nothing\n",
+                       ALL_LANGUAGES[li].display, g_startSweepCompared[li]);
+                return TA_CODEGEN_OUTPUT_MISMATCH;
+            }
+        }
+        {
+            long startSweepTotal = 0, valuesCompared = 0;
+            for( unsigned int li = 0; li < NUM_LANGUAGES; li++ )
+            {
+                startSweepTotal += g_startSweepWithOutput[li];
+                valuesCompared  += g_codegenCompared[li];
+            }
+            if( valuesCompared > 0 && startSweepTotal == 0 )
+            {
+                printf("\nCODEGEN FAILED: the startIdx-axis sweep compared "
+                       "nothing anywhere, on a run that did compare values — "
+                       "every server-facing call is back at startIdx 0\n");
+                return TA_CODEGEN_OUTPUT_MISMATCH;
+            }
+            /* The other half of the bound: it is a MINIMUM. Every leg above
+             * asks for exactly the produced count, so without this the harness
+             * would prove only that the minimum is accepted — never that a
+             * caller re-using a bigger pre-allocated buffer still is. */
+            for( unsigned int li = 0; li < NUM_LANGUAGES; li++ )
+            {
+                if( g_codegenCompared[li] > 0 && g_slackCalls[li] == 0 )
+                {
+                    printf("\nCODEGEN FAILED: %s never once REPORTED an output "
+                           "buffer larger than the count it produced — either the "
+                           "out_pad request field stopped being honoured, or the "
+                           "harness is asserting the bound is an equality, which "
+                           "it is not\n",
+                           ALL_LANGUAGES[li].display);
+                    return TA_CODEGEN_OUTPUT_MISMATCH;
+                }
+            }
+            {
+                long slackTotal = 0;
+                for( unsigned int li = 0; li < NUM_LANGUAGES; li++ )
+                    slackTotal += g_slackCalls[li];
+                if( slackTotal > 0 )
+                    printf("  output bound: %ld call(s) at the produced count + %d "
+                           "(slack is legal), the rest exactly at it\n",
+                           slackTotal, OUT_SLACK_PAD);
+            }
+
+            if( startSweepTotal > 0 )
+            {
+                printf("  startIdx-axis sweep: %ld range(s) with output compared "
+                       "at startIdx > 0", startSweepTotal);
+                if( g_startSweepSkipped98 > 0 )
+                    printf(", %ld withheld (TRIX/NATR partial range — the frozen "
+                           "reference predates issue #98)", g_startSweepSkipped98);
+                printf("\n");
+            }
         }
 
         /* The per-language floor above is silent when NOTHING is eligible

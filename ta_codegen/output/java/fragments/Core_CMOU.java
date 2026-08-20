@@ -40,13 +40,13 @@
       return optInTimePeriod ;
 
    }
-   RetCode CMOU_Internal( int startIdx,
-                          int endIdx,
-                          double inReal[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode CMOU_Body( int startIdx,
+                      int endIdx,
+                      double inReal[],
+                      int optInTimePeriod,
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -169,13 +169,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode CMOU_Internal( int startIdx,
-                          int endIdx,
-                          float inReal[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode CMOU_Body( int startIdx,
+                      int endIdx,
+                      float inReal[],
+                      int optInTimePeriod,
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -314,6 +314,7 @@
                          int optInTimePeriod,
                          double outReal[] )
    {
+      requireIndexRange("CMOU", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CMOU_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -321,11 +322,30 @@
       requireLength("CMOU", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CMOU_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CMOU_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("CMOU", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode CMOU_Internal( int startIdx,
+                          int endIdx,
+                          double inReal[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+   {
+      try {
+         return CMOU_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Chande Momentum Oscillator: Tushar Chande's original momentum oscillator,
@@ -380,6 +400,7 @@
                          int optInTimePeriod,
                          double outReal[] )
    {
+      requireIndexRange("CMOU", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CMOU_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -387,11 +408,30 @@
       requireLength("CMOU", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CMOU_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CMOU_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("CMOU", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode CMOU_Internal( int startIdx,
+                          int endIdx,
+                          float inReal[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+   {
+      try {
+         return CMOU_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -482,7 +522,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("CMOU update: BadParam");
+            throw new TaLibArgumentException("CMOU update: BadParam", RetCode.BadParam);
          core.CMOU_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -496,7 +536,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("CMOU peek: BadParam");
+            throw new TaLibArgumentException("CMOU peek: BadParam", RetCode.BadParam);
          CMOU_Stream scratch = new CMOU_Stream(this);
          core.CMOU_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -606,7 +646,7 @@
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Accumulate the up/down sums over the first window: the optInTimePeriod
        * changes ending at startIdx (prices inReal[startIdx-optInTimePeriod ..
@@ -729,13 +769,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CMOU openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CMOU openAndFill: internal error");
+         throw new TaLibStateException("CMOU openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CMOU openAndFill: " + retCode);
+      throw new TaLibArgumentException("CMOU openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind CMOU_Open (composition seam). */
    CMOU_Stream CMOU_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -745,13 +785,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CMOU open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CMOU open: internal error");
+         throw new TaLibStateException("CMOU open: internal error", retCode);
       }
-      throw new IllegalArgumentException("CMOU open: " + retCode);
+      throw new TaLibArgumentException("CMOU open: " + retCode, retCode);
    }
    /**
     * Open a live CMOU stream over the warm-up history; the handle's
@@ -786,11 +826,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CMOU openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CMOU openAndFill: internal error");
+         throw new TaLibStateException("CMOU openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CMOU openAndFill: " + retCode);
+      throw new TaLibArgumentException("CMOU openAndFill: " + retCode, retCode);
    }

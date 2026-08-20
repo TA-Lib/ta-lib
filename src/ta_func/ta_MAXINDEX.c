@@ -350,7 +350,7 @@ static TA_RetCode TA_MAXINDEX_OpenCore( struct TA_MAXINDEX_Stream **stream, cons
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       /* Proceed with the calculation for the requested range.
        * (The integer output can never share the real input's buffer —

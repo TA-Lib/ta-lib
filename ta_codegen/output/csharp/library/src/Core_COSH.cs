@@ -69,12 +69,12 @@ public partial class Core
       return 0 ;
 
    }
-   internal RetCode COSH( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<double> inReal,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
+   internal RetCode COSH_Body( int startIdx,
+                               int endIdx,
+                               ReadOnlySpan<double> inReal,
+                               out int outBegIdx,
+                               out int outNBElement,
+                               Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -96,12 +96,12 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode COSH( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<float> inReal,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
+   internal RetCode COSH_Body( int startIdx,
+                               int endIdx,
+                               ReadOnlySpan<float> inReal,
+                               out int outBegIdx,
+                               out int outNBElement,
+                               Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -168,11 +168,26 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("COSH", "inReal", inReal.Length, guardInLen);
       RequireLength("COSH", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = COSH(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = COSH_Body(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("COSH", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode COSH( int startIdx,
+                          int endIdx,
+                          ReadOnlySpan<double> inReal,
+                          out int outBegIdx,
+                          out int outNBElement,
+                          Span<double> outReal )
+   {
+      try {
+         return COSH_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Vector hyperbolic cosine: applies cosh element-wise to each input value. A
@@ -228,11 +243,26 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("COSH", "inReal", inReal.Length, guardInLen);
       RequireLength("COSH", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = COSH(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = COSH_Body(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("COSH", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode COSH( int startIdx,
+                          int endIdx,
+                          ReadOnlySpan<float> inReal,
+                          out int outBegIdx,
+                          out int outNBElement,
+                          Span<double> outReal )
+   {
+      try {
+         return COSH_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -426,7 +456,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public COSH_Stream COSH_Open( ReadOnlySpan<double> inReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return COSH_OpenInternal(inReal, 0);
    }
 
@@ -454,7 +484,7 @@ public partial class Core
    /// output.</exception>
    public COSH_Stream COSH_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       COSH_Stream sp = new COSH_Stream(this);
       RetCode retCode = COSH_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

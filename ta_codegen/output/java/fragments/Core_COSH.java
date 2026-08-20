@@ -25,12 +25,12 @@
       return 0 ;
 
    }
-   RetCode COSH_Internal( int startIdx,
-                          int endIdx,
-                          double inReal[],
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode COSH_Body( int startIdx,
+                      int endIdx,
+                      double inReal[],
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -47,12 +47,12 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode COSH_Internal( int startIdx,
-                          int endIdx,
-                          float inReal[],
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode COSH_Body( int startIdx,
+                      int endIdx,
+                      float inReal[],
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -111,6 +111,7 @@
                          double inReal[],
                          double outReal[] )
    {
+      requireIndexRange("COSH", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, COSH_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -118,11 +119,29 @@
       requireLength("COSH", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = COSH_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = COSH_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("COSH", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode COSH_Internal( int startIdx,
+                          int endIdx,
+                          double inReal[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+   {
+      try {
+         return COSH_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Vector hyperbolic cosine: applies cosh element-wise to each input value. A
@@ -169,6 +188,7 @@
                          float inReal[],
                          double outReal[] )
    {
+      requireIndexRange("COSH", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, COSH_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -176,11 +196,29 @@
       requireLength("COSH", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = COSH_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = COSH_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("COSH", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode COSH_Internal( int startIdx,
+                          int endIdx,
+                          float inReal[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+   {
+      try {
+         return COSH_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -240,7 +278,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("COSH update: BadParam");
+            throw new TaLibArgumentException("COSH update: BadParam", RetCode.BadParam);
          core.COSH_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -254,7 +292,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("COSH peek: BadParam");
+            throw new TaLibArgumentException("COSH peek: BadParam", RetCode.BadParam);
          COSH_Stream scratch = new COSH_Stream(this);
          core.COSH_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -328,13 +366,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("COSH openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("COSH openAndFill: internal error");
+         throw new TaLibStateException("COSH openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("COSH openAndFill: " + retCode);
+      throw new TaLibArgumentException("COSH openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind COSH_Open (composition seam). */
    COSH_Stream COSH_OpenInternal( double inReal[], int startIdx )
@@ -344,13 +382,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("COSH open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("COSH open: internal error");
+         throw new TaLibStateException("COSH open: internal error", retCode);
       }
-      throw new IllegalArgumentException("COSH open: " + retCode);
+      throw new TaLibArgumentException("COSH open: " + retCode, retCode);
    }
    /**
     * Open a live COSH stream over the warm-up history; the handle's
@@ -385,11 +423,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("COSH openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("COSH openAndFill: internal error");
+         throw new TaLibStateException("COSH openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("COSH openAndFill: " + retCode);
+      throw new TaLibArgumentException("COSH openAndFill: " + retCode, retCode);
    }

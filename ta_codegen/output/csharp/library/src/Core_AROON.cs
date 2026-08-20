@@ -79,15 +79,15 @@ public partial class Core
       return optInTimePeriod ;
 
    }
-   internal RetCode AROON( int startIdx,
-                           int endIdx,
-                           ReadOnlySpan<double> inHigh,
-                           ReadOnlySpan<double> inLow,
-                           int optInTimePeriod,
-                           out int outBegIdx,
-                           out int outNBElement,
-                           Span<double> outAroonDown,
-                           Span<double> outAroonUp )
+   internal RetCode AROON_Body( int startIdx,
+                                int endIdx,
+                                ReadOnlySpan<double> inHigh,
+                                ReadOnlySpan<double> inLow,
+                                int optInTimePeriod,
+                                out int outBegIdx,
+                                out int outNBElement,
+                                Span<double> outAroonDown,
+                                Span<double> outAroonUp )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -199,15 +199,15 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode AROON( int startIdx,
-                           int endIdx,
-                           ReadOnlySpan<float> inHigh,
-                           ReadOnlySpan<float> inLow,
-                           int optInTimePeriod,
-                           out int outBegIdx,
-                           out int outNBElement,
-                           Span<double> outAroonDown,
-                           Span<double> outAroonUp )
+   internal RetCode AROON_Body( int startIdx,
+                                int endIdx,
+                                ReadOnlySpan<float> inHigh,
+                                ReadOnlySpan<float> inLow,
+                                int optInTimePeriod,
+                                out int outBegIdx,
+                                out int outNBElement,
+                                Span<double> outAroonDown,
+                                Span<double> outAroonUp )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -355,11 +355,29 @@ public partial class Core
       RequireLength("AROON", "inLow", inLow.Length, guardInLen);
       RequireLength("AROON", "outAroonDown", outAroonDown.Length, guardOutLen);
       RequireLength("AROON", "outAroonUp", outAroonUp.Length, guardOutLen);
-      RetCode retCode = AROON(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outAroonDown, outAroonUp);
+      RetCode retCode = AROON_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outAroonDown, outAroonUp);
       if( retCode != RetCode.Success ) {
          throw Failure("AROON", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode AROON( int startIdx,
+                           int endIdx,
+                           ReadOnlySpan<double> inHigh,
+                           ReadOnlySpan<double> inLow,
+                           int optInTimePeriod,
+                           out int outBegIdx,
+                           out int outNBElement,
+                           Span<double> outAroonDown,
+                           Span<double> outAroonUp )
+   {
+      try {
+         return AROON_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outAroonDown, outAroonUp);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Aroon reports how recently the highest high and lowest low occurred within
@@ -428,11 +446,29 @@ public partial class Core
       RequireLength("AROON", "inLow", inLow.Length, guardInLen);
       RequireLength("AROON", "outAroonDown", outAroonDown.Length, guardOutLen);
       RequireLength("AROON", "outAroonUp", outAroonUp.Length, guardOutLen);
-      RetCode retCode = AROON(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outAroonDown, outAroonUp);
+      RetCode retCode = AROON_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outAroonDown, outAroonUp);
       if( retCode != RetCode.Success ) {
          throw Failure("AROON", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode AROON( int startIdx,
+                           int endIdx,
+                           ReadOnlySpan<float> inHigh,
+                           ReadOnlySpan<float> inLow,
+                           int optInTimePeriod,
+                           out int outBegIdx,
+                           out int outNBElement,
+                           Span<double> outAroonDown,
+                           Span<double> outAroonUp )
+   {
+      try {
+         return AROON_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outAroonDown, outAroonUp);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -709,7 +745,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Proceed with the calculation for the requested range.
        * Note that this algorithm allows the input and
@@ -868,8 +904,8 @@ public partial class Core
    /// span cannot be null.</exception>
    public AROON_Stream AROON_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       return AROON_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
 
@@ -902,8 +938,8 @@ public partial class Core
    /// output.</exception>
    public AROON_Stream AROON_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, Span<double> outAroonDown, Span<double> outAroonUp )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       AROON_Stream sp = new AROON_Stream(this);
       RetCode retCode = AROON_OpenAndFillBody(sp, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outAroonDown, outAroonUp);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

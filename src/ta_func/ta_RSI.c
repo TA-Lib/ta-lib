@@ -584,7 +584,7 @@ static TA_RetCode TA_RSI_OpenCore( struct TA_RSI_Stream **stream, const double i
 
    if( optInTimePeriod == 1 )
    {
-      if( historyLen < TA_RSI_Lookback( optInTimePeriod ) + 1 ) return TA_BAD_PARAM;
+      if( historyLen < TA_RSI_Lookback( optInTimePeriod ) + 1 ) return TA_INSUFFICIENT_HISTORY;
       sp = (struct TA_RSI_Stream *)TA_Malloc( sizeof(*sp) );
       if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
@@ -646,7 +646,7 @@ static TA_RetCode TA_RSI_OpenCore( struct TA_RSI_Stream **stream, const double i
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx )
       {
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       outIdx = 0;
       /* Index into the output. */
@@ -711,7 +711,7 @@ static TA_RetCode TA_RSI_OpenCore( struct TA_RSI_Stream **stream, const double i
          {
             *outBegIdx= startIdx;
             *outNBElement= outIdx;
-            return TA_BAD_PARAM;
+            return TA_INSUFFICIENT_HISTORY;
          }
          /* Start over for the next price bar. */
          today = today - (int)optInTimePeriod;

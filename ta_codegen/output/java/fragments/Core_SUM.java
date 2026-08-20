@@ -33,13 +33,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode SUM_Internal( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode SUM_Body( int startIdx,
+                     int endIdx,
+                     double inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       double periodTotal = 0;
       double tempReal = 0;
@@ -100,13 +100,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode SUM_Internal( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode SUM_Body( int startIdx,
+                     int endIdx,
+                     float inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       double periodTotal = 0;
       double tempReal = 0;
@@ -196,6 +196,7 @@
                         int optInTimePeriod,
                         double outReal[] )
    {
+      requireIndexRange("SUM", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, SUM_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -203,11 +204,30 @@
       requireLength("SUM", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SUM_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SUM_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("SUM", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode SUM_Internal( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      try {
+         return SUM_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Rolling sum of the input over a fixed period. Each output is the sum of
@@ -255,6 +275,7 @@
                         int optInTimePeriod,
                         double outReal[] )
    {
+      requireIndexRange("SUM", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, SUM_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -262,11 +283,30 @@
       requireLength("SUM", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SUM_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SUM_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("SUM", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode SUM_Internal( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      try {
+         return SUM_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -348,7 +388,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("SUM update: BadParam");
+            throw new TaLibArgumentException("SUM update: BadParam", RetCode.BadParam);
          core.SUM_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -362,7 +402,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("SUM peek: BadParam");
+            throw new TaLibArgumentException("SUM peek: BadParam", RetCode.BadParam);
          SUM_Stream scratch = new SUM_Stream(this);
          core.SUM_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -435,7 +475,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the MA calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -504,13 +544,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("SUM openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("SUM openAndFill: internal error");
+         throw new TaLibStateException("SUM openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("SUM openAndFill: " + retCode);
+      throw new TaLibArgumentException("SUM openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind SUM_Open (composition seam). */
    SUM_Stream SUM_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -520,13 +560,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("SUM open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("SUM open: internal error");
+         throw new TaLibStateException("SUM open: internal error", retCode);
       }
-      throw new IllegalArgumentException("SUM open: " + retCode);
+      throw new TaLibArgumentException("SUM open: " + retCode, retCode);
    }
    /**
     * Open a live SUM stream over the warm-up history; the handle's
@@ -561,11 +601,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("SUM openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("SUM openAndFill: internal error");
+         throw new TaLibStateException("SUM openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("SUM openAndFill: " + retCode);
+      throw new TaLibArgumentException("SUM openAndFill: " + retCode, retCode);
    }

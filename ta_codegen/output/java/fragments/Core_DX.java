@@ -44,15 +44,15 @@
       }
 
    }
-   RetCode DX_Internal( int startIdx,
-                        int endIdx,
-                        double inHigh[],
-                        double inLow[],
-                        double inClose[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode DX_Body( int startIdx,
+                    int endIdx,
+                    double inHigh[],
+                    double inLow[],
+                    double inClose[],
+                    int optInTimePeriod,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -350,15 +350,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode DX_Internal( int startIdx,
-                        int endIdx,
-                        float inHigh[],
-                        float inLow[],
-                        float inClose[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode DX_Body( int startIdx,
+                    int endIdx,
+                    float inHigh[],
+                    float inLow[],
+                    float inClose[],
+                    int optInTimePeriod,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -589,6 +589,7 @@
                        int optInTimePeriod,
                        double outReal[] )
    {
+      requireIndexRange("DX", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, DX_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -598,11 +599,32 @@
       requireLength("DX", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = DX_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = DX_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("DX", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode DX_Internal( int startIdx,
+                        int endIdx,
+                        double inHigh[],
+                        double inLow[],
+                        double inClose[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
+   {
+      try {
+         return DX_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Wilder's Directional Movement Index: the normalized spread between +DI and
@@ -667,6 +689,7 @@
                        int optInTimePeriod,
                        double outReal[] )
    {
+      requireIndexRange("DX", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, DX_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -676,11 +699,32 @@
       requireLength("DX", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = DX_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = DX_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("DX", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode DX_Internal( int startIdx,
+                        int endIdx,
+                        float inHigh[],
+                        float inLow[],
+                        float inClose[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
+   {
+      try {
+         return DX_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -779,7 +823,7 @@
        */
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("DX update: BadParam");
+            throw new TaLibArgumentException("DX update: BadParam", RetCode.BadParam);
          core.DX_StreamStep(this, inHigh, inLow, inClose);
          return this.cur_outReal;
       }
@@ -793,7 +837,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("DX peek: BadParam");
+            throw new TaLibArgumentException("DX peek: BadParam", RetCode.BadParam);
          DX_Stream scratch = new DX_Stream(this);
          core.DX_StreamStep(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
@@ -1010,7 +1054,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Indicate where the next output should be put
        * in the outReal.
@@ -1208,13 +1252,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("DX openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("DX openAndFill: internal error");
+         throw new TaLibStateException("DX openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("DX openAndFill: " + retCode);
+      throw new TaLibArgumentException("DX openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind DX_Open (composition seam). */
    DX_Stream DX_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -1224,13 +1268,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("DX open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("DX open: internal error");
+         throw new TaLibStateException("DX open: internal error", retCode);
       }
-      throw new IllegalArgumentException("DX open: " + retCode);
+      throw new TaLibArgumentException("DX open: " + retCode, retCode);
    }
    /**
     * Open a live DX stream over the warm-up history; the handle's
@@ -1265,11 +1309,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("DX openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("DX openAndFill: internal error");
+         throw new TaLibStateException("DX openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("DX openAndFill: " + retCode);
+      throw new TaLibArgumentException("DX openAndFill: " + retCode, retCode);
    }

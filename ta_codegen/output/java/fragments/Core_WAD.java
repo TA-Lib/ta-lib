@@ -31,14 +31,14 @@
       return 0 ;
 
    }
-   RetCode WAD_Internal( int startIdx,
-                         int endIdx,
-                         double inHigh[],
-                         double inLow[],
-                         double inClose[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode WAD_Body( int startIdx,
+                     int endIdx,
+                     double inHigh[],
+                     double inLow[],
+                     double inClose[],
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       double sum = 0;
       double prevClose = 0;
@@ -112,14 +112,14 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode WAD_Internal( int startIdx,
-                         int endIdx,
-                         float inHigh[],
-                         float inLow[],
-                         float inClose[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode WAD_Body( int startIdx,
+                     int endIdx,
+                     float inHigh[],
+                     float inLow[],
+                     float inClose[],
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       double sum = 0;
       double prevClose = 0;
@@ -217,6 +217,7 @@
                         double inClose[],
                         double outReal[] )
    {
+      requireIndexRange("WAD", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, WAD_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -226,11 +227,31 @@
       requireLength("WAD", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = WAD_Internal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      RetCode retCode = WAD_Body(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("WAD", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode WAD_Internal( int startIdx,
+                         int endIdx,
+                         double inHigh[],
+                         double inLow[],
+                         double inClose[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      try {
+         return WAD_Body(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Williams' Accumulation/Distribution: a cumulative line that measures each
@@ -293,6 +314,7 @@
                         float inClose[],
                         double outReal[] )
    {
+      requireIndexRange("WAD", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, WAD_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -302,11 +324,31 @@
       requireLength("WAD", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = WAD_Internal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      RetCode retCode = WAD_Body(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("WAD", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode WAD_Internal( int startIdx,
+                         int endIdx,
+                         float inHigh[],
+                         float inLow[],
+                         float inClose[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      try {
+         return WAD_Body(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -375,7 +417,7 @@
        */
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("WAD update: BadParam");
+            throw new TaLibArgumentException("WAD update: BadParam", RetCode.BadParam);
          core.WAD_StreamStep(this, inHigh, inLow, inClose);
          return this.cur_outReal;
       }
@@ -389,7 +431,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("WAD peek: BadParam");
+            throw new TaLibArgumentException("WAD peek: BadParam", RetCode.BadParam);
          WAD_Stream scratch = new WAD_Stream(this);
          core.WAD_StreamStep(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
@@ -539,13 +581,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("WAD openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("WAD openAndFill: internal error");
+         throw new TaLibStateException("WAD openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("WAD openAndFill: " + retCode);
+      throw new TaLibArgumentException("WAD openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind WAD_Open (composition seam). */
    WAD_Stream WAD_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -555,13 +597,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("WAD open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("WAD open: internal error");
+         throw new TaLibStateException("WAD open: internal error", retCode);
       }
-      throw new IllegalArgumentException("WAD open: " + retCode);
+      throw new TaLibArgumentException("WAD open: " + retCode, retCode);
    }
    /**
     * Open a live WAD stream over the warm-up history; the handle's
@@ -596,11 +638,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("WAD openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("WAD openAndFill: internal error");
+         throw new TaLibStateException("WAD openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("WAD openAndFill: " + retCode);
+      throw new TaLibArgumentException("WAD openAndFill: " + retCode, retCode);
    }

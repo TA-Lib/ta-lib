@@ -48,15 +48,15 @@
       return SMA_Lookback(Math.max(optInFastPeriod, optInSlowPeriod)) ;
 
    }
-   RetCode AO_Internal( int startIdx,
-                        int endIdx,
-                        double inHigh[],
-                        double inLow[],
-                        int optInFastPeriod,
-                        int optInSlowPeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode AO_Body( int startIdx,
+                    int endIdx,
+                    double inHigh[],
+                    double inLow[],
+                    int optInFastPeriod,
+                    int optInSlowPeriod,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       double sumFast = 0;
       double sumSlow = 0;
@@ -181,15 +181,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode AO_Internal( int startIdx,
-                        int endIdx,
-                        float inHigh[],
-                        float inLow[],
-                        int optInFastPeriod,
-                        int optInSlowPeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode AO_Body( int startIdx,
+                    int endIdx,
+                    float inHigh[],
+                    float inLow[],
+                    int optInFastPeriod,
+                    int optInSlowPeriod,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       double sumFast = 0;
       double sumSlow = 0;
@@ -325,6 +325,7 @@
                        int optInSlowPeriod,
                        double outReal[] )
    {
+      requireIndexRange("AO", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, AO_Lookback(optInFastPeriod, optInSlowPeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -333,11 +334,32 @@
       requireLength("AO", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AO_Internal(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = AO_Body(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("AO", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode AO_Internal( int startIdx,
+                        int endIdx,
+                        double inHigh[],
+                        double inLow[],
+                        int optInFastPeriod,
+                        int optInSlowPeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
+   {
+      try {
+         return AO_Body(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Bill Williams' Awesome Oscillator (*New Trading Dimensions*, 1998): market
@@ -409,6 +431,7 @@
                        int optInSlowPeriod,
                        double outReal[] )
    {
+      requireIndexRange("AO", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, AO_Lookback(optInFastPeriod, optInSlowPeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -417,11 +440,32 @@
       requireLength("AO", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AO_Internal(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = AO_Body(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("AO", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode AO_Internal( int startIdx,
+                        int endIdx,
+                        float inHigh[],
+                        float inLow[],
+                        int optInFastPeriod,
+                        int optInSlowPeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
+   {
+      try {
+         return AO_Body(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -525,7 +569,7 @@
        */
       public double update( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new IllegalArgumentException("AO update: BadParam");
+            throw new TaLibArgumentException("AO update: BadParam", RetCode.BadParam);
          core.AO_StreamStep(this, inHigh, inLow);
          return this.cur_outReal;
       }
@@ -541,7 +585,7 @@
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new IllegalArgumentException("AO peek: BadParam");
+            throw new TaLibArgumentException("AO peek: BadParam", RetCode.BadParam);
          AO_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new AO_Stream(this);
@@ -676,7 +720,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       sumFast = 0.0;
       sumSlow = 0.0;
@@ -790,13 +834,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("AO openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("AO openAndFill: internal error");
+         throw new TaLibStateException("AO openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("AO openAndFill: " + retCode);
+      throw new TaLibArgumentException("AO openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind AO_Open (composition seam). */
    AO_Stream AO_OpenInternal( double inHigh[], double inLow[], int startIdx, int optInFastPeriod, int optInSlowPeriod )
@@ -806,13 +850,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("AO open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("AO open: internal error");
+         throw new TaLibStateException("AO open: internal error", retCode);
       }
-      throw new IllegalArgumentException("AO open: " + retCode);
+      throw new TaLibArgumentException("AO open: " + retCode, retCode);
    }
    /**
     * Open a live AO stream over the warm-up history; the handle's
@@ -847,11 +891,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("AO openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("AO openAndFill: internal error");
+         throw new TaLibStateException("AO openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("AO openAndFill: " + retCode);
+      throw new TaLibArgumentException("AO openAndFill: " + retCode, retCode);
    }

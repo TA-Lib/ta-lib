@@ -40,13 +40,13 @@
       return EMA_Lookback(optInTimePeriod) * 2 ;
 
    }
-   RetCode DEMA_Internal( int startIdx,
-                          int endIdx,
-                          double inReal[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode DEMA_Body( int startIdx,
+                      int endIdx,
+                      double inReal[],
+                      int optInTimePeriod,
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       double prevEMA1 = 0;
       double prevEMA2 = 0;
@@ -195,13 +195,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode DEMA_Internal( int startIdx,
-                          int endIdx,
-                          float inReal[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode DEMA_Body( int startIdx,
+                      int endIdx,
+                      float inReal[],
+                      int optInTimePeriod,
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       double prevEMA1 = 0;
       double prevEMA2 = 0;
@@ -326,6 +326,7 @@
                          int optInTimePeriod,
                          double outReal[] )
    {
+      requireIndexRange("DEMA", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, DEMA_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -333,11 +334,30 @@
       requireLength("DEMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = DEMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = DEMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("DEMA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode DEMA_Internal( int startIdx,
+                          int endIdx,
+                          double inReal[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+   {
+      try {
+         return DEMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Double Exponential Moving Average: an EMA combined with an EMA-of-EMA to
@@ -391,6 +411,7 @@
                          int optInTimePeriod,
                          double outReal[] )
    {
+      requireIndexRange("DEMA", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, DEMA_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -398,11 +419,30 @@
       requireLength("DEMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = DEMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = DEMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("DEMA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode DEMA_Internal( int startIdx,
+                          int endIdx,
+                          float inReal[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+   {
+      try {
+         return DEMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -474,7 +514,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("DEMA update: BadParam");
+            throw new TaLibArgumentException("DEMA update: BadParam", RetCode.BadParam);
          core.DEMA_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -488,7 +528,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("DEMA peek: BadParam");
+            throw new TaLibArgumentException("DEMA peek: BadParam", RetCode.BadParam);
          DEMA_Stream scratch = new DEMA_Stream(this);
          core.DEMA_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -547,7 +587,7 @@
       }
       if( optInTimePeriod == 1 ) {
          if( historyLen < DEMA_Lookback(optInTimePeriod) + 1 ) {
-            return RetCode.OutOfRangeEndIndex;
+            return RetCode.InsufficientHistory;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.prevEMA1 = 0.0;
@@ -600,7 +640,7 @@
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Both EMA are computed in a single lockstep pass: each new
        * EMA1 value is immediately fed into EMA2. No temporary
@@ -705,13 +745,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("DEMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("DEMA openAndFill: internal error");
+         throw new TaLibStateException("DEMA openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("DEMA openAndFill: " + retCode);
+      throw new TaLibArgumentException("DEMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind DEMA_Open (composition seam). */
    DEMA_Stream DEMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -721,13 +761,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("DEMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("DEMA open: internal error");
+         throw new TaLibStateException("DEMA open: internal error", retCode);
       }
-      throw new IllegalArgumentException("DEMA open: " + retCode);
+      throw new TaLibArgumentException("DEMA open: " + retCode, retCode);
    }
    /**
     * Open a live DEMA stream over the warm-up history; the handle's
@@ -762,11 +802,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("DEMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("DEMA openAndFill: internal error");
+         throw new TaLibStateException("DEMA openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("DEMA openAndFill: " + retCode);
+      throw new TaLibArgumentException("DEMA openAndFill: " + retCode, retCode);
    }

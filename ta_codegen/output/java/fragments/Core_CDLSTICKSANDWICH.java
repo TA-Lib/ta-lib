@@ -29,15 +29,15 @@
       return Equal_avgPeriod + 2 ;
 
    }
-   RetCode CDLSTICKSANDWICH_Internal( int startIdx,
-                                      int endIdx,
-                                      double inOpen[],
-                                      double inHigh[],
-                                      double inLow[],
-                                      double inClose[],
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      int outInteger[] )
+   RetCode CDLSTICKSANDWICH_Body( int startIdx,
+                                  int endIdx,
+                                  double inOpen[],
+                                  double inHigh[],
+                                  double inLow[],
+                                  double inClose[],
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  int outInteger[] )
    {
       double EqualPeriodTotal = 0;
       int i = 0;
@@ -114,15 +114,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode CDLSTICKSANDWICH_Internal( int startIdx,
-                                      int endIdx,
-                                      float inOpen[],
-                                      float inHigh[],
-                                      float inLow[],
-                                      float inClose[],
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      int outInteger[] )
+   RetCode CDLSTICKSANDWICH_Body( int startIdx,
+                                  int endIdx,
+                                  float inOpen[],
+                                  float inHigh[],
+                                  float inLow[],
+                                  float inClose[],
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  int outInteger[] )
    {
       double EqualPeriodTotal = 0;
       int i = 0;
@@ -221,6 +221,7 @@
                                      double inClose[],
                                      int outInteger[] )
    {
+      requireIndexRange("CDLSTICKSANDWICH", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CDLSTICKSANDWICH_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -231,11 +232,32 @@
       requireLength("CDLSTICKSANDWICH", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLSTICKSANDWICH_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLSTICKSANDWICH_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLSTICKSANDWICH", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode CDLSTICKSANDWICH_Internal( int startIdx,
+                                      int endIdx,
+                                      double inOpen[],
+                                      double inHigh[],
+                                      double inLow[],
+                                      double inClose[],
+                                      MInteger outBegIdx,
+                                      MInteger outNBElement,
+                                      int outInteger[] )
+   {
+      try {
+         return CDLSTICKSANDWICH_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * A three-candle bullish reversal pattern: two black candles (1st and 3rd)
@@ -291,6 +313,7 @@
                                      float inClose[],
                                      int outInteger[] )
    {
+      requireIndexRange("CDLSTICKSANDWICH", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CDLSTICKSANDWICH_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -301,11 +324,32 @@
       requireLength("CDLSTICKSANDWICH", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLSTICKSANDWICH_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLSTICKSANDWICH_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLSTICKSANDWICH", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode CDLSTICKSANDWICH_Internal( int startIdx,
+                                      int endIdx,
+                                      float inOpen[],
+                                      float inHigh[],
+                                      float inLow[],
+                                      float inClose[],
+                                      MInteger outBegIdx,
+                                      MInteger outNBElement,
+                                      int outInteger[] )
+   {
+      try {
+         return CDLSTICKSANDWICH_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -417,7 +461,7 @@
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("CDLSTICKSANDWICH update: BadParam");
+            throw new TaLibArgumentException("CDLSTICKSANDWICH update: BadParam", RetCode.BadParam);
          core.CDLSTICKSANDWICH_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outInteger;
       }
@@ -431,7 +475,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("CDLSTICKSANDWICH peek: BadParam");
+            throw new TaLibArgumentException("CDLSTICKSANDWICH peek: BadParam", RetCode.BadParam);
          CDLSTICKSANDWICH_Stream scratch = new CDLSTICKSANDWICH_Stream(this);
          core.CDLSTICKSANDWICH_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
@@ -520,7 +564,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -621,13 +665,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLSTICKSANDWICH openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLSTICKSANDWICH openAndFill: internal error");
+         throw new TaLibStateException("CDLSTICKSANDWICH openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLSTICKSANDWICH openAndFill: " + retCode);
+      throw new TaLibArgumentException("CDLSTICKSANDWICH openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind CDLSTICKSANDWICH_Open (composition seam). */
    CDLSTICKSANDWICH_Stream CDLSTICKSANDWICH_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -637,13 +681,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLSTICKSANDWICH open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLSTICKSANDWICH open: internal error");
+         throw new TaLibStateException("CDLSTICKSANDWICH open: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLSTICKSANDWICH open: " + retCode);
+      throw new TaLibArgumentException("CDLSTICKSANDWICH open: " + retCode, retCode);
    }
    /**
     * Open a live CDLSTICKSANDWICH stream over the warm-up history; the handle's
@@ -678,11 +722,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLSTICKSANDWICH openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLSTICKSANDWICH openAndFill: internal error");
+         throw new TaLibStateException("CDLSTICKSANDWICH openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLSTICKSANDWICH openAndFill: " + retCode);
+      throw new TaLibArgumentException("CDLSTICKSANDWICH openAndFill: " + retCode, retCode);
    }

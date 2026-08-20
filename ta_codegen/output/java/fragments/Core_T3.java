@@ -55,14 +55,14 @@
       return 6 * (optInTimePeriod - 1) + this.unstablePeriod[FuncUnstId.T3.ordinal()] ;
 
    }
-   RetCode T3_Internal( int startIdx,
-                        int endIdx,
-                        double inReal[],
-                        int optInTimePeriod,
-                        double optInVFactor,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode T3_Body( int startIdx,
+                    int endIdx,
+                    double inReal[],
+                    int optInTimePeriod,
+                    double optInVFactor,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       int outIdx = 0;
       int lookbackTotal = 0;
@@ -228,14 +228,14 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode T3_Internal( int startIdx,
-                        int endIdx,
-                        float inReal[],
-                        int optInTimePeriod,
-                        double optInVFactor,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode T3_Body( int startIdx,
+                    int endIdx,
+                    float inReal[],
+                    int optInTimePeriod,
+                    double optInVFactor,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
    {
       int outIdx = 0;
       int lookbackTotal = 0;
@@ -422,6 +422,7 @@
                        double optInVFactor,
                        double outReal[] )
    {
+      requireIndexRange("T3", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, T3_Lookback(optInTimePeriod, optInVFactor));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -429,11 +430,31 @@
       requireLength("T3", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = T3_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal);
+      RetCode retCode = T3_Body(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("T3", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode T3_Internal( int startIdx,
+                        int endIdx,
+                        double inReal[],
+                        int optInTimePeriod,
+                        double optInVFactor,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
+   {
+      try {
+         return T3_Body(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Tillson's T3: a low-lag moving average built from six chained EMAs,
@@ -495,6 +516,7 @@
                        double optInVFactor,
                        double outReal[] )
    {
+      requireIndexRange("T3", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, T3_Lookback(optInTimePeriod, optInVFactor));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -502,11 +524,31 @@
       requireLength("T3", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = T3_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal);
+      RetCode retCode = T3_Body(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("T3", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode T3_Internal( int startIdx,
+                        int endIdx,
+                        float inReal[],
+                        int optInTimePeriod,
+                        double optInVFactor,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
+   {
+      try {
+         return T3_Body(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -608,7 +650,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("T3 update: BadParam");
+            throw new TaLibArgumentException("T3 update: BadParam", RetCode.BadParam);
          core.T3_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -622,7 +664,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("T3 peek: BadParam");
+            throw new TaLibArgumentException("T3 peek: BadParam", RetCode.BadParam);
          T3_Stream scratch = new T3_Stream(this);
          core.T3_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -698,7 +740,7 @@
       }
       if( optInTimePeriod == 1 ) {
          if( historyLen < T3_Lookback(optInTimePeriod, optInVFactor) + 1 ) {
-            return RetCode.OutOfRangeEndIndex;
+            return RetCode.InsufficientHistory;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.optInVFactor = optInVFactor;
@@ -751,7 +793,7 @@
       if( startIdx > endIdx ) {
          outNBElement.value = 0;
          outBegIdx.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outBegIdx.value = startIdx;
       today = startIdx - lookbackTotal;
@@ -885,13 +927,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("T3 openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("T3 openAndFill: internal error");
+         throw new TaLibStateException("T3 openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("T3 openAndFill: " + retCode);
+      throw new TaLibArgumentException("T3 openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind T3_Open (composition seam). */
    T3_Stream T3_OpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInVFactor )
@@ -901,13 +943,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("T3 open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("T3 open: internal error");
+         throw new TaLibStateException("T3 open: internal error", retCode);
       }
-      throw new IllegalArgumentException("T3 open: " + retCode);
+      throw new TaLibArgumentException("T3 open: " + retCode, retCode);
    }
    /**
     * Open a live T3 stream over the warm-up history; the handle's
@@ -942,11 +984,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("T3 openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("T3 openAndFill: internal error");
+         throw new TaLibStateException("T3 openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("T3 openAndFill: " + retCode);
+      throw new TaLibArgumentException("T3 openAndFill: " + retCode, retCode);
    }

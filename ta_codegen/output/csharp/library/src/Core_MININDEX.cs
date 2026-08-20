@@ -76,13 +76,13 @@ public partial class Core
       return optInTimePeriod - 1 ;
 
    }
-   internal RetCode MININDEX( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<double> inReal,
-                              int optInTimePeriod,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<int> outInteger )
+   internal RetCode MININDEX_Body( int startIdx,
+                                   int endIdx,
+                                   ReadOnlySpan<double> inReal,
+                                   int optInTimePeriod,
+                                   out int outBegIdx,
+                                   out int outNBElement,
+                                   Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -159,13 +159,13 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode MININDEX( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<float> inReal,
-                              int optInTimePeriod,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<int> outInteger )
+   internal RetCode MININDEX_Body( int startIdx,
+                                   int endIdx,
+                                   ReadOnlySpan<float> inReal,
+                                   int optInTimePeriod,
+                                   out int outBegIdx,
+                                   out int outNBElement,
+                                   Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -282,11 +282,27 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("MININDEX", "inReal", inReal.Length, guardInLen);
       RequireLength("MININDEX", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = MININDEX(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = MININDEX_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("MININDEX", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode MININDEX( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<double> inReal,
+                              int optInTimePeriod,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<int> outInteger )
+   {
+      try {
+         return MININDEX_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outInteger);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Returns the absolute index of the lowest value within a rolling window of
@@ -349,11 +365,27 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("MININDEX", "inReal", inReal.Length, guardInLen);
       RequireLength("MININDEX", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = MININDEX(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = MININDEX_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("MININDEX", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode MININDEX( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<float> inReal,
+                              int optInTimePeriod,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<int> outInteger )
+   {
+      try {
+         return MININDEX_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outInteger);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -564,7 +596,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Proceed with the calculation for the requested range.
        * (The integer output can never share the real input's buffer —
@@ -686,7 +718,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public MININDEX_Stream MININDEX_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return MININDEX_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -716,7 +748,7 @@ public partial class Core
    /// output.</exception>
    public MININDEX_Stream MININDEX_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<int> outInteger )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       MININDEX_Stream sp = new MININDEX_Stream(this);
       RetCode retCode = MININDEX_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

@@ -34,15 +34,15 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode WILLR_Internal( int startIdx,
-                           int endIdx,
-                           double inHigh[],
-                           double inLow[],
-                           double inClose[],
-                           int optInTimePeriod,
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outReal[] )
+   RetCode WILLR_Body( int startIdx,
+                       int endIdx,
+                       double inHigh[],
+                       double inLow[],
+                       double inClose[],
+                       int optInTimePeriod,
+                       MInteger outBegIdx,
+                       MInteger outNBElement,
+                       double outReal[] )
    {
       double[] sufHighest;
       int sufHighest_Idx = 0;
@@ -236,15 +236,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode WILLR_Internal( int startIdx,
-                           int endIdx,
-                           float inHigh[],
-                           float inLow[],
-                           float inClose[],
-                           int optInTimePeriod,
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outReal[] )
+   RetCode WILLR_Body( int startIdx,
+                       int endIdx,
+                       float inHigh[],
+                       float inLow[],
+                       float inClose[],
+                       int optInTimePeriod,
+                       MInteger outBegIdx,
+                       MInteger outNBElement,
+                       double outReal[] )
    {
       double[] sufHighest;
       int sufHighest_Idx = 0;
@@ -445,6 +445,7 @@
                           int optInTimePeriod,
                           double outReal[] )
    {
+      requireIndexRange("WILLR", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, WILLR_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -454,11 +455,32 @@
       requireLength("WILLR", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = WILLR_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = WILLR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("WILLR", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode WILLR_Internal( int startIdx,
+                           int endIdx,
+                           double inHigh[],
+                           double inLow[],
+                           double inClose[],
+                           int optInTimePeriod,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
+   {
+      try {
+         return WILLR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Williams' %R momentum oscillator over a rolling period, bounded in [-100,
@@ -514,6 +536,7 @@
                           int optInTimePeriod,
                           double outReal[] )
    {
+      requireIndexRange("WILLR", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, WILLR_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -523,11 +546,32 @@
       requireLength("WILLR", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = WILLR_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = WILLR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("WILLR", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode WILLR_Internal( int startIdx,
+                           int endIdx,
+                           float inHigh[],
+                           float inLow[],
+                           float inClose[],
+                           int optInTimePeriod,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
+   {
+      try {
+         return WILLR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -643,7 +687,7 @@
        */
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("WILLR update: BadParam");
+            throw new TaLibArgumentException("WILLR update: BadParam", RetCode.BadParam);
          core.WILLR_StreamStep(this, inHigh, inLow, inClose);
          return this.cur_outReal;
       }
@@ -659,7 +703,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("WILLR peek: BadParam");
+            throw new TaLibArgumentException("WILLR peek: BadParam", RetCode.BadParam);
          WILLR_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new WILLR_Stream(this);
@@ -789,7 +833,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Initialize 'diff', just to avoid warning. */
       diff = 0.0;
@@ -933,13 +977,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("WILLR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("WILLR openAndFill: internal error");
+         throw new TaLibStateException("WILLR openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("WILLR openAndFill: " + retCode);
+      throw new TaLibArgumentException("WILLR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind WILLR_Open (composition seam). */
    WILLR_Stream WILLR_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -949,13 +993,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("WILLR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("WILLR open: internal error");
+         throw new TaLibStateException("WILLR open: internal error", retCode);
       }
-      throw new IllegalArgumentException("WILLR open: " + retCode);
+      throw new TaLibArgumentException("WILLR open: " + retCode, retCode);
    }
    /**
     * Open a live WILLR stream over the warm-up history; the handle's
@@ -990,11 +1034,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("WILLR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("WILLR openAndFill: internal error");
+         throw new TaLibStateException("WILLR openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("WILLR openAndFill: " + retCode);
+      throw new TaLibArgumentException("WILLR openAndFill: " + retCode, retCode);
    }

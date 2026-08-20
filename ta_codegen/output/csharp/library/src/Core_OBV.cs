@@ -74,13 +74,13 @@ public partial class Core
       return 0 ;
 
    }
-   internal RetCode OBV( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inReal,
-                         ReadOnlySpan<double> inVolume,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode OBV_Body( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<double> inReal,
+                              ReadOnlySpan<double> inVolume,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -115,13 +115,13 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode OBV( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inReal,
-                         ReadOnlySpan<float> inVolume,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode OBV_Body( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<float> inReal,
+                              ReadOnlySpan<float> inVolume,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -205,11 +205,27 @@ public partial class Core
       RequireLength("OBV", "inReal", inReal.Length, guardInLen);
       RequireLength("OBV", "inVolume", inVolume.Length, guardInLen);
       RequireLength("OBV", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = OBV(startIdx, endIdx, inReal, inVolume, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = OBV_Body(startIdx, endIdx, inReal, inVolume, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("OBV", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode OBV( int startIdx,
+                         int endIdx,
+                         ReadOnlySpan<double> inReal,
+                         ReadOnlySpan<double> inVolume,
+                         out int outBegIdx,
+                         out int outNBElement,
+                         Span<double> outReal )
+   {
+      try {
+         return OBV_Body(startIdx, endIdx, inReal, inVolume, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// On Balance Volume: a running cumulative total of volume, added on up-price
@@ -269,11 +285,27 @@ public partial class Core
       RequireLength("OBV", "inReal", inReal.Length, guardInLen);
       RequireLength("OBV", "inVolume", inVolume.Length, guardInLen);
       RequireLength("OBV", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = OBV(startIdx, endIdx, inReal, inVolume, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = OBV_Body(startIdx, endIdx, inReal, inVolume, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("OBV", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode OBV( int startIdx,
+                         int endIdx,
+                         ReadOnlySpan<float> inReal,
+                         ReadOnlySpan<float> inVolume,
+                         out int outBegIdx,
+                         out int outNBElement,
+                         Span<double> outReal )
+   {
+      try {
+         return OBV_Body(startIdx, endIdx, inReal, inVolume, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -499,8 +531,8 @@ public partial class Core
    /// span cannot be null.</exception>
    public OBV_Stream OBV_Open( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
+      if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
       return OBV_OpenInternal(inReal, inVolume, 0);
    }
 
@@ -529,8 +561,8 @@ public partial class Core
    /// output.</exception>
    public OBV_Stream OBV_OpenAndFill( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
-      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
+      if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
       OBV_Stream sp = new OBV_Stream(this);
       RetCode retCode = OBV_OpenAndFillBody(sp, inReal, inVolume, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

@@ -35,14 +35,14 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode VWMA_Internal( int startIdx,
-                          int endIdx,
-                          double inReal[],
-                          double inVolume[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode VWMA_Body( int startIdx,
+                      int endIdx,
+                      double inReal[],
+                      double inVolume[],
+                      int optInTimePeriod,
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       double sumPV = 0;
       double sumV = 0;
@@ -145,14 +145,14 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode VWMA_Internal( int startIdx,
-                          int endIdx,
-                          float inReal[],
-                          float inVolume[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode VWMA_Body( int startIdx,
+                      int endIdx,
+                      float inReal[],
+                      float inVolume[],
+                      int optInTimePeriod,
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       double sumPV = 0;
       double sumV = 0;
@@ -285,6 +285,7 @@
                          int optInTimePeriod,
                          double outReal[] )
    {
+      requireIndexRange("VWMA", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, VWMA_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -293,11 +294,31 @@
       requireLength("VWMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = VWMA_Internal(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = VWMA_Body(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("VWMA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode VWMA_Internal( int startIdx,
+                          int endIdx,
+                          double inReal[],
+                          double inVolume[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+   {
+      try {
+         return VWMA_Body(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Volume Weighted Moving Average: the mean price over a trailing window of
@@ -363,6 +384,7 @@
                          int optInTimePeriod,
                          double outReal[] )
    {
+      requireIndexRange("VWMA", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, VWMA_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -371,11 +393,31 @@
       requireLength("VWMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = VWMA_Internal(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = VWMA_Body(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("VWMA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode VWMA_Internal( int startIdx,
+                          int endIdx,
+                          float inReal[],
+                          float inVolume[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+   {
+      try {
+         return VWMA_Body(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -473,7 +515,7 @@
        */
       public double update( double inReal, double inVolume ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
-            throw new IllegalArgumentException("VWMA update: BadParam");
+            throw new TaLibArgumentException("VWMA update: BadParam", RetCode.BadParam);
          core.VWMA_StreamStep(this, inReal, inVolume);
          return this.cur_outReal;
       }
@@ -489,7 +531,7 @@
        */
       public double peek( double inReal, double inVolume ) {
          if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
-            throw new IllegalArgumentException("VWMA peek: BadParam");
+            throw new TaLibArgumentException("VWMA peek: BadParam", RetCode.BadParam);
          VWMA_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new VWMA_Stream(this);
@@ -578,7 +620,7 @@
       }
       if( optInTimePeriod == 1 ) {
          if( historyLen < VWMA_Lookback(optInTimePeriod) + 1 ) {
-            return RetCode.OutOfRangeEndIndex;
+            return RetCode.InsufficientHistory;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.sumPV = 0.0;
@@ -616,7 +658,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Add-up the initial period, except for the last value.
        *
@@ -714,13 +756,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("VWMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("VWMA openAndFill: internal error");
+         throw new TaLibStateException("VWMA openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("VWMA openAndFill: " + retCode);
+      throw new TaLibArgumentException("VWMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind VWMA_Open (composition seam). */
    VWMA_Stream VWMA_OpenInternal( double inReal[], double inVolume[], int startIdx, int optInTimePeriod )
@@ -730,13 +772,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("VWMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("VWMA open: internal error");
+         throw new TaLibStateException("VWMA open: internal error", retCode);
       }
-      throw new IllegalArgumentException("VWMA open: " + retCode);
+      throw new TaLibArgumentException("VWMA open: " + retCode, retCode);
    }
    /**
     * Open a live VWMA stream over the warm-up history; the handle's
@@ -771,11 +813,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("VWMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("VWMA openAndFill: internal error");
+         throw new TaLibStateException("VWMA openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("VWMA openAndFill: " + retCode);
+      throw new TaLibArgumentException("VWMA openAndFill: " + retCode, retCode);
    }

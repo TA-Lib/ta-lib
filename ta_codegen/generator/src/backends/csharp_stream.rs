@@ -1514,12 +1514,12 @@ fn scale_by_stride(idx: Expr) -> Expr {
 }
 
 /// Map a batch return-code variable for the open body. Early SUCCESS returns
-/// (the no-data guard AND the Metastock seed-boundary return) become the in-band
-/// insufficient-history signal `OutOfRangeEndIndex`, which the wrapper types as
+/// (the no-data guard AND the Metastock seed-boundary return) become
+/// `InsufficientHistory`, which the wrapper types as
 /// `InsufficientHistoryException`. Everything else passes through.
 fn map_open_return(v: &str) -> String {
     match v {
-        "SUCCESS" | "TA_SUCCESS" => "OutOfRangeEndIndex".to_string(),
+        "SUCCESS" | "TA_SUCCESS" => "InsufficientHistory".to_string(),
         other => other.to_string(),
     }
 }
@@ -1892,7 +1892,7 @@ fn emit_identity_fast_path(
     let lb_call = format!("{base}_Lookback({})", lb_args.join(", "));
     let _ = writeln!(o, "      if( {cond} ) {{");
     let _ = writeln!(o, "         if( historyLen < {lb_call} + 1 ) {{");
-    let _ = writeln!(o, "            return RetCode.OutOfRangeEndIndex;");
+    let _ = writeln!(o, "            return RetCode.InsufficientHistory;");
     let _ = writeln!(o, "         }}");
     // Identity state: params captured, everything else deterministic defaults
     // (1-slot buffers keep the transition's cap-0 guard well-defined).
@@ -2394,7 +2394,7 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef) {
     for input in &in_fwd {
         let _ = writeln!(
             o,
-            "      if( {input}.IsEmpty ) throw new ArgumentException(\"{input} is empty\", nameof({input}));"
+            "      if( {input}.IsEmpty ) throw new TaLibArgumentException(\"{input} is empty\", nameof({input}), RetCode.BadParam);"
         );
     }
     let _ = writeln!(
@@ -2490,7 +2490,7 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef) {
     for input in &in_fwd {
         let _ = writeln!(
             o,
-            "      if( {input}.IsEmpty ) throw new ArgumentException(\"{input} is empty\", nameof({input}));"
+            "      if( {input}.IsEmpty ) throw new TaLibArgumentException(\"{input} is empty\", nameof({input}), RetCode.BadParam);"
         );
     }
     let _ = writeln!(o, "      {class} sp = new {class}(this);");
@@ -2899,14 +2899,14 @@ fn emit_dispatch(
         // the documented stable "<NAME> open:" contract requires the reject to
         // carry this function's name.
         let _ = writeln!(o, "      if( historyLen < {lb_call} + 1 ) {{");
-        let _ = writeln!(o, "         return RetCode.OutOfRangeEndIndex;");
+        let _ = writeln!(o, "         return RetCode.InsufficientHistory;");
         let _ = writeln!(o, "      }}");
         if let Some(idp) = &dp.identity {
             // The identity path FIRST (batch order — it applies to every arm).
             let cond = render_predicate(&idp.condition, &ctx, registry, helpers);
             let _ = writeln!(o, "      if( {cond} ) {{");
             let _ = writeln!(o, "         if( historyLen < {lb_call} + 1 ) {{");
-            let _ = writeln!(o, "            return RetCode.OutOfRangeEndIndex;");
+            let _ = writeln!(o, "            return RetCode.InsufficientHistory;");
             let _ = writeln!(o, "         }}");
             for p in &func.optional_inputs {
                 let _ = writeln!(o, "         sp.{0} = {0};", p.name);
@@ -2928,7 +2928,7 @@ fn emit_dispatch(
                         // batch( startIdx, .. ) begins at max(startIdx, lookback).
                         let _ = writeln!(o, "         if( startIdx > fillLb ) fillLb = startIdx;");
                         let _ = writeln!(o, "         if( historyLen < fillLb + 1 ) {{");
-                        let _ = writeln!(o, "            return RetCode.OutOfRangeEndIndex;");
+                        let _ = writeln!(o, "            return RetCode.InsufficientHistory;");
                         let _ = writeln!(o, "         }}");
                     }
                     let _ = writeln!(o, "         outBegIdx = fillLb;");
@@ -3154,7 +3154,7 @@ fn emit_period_bank(
     // carry the callee's message prefix, not this function's (stable-prefix
     // contract; the Fill body below has the equivalent check).
     let _ = writeln!(o, "      if( historyLen < {own_lb_call} + 1 ) {{");
-    let _ = writeln!(o, "         return RetCode.OutOfRangeEndIndex;");
+    let _ = writeln!(o, "         return RetCode.InsufficientHistory;");
     let _ = writeln!(o, "      }}");
     let _ = writeln!(
         o,
@@ -3199,7 +3199,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "      }}");
     let _ = writeln!(o, "      int lookbackTotal = {callee_base}_Lookback({lb_args});");
     let _ = writeln!(o, "      if( historyLen < lookbackTotal + 1 ) {{");
-    let _ = writeln!(o, "         return RetCode.OutOfRangeEndIndex;");
+    let _ = writeln!(o, "         return RetCode.InsufficientHistory;");
     let _ = writeln!(o, "      }}");
     let _ = writeln!(o, "      int nBank = {max} - {min} + 1;");
     let _ = writeln!(o, "      /* Seed each sub at the first output bar (lookbackTotal), NOT the last. */");
@@ -3651,7 +3651,7 @@ fn emit_composed_open(
             func.optional_inputs.iter().map(|p| p.name.clone()).collect();
         let lb_call = format!("{}_Lookback({})", base_name(func), lb_args.join(", "));
         let _ = writeln!(o, "      if( historyLen < {lb_call} + 1 ) {{");
-        let _ = writeln!(o, "         return RetCode.OutOfRangeEndIndex;");
+        let _ = writeln!(o, "         return RetCode.InsufficientHistory;");
         let _ = writeln!(o, "      }}");
     }
     emit_extras_and_candle(o, func, &combined, registry, helpers, counter, stream_fma);
@@ -3848,7 +3848,7 @@ fn emit_composed_open(
     // --- capture ------------------------------------------------------------
     let _ = writeln!(o, "      /* Capture the live producer state + sub handles. */");
     let _ = writeln!(o, "      if( outNBElement < 1 ) {{");
-    let _ = writeln!(o, "         return RetCode.OutOfRangeEndIndex;");
+    let _ = writeln!(o, "         return RetCode.InsufficientHistory;");
     let _ = writeln!(o, "      }}");
     // Lag rings: seed from the tail of the still-live intermediate array (its
     // batch `free()` renders as nothing in a managed backend, so no

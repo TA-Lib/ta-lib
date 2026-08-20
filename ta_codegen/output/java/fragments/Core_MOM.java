@@ -34,13 +34,13 @@
       return optInTimePeriod ;
 
    }
-   RetCode MOM_Internal( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode MOM_Body( int startIdx,
+                     int endIdx,
+                     double inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -114,13 +114,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode MOM_Internal( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode MOM_Body( int startIdx,
+                     int endIdx,
+                     float inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -201,6 +201,7 @@
                         int optInTimePeriod,
                         double outReal[] )
    {
+      requireIndexRange("MOM", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, MOM_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -208,11 +209,30 @@
       requireLength("MOM", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MOM_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MOM_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MOM", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode MOM_Internal( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      try {
+         return MOM_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Momentum: current price minus the price optInTimePeriod bars ago. The
@@ -264,6 +284,7 @@
                         int optInTimePeriod,
                         double outReal[] )
    {
+      requireIndexRange("MOM", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, MOM_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -271,11 +292,30 @@
       requireLength("MOM", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MOM_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MOM_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MOM", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode MOM_Internal( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      try {
+         return MOM_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -351,7 +391,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("MOM update: BadParam");
+            throw new TaLibArgumentException("MOM update: BadParam", RetCode.BadParam);
          core.MOM_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -365,7 +405,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("MOM peek: BadParam");
+            throw new TaLibArgumentException("MOM peek: BadParam", RetCode.BadParam);
          MOM_Stream scratch = new MOM_Stream(this);
          core.MOM_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -459,7 +499,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Calculate Momentum:
        *    Just substract the value from 'period' ago from
@@ -515,13 +555,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MOM openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MOM openAndFill: internal error");
+         throw new TaLibStateException("MOM openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("MOM openAndFill: " + retCode);
+      throw new TaLibArgumentException("MOM openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind MOM_Open (composition seam). */
    MOM_Stream MOM_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -531,13 +571,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MOM open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MOM open: internal error");
+         throw new TaLibStateException("MOM open: internal error", retCode);
       }
-      throw new IllegalArgumentException("MOM open: " + retCode);
+      throw new TaLibArgumentException("MOM open: " + retCode, retCode);
    }
    /**
     * Open a live MOM stream over the warm-up history; the handle's
@@ -572,11 +612,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MOM openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MOM openAndFill: internal error");
+         throw new TaLibStateException("MOM openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("MOM openAndFill: " + retCode);
+      throw new TaLibArgumentException("MOM openAndFill: " + retCode, retCode);
    }

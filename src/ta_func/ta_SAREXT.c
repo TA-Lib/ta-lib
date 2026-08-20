@@ -1069,7 +1069,7 @@ static TA_RetCode TA_SAREXT_OpenCore( struct TA_SAREXT_Stream **stream, const do
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       /* Check if the acceleration factors are being defined by the user.
        * Make sure the acceleration and maximum are coherent.

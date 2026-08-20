@@ -923,7 +923,7 @@ static TA_RetCode TA_MINUS_DI_OpenCore( struct TA_MINUS_DI_Stream **stream, cons
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       /* Indicate where the next output should be put
        * in the outReal.
@@ -1124,7 +1124,7 @@ static TA_RetCode TA_MINUS_DI_OpenCore( struct TA_MINUS_DI_Stream **stream, cons
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       /* Indicate where the next output should be put
        * in the outReal.

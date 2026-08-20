@@ -25,13 +25,13 @@
       return 0 ;
 
    }
-   RetCode MULT_Internal( int startIdx,
-                          int endIdx,
-                          double inReal0[],
-                          double inReal1[],
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode MULT_Body( int startIdx,
+                      int endIdx,
+                      double inReal0[],
+                      double inReal1[],
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -52,13 +52,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode MULT_Internal( int startIdx,
-                          int endIdx,
-                          float inReal0[],
-                          float inReal1[],
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode MULT_Body( int startIdx,
+                      int endIdx,
+                      float inReal0[],
+                      float inReal1[],
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -123,6 +123,7 @@
                          double inReal1[],
                          double outReal[] )
    {
+      requireIndexRange("MULT", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, MULT_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -131,11 +132,30 @@
       requireLength("MULT", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MULT_Internal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MULT_Body(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MULT", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode MULT_Internal( int startIdx,
+                          int endIdx,
+                          double inReal0[],
+                          double inReal1[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+   {
+      try {
+         return MULT_Body(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Element-wise multiplication of two input series. Produces outReal[i] =
@@ -184,6 +204,7 @@
                          float inReal1[],
                          double outReal[] )
    {
+      requireIndexRange("MULT", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, MULT_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -192,11 +213,30 @@
       requireLength("MULT", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MULT_Internal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MULT_Body(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MULT", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode MULT_Internal( int startIdx,
+                          int endIdx,
+                          float inReal0[],
+                          float inReal1[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+   {
+      try {
+         return MULT_Body(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -256,7 +296,7 @@
        */
       public double update( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new IllegalArgumentException("MULT update: BadParam");
+            throw new TaLibArgumentException("MULT update: BadParam", RetCode.BadParam);
          core.MULT_StreamStep(this, inReal0, inReal1);
          return this.cur_outReal;
       }
@@ -270,7 +310,7 @@
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new IllegalArgumentException("MULT peek: BadParam");
+            throw new TaLibArgumentException("MULT peek: BadParam", RetCode.BadParam);
          MULT_Stream scratch = new MULT_Stream(this);
          core.MULT_StreamStep(scratch, inReal0, inReal1);
          return scratch.cur_outReal;
@@ -348,13 +388,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MULT openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MULT openAndFill: internal error");
+         throw new TaLibStateException("MULT openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("MULT openAndFill: " + retCode);
+      throw new TaLibArgumentException("MULT openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind MULT_Open (composition seam). */
    MULT_Stream MULT_OpenInternal( double inReal0[], double inReal1[], int startIdx )
@@ -364,13 +404,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MULT open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MULT open: internal error");
+         throw new TaLibStateException("MULT open: internal error", retCode);
       }
-      throw new IllegalArgumentException("MULT open: " + retCode);
+      throw new TaLibArgumentException("MULT open: " + retCode, retCode);
    }
    /**
     * Open a live MULT stream over the warm-up history; the handle's
@@ -405,11 +445,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MULT openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MULT openAndFill: internal error");
+         throw new TaLibStateException("MULT openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("MULT openAndFill: " + retCode);
+      throw new TaLibArgumentException("MULT openAndFill: " + retCode, retCode);
    }

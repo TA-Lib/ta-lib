@@ -32,15 +32,15 @@
       return Math.max(Equal_avgPeriod, BodyLong_avgPeriod) + 1 ;
 
    }
-   RetCode CDLCOUNTERATTACK_Internal( int startIdx,
-                                      int endIdx,
-                                      double inOpen[],
-                                      double inHigh[],
-                                      double inLow[],
-                                      double inClose[],
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      int outInteger[] )
+   RetCode CDLCOUNTERATTACK_Body( int startIdx,
+                                  int endIdx,
+                                  double inOpen[],
+                                  double inHigh[],
+                                  double inLow[],
+                                  double inClose[],
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  int outInteger[] )
    {
       double EqualPeriodTotal = 0;
       double[] BodyLongPeriodTotal = new double[2];
@@ -133,15 +133,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode CDLCOUNTERATTACK_Internal( int startIdx,
-                                      int endIdx,
-                                      float inOpen[],
-                                      float inHigh[],
-                                      float inLow[],
-                                      float inClose[],
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      int outInteger[] )
+   RetCode CDLCOUNTERATTACK_Body( int startIdx,
+                                  int endIdx,
+                                  float inOpen[],
+                                  float inHigh[],
+                                  float inLow[],
+                                  float inClose[],
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  int outInteger[] )
    {
       double EqualPeriodTotal = 0;
       double[] BodyLongPeriodTotal = new double[2];
@@ -260,6 +260,7 @@
                                      double inClose[],
                                      int outInteger[] )
    {
+      requireIndexRange("CDLCOUNTERATTACK", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CDLCOUNTERATTACK_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -270,11 +271,32 @@
       requireLength("CDLCOUNTERATTACK", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLCOUNTERATTACK_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLCOUNTERATTACK_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLCOUNTERATTACK", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode CDLCOUNTERATTACK_Internal( int startIdx,
+                                      int endIdx,
+                                      double inOpen[],
+                                      double inHigh[],
+                                      double inLow[],
+                                      double inClose[],
+                                      MInteger outBegIdx,
+                                      MInteger outNBElement,
+                                      int outInteger[] )
+   {
+      try {
+         return CDLCOUNTERATTACK_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * A two-candle pattern of two long, opposite-colored real bodies whose
@@ -331,6 +353,7 @@
                                      float inClose[],
                                      int outInteger[] )
    {
+      requireIndexRange("CDLCOUNTERATTACK", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CDLCOUNTERATTACK_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -341,11 +364,32 @@
       requireLength("CDLCOUNTERATTACK", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLCOUNTERATTACK_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLCOUNTERATTACK_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLCOUNTERATTACK", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode CDLCOUNTERATTACK_Internal( int startIdx,
+                                      int endIdx,
+                                      float inOpen[],
+                                      float inHigh[],
+                                      float inLow[],
+                                      float inClose[],
+                                      MInteger outBegIdx,
+                                      MInteger outNBElement,
+                                      int outInteger[] )
+   {
+      try {
+         return CDLCOUNTERATTACK_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -517,7 +561,7 @@
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("CDLCOUNTERATTACK update: BadParam");
+            throw new TaLibArgumentException("CDLCOUNTERATTACK update: BadParam", RetCode.BadParam);
          core.CDLCOUNTERATTACK_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outInteger;
       }
@@ -533,7 +577,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("CDLCOUNTERATTACK peek: BadParam");
+            throw new TaLibArgumentException("CDLCOUNTERATTACK peek: BadParam", RetCode.BadParam);
          CDLCOUNTERATTACK_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new CDLCOUNTERATTACK_Stream(this);
@@ -648,7 +692,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -792,13 +836,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLCOUNTERATTACK openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLCOUNTERATTACK openAndFill: internal error");
+         throw new TaLibStateException("CDLCOUNTERATTACK openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLCOUNTERATTACK openAndFill: " + retCode);
+      throw new TaLibArgumentException("CDLCOUNTERATTACK openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind CDLCOUNTERATTACK_Open (composition seam). */
    CDLCOUNTERATTACK_Stream CDLCOUNTERATTACK_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -808,13 +852,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLCOUNTERATTACK open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLCOUNTERATTACK open: internal error");
+         throw new TaLibStateException("CDLCOUNTERATTACK open: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLCOUNTERATTACK open: " + retCode);
+      throw new TaLibArgumentException("CDLCOUNTERATTACK open: " + retCode, retCode);
    }
    /**
     * Open a live CDLCOUNTERATTACK stream over the warm-up history; the handle's
@@ -849,11 +893,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLCOUNTERATTACK openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLCOUNTERATTACK openAndFill: internal error");
+         throw new TaLibStateException("CDLCOUNTERATTACK openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLCOUNTERATTACK openAndFill: " + retCode);
+      throw new TaLibArgumentException("CDLCOUNTERATTACK openAndFill: " + retCode, retCode);
    }

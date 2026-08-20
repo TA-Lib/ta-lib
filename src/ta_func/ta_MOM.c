@@ -306,7 +306,7 @@ static TA_RetCode TA_MOM_OpenCore( struct TA_MOM_Stream **stream, const double i
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       /* Calculate Momentum:
        *    Just substract the value from 'period' ago from

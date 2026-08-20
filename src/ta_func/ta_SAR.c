@@ -814,7 +814,7 @@ static TA_RetCode TA_SAR_OpenCore( struct TA_SAR_Stream **stream, const double i
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       /* Make sure the acceleration and maximum are coherent.
        * If not, correct the acceleration.

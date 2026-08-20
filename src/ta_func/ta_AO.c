@@ -458,7 +458,7 @@ static TA_RetCode TA_AO_OpenCore( struct TA_AO_Stream **stream, const double inH
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       sumFast = 0.0;
       sumSlow = 0.0;

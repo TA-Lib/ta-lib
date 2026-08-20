@@ -575,7 +575,7 @@ static TA_RetCode TA_MFI_OpenCore( struct TA_MFI_Stream **stream, const double i
       {
          if( mflow_positive != &local_mflow_positive[0] ) { TA_Free( mflow_positive ); mflow_positive = &local_mflow_positive[0]; }
          if( mflow_negative != &local_mflow_negative[0] ) { TA_Free( mflow_negative ); mflow_negative = &local_mflow_negative[0]; }
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       outIdx = 0;
       /* Index into the output. */

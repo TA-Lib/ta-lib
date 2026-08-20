@@ -99,17 +99,17 @@ public partial class Core
       return SMA_Lookback(maxPeriod) + 1 ;
 
    }
-   internal RetCode ULTOSC( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<double> inHigh,
-                            ReadOnlySpan<double> inLow,
-                            ReadOnlySpan<double> inClose,
-                            int optInTimePeriod1,
-                            int optInTimePeriod2,
-                            int optInTimePeriod3,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outReal )
+   internal RetCode ULTOSC_Body( int startIdx,
+                                 int endIdx,
+                                 ReadOnlySpan<double> inHigh,
+                                 ReadOnlySpan<double> inLow,
+                                 ReadOnlySpan<double> inClose,
+                                 int optInTimePeriod1,
+                                 int optInTimePeriod2,
+                                 int optInTimePeriod3,
+                                 out int outBegIdx,
+                                 out int outNBElement,
+                                 Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -343,17 +343,17 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode ULTOSC( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<float> inHigh,
-                            ReadOnlySpan<float> inLow,
-                            ReadOnlySpan<float> inClose,
-                            int optInTimePeriod1,
-                            int optInTimePeriod2,
-                            int optInTimePeriod3,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outReal )
+   internal RetCode ULTOSC_Body( int startIdx,
+                                 int endIdx,
+                                 ReadOnlySpan<float> inHigh,
+                                 ReadOnlySpan<float> inLow,
+                                 ReadOnlySpan<float> inClose,
+                                 int optInTimePeriod1,
+                                 int optInTimePeriod2,
+                                 int optInTimePeriod3,
+                                 out int outBegIdx,
+                                 out int outNBElement,
+                                 Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -618,11 +618,31 @@ public partial class Core
       RequireLength("ULTOSC", "inLow", inLow.Length, guardInLen);
       RequireLength("ULTOSC", "inClose", inClose.Length, guardInLen);
       RequireLength("ULTOSC", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = ULTOSC(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ULTOSC_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ULTOSC", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode ULTOSC( int startIdx,
+                            int endIdx,
+                            ReadOnlySpan<double> inHigh,
+                            ReadOnlySpan<double> inLow,
+                            ReadOnlySpan<double> inClose,
+                            int optInTimePeriod1,
+                            int optInTimePeriod2,
+                            int optInTimePeriod3,
+                            out int outBegIdx,
+                            out int outNBElement,
+                            Span<double> outReal )
+   {
+      try {
+         return ULTOSC_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Ultimate Oscillator: momentum indicator combining
@@ -702,11 +722,31 @@ public partial class Core
       RequireLength("ULTOSC", "inLow", inLow.Length, guardInLen);
       RequireLength("ULTOSC", "inClose", inClose.Length, guardInLen);
       RequireLength("ULTOSC", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = ULTOSC(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ULTOSC_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ULTOSC", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode ULTOSC( int startIdx,
+                            int endIdx,
+                            ReadOnlySpan<float> inHigh,
+                            ReadOnlySpan<float> inLow,
+                            ReadOnlySpan<float> inClose,
+                            int optInTimePeriod1,
+                            int optInTimePeriod2,
+                            int optInTimePeriod3,
+                            out int outBegIdx,
+                            out int outNBElement,
+                            Span<double> outReal )
+   {
+      try {
+         return ULTOSC_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -1060,7 +1100,7 @@ public partial class Core
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       if( optInTimePeriod3 < 1 ) return RetCode.InternalError;
       term_closeMinusTrueLow = new double[optInTimePeriod3];
@@ -1288,9 +1328,9 @@ public partial class Core
    /// span cannot be null.</exception>
    public ULTOSC_Stream ULTOSC_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       return ULTOSC_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
    }
 
@@ -1326,9 +1366,9 @@ public partial class Core
    /// output.</exception>
    public ULTOSC_Stream ULTOSC_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       ULTOSC_Stream sp = new ULTOSC_Stream(this);
       RetCode retCode = ULTOSC_OpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

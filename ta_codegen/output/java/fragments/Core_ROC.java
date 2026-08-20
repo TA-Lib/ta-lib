@@ -34,13 +34,13 @@
       return optInTimePeriod ;
 
    }
-   RetCode ROC_Internal( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode ROC_Body( int startIdx,
+                     int endIdx,
+                     double inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -118,13 +118,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode ROC_Internal( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode ROC_Body( int startIdx,
+                     int endIdx,
+                     float inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -213,6 +213,7 @@
                         int optInTimePeriod,
                         double outReal[] )
    {
+      requireIndexRange("ROC", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, ROC_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -220,11 +221,30 @@
       requireLength("ROC", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ROC_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ROC_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ROC", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode ROC_Internal( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      try {
+         return ROC_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Rate-of-change momentum oscillator: the percent change of price versus the
@@ -277,6 +297,7 @@
                         int optInTimePeriod,
                         double outReal[] )
    {
+      requireIndexRange("ROC", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, ROC_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -284,11 +305,30 @@
       requireLength("ROC", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ROC_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ROC_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ROC", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode ROC_Internal( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      try {
+         return ROC_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -364,7 +404,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("ROC update: BadParam");
+            throw new TaLibArgumentException("ROC update: BadParam", RetCode.BadParam);
          core.ROC_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -378,7 +418,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("ROC peek: BadParam");
+            throw new TaLibArgumentException("ROC peek: BadParam", RetCode.BadParam);
          ROC_Stream scratch = new ROC_Stream(this);
          core.ROC_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -479,7 +519,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Calculate Rate of change: ((price / prevPrice)-1)*100 */
       outIdx = 0;
@@ -538,13 +578,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("ROC openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("ROC openAndFill: internal error");
+         throw new TaLibStateException("ROC openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("ROC openAndFill: " + retCode);
+      throw new TaLibArgumentException("ROC openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind ROC_Open (composition seam). */
    ROC_Stream ROC_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -554,13 +594,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("ROC open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("ROC open: internal error");
+         throw new TaLibStateException("ROC open: internal error", retCode);
       }
-      throw new IllegalArgumentException("ROC open: " + retCode);
+      throw new TaLibArgumentException("ROC open: " + retCode, retCode);
    }
    /**
     * Open a live ROC stream over the warm-up history; the handle's
@@ -595,11 +635,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("ROC openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("ROC openAndFill: internal error");
+         throw new TaLibStateException("ROC openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("ROC openAndFill: " + retCode);
+      throw new TaLibArgumentException("ROC openAndFill: " + retCode, retCode);
    }

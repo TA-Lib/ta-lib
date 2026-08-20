@@ -29,14 +29,14 @@
       return 0 ;
 
    }
-   RetCode TYPPRICE_Internal( int startIdx,
-                              int endIdx,
-                              double inHigh[],
-                              double inLow[],
-                              double inClose[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
+   RetCode TYPPRICE_Body( int startIdx,
+                          int endIdx,
+                          double inHigh[],
+                          double inLow[],
+                          double inClose[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -55,14 +55,14 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode TYPPRICE_Internal( int startIdx,
-                              int endIdx,
-                              float inHigh[],
-                              float inLow[],
-                              float inClose[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
+   RetCode TYPPRICE_Body( int startIdx,
+                          int endIdx,
+                          float inHigh[],
+                          float inLow[],
+                          float inClose[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -126,6 +126,7 @@
                              double inClose[],
                              double outReal[] )
    {
+      requireIndexRange("TYPPRICE", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, TYPPRICE_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -135,11 +136,31 @@
       requireLength("TYPPRICE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TYPPRICE_Internal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TYPPRICE_Body(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("TYPPRICE", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode TYPPRICE_Internal( int startIdx,
+                              int endIdx,
+                              double inHigh[],
+                              double inLow[],
+                              double inClose[],
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outReal[] )
+   {
+      try {
+         return TYPPRICE_Body(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Typical Price: the average of the high, low, and close of each bar. A
@@ -190,6 +211,7 @@
                              float inClose[],
                              double outReal[] )
    {
+      requireIndexRange("TYPPRICE", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, TYPPRICE_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -199,11 +221,31 @@
       requireLength("TYPPRICE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TYPPRICE_Internal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TYPPRICE_Body(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("TYPPRICE", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode TYPPRICE_Internal( int startIdx,
+                              int endIdx,
+                              float inHigh[],
+                              float inLow[],
+                              float inClose[],
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outReal[] )
+   {
+      try {
+         return TYPPRICE_Body(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -263,7 +305,7 @@
        */
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("TYPPRICE update: BadParam");
+            throw new TaLibArgumentException("TYPPRICE update: BadParam", RetCode.BadParam);
          core.TYPPRICE_StreamStep(this, inHigh, inLow, inClose);
          return this.cur_outReal;
       }
@@ -277,7 +319,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("TYPPRICE peek: BadParam");
+            throw new TaLibArgumentException("TYPPRICE peek: BadParam", RetCode.BadParam);
          TYPPRICE_Stream scratch = new TYPPRICE_Stream(this);
          core.TYPPRICE_StreamStep(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
@@ -353,13 +395,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("TYPPRICE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TYPPRICE openAndFill: internal error");
+         throw new TaLibStateException("TYPPRICE openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("TYPPRICE openAndFill: " + retCode);
+      throw new TaLibArgumentException("TYPPRICE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind TYPPRICE_Open (composition seam). */
    TYPPRICE_Stream TYPPRICE_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -369,13 +411,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("TYPPRICE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TYPPRICE open: internal error");
+         throw new TaLibStateException("TYPPRICE open: internal error", retCode);
       }
-      throw new IllegalArgumentException("TYPPRICE open: " + retCode);
+      throw new TaLibArgumentException("TYPPRICE open: " + retCode, retCode);
    }
    /**
     * Open a live TYPPRICE stream over the warm-up history; the handle's
@@ -410,11 +452,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("TYPPRICE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TYPPRICE openAndFill: internal error");
+         throw new TaLibStateException("TYPPRICE openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("TYPPRICE openAndFill: " + retCode);
+      throw new TaLibArgumentException("TYPPRICE openAndFill: " + retCode, retCode);
    }

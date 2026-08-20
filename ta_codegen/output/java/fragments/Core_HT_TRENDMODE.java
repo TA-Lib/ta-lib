@@ -46,12 +46,12 @@
       return 63 + this.unstablePeriod[FuncUnstId.HT_TRENDMODE.ordinal()] ;
 
    }
-   RetCode HT_TRENDMODE_Internal( int startIdx,
-                                  int endIdx,
-                                  double inReal[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  int outInteger[] )
+   RetCode HT_TRENDMODE_Body( int startIdx,
+                              int endIdx,
+                              double inReal[],
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              int outInteger[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -533,12 +533,12 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode HT_TRENDMODE_Internal( int startIdx,
-                                  int endIdx,
-                                  float inReal[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  int outInteger[] )
+   RetCode HT_TRENDMODE_Body( int startIdx,
+                              int endIdx,
+                              float inReal[],
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              int outInteger[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -978,6 +978,7 @@
                                  double inReal[],
                                  int outInteger[] )
    {
+      requireIndexRange("HT_TRENDMODE", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, HT_TRENDMODE_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -985,11 +986,29 @@
       requireLength("HT_TRENDMODE", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_TRENDMODE_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = HT_TRENDMODE_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("HT_TRENDMODE", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode HT_TRENDMODE_Internal( int startIdx,
+                                  int endIdx,
+                                  double inReal[],
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  int outInteger[] )
+   {
+      try {
+         return HT_TRENDMODE_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Hilbert Transform classifier that labels each bar as trending (1) or
@@ -1036,6 +1055,7 @@
                                  float inReal[],
                                  int outInteger[] )
    {
+      requireIndexRange("HT_TRENDMODE", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, HT_TRENDMODE_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -1043,11 +1063,29 @@
       requireLength("HT_TRENDMODE", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_TRENDMODE_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = HT_TRENDMODE_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("HT_TRENDMODE", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode HT_TRENDMODE_Internal( int startIdx,
+                                  int endIdx,
+                                  float inReal[],
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  int outInteger[] )
+   {
+      try {
+         return HT_TRENDMODE_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -1403,7 +1441,7 @@
        */
       public int update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("HT_TRENDMODE update: BadParam");
+            throw new TaLibArgumentException("HT_TRENDMODE update: BadParam", RetCode.BadParam);
          core.HT_TRENDMODE_StreamStep(this, inReal);
          return this.cur_outInteger;
       }
@@ -1419,7 +1457,7 @@
        */
       public int peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("HT_TRENDMODE peek: BadParam");
+            throw new TaLibArgumentException("HT_TRENDMODE peek: BadParam", RetCode.BadParam);
          HT_TRENDMODE_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new HT_TRENDMODE_Stream(this);
@@ -1834,7 +1872,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outBegIdx.value = startIdx;
       /* Initialize the price smoother, which is simply a weighted
@@ -2313,13 +2351,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("HT_TRENDMODE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("HT_TRENDMODE openAndFill: internal error");
+         throw new TaLibStateException("HT_TRENDMODE openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("HT_TRENDMODE openAndFill: " + retCode);
+      throw new TaLibArgumentException("HT_TRENDMODE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind HT_TRENDMODE_Open (composition seam). */
    HT_TRENDMODE_Stream HT_TRENDMODE_OpenInternal( double inReal[], int startIdx )
@@ -2329,13 +2367,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("HT_TRENDMODE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("HT_TRENDMODE open: internal error");
+         throw new TaLibStateException("HT_TRENDMODE open: internal error", retCode);
       }
-      throw new IllegalArgumentException("HT_TRENDMODE open: " + retCode);
+      throw new TaLibArgumentException("HT_TRENDMODE open: " + retCode, retCode);
    }
    /**
     * Open a live HT_TRENDMODE stream over the warm-up history; the handle's
@@ -2370,11 +2408,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("HT_TRENDMODE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("HT_TRENDMODE openAndFill: internal error");
+         throw new TaLibStateException("HT_TRENDMODE openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("HT_TRENDMODE openAndFill: " + retCode);
+      throw new TaLibArgumentException("HT_TRENDMODE openAndFill: " + retCode, retCode);
    }

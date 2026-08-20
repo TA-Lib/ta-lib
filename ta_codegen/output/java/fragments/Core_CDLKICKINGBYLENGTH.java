@@ -32,15 +32,15 @@
       return Math.max(ShadowVeryShort_avgPeriod, BodyLong_avgPeriod) + 1 ;
 
    }
-   RetCode CDLKICKINGBYLENGTH_Internal( int startIdx,
-                                        int endIdx,
-                                        double inOpen[],
-                                        double inHigh[],
-                                        double inLow[],
-                                        double inClose[],
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
+   RetCode CDLKICKINGBYLENGTH_Body( int startIdx,
+                                    int endIdx,
+                                    double inOpen[],
+                                    double inHigh[],
+                                    double inLow[],
+                                    double inClose[],
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    int outInteger[] )
    {
       double[] ShadowVeryShortPeriodTotal = new double[2];
       double[] BodyLongPeriodTotal = new double[2];
@@ -139,15 +139,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode CDLKICKINGBYLENGTH_Internal( int startIdx,
-                                        int endIdx,
-                                        float inOpen[],
-                                        float inHigh[],
-                                        float inLow[],
-                                        float inClose[],
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
+   RetCode CDLKICKINGBYLENGTH_Body( int startIdx,
+                                    int endIdx,
+                                    float inOpen[],
+                                    float inHigh[],
+                                    float inLow[],
+                                    float inClose[],
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    int outInteger[] )
    {
       double[] ShadowVeryShortPeriodTotal = new double[2];
       double[] BodyLongPeriodTotal = new double[2];
@@ -263,6 +263,7 @@
                                        double inClose[],
                                        int outInteger[] )
    {
+      requireIndexRange("CDLKICKINGBYLENGTH", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CDLKICKINGBYLENGTH_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -273,11 +274,32 @@
       requireLength("CDLKICKINGBYLENGTH", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLKICKINGBYLENGTH_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLKICKINGBYLENGTH_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLKICKINGBYLENGTH", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode CDLKICKINGBYLENGTH_Internal( int startIdx,
+                                        int endIdx,
+                                        double inOpen[],
+                                        double inHigh[],
+                                        double inLow[],
+                                        double inClose[],
+                                        MInteger outBegIdx,
+                                        MInteger outNBElement,
+                                        int outInteger[] )
+   {
+      try {
+         return CDLKICKINGBYLENGTH_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * A two-candle pattern of two opposite-color marubozu (long body, very short
@@ -329,6 +351,7 @@
                                        float inClose[],
                                        int outInteger[] )
    {
+      requireIndexRange("CDLKICKINGBYLENGTH", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CDLKICKINGBYLENGTH_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -339,11 +362,32 @@
       requireLength("CDLKICKINGBYLENGTH", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLKICKINGBYLENGTH_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLKICKINGBYLENGTH_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLKICKINGBYLENGTH", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode CDLKICKINGBYLENGTH_Internal( int startIdx,
+                                        int endIdx,
+                                        float inOpen[],
+                                        float inHigh[],
+                                        float inLow[],
+                                        float inClose[],
+                                        MInteger outBegIdx,
+                                        MInteger outNBElement,
+                                        int outInteger[] )
+   {
+      try {
+         return CDLKICKINGBYLENGTH_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -519,7 +563,7 @@
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("CDLKICKINGBYLENGTH update: BadParam");
+            throw new TaLibArgumentException("CDLKICKINGBYLENGTH update: BadParam", RetCode.BadParam);
          core.CDLKICKINGBYLENGTH_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outInteger;
       }
@@ -535,7 +579,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("CDLKICKINGBYLENGTH peek: BadParam");
+            throw new TaLibArgumentException("CDLKICKINGBYLENGTH peek: BadParam", RetCode.BadParam);
          CDLKICKINGBYLENGTH_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new CDLKICKINGBYLENGTH_Stream(this);
@@ -653,7 +697,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -803,13 +847,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLKICKINGBYLENGTH openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLKICKINGBYLENGTH openAndFill: internal error");
+         throw new TaLibStateException("CDLKICKINGBYLENGTH openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLKICKINGBYLENGTH openAndFill: " + retCode);
+      throw new TaLibArgumentException("CDLKICKINGBYLENGTH openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind CDLKICKINGBYLENGTH_Open (composition seam). */
    CDLKICKINGBYLENGTH_Stream CDLKICKINGBYLENGTH_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -819,13 +863,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLKICKINGBYLENGTH open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLKICKINGBYLENGTH open: internal error");
+         throw new TaLibStateException("CDLKICKINGBYLENGTH open: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLKICKINGBYLENGTH open: " + retCode);
+      throw new TaLibArgumentException("CDLKICKINGBYLENGTH open: " + retCode, retCode);
    }
    /**
     * Open a live CDLKICKINGBYLENGTH stream over the warm-up history; the handle's
@@ -860,11 +904,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLKICKINGBYLENGTH openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLKICKINGBYLENGTH openAndFill: internal error");
+         throw new TaLibStateException("CDLKICKINGBYLENGTH openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLKICKINGBYLENGTH openAndFill: " + retCode);
+      throw new TaLibArgumentException("CDLKICKINGBYLENGTH openAndFill: " + retCode, retCode);
    }

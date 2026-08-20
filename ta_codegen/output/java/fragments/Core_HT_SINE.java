@@ -38,13 +38,13 @@
       return 63 + this.unstablePeriod[FuncUnstId.HT_SINE.ordinal()] ;
 
    }
-   RetCode HT_SINE_Internal( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outSine[],
-                             double outLeadSine[] )
+   RetCode HT_SINE_Body( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outSine[],
+                         double outLeadSine[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -453,13 +453,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode HT_SINE_Internal( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outSine[],
-                             double outLeadSine[] )
+   RetCode HT_SINE_Body( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outSine[],
+                         double outLeadSine[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -847,6 +847,7 @@
                             double outSine[],
                             double outLeadSine[] )
    {
+      requireIndexRange("HT_SINE", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, HT_SINE_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -855,11 +856,30 @@
       requireLength("HT_SINE", "outLeadSine", outLeadSine, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_SINE_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine);
+      RetCode retCode = HT_SINE_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine);
       if( retCode != RetCode.Success ) {
          throw failure("HT_SINE", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode HT_SINE_Internal( int startIdx,
+                             int endIdx,
+                             double inReal[],
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             double outSine[],
+                             double outLeadSine[] )
+   {
+      try {
+         return HT_SINE_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Hilbert Transform SineWave: derives the dominant-cycle phase from price
@@ -909,6 +929,7 @@
                             double outSine[],
                             double outLeadSine[] )
    {
+      requireIndexRange("HT_SINE", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, HT_SINE_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -917,11 +938,30 @@
       requireLength("HT_SINE", "outLeadSine", outLeadSine, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_SINE_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine);
+      RetCode retCode = HT_SINE_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine);
       if( retCode != RetCode.Success ) {
          throw failure("HT_SINE", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode HT_SINE_Internal( int startIdx,
+                             int endIdx,
+                             float inReal[],
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             double outSine[],
+                             double outLeadSine[] )
+   {
+      try {
+         return HT_SINE_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -1247,7 +1287,7 @@
        */
       public Value update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("HT_SINE update: BadParam");
+            throw new TaLibArgumentException("HT_SINE update: BadParam", RetCode.BadParam);
          core.HT_SINE_StreamStep(this, inReal);
          this.cachedValue = new Value(this.cur_outSine, this.cur_outLeadSine);
          return this.cachedValue;
@@ -1264,7 +1304,7 @@
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("HT_SINE peek: BadParam");
+            throw new TaLibArgumentException("HT_SINE peek: BadParam", RetCode.BadParam);
          HT_SINE_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new HT_SINE_Stream(this);
@@ -1598,7 +1638,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outBegIdx.value = startIdx;
       /* Initialize the price smoother, which is simply a weighted
@@ -2007,13 +2047,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("HT_SINE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("HT_SINE openAndFill: internal error");
+         throw new TaLibStateException("HT_SINE openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("HT_SINE openAndFill: " + retCode);
+      throw new TaLibArgumentException("HT_SINE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind HT_SINE_Open (composition seam). */
    HT_SINE_Stream HT_SINE_OpenInternal( double inReal[], int startIdx )
@@ -2023,13 +2063,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("HT_SINE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("HT_SINE open: internal error");
+         throw new TaLibStateException("HT_SINE open: internal error", retCode);
       }
-      throw new IllegalArgumentException("HT_SINE open: " + retCode);
+      throw new TaLibArgumentException("HT_SINE open: " + retCode, retCode);
    }
    /**
     * Open a live HT_SINE stream over the warm-up history; the handle's
@@ -2064,11 +2104,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("HT_SINE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("HT_SINE openAndFill: internal error");
+         throw new TaLibStateException("HT_SINE openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("HT_SINE openAndFill: " + retCode);
+      throw new TaLibArgumentException("HT_SINE openAndFill: " + retCode, retCode);
    }

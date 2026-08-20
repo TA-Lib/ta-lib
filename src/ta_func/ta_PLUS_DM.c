@@ -624,7 +624,7 @@ static TA_RetCode TA_PLUS_DM_OpenCore( struct TA_PLUS_DM_Stream **stream, const 
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       /* Indicate where the next output should be put
        * in the outReal.
@@ -770,7 +770,7 @@ static TA_RetCode TA_PLUS_DM_OpenCore( struct TA_PLUS_DM_Stream **stream, const 
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       /* Indicate where the next output should be put
        * in the outReal.

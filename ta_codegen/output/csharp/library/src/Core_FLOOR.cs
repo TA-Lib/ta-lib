@@ -69,12 +69,12 @@ public partial class Core
       return 0 ;
 
    }
-   internal RetCode FLOOR( int startIdx,
-                           int endIdx,
-                           ReadOnlySpan<double> inReal,
-                           out int outBegIdx,
-                           out int outNBElement,
-                           Span<double> outReal )
+   internal RetCode FLOOR_Body( int startIdx,
+                                int endIdx,
+                                ReadOnlySpan<double> inReal,
+                                out int outBegIdx,
+                                out int outNBElement,
+                                Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -96,12 +96,12 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode FLOOR( int startIdx,
-                           int endIdx,
-                           ReadOnlySpan<float> inReal,
-                           out int outBegIdx,
-                           out int outNBElement,
-                           Span<double> outReal )
+   internal RetCode FLOOR_Body( int startIdx,
+                                int endIdx,
+                                ReadOnlySpan<float> inReal,
+                                out int outBegIdx,
+                                out int outNBElement,
+                                Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -168,11 +168,26 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("FLOOR", "inReal", inReal.Length, guardInLen);
       RequireLength("FLOOR", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = FLOOR(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = FLOOR_Body(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("FLOOR", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode FLOOR( int startIdx,
+                           int endIdx,
+                           ReadOnlySpan<double> inReal,
+                           out int outBegIdx,
+                           out int outNBElement,
+                           Span<double> outReal )
+   {
+      try {
+         return FLOOR_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Vector floor: rounds each input value down to the nearest integer.
@@ -228,11 +243,26 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("FLOOR", "inReal", inReal.Length, guardInLen);
       RequireLength("FLOOR", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = FLOOR(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = FLOOR_Body(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("FLOOR", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode FLOOR( int startIdx,
+                           int endIdx,
+                           ReadOnlySpan<float> inReal,
+                           out int outBegIdx,
+                           out int outNBElement,
+                           Span<double> outReal )
+   {
+      try {
+         return FLOOR_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -426,7 +456,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public FLOOR_Stream FLOOR_Open( ReadOnlySpan<double> inReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return FLOOR_OpenInternal(inReal, 0);
    }
 
@@ -454,7 +484,7 @@ public partial class Core
    /// output.</exception>
    public FLOOR_Stream FLOOR_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       FLOOR_Stream sp = new FLOOR_Stream(this);
       RetCode retCode = FLOOR_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

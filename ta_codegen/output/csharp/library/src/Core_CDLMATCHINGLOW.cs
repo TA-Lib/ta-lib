@@ -73,15 +73,15 @@ public partial class Core
       return Equal_avgPeriod + 1 ;
 
    }
-   internal RetCode CDLMATCHINGLOW( int startIdx,
-                                    int endIdx,
-                                    ReadOnlySpan<double> inOpen,
-                                    ReadOnlySpan<double> inHigh,
-                                    ReadOnlySpan<double> inLow,
-                                    ReadOnlySpan<double> inClose,
-                                    out int outBegIdx,
-                                    out int outNBElement,
-                                    Span<int> outInteger )
+   internal RetCode CDLMATCHINGLOW_Body( int startIdx,
+                                         int endIdx,
+                                         ReadOnlySpan<double> inOpen,
+                                         ReadOnlySpan<double> inHigh,
+                                         ReadOnlySpan<double> inLow,
+                                         ReadOnlySpan<double> inClose,
+                                         out int outBegIdx,
+                                         out int outNBElement,
+                                         Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -155,15 +155,15 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CDLMATCHINGLOW( int startIdx,
-                                    int endIdx,
-                                    ReadOnlySpan<float> inOpen,
-                                    ReadOnlySpan<float> inHigh,
-                                    ReadOnlySpan<float> inLow,
-                                    ReadOnlySpan<float> inClose,
-                                    out int outBegIdx,
-                                    out int outNBElement,
-                                    Span<int> outInteger )
+   internal RetCode CDLMATCHINGLOW_Body( int startIdx,
+                                         int endIdx,
+                                         ReadOnlySpan<float> inOpen,
+                                         ReadOnlySpan<float> inHigh,
+                                         ReadOnlySpan<float> inLow,
+                                         ReadOnlySpan<float> inClose,
+                                         out int outBegIdx,
+                                         out int outNBElement,
+                                         Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -277,11 +277,29 @@ public partial class Core
       RequireLength("CDLMATCHINGLOW", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLMATCHINGLOW", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLMATCHINGLOW", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLMATCHINGLOW(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLMATCHINGLOW_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLMATCHINGLOW", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode CDLMATCHINGLOW( int startIdx,
+                                    int endIdx,
+                                    ReadOnlySpan<double> inOpen,
+                                    ReadOnlySpan<double> inHigh,
+                                    ReadOnlySpan<double> inLow,
+                                    ReadOnlySpan<double> inClose,
+                                    out int outBegIdx,
+                                    out int outNBElement,
+                                    Span<int> outInteger )
+   {
+      try {
+         return CDLMATCHINGLOW_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outInteger);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// A two-candle pattern of two consecutive black (bearish) candles with equal
@@ -353,11 +371,29 @@ public partial class Core
       RequireLength("CDLMATCHINGLOW", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLMATCHINGLOW", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLMATCHINGLOW", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLMATCHINGLOW(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLMATCHINGLOW_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLMATCHINGLOW", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode CDLMATCHINGLOW( int startIdx,
+                                    int endIdx,
+                                    ReadOnlySpan<float> inOpen,
+                                    ReadOnlySpan<float> inHigh,
+                                    ReadOnlySpan<float> inLow,
+                                    ReadOnlySpan<float> inClose,
+                                    out int outBegIdx,
+                                    out int outNBElement,
+                                    Span<int> outInteger )
+   {
+      try {
+         return CDLMATCHINGLOW_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outInteger);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -572,7 +608,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -700,10 +736,10 @@ public partial class Core
    /// span cannot be null.</exception>
    public CDLMATCHINGLOW_Stream CDLMATCHINGLOW_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inOpen.IsEmpty ) throw new TaLibArgumentException("inOpen is empty", nameof(inOpen), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       return CDLMATCHINGLOW_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
@@ -736,10 +772,10 @@ public partial class Core
    /// output.</exception>
    public CDLMATCHINGLOW_Stream CDLMATCHINGLOW_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
-      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inOpen.IsEmpty ) throw new TaLibArgumentException("inOpen is empty", nameof(inOpen), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       CDLMATCHINGLOW_Stream sp = new CDLMATCHINGLOW_Stream(this);
       RetCode retCode = CDLMATCHINGLOW_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

@@ -37,14 +37,14 @@
       return optInTimePeriod + this.unstablePeriod[FuncUnstId.EMA.ordinal()] ;
 
    }
-   RetCode EFI_Internal( int startIdx,
-                         int endIdx,
-                         double inClose[],
-                         double inVolume[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode EFI_Body( int startIdx,
+                     int endIdx,
+                     double inClose[],
+                     double inVolume[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       double optInK_1 = 0;
       double tempReal = 0;
@@ -174,14 +174,14 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode EFI_Internal( int startIdx,
-                         int endIdx,
-                         float inClose[],
-                         float inVolume[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode EFI_Body( int startIdx,
+                     int endIdx,
+                     float inClose[],
+                     float inVolume[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       double optInK_1 = 0;
       double tempReal = 0;
@@ -320,6 +320,7 @@
                         int optInTimePeriod,
                         double outReal[] )
    {
+      requireIndexRange("EFI", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, EFI_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -328,11 +329,31 @@
       requireLength("EFI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = EFI_Internal(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = EFI_Body(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("EFI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode EFI_Internal( int startIdx,
+                         int endIdx,
+                         double inClose[],
+                         double inVolume[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      try {
+         return EFI_Body(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Alexander Elder's Force Index (*Trading for a Living*, 1993):
@@ -398,6 +419,7 @@
                         int optInTimePeriod,
                         double outReal[] )
    {
+      requireIndexRange("EFI", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, EFI_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -406,11 +428,31 @@
       requireLength("EFI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = EFI_Internal(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = EFI_Body(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("EFI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode EFI_Internal( int startIdx,
+                         int endIdx,
+                         float inClose[],
+                         float inVolume[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      try {
+         return EFI_Body(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -482,7 +524,7 @@
        */
       public double update( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new IllegalArgumentException("EFI update: BadParam");
+            throw new TaLibArgumentException("EFI update: BadParam", RetCode.BadParam);
          core.EFI_StreamStep(this, inClose, inVolume);
          return this.cur_outReal;
       }
@@ -496,7 +538,7 @@
        */
       public double peek( double inClose, double inVolume ) {
          if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
-            throw new IllegalArgumentException("EFI peek: BadParam");
+            throw new TaLibArgumentException("EFI peek: BadParam", RetCode.BadParam);
          EFI_Stream scratch = new EFI_Stream(this);
          core.EFI_StreamStep(scratch, inClose, inVolume);
          return scratch.cur_outReal;
@@ -600,7 +642,7 @@
          if( startIdx > endIdx ) {
             outBegIdx.value = 0;
             outNBElement.value = 0;
-            return RetCode.OutOfRangeEndIndex ;
+            return RetCode.InsufficientHistory ;
          }
          /* No smoothing at a period of 1: the output is the raw Force Index.
           * Explicit for the reason spelled out in ema.c -- at period 1 optInK_1 is
@@ -679,7 +721,7 @@
          if( startIdx > endIdx ) {
             outBegIdx.value = 0;
             outNBElement.value = 0;
-            return RetCode.OutOfRangeEndIndex ;
+            return RetCode.InsufficientHistory ;
          }
          /* No smoothing at a period of 1: the output is the raw Force Index.
           * Explicit for the reason spelled out in ema.c -- at period 1 optInK_1 is
@@ -764,13 +806,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("EFI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("EFI openAndFill: internal error");
+         throw new TaLibStateException("EFI openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("EFI openAndFill: " + retCode);
+      throw new TaLibArgumentException("EFI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind EFI_Open (composition seam). */
    EFI_Stream EFI_OpenInternal( double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
@@ -780,13 +822,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("EFI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("EFI open: internal error");
+         throw new TaLibStateException("EFI open: internal error", retCode);
       }
-      throw new IllegalArgumentException("EFI open: " + retCode);
+      throw new TaLibArgumentException("EFI open: " + retCode, retCode);
    }
    /**
     * Open a live EFI stream over the warm-up history; the handle's
@@ -821,11 +863,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("EFI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("EFI openAndFill: internal error");
+         throw new TaLibStateException("EFI openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("EFI openAndFill: " + retCode);
+      throw new TaLibArgumentException("EFI openAndFill: " + retCode, retCode);
    }

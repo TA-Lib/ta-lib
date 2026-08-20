@@ -39,13 +39,13 @@
       return retValue ;
 
    }
-   RetCode CMO_Internal( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode CMO_Body( int startIdx,
+                     int endIdx,
+                     double inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -212,13 +212,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode CMO_Internal( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode CMO_Body( int startIdx,
+                     int endIdx,
+                     float inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -379,6 +379,7 @@
                         int optInTimePeriod,
                         double outReal[] )
    {
+      requireIndexRange("CMO", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CMO_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -386,11 +387,30 @@
       requireLength("CMO", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CMO_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CMO_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("CMO", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode CMO_Internal( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      try {
+         return CMO_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Chande Momentum Oscillator: bounded momentum measure from Wilder-smoothed
@@ -444,6 +464,7 @@
                         int optInTimePeriod,
                         double outReal[] )
    {
+      requireIndexRange("CMO", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CMO_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -451,11 +472,30 @@
       requireLength("CMO", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CMO_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CMO_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("CMO", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode CMO_Internal( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      try {
+         return CMO_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -527,7 +567,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("CMO update: BadParam");
+            throw new TaLibArgumentException("CMO update: BadParam", RetCode.BadParam);
          core.CMO_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -541,7 +581,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("CMO peek: BadParam");
+            throw new TaLibArgumentException("CMO peek: BadParam", RetCode.BadParam);
          CMO_Stream scratch = new CMO_Stream(this);
          core.CMO_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -621,7 +661,7 @@
       }
       if( optInTimePeriod == 1 ) {
          if( historyLen < CMO_Lookback(optInTimePeriod) + 1 ) {
-            return RetCode.OutOfRangeEndIndex;
+            return RetCode.InsufficientHistory;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.prevGain = 0.0;
@@ -659,7 +699,7 @@
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outIdx = 0;
       /* Index into the output. */
@@ -795,13 +835,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CMO openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CMO openAndFill: internal error");
+         throw new TaLibStateException("CMO openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CMO openAndFill: " + retCode);
+      throw new TaLibArgumentException("CMO openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind CMO_Open (composition seam). */
    CMO_Stream CMO_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -811,13 +851,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CMO open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CMO open: internal error");
+         throw new TaLibStateException("CMO open: internal error", retCode);
       }
-      throw new IllegalArgumentException("CMO open: " + retCode);
+      throw new TaLibArgumentException("CMO open: " + retCode, retCode);
    }
    /**
     * Open a live CMO stream over the warm-up history; the handle's
@@ -852,11 +892,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CMO openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CMO openAndFill: internal error");
+         throw new TaLibStateException("CMO openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CMO openAndFill: " + retCode);
+      throw new TaLibArgumentException("CMO openAndFill: " + retCode, retCode);
    }

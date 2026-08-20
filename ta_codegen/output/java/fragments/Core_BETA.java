@@ -38,14 +38,14 @@
       return optInTimePeriod ;
 
    }
-   RetCode BETA_Internal( int startIdx,
-                          int endIdx,
-                          double inReal0[],
-                          double inReal1[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode BETA_Body( int startIdx,
+                      int endIdx,
+                      double inReal0[],
+                      double inReal1[],
+                      int optInTimePeriod,
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       double S_xx = 0;
       double S_xy = 0;
@@ -208,14 +208,14 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode BETA_Internal( int startIdx,
-                          int endIdx,
-                          float inReal0[],
-                          float inReal1[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode BETA_Body( int startIdx,
+                      int endIdx,
+                      float inReal0[],
+                      float inReal1[],
+                      int optInTimePeriod,
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       double S_xx = 0;
       double S_xy = 0;
@@ -391,6 +391,7 @@
                          int optInTimePeriod,
                          double outReal[] )
    {
+      requireIndexRange("BETA", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, BETA_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -399,11 +400,31 @@
       requireLength("BETA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = BETA_Internal(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = BETA_Body(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("BETA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode BETA_Internal( int startIdx,
+                          int endIdx,
+                          double inReal0[],
+                          double inReal1[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+   {
+      try {
+         return BETA_Body(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Beta: the slope of a least-squares linear regression of one series'
@@ -460,6 +481,7 @@
                          int optInTimePeriod,
                          double outReal[] )
    {
+      requireIndexRange("BETA", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, BETA_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -468,11 +490,31 @@
       requireLength("BETA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = BETA_Internal(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = BETA_Body(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("BETA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode BETA_Internal( int startIdx,
+                          int endIdx,
+                          float inReal0[],
+                          float inReal1[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+   {
+      try {
+         return BETA_Body(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -591,7 +633,7 @@
        */
       public double update( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new IllegalArgumentException("BETA update: BadParam");
+            throw new TaLibArgumentException("BETA update: BadParam", RetCode.BadParam);
          core.BETA_StreamStep(this, inReal0, inReal1);
          return this.cur_outReal;
       }
@@ -607,7 +649,7 @@
        */
       public double peek( double inReal0, double inReal1 ) {
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
-            throw new IllegalArgumentException("BETA peek: BadParam");
+            throw new TaLibArgumentException("BETA peek: BadParam", RetCode.BadParam);
          BETA_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new BETA_Stream(this);
@@ -775,7 +817,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Consume first input. */
       trailingIdx = startIdx - nbInitialElementNeeded;
@@ -915,13 +957,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("BETA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("BETA openAndFill: internal error");
+         throw new TaLibStateException("BETA openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("BETA openAndFill: " + retCode);
+      throw new TaLibArgumentException("BETA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind BETA_Open (composition seam). */
    BETA_Stream BETA_OpenInternal( double inReal0[], double inReal1[], int startIdx, int optInTimePeriod )
@@ -931,13 +973,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("BETA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("BETA open: internal error");
+         throw new TaLibStateException("BETA open: internal error", retCode);
       }
-      throw new IllegalArgumentException("BETA open: " + retCode);
+      throw new TaLibArgumentException("BETA open: " + retCode, retCode);
    }
    /**
     * Open a live BETA stream over the warm-up history; the handle's
@@ -972,11 +1014,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("BETA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("BETA openAndFill: internal error");
+         throw new TaLibStateException("BETA openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("BETA openAndFill: " + retCode);
+      throw new TaLibArgumentException("BETA openAndFill: " + retCode, retCode);
    }

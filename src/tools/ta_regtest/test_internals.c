@@ -88,6 +88,7 @@ static ErrorNumber testBoundedAppend( void );
 static ErrorNumber testUnstablePeriodBounds( void );
 static ErrorNumber testCandleSettingsBounds( void );
 static ErrorNumber testEnumValueContract( void );
+static ErrorNumber testStreamShortHistory( void );
 
 static TA_RetCode circBufferFillFrom0ToSize( int size, int *buffer );
 
@@ -140,7 +141,247 @@ ErrorNumber test_internals( void )
       return retValue;
    }
 
+   retValue = testStreamShortHistory();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "\nFailed: Streaming short-history contract (%d)\n", retValue );
+      return retValue;
+   }
+
    return TA_TEST_PASS; /* Success. */
+}
+
+/* Rule S-6: a stream opened on fewer than `lookback + 1` bars reports
+ * TA_INSUFFICIENT_HISTORY -- the library's one RECOVERABLE condition.
+ *
+ * It is worth its own code, and its own probe, because it is the only failure a
+ * correct caller can provoke and then fix by doing nothing but waiting: every
+ * other rejection means the call itself is wrong. Until TA_INSUFFICIENT_HISTORY
+ * was appended (#236) it shared TA_BAD_PARAM with all of them, and the two were
+ * indistinguishable.
+ *
+ * One case per distinct shape the generator emits the arm in -- a plain
+ * transcribed body (SMA), a composed capture guard (BBANDS), the dispatch tier's
+ * own precheck (MA), the period bank (MAVP), a candlestick (CDLDOJI), the
+ * identity fast path (EMA at period 1 with an unstable period to lift its
+ * lookback off zero) -- plus the two OpenAndFill entry points, which are
+ * separate emissions from their Open.
+ *
+ * The identity and period-bank-OpenAndFill cases are here because they were
+ * MISSED: the first version of this probe covered six shapes and neither of
+ * those was among them, so eleven C entry points kept answering the catch-all
+ * with every gate green. The corpus-wide structural check
+ * (scripts/check_stream_retcodes.py) is what covers the shapes nobody thought
+ * to write a case for; this file covers the ones worth watching execute.
+ *
+ * Every case carries two controls, because the assertion alone would pass
+ * against a stream that answered TA_INSUFFICIENT_HISTORY for everything:
+ * ONE MORE BAR must succeed (so the rejection is about the length), and a bad
+ * parameter at sufficient history must still answer TA_BAD_PARAM (so the new
+ * code did not simply replace the catch-all).
+ */
+static int shShort, shControl;
+
+#define SH_CHECK( name, lookbackExpr, shortOpen, enoughOpen, badParamOpen, closeCall ) \
+   do {                                                                        \
+      int lb__ = (lookbackExpr);                                               \
+      TA_RetCode rc__;                                                         \
+      if( lb__ < 1 )                                                           \
+      {                                                                        \
+         printf( "\nFailed: %s has lookback %d -- no short history exists\n",   \
+                 name, lb__ );                                                 \
+         return TA_STREAM_SHORT_HISTORY_CONTROL;                               \
+      }                                                                        \
+      rc__ = (shortOpen);                                                      \
+      if( rc__ == TA_SUCCESS )                                                 \
+      {                                                                        \
+         printf( "\nFailed: %s opened on %d bars, one short of its lookback\n", \
+                 name, lb__ );                                                 \
+         return TA_STREAM_SHORT_HISTORY_ACCEPTED;                              \
+      }                                                                        \
+      if( rc__ != TA_INSUFFICIENT_HISTORY )                                    \
+      {                                                                        \
+         printf( "\nFailed: %s short history returned %d, expected "            \
+                 "TA_INSUFFICIENT_HISTORY (%d)\n",                             \
+                 name, (int)rc__, (int)TA_INSUFFICIENT_HISTORY );              \
+         return TA_STREAM_SHORT_HISTORY_WRONG_CODE;                            \
+      }                                                                        \
+      shShort++;                                                               \
+      rc__ = (enoughOpen);                                                     \
+      if( rc__ != TA_SUCCESS )                                                 \
+      {                                                                        \
+         printf( "\nFailed: %s rejected %d bars (lookback + 1) with %d\n",      \
+                 name, lb__ + 1, (int)rc__ );                                  \
+         return TA_STREAM_SHORT_HISTORY_CONTROL;                               \
+      }                                                                        \
+      (closeCall);                                                             \
+      shControl++;                                                             \
+      rc__ = (badParamOpen);                                                   \
+      if( rc__ != TA_BAD_PARAM )                                               \
+      {                                                                        \
+         printf( "\nFailed: %s bad argument returned %d, expected "             \
+                 "TA_BAD_PARAM (%d) -- the catch-all must survive\n",          \
+                 name, (int)rc__, (int)TA_BAD_PARAM );                         \
+         return TA_STREAM_SHORT_HISTORY_CONTROL;                               \
+      }                                                                        \
+      shControl++;                                                             \
+   } while(0)
+
+static ErrorNumber testStreamShortHistory( void )
+{
+   /* A monotone series: every value distinct and finite, so nothing here can be
+    * rejected for any reason but its length. */
+   static double bars[512];
+   static double periods[512];
+   ErrorNumber retValue;
+   int i;
+
+   /* The candle-settings test above ends with freeLib(), so the globals a
+    * candlestick lookback reads are zeroed by the time this runs. Without this
+    * the CDLDOJI leg would see lookback 0 and have no short history to give. */
+   retValue = allocLib();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "\nFailed: Can't initialize the library\n" );
+      return retValue;
+   }
+
+   shShort = shControl = 0;
+
+   for( i = 0; i < 512; i++ )
+   {
+      bars[i] = 100.0 + (double)i * 0.25;
+      periods[i] = 5.0;
+   }
+
+   /* Plain transcribed body. */
+   {
+      TA_SMA_Stream *st = NULL;
+      double v = 0.0;
+      SH_CHECK( "TA_SMA_Open", TA_SMA_Lookback( 30 ),
+                TA_SMA_Open( &st, bars, TA_SMA_Lookback( 30 ), 30, &v ),
+                TA_SMA_Open( &st, bars, TA_SMA_Lookback( 30 ) + 1, 30, &v ),
+                TA_SMA_Open( &st, bars, 200, 0, &v ),
+                TA_SMA_Close( st ) );
+   }
+
+   /* Composed: the capture guard after the sub-streams have run. */
+   {
+      TA_BBANDS_Stream *st = NULL;
+      double a = 0.0, b = 0.0, c = 0.0;
+      int lb = TA_BBANDS_Lookback( 20, 2.0, 2.0, TA_MAType_SMA );
+      SH_CHECK( "TA_BBANDS_Open", lb,
+                TA_BBANDS_Open( &st, bars, lb, 20, 2.0, 2.0, TA_MAType_SMA, &a, &b, &c ),
+                TA_BBANDS_Open( &st, bars, lb + 1, 20, 2.0, 2.0, TA_MAType_SMA, &a, &b, &c ),
+                TA_BBANDS_Open( &st, bars, 200, 0, 2.0, 2.0, TA_MAType_SMA, &a, &b, &c ),
+                TA_BBANDS_Close( st ) );
+   }
+
+   /* Dispatch tier: its own precheck, before delegating to the selected arm. */
+   {
+      TA_MA_Stream *st = NULL;
+      double v = 0.0;
+      int lb = TA_MA_Lookback( 30, TA_MAType_EMA );
+      SH_CHECK( "TA_MA_Open", lb,
+                TA_MA_Open( &st, bars, lb, 30, TA_MAType_EMA, &v ),
+                TA_MA_Open( &st, bars, lb + 1, 30, TA_MAType_EMA, &v ),
+                TA_MA_Open( &st, bars, 200, 0, TA_MAType_EMA, &v ),
+                TA_MA_Close( st ) );
+   }
+
+   /* Period bank. */
+   {
+      TA_MAVP_Stream *st = NULL;
+      double v = 0.0;
+      int lb = TA_MAVP_Lookback( 2, 30, TA_MAType_SMA );
+      SH_CHECK( "TA_MAVP_Open", lb,
+                TA_MAVP_Open( &st, bars, periods, lb, 2, 30, TA_MAType_SMA, &v ),
+                TA_MAVP_Open( &st, bars, periods, lb + 1, 2, 30, TA_MAType_SMA, &v ),
+                TA_MAVP_Open( &st, bars, periods, 200, 2, 0, TA_MAType_SMA, &v ),
+                TA_MAVP_Close( st ) );
+   }
+
+   /* Candlestick: an integer output, and the settings-driven averaging window. */
+   {
+      TA_CDLDOJI_Stream *st = NULL;
+      int v = 0;
+      int lb = TA_CDLDOJI_Lookback();
+      SH_CHECK( "TA_CDLDOJI_Open", lb,
+                TA_CDLDOJI_Open( &st, bars, bars, bars, bars, lb, &v ),
+                TA_CDLDOJI_Open( &st, bars, bars, bars, bars, lb + 1, &v ),
+                /* No optional parameter to spoil: an empty history is the other
+                 * rejection this tier owns (rule S-2), and it is still the
+                 * catch-all. */
+                TA_CDLDOJI_Open( &st, bars, bars, bars, bars, 0, &v ),
+                TA_CDLDOJI_Close( st ) );
+   }
+
+   /* The IDENTITY fast path: a period that makes the function a copy of its
+    * input. Its guard is emitted separately from the transcribed body, and it
+    * was one of the two C sites that kept answering the catch-all when
+    * TA_INSUFFICIENT_HISTORY was introduced -- neither reachable by any of the
+    * probes above, because they all use a period well above 1.
+    *
+    * At period 1 the lookback is 0 and no short history exists, so the arm is
+    * unreachable until an unstable period lifts it. That is exactly the
+    * configuration the divergence lives in.
+    */
+   {
+      TA_EMA_Stream *st = NULL;
+      double v = 0.0;
+      int lb;
+      TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 5 );
+      lb = TA_EMA_Lookback( 1 );
+      SH_CHECK( "TA_EMA_Open (identity, unstable 5)", lb,
+                TA_EMA_Open( &st, bars, lb, 1, &v ),
+                TA_EMA_Open( &st, bars, lb + 1, 1, &v ),
+                TA_EMA_Open( &st, bars, 200, 0, &v ),
+                TA_EMA_Close( st ) );
+      TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 0 );
+   }
+
+   /* The period BANK's own OpenAndFill guard, which is emitted separately from
+    * the Open above -- the other of the two missed C sites. MAVP_Open and
+    * MAVP_OpenAndFill answered DIFFERENT codes for the same short history.
+    */
+   {
+      TA_MAVP_Stream *st = NULL;
+      static double out2[512];
+      int beg = 0, nb = 0;
+      int lb = TA_MAVP_Lookback( 2, 30, TA_MAType_SMA );
+      SH_CHECK( "TA_MAVP_OpenAndFill", lb,
+                TA_MAVP_OpenAndFill( &st, bars, periods, lb, 2, 30, TA_MAType_SMA, &beg, &nb, out2 ),
+                TA_MAVP_OpenAndFill( &st, bars, periods, lb + 1, 2, 30, TA_MAType_SMA, &beg, &nb, out2 ),
+                TA_MAVP_OpenAndFill( &st, bars, periods, 200, 2, 0, TA_MAType_SMA, &beg, &nb, out2 ),
+                TA_MAVP_Close( st ) );
+   }
+
+   /* OpenAndFill is a separate entry point with its own emission. */
+   {
+      TA_SMA_Stream *st = NULL;
+      static double out[512];
+      int beg = 0, nb = 0;
+      int lb = TA_SMA_Lookback( 30 );
+      SH_CHECK( "TA_SMA_OpenAndFill", lb,
+                TA_SMA_OpenAndFill( &st, bars, lb, 30, &beg, &nb, out ),
+                TA_SMA_OpenAndFill( &st, bars, lb + 1, 30, &beg, &nb, out ),
+                TA_SMA_OpenAndFill( &st, bars, 200, 0, &beg, &nb, out ),
+                TA_SMA_Close( st ) );
+   }
+
+   printf( "  Streaming short history (S-6): %d rejection(s) reporting "
+           "TA_INSUFFICIENT_HISTORY, %d control(s)\n", shShort, shControl );
+
+   /* Literal floors, not derived from the cases above: a count computed from the
+    * loop would move with a deleted case and still "pass". */
+   if( shShort < 8 || shControl < 16 )
+   {
+      printf( "\nFailed: the short-history gate ran fewer checks than it was "
+              "written with\n" );
+      return TA_STREAM_SHORT_HISTORY_VACUOUS;
+   }
+
+   return freeLib();
 }
 
 /* The published value of every enumerator that has ever shipped, pinned.
@@ -156,10 +397,16 @@ ErrorNumber test_internals( void )
  * enums.yaml; an existing row must never change. The literals are deliberately
  * hardcoded -- comparing an enumerator to itself would prove nothing.
  *
- * This pins C only, which is sufficient: every other surface (the Rust crate,
- * the shipped Java enum, all four servers) is generated from the same
- * enums.yaml that generates this header, and the generator already fails if the
- * hand-maintained Rust copy drifts from it.
+ * This pins C only. For TA_MAType and TA_FuncUnstId that is sufficient: every
+ * other surface (the Rust crate, the shipped Java enum, all four servers) is
+ * generated from the same enums.yaml that generates this header, and the
+ * generator already fails if the hand-maintained Rust copy drifts from it.
+ *
+ * TA_RetCode is NOT in enums.yaml and nothing generates its Rust, Java or C#
+ * copies -- each is hand-written, and the number a backend puts on the wire is
+ * carried by the member there (Rust `as_c_int`, Java `asCInt`, C#'s explicit
+ * discriminants). So for TA_RetCode this file pins the C numbering only, and
+ * cross-language agreement is what the ta_regtest server comparison tests.
  */
 static ErrorNumber testEnumValueContract( void )
 {
@@ -231,6 +478,7 @@ static ErrorNumber testEnumValueContract( void )
       { "TA_INVALID_LIST_TYPE",            14, TA_INVALID_LIST_TYPE },
       { "TA_BAD_OBJECT",                   15, TA_BAD_OBJECT },
       { "TA_NOT_SUPPORTED",                16, TA_NOT_SUPPORTED },
+      { "TA_INSUFFICIENT_HISTORY",         17, TA_INSUFFICIENT_HISTORY },
       { "TA_INTERNAL_ERROR",             5000, TA_INTERNAL_ERROR },
       { "TA_UNKNOWN_ERR",              0xFFFF, TA_UNKNOWN_ERR }
    };
@@ -308,6 +556,42 @@ static ErrorNumber testEnumValueContract( void )
                     v, info.enumStr );
             return TA_INTERNAL_ENUM_CONTRACT_FAIL_3;
          }
+      }
+   }
+
+   /* The other direction, and the one the probe above cannot see. It observes
+    * TA_SetRetCodeInfo, whose table comes from src/ta_common/ta_retcode.csv --
+    * so a member added to the ta_defs.h enum and to this table, but NOT to the
+    * csv, reads as "not a defined code" and is skipped silently. Every pin above
+    * names an enumerator that exists (it is compiled), so requiring the table to
+    * know it by that name is exactly the enum -> csv check.
+    *
+    * TA_UNKNOWN_ERR is the table's not-found answer and is not a csv row; it
+    * round-trips through this check for the same reason, so it needs no
+    * exemption.
+    */
+   for( i=0; i < sizeof(retCodePins)/sizeof(retCodePins[0]); i++ )
+   {
+      TA_RetCodeInfo info;
+
+      /* TA_SetRetCodeInfo answers the 5000-5999 band from a hardcoded literal
+       * before it consults the table at all, so this check cannot see that row
+       * -- it would compare the trap's "TA_INTERNAL_ERROR" against the pin's
+       * identical text whether the csv row exists, is renamed, or is deleted.
+       * Skipped rather than left to pass vacuously. The band itself is pinned by
+       * the probe above, which walks the whole value space.
+       */
+      if( retCodePins[i].shipped >= 5000 && retCodePins[i].shipped <= 5999 )
+         continue;
+
+      TA_SetRetCodeInfo( (TA_RetCode)retCodePins[i].shipped, &info );
+      if( strcmp( info.enumStr, retCodePins[i].name ) != 0 )
+      {
+         printf( "\nFailed: TA_RetCode %d is %s in include/ta_defs.h but %s in\n"
+                 "        src/ta_common/ta_retcode.csv. The two are hand-written and\n"
+                 "        nothing else compares them -- add the missing row.\n",
+                 retCodePins[i].shipped, retCodePins[i].name, info.enumStr );
+         return TA_INTERNAL_ENUM_CONTRACT_FAIL_3;
       }
    }
 

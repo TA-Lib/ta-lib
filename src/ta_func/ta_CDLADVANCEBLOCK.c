@@ -644,7 +644,7 @@ static TA_RetCode TA_CDLADVANCEBLOCK_OpenCore( struct TA_CDLADVANCEBLOCK_Stream 
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */

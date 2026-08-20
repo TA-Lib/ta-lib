@@ -37,13 +37,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode MIDPOINT_Internal( int startIdx,
-                              int endIdx,
-                              double inReal[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
+   RetCode MIDPOINT_Body( int startIdx,
+                          int endIdx,
+                          double inReal[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       double[] sufHighest;
       int sufHighest_Idx = 0;
@@ -225,13 +225,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode MIDPOINT_Internal( int startIdx,
-                              int endIdx,
-                              float inReal[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
+   RetCode MIDPOINT_Body( int startIdx,
+                          int endIdx,
+                          float inReal[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       double[] sufHighest;
       int sufHighest_Idx = 0;
@@ -411,6 +411,7 @@
                              int optInTimePeriod,
                              double outReal[] )
    {
+      requireIndexRange("MIDPOINT", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, MIDPOINT_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -418,11 +419,30 @@
       requireLength("MIDPOINT", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MIDPOINT_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MIDPOINT_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MIDPOINT", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode MIDPOINT_Internal( int startIdx,
+                              int endIdx,
+                              double inReal[],
+                              int optInTimePeriod,
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outReal[] )
+   {
+      try {
+         return MIDPOINT_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Midpoint over a period: the average of the highest and lowest input values
@@ -473,6 +493,7 @@
                              int optInTimePeriod,
                              double outReal[] )
    {
+      requireIndexRange("MIDPOINT", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, MIDPOINT_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -480,11 +501,30 @@
       requireLength("MIDPOINT", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MIDPOINT_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MIDPOINT_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MIDPOINT", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode MIDPOINT_Internal( int startIdx,
+                              int endIdx,
+                              float inReal[],
+                              int optInTimePeriod,
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outReal[] )
+   {
+      try {
+         return MIDPOINT_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -586,7 +626,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("MIDPOINT update: BadParam");
+            throw new TaLibArgumentException("MIDPOINT update: BadParam", RetCode.BadParam);
          core.MIDPOINT_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -600,7 +640,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("MIDPOINT peek: BadParam");
+            throw new TaLibArgumentException("MIDPOINT peek: BadParam", RetCode.BadParam);
          MIDPOINT_Stream scratch = new MIDPOINT_Stream(this);
          core.MIDPOINT_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -718,7 +758,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Proceed with the calculation for the requested range.
        * Note that this algorithm allows the input and
@@ -844,13 +884,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MIDPOINT openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MIDPOINT openAndFill: internal error");
+         throw new TaLibStateException("MIDPOINT openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("MIDPOINT openAndFill: " + retCode);
+      throw new TaLibArgumentException("MIDPOINT openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind MIDPOINT_Open (composition seam). */
    MIDPOINT_Stream MIDPOINT_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -860,13 +900,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MIDPOINT open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MIDPOINT open: internal error");
+         throw new TaLibStateException("MIDPOINT open: internal error", retCode);
       }
-      throw new IllegalArgumentException("MIDPOINT open: " + retCode);
+      throw new TaLibArgumentException("MIDPOINT open: " + retCode, retCode);
    }
    /**
     * Open a live MIDPOINT stream over the warm-up history; the handle's
@@ -901,11 +941,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MIDPOINT openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MIDPOINT openAndFill: internal error");
+         throw new TaLibStateException("MIDPOINT openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("MIDPOINT openAndFill: " + retCode);
+      throw new TaLibArgumentException("MIDPOINT openAndFill: " + retCode, retCode);
    }

@@ -88,14 +88,14 @@ public partial class Core
       return VAR_Lookback(optInTimePeriod, optInNbDev) ;
 
    }
-   internal RetCode STDDEV( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<double> inReal,
-                            int optInTimePeriod,
-                            double optInNbDev,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outReal )
+   internal RetCode STDDEV_Body( int startIdx,
+                                 int endIdx,
+                                 ReadOnlySpan<double> inReal,
+                                 int optInTimePeriod,
+                                 double optInNbDev,
+                                 out int outBegIdx,
+                                 out int outNBElement,
+                                 Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -122,7 +122,10 @@ public partial class Core
          return RetCode.BadParam ;
       }
       /* Calculate the variance. */
-      retCode = VAR(startIdx, endIdx, inReal, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, outReal);
+      OutRange _xr0 = VAR(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outReal);
+      outBegIdx = _xr0.BegIdx;
+      outNBElement = _xr0.Count;
+      retCode = RetCode.Success;
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -152,14 +155,14 @@ public partial class Core
       }
       return RetCode.Success ;
    }
-   internal RetCode STDDEV( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<float> inReal,
-                            int optInTimePeriod,
-                            double optInNbDev,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outReal )
+   internal RetCode STDDEV_Body( int startIdx,
+                                 int endIdx,
+                                 ReadOnlySpan<float> inReal,
+                                 int optInTimePeriod,
+                                 double optInNbDev,
+                                 out int outBegIdx,
+                                 out int outNBElement,
+                                 Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -182,7 +185,10 @@ public partial class Core
       } else if( !(optInNbDev >= TA_REAL_MIN && optInNbDev <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      retCode = VAR(startIdx, endIdx, inReal, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, outReal);
+      OutRange _xr0 = VAR(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outReal);
+      outBegIdx = _xr0.BegIdx;
+      outNBElement = _xr0.Count;
+      retCode = RetCode.Success;
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -264,11 +270,28 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("STDDEV", "inReal", inReal.Length, guardInLen);
       RequireLength("STDDEV", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = STDDEV(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = STDDEV_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("STDDEV", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode STDDEV( int startIdx,
+                            int endIdx,
+                            ReadOnlySpan<double> inReal,
+                            int optInTimePeriod,
+                            double optInNbDev,
+                            out int outBegIdx,
+                            out int outNBElement,
+                            Span<double> outReal )
+   {
+      try {
+         return STDDEV_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Rolling standard deviation of a series over a window, scaled by a
@@ -333,11 +356,28 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("STDDEV", "inReal", inReal.Length, guardInLen);
       RequireLength("STDDEV", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = STDDEV(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = STDDEV_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("STDDEV", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode STDDEV( int startIdx,
+                            int endIdx,
+                            ReadOnlySpan<float> inReal,
+                            int optInTimePeriod,
+                            double optInNbDev,
+                            out int outBegIdx,
+                            out int outNBElement,
+                            Span<double> outReal )
+   {
+      try {
+         return STDDEV_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -507,7 +547,7 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( historyLen < STDDEV_Lookback(optInTimePeriod, optInNbDev) + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.InsufficientHistory;
       }
       Span<double> sc_outReal = outStride == 1 ? outReal : new double[historyLen];
       /* Calculate the variance. */
@@ -544,7 +584,7 @@ public partial class Core
       }
       /* Capture the live producer state + sub handles. */
       if( outNBElement < 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.InsufficientHistory;
       }
       sp.optInTimePeriod = optInTimePeriod;
       sp.optInNbDev = optInNbDev;
@@ -617,7 +657,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public STDDEV_Stream STDDEV_Open( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDev )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return STDDEV_OpenInternal(inReal, 0, optInTimePeriod, optInNbDev);
    }
 
@@ -649,7 +689,7 @@ public partial class Core
    /// output.</exception>
    public STDDEV_Stream STDDEV_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDev, Span<double> outReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       STDDEV_Stream sp = new STDDEV_Stream(this);
       RetCode retCode = STDDEV_OpenAndFillBody(sp, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

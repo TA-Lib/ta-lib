@@ -83,13 +83,13 @@ public partial class Core
       return 63 + this.unstablePeriod[(int)FuncUnstId.HT_SINE] ;
 
    }
-   internal RetCode HT_SINE( int startIdx,
-                             int endIdx,
-                             ReadOnlySpan<double> inReal,
-                             out int outBegIdx,
-                             out int outNBElement,
-                             Span<double> outSine,
-                             Span<double> outLeadSine )
+   internal RetCode HT_SINE_Body( int startIdx,
+                                  int endIdx,
+                                  ReadOnlySpan<double> inReal,
+                                  out int outBegIdx,
+                                  out int outNBElement,
+                                  Span<double> outSine,
+                                  Span<double> outLeadSine )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -503,13 +503,13 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode HT_SINE( int startIdx,
-                             int endIdx,
-                             ReadOnlySpan<float> inReal,
-                             out int outBegIdx,
-                             out int outNBElement,
-                             Span<double> outSine,
-                             Span<double> outLeadSine )
+   internal RetCode HT_SINE_Body( int startIdx,
+                                  int endIdx,
+                                  ReadOnlySpan<float> inReal,
+                                  out int outBegIdx,
+                                  out int outNBElement,
+                                  Span<double> outSine,
+                                  Span<double> outLeadSine )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -904,11 +904,27 @@ public partial class Core
       RequireLength("HT_SINE", "inReal", inReal.Length, guardInLen);
       RequireLength("HT_SINE", "outSine", outSine.Length, guardOutLen);
       RequireLength("HT_SINE", "outLeadSine", outLeadSine.Length, guardOutLen);
-      RetCode retCode = HT_SINE(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outSine, outLeadSine);
+      RetCode retCode = HT_SINE_Body(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outSine, outLeadSine);
       if( retCode != RetCode.Success ) {
          throw Failure("HT_SINE", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode HT_SINE( int startIdx,
+                             int endIdx,
+                             ReadOnlySpan<double> inReal,
+                             out int outBegIdx,
+                             out int outNBElement,
+                             Span<double> outSine,
+                             Span<double> outLeadSine )
+   {
+      try {
+         return HT_SINE_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outSine, outLeadSine);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Hilbert Transform SineWave: derives the dominant-cycle phase from price
@@ -966,11 +982,27 @@ public partial class Core
       RequireLength("HT_SINE", "inReal", inReal.Length, guardInLen);
       RequireLength("HT_SINE", "outSine", outSine.Length, guardOutLen);
       RequireLength("HT_SINE", "outLeadSine", outLeadSine.Length, guardOutLen);
-      RetCode retCode = HT_SINE(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outSine, outLeadSine);
+      RetCode retCode = HT_SINE_Body(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outSine, outLeadSine);
       if( retCode != RetCode.Success ) {
          throw Failure("HT_SINE", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode HT_SINE( int startIdx,
+                             int endIdx,
+                             ReadOnlySpan<float> inReal,
+                             out int outBegIdx,
+                             out int outNBElement,
+                             Span<double> outSine,
+                             Span<double> outLeadSine )
+   {
+      try {
+         return HT_SINE_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outSine, outLeadSine);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -1653,7 +1685,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outBegIdx = startIdx;
       /* Initialize the price smoother, which is simply a weighted
@@ -2096,7 +2128,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public HT_SINE_Stream HT_SINE_Open( ReadOnlySpan<double> inReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return HT_SINE_OpenInternal(inReal, 0);
    }
 
@@ -2126,7 +2158,7 @@ public partial class Core
    /// output.</exception>
    public HT_SINE_Stream HT_SINE_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outSine, Span<double> outLeadSine )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       HT_SINE_Stream sp = new HT_SINE_Stream(this);
       RetCode retCode = HT_SINE_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outSine, outLeadSine);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

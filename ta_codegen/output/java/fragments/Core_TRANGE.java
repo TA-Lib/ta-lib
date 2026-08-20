@@ -27,14 +27,14 @@
       return 1 ;
 
    }
-   RetCode TRANGE_Internal( int startIdx,
-                            int endIdx,
-                            double inHigh[],
-                            double inLow[],
-                            double inClose[],
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
+   RetCode TRANGE_Body( int startIdx,
+                        int endIdx,
+                        double inHigh[],
+                        double inLow[],
+                        double inClose[],
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int today = 0;
       int outIdx = 0;
@@ -99,14 +99,14 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode TRANGE_Internal( int startIdx,
-                            int endIdx,
-                            float inHigh[],
-                            float inLow[],
-                            float inClose[],
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
+   RetCode TRANGE_Body( int startIdx,
+                        int endIdx,
+                        float inHigh[],
+                        float inLow[],
+                        float inClose[],
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int today = 0;
       int outIdx = 0;
@@ -203,6 +203,7 @@
                            double inClose[],
                            double outReal[] )
    {
+      requireIndexRange("TRANGE", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, TRANGE_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -212,11 +213,31 @@
       requireLength("TRANGE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TRANGE_Internal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TRANGE_Body(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("TRANGE", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode TRANGE_Internal( int startIdx,
+                            int endIdx,
+                            double inHigh[],
+                            double inLow[],
+                            double inClose[],
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            double outReal[] )
+   {
+      try {
+         return TRANGE_Body(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * True Range: the greatest of today's high-low span and the two gaps between
@@ -272,6 +293,7 @@
                            float inClose[],
                            double outReal[] )
    {
+      requireIndexRange("TRANGE", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, TRANGE_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -281,11 +303,31 @@
       requireLength("TRANGE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TRANGE_Internal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TRANGE_Body(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("TRANGE", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode TRANGE_Internal( int startIdx,
+                            int endIdx,
+                            float inHigh[],
+                            float inLow[],
+                            float inClose[],
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            double outReal[] )
+   {
+      try {
+         return TRANGE_Body(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -351,7 +393,7 @@
        */
       public double update( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("TRANGE update: BadParam");
+            throw new TaLibArgumentException("TRANGE update: BadParam", RetCode.BadParam);
          core.TRANGE_StreamStep(this, inHigh, inLow, inClose);
          return this.cur_outReal;
       }
@@ -365,7 +407,7 @@
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("TRANGE peek: BadParam");
+            throw new TaLibArgumentException("TRANGE peek: BadParam", RetCode.BadParam);
          TRANGE_Stream scratch = new TRANGE_Stream(this);
          core.TRANGE_StreamStep(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
@@ -453,7 +495,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outIdx = 0;
       today = startIdx;
@@ -509,13 +551,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("TRANGE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TRANGE openAndFill: internal error");
+         throw new TaLibStateException("TRANGE openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("TRANGE openAndFill: " + retCode);
+      throw new TaLibArgumentException("TRANGE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind TRANGE_Open (composition seam). */
    TRANGE_Stream TRANGE_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -525,13 +567,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("TRANGE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TRANGE open: internal error");
+         throw new TaLibStateException("TRANGE open: internal error", retCode);
       }
-      throw new IllegalArgumentException("TRANGE open: " + retCode);
+      throw new TaLibArgumentException("TRANGE open: " + retCode, retCode);
    }
    /**
     * Open a live TRANGE stream over the warm-up history; the handle's
@@ -566,11 +608,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("TRANGE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TRANGE openAndFill: internal error");
+         throw new TaLibStateException("TRANGE openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("TRANGE openAndFill: " + retCode);
+      throw new TaLibArgumentException("TRANGE openAndFill: " + retCode, retCode);
    }

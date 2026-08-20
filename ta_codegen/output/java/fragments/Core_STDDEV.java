@@ -44,14 +44,14 @@
       return VAR_Lookback(optInTimePeriod, optInNbDev) ;
 
    }
-   RetCode STDDEV_Internal( int startIdx,
-                            int endIdx,
-                            double inReal[],
-                            int optInTimePeriod,
-                            double optInNbDev,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
+   RetCode STDDEV_Body( int startIdx,
+                        int endIdx,
+                        double inReal[],
+                        int optInTimePeriod,
+                        double optInNbDev,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int i = 0;
       RetCode retCode;
@@ -73,7 +73,10 @@
          return RetCode.BadParam;
       }
       /* Calculate the variance. */
-      retCode = VAR_Internal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
+      OutRange _xr0 = VAR(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outReal);
+      outBegIdx.value = _xr0.begIdx();
+      outNBElement.value = _xr0.count();
+      retCode = RetCode.Success;
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -103,14 +106,14 @@
       }
       return RetCode.Success ;
    }
-   RetCode STDDEV_Internal( int startIdx,
-                            int endIdx,
-                            float inReal[],
-                            int optInTimePeriod,
-                            double optInNbDev,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
+   RetCode STDDEV_Body( int startIdx,
+                        int endIdx,
+                        float inReal[],
+                        int optInTimePeriod,
+                        double optInNbDev,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int i = 0;
       RetCode retCode;
@@ -131,7 +134,10 @@
       } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      retCode = VAR_Internal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
+      OutRange _xr0 = VAR(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outReal);
+      outBegIdx.value = _xr0.begIdx();
+      outNBElement.value = _xr0.count();
+      retCode = RetCode.Success;
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -208,6 +214,7 @@
                            double optInNbDev,
                            double outReal[] )
    {
+      requireIndexRange("STDDEV", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, STDDEV_Lookback(optInTimePeriod, optInNbDev));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -215,11 +222,31 @@
       requireLength("STDDEV", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = STDDEV_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
+      RetCode retCode = STDDEV_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("STDDEV", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode STDDEV_Internal( int startIdx,
+                            int endIdx,
+                            double inReal[],
+                            int optInTimePeriod,
+                            double optInNbDev,
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            double outReal[] )
+   {
+      try {
+         return STDDEV_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Rolling standard deviation of a series over a window, scaled by a
@@ -276,6 +303,7 @@
                            double optInNbDev,
                            double outReal[] )
    {
+      requireIndexRange("STDDEV", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, STDDEV_Lookback(optInTimePeriod, optInNbDev));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -283,11 +311,31 @@
       requireLength("STDDEV", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = STDDEV_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
+      RetCode retCode = STDDEV_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("STDDEV", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode STDDEV_Internal( int startIdx,
+                            int endIdx,
+                            float inReal[],
+                            int optInTimePeriod,
+                            double optInNbDev,
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            double outReal[] )
+   {
+      try {
+         return STDDEV_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -360,7 +408,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("STDDEV update: BadParam");
+            throw new TaLibArgumentException("STDDEV update: BadParam", RetCode.BadParam);
          core.STDDEV_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -374,7 +422,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("STDDEV peek: BadParam");
+            throw new TaLibArgumentException("STDDEV peek: BadParam", RetCode.BadParam);
          STDDEV_Stream scratch = new STDDEV_Stream(this);
          core.STDDEV_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -445,7 +493,7 @@
          return RetCode.BadParam;
       }
       if( historyLen < STDDEV_Lookback(optInTimePeriod, optInNbDev) + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.InsufficientHistory;
       }
       double[] sc_outReal = outStride == 1 ? outReal : new double[historyLen];
       /* Calculate the variance. */
@@ -482,7 +530,7 @@
       }
       /* Capture the live producer state + sub handles. */
       if( outNBElement.value < 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.InsufficientHistory;
       }
       sp.optInTimePeriod = optInTimePeriod;
       sp.optInNbDev = optInNbDev;
@@ -516,13 +564,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("STDDEV openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("STDDEV openAndFill: internal error");
+         throw new TaLibStateException("STDDEV openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("STDDEV openAndFill: " + retCode);
+      throw new TaLibArgumentException("STDDEV openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind STDDEV_Open (composition seam). */
    STDDEV_Stream STDDEV_OpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDev )
@@ -532,13 +580,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("STDDEV open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("STDDEV open: internal error");
+         throw new TaLibStateException("STDDEV open: internal error", retCode);
       }
-      throw new IllegalArgumentException("STDDEV open: " + retCode);
+      throw new TaLibArgumentException("STDDEV open: " + retCode, retCode);
    }
    /**
     * Open a live STDDEV stream over the warm-up history; the handle's
@@ -573,11 +621,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("STDDEV openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("STDDEV openAndFill: internal error");
+         throw new TaLibStateException("STDDEV openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("STDDEV openAndFill: " + retCode);
+      throw new TaLibArgumentException("STDDEV openAndFill: " + retCode, retCode);
    }

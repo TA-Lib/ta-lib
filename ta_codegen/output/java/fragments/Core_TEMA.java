@@ -44,13 +44,13 @@
       return retValue * 3 ;
 
    }
-   RetCode TEMA_Internal( int startIdx,
-                          int endIdx,
-                          double inReal[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode TEMA_Body( int startIdx,
+                      int endIdx,
+                      double inReal[],
+                      int optInTimePeriod,
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       double prevEMA1 = 0;
       double prevEMA2 = 0;
@@ -218,13 +218,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode TEMA_Internal( int startIdx,
-                          int endIdx,
-                          float inReal[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode TEMA_Body( int startIdx,
+                      int endIdx,
+                      float inReal[],
+                      int optInTimePeriod,
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outReal[] )
    {
       double prevEMA1 = 0;
       double prevEMA2 = 0;
@@ -365,6 +365,7 @@
                          int optInTimePeriod,
                          double outReal[] )
    {
+      requireIndexRange("TEMA", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, TEMA_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -372,11 +373,30 @@
       requireLength("TEMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TEMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TEMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("TEMA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode TEMA_Internal( int startIdx,
+                          int endIdx,
+                          double inReal[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+   {
+      try {
+         return TEMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Triple Exponential Moving Average: a smoothed price overlay built from
@@ -431,6 +451,7 @@
                          int optInTimePeriod,
                          double outReal[] )
    {
+      requireIndexRange("TEMA", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, TEMA_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -438,11 +459,30 @@
       requireLength("TEMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TEMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TEMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("TEMA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode TEMA_Internal( int startIdx,
+                          int endIdx,
+                          float inReal[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
+   {
+      try {
+         return TEMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -517,7 +557,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("TEMA update: BadParam");
+            throw new TaLibArgumentException("TEMA update: BadParam", RetCode.BadParam);
          core.TEMA_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -531,7 +571,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("TEMA peek: BadParam");
+            throw new TaLibArgumentException("TEMA peek: BadParam", RetCode.BadParam);
          TEMA_Stream scratch = new TEMA_Stream(this);
          core.TEMA_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -592,7 +632,7 @@
       }
       if( optInTimePeriod == 1 ) {
          if( historyLen < TEMA_Lookback(optInTimePeriod) + 1 ) {
-            return RetCode.OutOfRangeEndIndex;
+            return RetCode.InsufficientHistory;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.prevEMA1 = 0.0;
@@ -646,7 +686,7 @@
       }
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx ) {
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* The three EMA are computed in a single lockstep pass: each new
        * EMA1 value is immediately fed into EMA2, and each new EMA2 value
@@ -776,13 +816,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("TEMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TEMA openAndFill: internal error");
+         throw new TaLibStateException("TEMA openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("TEMA openAndFill: " + retCode);
+      throw new TaLibArgumentException("TEMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind TEMA_Open (composition seam). */
    TEMA_Stream TEMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -792,13 +832,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("TEMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TEMA open: internal error");
+         throw new TaLibStateException("TEMA open: internal error", retCode);
       }
-      throw new IllegalArgumentException("TEMA open: " + retCode);
+      throw new TaLibArgumentException("TEMA open: " + retCode, retCode);
    }
    /**
     * Open a live TEMA stream over the warm-up history; the handle's
@@ -833,11 +873,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("TEMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("TEMA openAndFill: internal error");
+         throw new TaLibStateException("TEMA openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("TEMA openAndFill: " + retCode);
+      throw new TaLibArgumentException("TEMA openAndFill: " + retCode, retCode);
    }

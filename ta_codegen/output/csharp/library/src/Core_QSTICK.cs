@@ -78,14 +78,14 @@ public partial class Core
       return optInTimePeriod - 1 ;
 
    }
-   internal RetCode QSTICK( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<double> inOpen,
-                            ReadOnlySpan<double> inClose,
-                            int optInTimePeriod,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outReal )
+   internal RetCode QSTICK_Body( int startIdx,
+                                 int endIdx,
+                                 ReadOnlySpan<double> inOpen,
+                                 ReadOnlySpan<double> inClose,
+                                 int optInTimePeriod,
+                                 out int outBegIdx,
+                                 out int outNBElement,
+                                 Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -173,14 +173,14 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode QSTICK( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<float> inOpen,
-                            ReadOnlySpan<float> inClose,
-                            int optInTimePeriod,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outReal )
+   internal RetCode QSTICK_Body( int startIdx,
+                                 int endIdx,
+                                 ReadOnlySpan<float> inOpen,
+                                 ReadOnlySpan<float> inClose,
+                                 int optInTimePeriod,
+                                 out int outBegIdx,
+                                 out int outNBElement,
+                                 Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -293,11 +293,28 @@ public partial class Core
       RequireLength("QSTICK", "inOpen", inOpen.Length, guardInLen);
       RequireLength("QSTICK", "inClose", inClose.Length, guardInLen);
       RequireLength("QSTICK", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = QSTICK(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = QSTICK_Body(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("QSTICK", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode QSTICK( int startIdx,
+                            int endIdx,
+                            ReadOnlySpan<double> inOpen,
+                            ReadOnlySpan<double> inClose,
+                            int optInTimePeriod,
+                            out int outBegIdx,
+                            out int outNBElement,
+                            Span<double> outReal )
+   {
+      try {
+         return QSTICK_Body(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Tushar Chande and Stanley Kroll's Qstick (*The New Technical Trader*,
@@ -365,11 +382,28 @@ public partial class Core
       RequireLength("QSTICK", "inOpen", inOpen.Length, guardInLen);
       RequireLength("QSTICK", "inClose", inClose.Length, guardInLen);
       RequireLength("QSTICK", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = QSTICK(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = QSTICK_Body(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("QSTICK", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode QSTICK( int startIdx,
+                            int endIdx,
+                            ReadOnlySpan<float> inOpen,
+                            ReadOnlySpan<float> inClose,
+                            int optInTimePeriod,
+                            out int outBegIdx,
+                            out int outNBElement,
+                            Span<double> outReal )
+   {
+      try {
+         return QSTICK_Body(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -570,7 +604,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the MA calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -683,8 +717,8 @@ public partial class Core
    /// span cannot be null.</exception>
    public QSTICK_Stream QSTICK_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int optInTimePeriod )
    {
-      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inOpen.IsEmpty ) throw new TaLibArgumentException("inOpen is empty", nameof(inOpen), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       return QSTICK_OpenInternal(inOpen, inClose, 0, optInTimePeriod);
    }
 
@@ -715,8 +749,8 @@ public partial class Core
    /// output.</exception>
    public QSTICK_Stream QSTICK_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int optInTimePeriod, Span<double> outReal )
    {
-      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inOpen.IsEmpty ) throw new TaLibArgumentException("inOpen is empty", nameof(inOpen), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       QSTICK_Stream sp = new QSTICK_Stream(this);
       RetCode retCode = QSTICK_OpenAndFillBody(sp, inOpen, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

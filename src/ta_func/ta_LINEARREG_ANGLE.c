@@ -372,7 +372,7 @@ static TA_RetCode TA_LINEARREG_ANGLE_OpenCore( struct TA_LINEARREG_ANGLE_Stream 
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       outIdx = 0;
       /* Index into the output. */

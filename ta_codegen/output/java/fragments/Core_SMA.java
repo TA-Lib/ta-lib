@@ -34,13 +34,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode SMA_Internal( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode SMA_Body( int startIdx,
+                     int endIdx,
+                     double inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       double periodTotal = 0;
       double tempReal = 0;
@@ -105,13 +105,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode SMA_Internal( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode SMA_Body( int startIdx,
+                     int endIdx,
+                     float inReal[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       double periodTotal = 0;
       double tempReal = 0;
@@ -213,6 +213,7 @@
                         int optInTimePeriod,
                         double outReal[] )
    {
+      requireIndexRange("SMA", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, SMA_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -220,11 +221,30 @@
       requireLength("SMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("SMA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode SMA_Internal( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      try {
+         return SMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Simple Moving Average: the unweighted arithmetic mean of the last N input
@@ -280,6 +300,7 @@
                         int optInTimePeriod,
                         double outReal[] )
    {
+      requireIndexRange("SMA", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, SMA_Lookback(optInTimePeriod));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -287,11 +308,30 @@
       requireLength("SMA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("SMA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode SMA_Internal( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      try {
+         return SMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -373,7 +413,7 @@
        */
       public double update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("SMA update: BadParam");
+            throw new TaLibArgumentException("SMA update: BadParam", RetCode.BadParam);
          core.SMA_StreamStep(this, inReal);
          return this.cur_outReal;
       }
@@ -387,7 +427,7 @@
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("SMA peek: BadParam");
+            throw new TaLibArgumentException("SMA peek: BadParam", RetCode.BadParam);
          SMA_Stream scratch = new SMA_Stream(this);
          core.SMA_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
@@ -460,7 +500,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the MA calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -533,13 +573,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("SMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("SMA openAndFill: internal error");
+         throw new TaLibStateException("SMA openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("SMA openAndFill: " + retCode);
+      throw new TaLibArgumentException("SMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind SMA_Open (composition seam). */
    SMA_Stream SMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
@@ -549,13 +589,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("SMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("SMA open: internal error");
+         throw new TaLibStateException("SMA open: internal error", retCode);
       }
-      throw new IllegalArgumentException("SMA open: " + retCode);
+      throw new TaLibArgumentException("SMA open: " + retCode, retCode);
    }
    /**
     * Open a live SMA stream over the warm-up history; the handle's
@@ -590,11 +630,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("SMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("SMA openAndFill: internal error");
+         throw new TaLibStateException("SMA openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("SMA openAndFill: " + retCode);
+      throw new TaLibArgumentException("SMA openAndFill: " + retCode, retCode);
    }

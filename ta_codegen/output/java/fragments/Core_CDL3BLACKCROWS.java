@@ -29,15 +29,15 @@
       return ShadowVeryShort_avgPeriod + 3 ;
 
    }
-   RetCode CDL3BLACKCROWS_Internal( int startIdx,
-                                    int endIdx,
-                                    double inOpen[],
-                                    double inHigh[],
-                                    double inLow[],
-                                    double inClose[],
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    int outInteger[] )
+   RetCode CDL3BLACKCROWS_Body( int startIdx,
+                                int endIdx,
+                                double inOpen[],
+                                double inHigh[],
+                                double inLow[],
+                                double inClose[],
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                int outInteger[] )
    {
       double[] ShadowVeryShortPeriodTotal = new double[3];
       int i = 0;
@@ -130,15 +130,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode CDL3BLACKCROWS_Internal( int startIdx,
-                                    int endIdx,
-                                    float inOpen[],
-                                    float inHigh[],
-                                    float inLow[],
-                                    float inClose[],
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    int outInteger[] )
+   RetCode CDL3BLACKCROWS_Body( int startIdx,
+                                int endIdx,
+                                float inOpen[],
+                                float inHigh[],
+                                float inLow[],
+                                float inClose[],
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                int outInteger[] )
    {
       double[] ShadowVeryShortPeriodTotal = new double[3];
       int i = 0;
@@ -243,6 +243,7 @@
                                    double inClose[],
                                    int outInteger[] )
    {
+      requireIndexRange("CDL3BLACKCROWS", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CDL3BLACKCROWS_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -253,11 +254,32 @@
       requireLength("CDL3BLACKCROWS", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDL3BLACKCROWS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDL3BLACKCROWS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDL3BLACKCROWS", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode CDL3BLACKCROWS_Internal( int startIdx,
+                                    int endIdx,
+                                    double inOpen[],
+                                    double inHigh[],
+                                    double inLow[],
+                                    double inClose[],
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    int outInteger[] )
+   {
+      try {
+         return CDL3BLACKCROWS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * A four-bar pattern: a white candle followed by three consecutive black
@@ -312,6 +334,7 @@
                                    float inClose[],
                                    int outInteger[] )
    {
+      requireIndexRange("CDL3BLACKCROWS", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CDL3BLACKCROWS_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -322,11 +345,32 @@
       requireLength("CDL3BLACKCROWS", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDL3BLACKCROWS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDL3BLACKCROWS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDL3BLACKCROWS", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode CDL3BLACKCROWS_Internal( int startIdx,
+                                    int endIdx,
+                                    float inOpen[],
+                                    float inHigh[],
+                                    float inLow[],
+                                    float inClose[],
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    int outInteger[] )
+   {
+      try {
+         return CDL3BLACKCROWS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -491,7 +535,7 @@
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("CDL3BLACKCROWS update: BadParam");
+            throw new TaLibArgumentException("CDL3BLACKCROWS update: BadParam", RetCode.BadParam);
          core.CDL3BLACKCROWS_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outInteger;
       }
@@ -507,7 +551,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("CDL3BLACKCROWS peek: BadParam");
+            throw new TaLibArgumentException("CDL3BLACKCROWS peek: BadParam", RetCode.BadParam);
          CDL3BLACKCROWS_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new CDL3BLACKCROWS_Stream(this);
@@ -624,7 +668,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -762,13 +806,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDL3BLACKCROWS openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDL3BLACKCROWS openAndFill: internal error");
+         throw new TaLibStateException("CDL3BLACKCROWS openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDL3BLACKCROWS openAndFill: " + retCode);
+      throw new TaLibArgumentException("CDL3BLACKCROWS openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind CDL3BLACKCROWS_Open (composition seam). */
    CDL3BLACKCROWS_Stream CDL3BLACKCROWS_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -778,13 +822,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDL3BLACKCROWS open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDL3BLACKCROWS open: internal error");
+         throw new TaLibStateException("CDL3BLACKCROWS open: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDL3BLACKCROWS open: " + retCode);
+      throw new TaLibArgumentException("CDL3BLACKCROWS open: " + retCode, retCode);
    }
    /**
     * Open a live CDL3BLACKCROWS stream over the warm-up history; the handle's
@@ -819,11 +863,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDL3BLACKCROWS openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDL3BLACKCROWS openAndFill: internal error");
+         throw new TaLibStateException("CDL3BLACKCROWS openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDL3BLACKCROWS openAndFill: " + retCode);
+      throw new TaLibArgumentException("CDL3BLACKCROWS openAndFill: " + retCode, retCode);
    }

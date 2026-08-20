@@ -73,13 +73,13 @@ public partial class Core
       return 0 ;
 
    }
-   internal RetCode MEDPRICE( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<double> inHigh,
-                              ReadOnlySpan<double> inLow,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outReal )
+   internal RetCode MEDPRICE_Body( int startIdx,
+                                   int endIdx,
+                                   ReadOnlySpan<double> inHigh,
+                                   ReadOnlySpan<double> inLow,
+                                   out int outBegIdx,
+                                   out int outNBElement,
+                                   Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -108,13 +108,13 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode MEDPRICE( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<float> inHigh,
-                              ReadOnlySpan<float> inLow,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outReal )
+   internal RetCode MEDPRICE_Body( int startIdx,
+                                   int endIdx,
+                                   ReadOnlySpan<float> inHigh,
+                                   ReadOnlySpan<float> inLow,
+                                   out int outBegIdx,
+                                   out int outNBElement,
+                                   Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -185,11 +185,27 @@ public partial class Core
       RequireLength("MEDPRICE", "inHigh", inHigh.Length, guardInLen);
       RequireLength("MEDPRICE", "inLow", inLow.Length, guardInLen);
       RequireLength("MEDPRICE", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = MEDPRICE(startIdx, endIdx, inHigh, inLow, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MEDPRICE_Body(startIdx, endIdx, inHigh, inLow, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MEDPRICE", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode MEDPRICE( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<double> inHigh,
+                              ReadOnlySpan<double> inLow,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
+   {
+      try {
+         return MEDPRICE_Body(startIdx, endIdx, inHigh, inLow, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Median Price: the midpoint of each bar's high and low. A price-transform
@@ -248,11 +264,27 @@ public partial class Core
       RequireLength("MEDPRICE", "inHigh", inHigh.Length, guardInLen);
       RequireLength("MEDPRICE", "inLow", inLow.Length, guardInLen);
       RequireLength("MEDPRICE", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = MEDPRICE(startIdx, endIdx, inHigh, inLow, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MEDPRICE_Body(startIdx, endIdx, inHigh, inLow, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MEDPRICE", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode MEDPRICE( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<float> inHigh,
+                              ReadOnlySpan<float> inLow,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
+   {
+      try {
+         return MEDPRICE_Body(startIdx, endIdx, inHigh, inLow, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -458,8 +490,8 @@ public partial class Core
    /// span cannot be null.</exception>
    public MEDPRICE_Stream MEDPRICE_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       return MEDPRICE_OpenInternal(inHigh, inLow, 0);
    }
 
@@ -488,8 +520,8 @@ public partial class Core
    /// output.</exception>
    public MEDPRICE_Stream MEDPRICE_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       MEDPRICE_Stream sp = new MEDPRICE_Stream(this);
       RetCode retCode = MEDPRICE_OpenAndFillBody(sp, inHigh, inLow, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

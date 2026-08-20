@@ -466,7 +466,7 @@ static TA_RetCode TA_CMOU_OpenCore( struct TA_CMOU_Stream **stream, const double
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx )
       {
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       /* Accumulate the up/down sums over the first window: the optInTimePeriod
        * changes ending at startIdx (prices inReal[startIdx-optInTimePeriod ..

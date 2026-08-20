@@ -488,7 +488,7 @@ static TA_RetCode TA_ADOSC_OpenCore( struct TA_ADOSC_Stream **stream, const doub
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       *outBegIdx= startIdx;
       today = startIdx - lookbackTotal;

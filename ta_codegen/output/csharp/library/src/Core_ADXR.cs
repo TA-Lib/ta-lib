@@ -88,15 +88,15 @@ public partial class Core
       }
 
    }
-   internal RetCode ADXR( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<double> inHigh,
-                          ReadOnlySpan<double> inLow,
-                          ReadOnlySpan<double> inClose,
-                          int optInTimePeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
+   internal RetCode ADXR_Body( int startIdx,
+                               int endIdx,
+                               ReadOnlySpan<double> inHigh,
+                               ReadOnlySpan<double> inLow,
+                               ReadOnlySpan<double> inClose,
+                               int optInTimePeriod,
+                               out int outBegIdx,
+                               out int outNBElement,
+                               Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -149,7 +149,10 @@ public partial class Core
       /* Compute ADX over a range that starts (period-1) bars earlier, so each
        * ADXR bar can pair the current ADX with the ADX from (period-1) bars ago.
        */
-      retCode = ADX(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, adx);
+      OutRange _xr0 = ADX(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, adx);
+      outBegIdx = _xr0.BegIdx;
+      outNBElement = _xr0.Count;
+      retCode = RetCode.Success;
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -165,15 +168,15 @@ public partial class Core
       outNBElement = nbElement;
       return RetCode.Success ;
    }
-   internal RetCode ADXR( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<float> inHigh,
-                          ReadOnlySpan<float> inLow,
-                          ReadOnlySpan<float> inClose,
-                          int optInTimePeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
+   internal RetCode ADXR_Body( int startIdx,
+                               int endIdx,
+                               ReadOnlySpan<float> inHigh,
+                               ReadOnlySpan<float> inLow,
+                               ReadOnlySpan<float> inClose,
+                               int optInTimePeriod,
+                               out int outBegIdx,
+                               out int outNBElement,
+                               Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -203,7 +206,10 @@ public partial class Core
          return RetCode.Success ;
       }
       adx = new double[(int)((endIdx - startIdx + optInTimePeriod) * 1)];
-      retCode = ADX(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, adx);
+      OutRange _xr0 = ADX(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, adx);
+      outBegIdx = _xr0.BegIdx;
+      outNBElement = _xr0.Count;
+      retCode = RetCode.Success;
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -277,11 +283,29 @@ public partial class Core
       RequireLength("ADXR", "inLow", inLow.Length, guardInLen);
       RequireLength("ADXR", "inClose", inClose.Length, guardInLen);
       RequireLength("ADXR", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = ADXR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ADXR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ADXR", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode ADXR( int startIdx,
+                          int endIdx,
+                          ReadOnlySpan<double> inHigh,
+                          ReadOnlySpan<double> inLow,
+                          ReadOnlySpan<double> inClose,
+                          int optInTimePeriod,
+                          out int outBegIdx,
+                          out int outNBElement,
+                          Span<double> outReal )
+   {
+      try {
+         return ADXR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Smoothed variant of ADX: the average of the current ADX value and the ADX
@@ -351,11 +375,29 @@ public partial class Core
       RequireLength("ADXR", "inLow", inLow.Length, guardInLen);
       RequireLength("ADXR", "inClose", inClose.Length, guardInLen);
       RequireLength("ADXR", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = ADXR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ADXR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ADXR", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode ADXR( int startIdx,
+                          int endIdx,
+                          ReadOnlySpan<float> inHigh,
+                          ReadOnlySpan<float> inLow,
+                          ReadOnlySpan<float> inClose,
+                          int optInTimePeriod,
+                          out int outBegIdx,
+                          out int outNBElement,
+                          Span<double> outReal )
+   {
+      try {
+         return ADXR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -523,7 +565,7 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( historyLen < ADXR_Lookback(optInTimePeriod) + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.InsufficientHistory;
       }
       Span<double> sc_outReal = outStride == 1 ? outReal : new double[historyLen];
       /* Original implementation from Wilder's book was doing some integer
@@ -550,7 +592,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       adx = new double[(int)((endIdx - startIdx + optInTimePeriod) * 1)];
       /* Compute ADX over a range that starts (period-1) bars earlier, so each
@@ -575,7 +617,7 @@ public partial class Core
       outNBElement = nbElement;
       /* Capture the live producer state + sub handles. */
       if( outNBElement < 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.InsufficientHistory;
       }
       int lagCap_adx = (int)(optInTimePeriod - 1);
       double[] lagRing_adx = new double[lagCap_adx];
@@ -655,9 +697,9 @@ public partial class Core
    /// span cannot be null.</exception>
    public ADXR_Stream ADXR_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       return ADXR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
 
@@ -689,9 +731,9 @@ public partial class Core
    /// output.</exception>
    public ADXR_Stream ADXR_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       ADXR_Stream sp = new ADXR_Stream(this);
       RetCode retCode = ADXR_OpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

@@ -66,6 +66,7 @@ static TA_InternalRetCodeInfo retCodeInfoTable[] = {
          {(TA_RetCode)14,"TA_INVALID_LIST_TYPE","No Info"},
          {(TA_RetCode)15,"TA_BAD_OBJECT","No Info"},
          {(TA_RetCode)16,"TA_NOT_SUPPORTED","No Info"},
+         {(TA_RetCode)17,"TA_INSUFFICIENT_HISTORY","History shorter than the lookback"},
          {(TA_RetCode)5000,"TA_INTERNAL_ERROR","No Info"},
          {(TA_RetCode)0xFFFF,"TA_UNKNOWN_ERR","Unknown Error"}
 };

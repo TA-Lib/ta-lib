@@ -86,14 +86,14 @@ public partial class Core
       return optInTimePeriod - 1 ;
 
    }
-   internal RetCode IMI( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inOpen,
-                         ReadOnlySpan<double> inClose,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode IMI_Body( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<double> inOpen,
+                              ReadOnlySpan<double> inClose,
+                              int optInTimePeriod,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -149,14 +149,14 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode IMI( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inOpen,
-                         ReadOnlySpan<float> inClose,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
+   internal RetCode IMI_Body( int startIdx,
+                              int endIdx,
+                              ReadOnlySpan<float> inOpen,
+                              ReadOnlySpan<float> inClose,
+                              int optInTimePeriod,
+                              out int outBegIdx,
+                              out int outNBElement,
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -259,11 +259,28 @@ public partial class Core
       RequireLength("IMI", "inOpen", inOpen.Length, guardInLen);
       RequireLength("IMI", "inClose", inClose.Length, guardInLen);
       RequireLength("IMI", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = IMI(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = IMI_Body(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("IMI", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode IMI( int startIdx,
+                         int endIdx,
+                         ReadOnlySpan<double> inOpen,
+                         ReadOnlySpan<double> inClose,
+                         int optInTimePeriod,
+                         out int outBegIdx,
+                         out int outNBElement,
+                         Span<double> outReal )
+   {
+      try {
+         return IMI_Body(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Intraday Momentum Index: an RSI-like 0-100 oscillator built from the
@@ -326,11 +343,28 @@ public partial class Core
       RequireLength("IMI", "inOpen", inOpen.Length, guardInLen);
       RequireLength("IMI", "inClose", inClose.Length, guardInLen);
       RequireLength("IMI", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = IMI(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = IMI_Body(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("IMI", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode IMI( int startIdx,
+                         int endIdx,
+                         ReadOnlySpan<float> inOpen,
+                         ReadOnlySpan<float> inClose,
+                         int optInTimePeriod,
+                         out int outBegIdx,
+                         out int outNBElement,
+                         Span<double> outReal )
+   {
+      try {
+         return IMI_Body(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -528,7 +562,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outBegIdx = startIdx;
       while( startIdx <= endIdx ) {
@@ -634,8 +668,8 @@ public partial class Core
    /// span cannot be null.</exception>
    public IMI_Stream IMI_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int optInTimePeriod )
    {
-      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inOpen.IsEmpty ) throw new TaLibArgumentException("inOpen is empty", nameof(inOpen), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       return IMI_OpenInternal(inOpen, inClose, 0, optInTimePeriod);
    }
 
@@ -666,8 +700,8 @@ public partial class Core
    /// output.</exception>
    public IMI_Stream IMI_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int optInTimePeriod, Span<double> outReal )
    {
-      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inOpen.IsEmpty ) throw new TaLibArgumentException("inOpen is empty", nameof(inOpen), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       IMI_Stream sp = new IMI_Stream(this);
       RetCode retCode = IMI_OpenAndFillBody(sp, inOpen, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

@@ -29,15 +29,15 @@
       return BodyDoji_avgPeriod ;
 
    }
-   RetCode CDLDOJI_Internal( int startIdx,
-                             int endIdx,
-                             double inOpen[],
-                             double inHigh[],
-                             double inLow[],
-                             double inClose[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             int outInteger[] )
+   RetCode CDLDOJI_Body( int startIdx,
+                         int endIdx,
+                         double inOpen[],
+                         double inHigh[],
+                         double inLow[],
+                         double inClose[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       int i = 0;
@@ -105,15 +105,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode CDLDOJI_Internal( int startIdx,
-                             int endIdx,
-                             float inOpen[],
-                             float inHigh[],
-                             float inLow[],
-                             float inClose[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             int outInteger[] )
+   RetCode CDLDOJI_Body( int startIdx,
+                         int endIdx,
+                         float inOpen[],
+                         float inHigh[],
+                         float inLow[],
+                         float inClose[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       int i = 0;
@@ -210,6 +210,7 @@
                             double inClose[],
                             int outInteger[] )
    {
+      requireIndexRange("CDLDOJI", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CDLDOJI_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -220,11 +221,32 @@
       requireLength("CDLDOJI", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLDOJI_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLDOJI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLDOJI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode CDLDOJI_Internal( int startIdx,
+                             int endIdx,
+                             double inOpen[],
+                             double inHigh[],
+                             double inLow[],
+                             double inClose[],
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             int outInteger[] )
+   {
+      try {
+         return CDLDOJI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Single-candle Doji recognizer: fires when the real body (|close-open|) is
@@ -279,6 +301,7 @@
                             float inClose[],
                             int outInteger[] )
    {
+      requireIndexRange("CDLDOJI", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, CDLDOJI_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -289,11 +312,32 @@
       requireLength("CDLDOJI", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CDLDOJI_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLDOJI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLDOJI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode CDLDOJI_Internal( int startIdx,
+                             int endIdx,
+                             float inOpen[],
+                             float inHigh[],
+                             float inLow[],
+                             float inClose[],
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             int outInteger[] )
+   {
+      try {
+         return CDLDOJI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -378,7 +422,7 @@
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("CDLDOJI update: BadParam");
+            throw new TaLibArgumentException("CDLDOJI update: BadParam", RetCode.BadParam);
          core.CDLDOJI_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outInteger;
       }
@@ -392,7 +436,7 @@
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("CDLDOJI peek: BadParam");
+            throw new TaLibArgumentException("CDLDOJI peek: BadParam", RetCode.BadParam);
          CDLDOJI_Stream scratch = new CDLDOJI_Stream(this);
          core.CDLDOJI_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
@@ -470,7 +514,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -552,13 +596,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLDOJI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLDOJI openAndFill: internal error");
+         throw new TaLibStateException("CDLDOJI openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLDOJI openAndFill: " + retCode);
+      throw new TaLibArgumentException("CDLDOJI openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind CDLDOJI_Open (composition seam). */
    CDLDOJI_Stream CDLDOJI_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -568,13 +612,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLDOJI open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLDOJI open: internal error");
+         throw new TaLibStateException("CDLDOJI open: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLDOJI open: " + retCode);
+      throw new TaLibArgumentException("CDLDOJI open: " + retCode, retCode);
    }
    /**
     * Open a live CDLDOJI stream over the warm-up history; the handle's
@@ -609,11 +653,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("CDLDOJI openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("CDLDOJI openAndFill: internal error");
+         throw new TaLibStateException("CDLDOJI openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("CDLDOJI openAndFill: " + retCode);
+      throw new TaLibArgumentException("CDLDOJI openAndFill: " + retCode, retCode);
    }

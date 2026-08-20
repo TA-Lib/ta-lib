@@ -501,7 +501,7 @@ static TA_RetCode TA_CDLMATHOLD_OpenCore( struct TA_CDLMATHOLD_Stream **stream, 
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */

@@ -46,15 +46,15 @@
       return 1 ;
 
    }
-   RetCode SAR_Internal( int startIdx,
-                         int endIdx,
-                         double inHigh[],
-                         double inLow[],
-                         double optInAcceleration,
-                         double optInMaximum,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode SAR_Body( int startIdx,
+                     int endIdx,
+                     double inHigh[],
+                     double inLow[],
+                     double optInAcceleration,
+                     double optInMaximum,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       RetCode retCode;
       int isLong = 0;
@@ -153,7 +153,10 @@
        * (ep is just used as a temp buffer here, the name
        *  of the parameter is not significant).
        */
-      retCode = MINUS_DM_Internal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
+      OutRange _xr0 = MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, ep_temp);
+      tempInt.value = _xr0.begIdx();
+      tempInt.value = _xr0.count();
+      retCode = RetCode.Success;
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -301,15 +304,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode SAR_Internal( int startIdx,
-                         int endIdx,
-                         float inHigh[],
-                         float inLow[],
-                         double optInAcceleration,
-                         double optInMaximum,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode SAR_Body( int startIdx,
+                     int endIdx,
+                     float inHigh[],
+                     float inLow[],
+                     double optInAcceleration,
+                     double optInMaximum,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outReal[] )
    {
       RetCode retCode;
       int isLong = 0;
@@ -353,7 +356,10 @@
          optInAcceleration = optInMaximum;
          af = optInAcceleration;
       }
-      retCode = MINUS_DM_Internal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
+      OutRange _xr0 = MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, ep_temp);
+      tempInt.value = _xr0.begIdx();
+      tempInt.value = _xr0.count();
+      retCode = RetCode.Success;
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -516,6 +522,7 @@
                         double optInMaximum,
                         double outReal[] )
    {
+      requireIndexRange("SAR", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, SAR_Lookback(optInAcceleration, optInMaximum));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -524,11 +531,32 @@
       requireLength("SAR", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SAR_Internal(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SAR_Body(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("SAR", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode SAR_Internal( int startIdx,
+                         int endIdx,
+                         double inHigh[],
+                         double inLow[],
+                         double optInAcceleration,
+                         double optInMaximum,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      try {
+         return SAR_Body(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Wilder's Parabolic SAR (Stop And Reverse): a trailing stop/reverse level
@@ -588,6 +616,7 @@
                         double optInMaximum,
                         double outReal[] )
    {
+      requireIndexRange("SAR", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, SAR_Lookback(optInAcceleration, optInMaximum));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -596,11 +625,32 @@
       requireLength("SAR", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SAR_Internal(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SAR_Body(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("SAR", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode SAR_Internal( int startIdx,
+                         int endIdx,
+                         float inHigh[],
+                         float inLow[],
+                         double optInAcceleration,
+                         double optInMaximum,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+   {
+      try {
+         return SAR_Body(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -684,7 +734,7 @@
        */
       public double update( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new IllegalArgumentException("SAR update: BadParam");
+            throw new TaLibArgumentException("SAR update: BadParam", RetCode.BadParam);
          core.SAR_StreamStep(this, inHigh, inLow);
          return this.cur_outReal;
       }
@@ -698,7 +748,7 @@
        */
       public double peek( double inHigh, double inLow ) {
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
-            throw new IllegalArgumentException("SAR peek: BadParam");
+            throw new TaLibArgumentException("SAR peek: BadParam", RetCode.BadParam);
          SAR_Stream scratch = new SAR_Stream(this);
          core.SAR_StreamStep(scratch, inHigh, inLow);
          return scratch.cur_outReal;
@@ -926,7 +976,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Make sure the acceleration and maximum are coherent.
        * If not, correct the acceleration.
@@ -940,7 +990,10 @@
        * (ep is just used as a temp buffer here, the name
        *  of the parameter is not significant).
        */
-      retCode = MINUS_DM_Internal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
+      OutRange _xr0 = MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, ep_temp);
+      tempInt.value = _xr0.begIdx();
+      tempInt.value = _xr0.count();
+      retCode = RetCode.Success;
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -1124,13 +1177,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("SAR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("SAR openAndFill: internal error");
+         throw new TaLibStateException("SAR openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("SAR openAndFill: " + retCode);
+      throw new TaLibArgumentException("SAR openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind SAR_Open (composition seam). */
    SAR_Stream SAR_OpenInternal( double inHigh[], double inLow[], int startIdx, double optInAcceleration, double optInMaximum )
@@ -1140,13 +1193,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("SAR open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("SAR open: internal error");
+         throw new TaLibStateException("SAR open: internal error", retCode);
       }
-      throw new IllegalArgumentException("SAR open: " + retCode);
+      throw new TaLibArgumentException("SAR open: " + retCode, retCode);
    }
    /**
     * Open a live SAR stream over the warm-up history; the handle's
@@ -1181,11 +1234,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("SAR openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("SAR openAndFill: internal error");
+         throw new TaLibStateException("SAR openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("SAR openAndFill: " + retCode);
+      throw new TaLibArgumentException("SAR openAndFill: " + retCode, retCode);
    }

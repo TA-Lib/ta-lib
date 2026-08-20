@@ -79,15 +79,15 @@ public partial class Core
       return Math.Max(Math.Max(BodyShort_avgPeriod, ShadowLong_avgPeriod), ShadowVeryShort_avgPeriod) + 1 ;
 
    }
-   internal RetCode CDLINVERTEDHAMMER( int startIdx,
-                                       int endIdx,
-                                       ReadOnlySpan<double> inOpen,
-                                       ReadOnlySpan<double> inHigh,
-                                       ReadOnlySpan<double> inLow,
-                                       ReadOnlySpan<double> inClose,
-                                       out int outBegIdx,
-                                       out int outNBElement,
-                                       Span<int> outInteger )
+   internal RetCode CDLINVERTEDHAMMER_Body( int startIdx,
+                                            int endIdx,
+                                            ReadOnlySpan<double> inOpen,
+                                            ReadOnlySpan<double> inHigh,
+                                            ReadOnlySpan<double> inLow,
+                                            ReadOnlySpan<double> inClose,
+                                            out int outBegIdx,
+                                            out int outNBElement,
+                                            Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -192,15 +192,15 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CDLINVERTEDHAMMER( int startIdx,
-                                       int endIdx,
-                                       ReadOnlySpan<float> inOpen,
-                                       ReadOnlySpan<float> inHigh,
-                                       ReadOnlySpan<float> inLow,
-                                       ReadOnlySpan<float> inClose,
-                                       out int outBegIdx,
-                                       out int outNBElement,
-                                       Span<int> outInteger )
+   internal RetCode CDLINVERTEDHAMMER_Body( int startIdx,
+                                            int endIdx,
+                                            ReadOnlySpan<float> inOpen,
+                                            ReadOnlySpan<float> inHigh,
+                                            ReadOnlySpan<float> inLow,
+                                            ReadOnlySpan<float> inClose,
+                                            out int outBegIdx,
+                                            out int outNBElement,
+                                            Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -336,11 +336,29 @@ public partial class Core
       RequireLength("CDLINVERTEDHAMMER", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLINVERTEDHAMMER", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLINVERTEDHAMMER", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLINVERTEDHAMMER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLINVERTEDHAMMER_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLINVERTEDHAMMER", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode CDLINVERTEDHAMMER( int startIdx,
+                                       int endIdx,
+                                       ReadOnlySpan<double> inOpen,
+                                       ReadOnlySpan<double> inHigh,
+                                       ReadOnlySpan<double> inLow,
+                                       ReadOnlySpan<double> inClose,
+                                       out int outBegIdx,
+                                       out int outNBElement,
+                                       Span<int> outInteger )
+   {
+      try {
+         return CDLINVERTEDHAMMER_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outInteger);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Single-candle pattern: a small real body with a long upper shadow and
@@ -407,11 +425,29 @@ public partial class Core
       RequireLength("CDLINVERTEDHAMMER", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLINVERTEDHAMMER", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLINVERTEDHAMMER", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLINVERTEDHAMMER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLINVERTEDHAMMER_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLINVERTEDHAMMER", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode CDLINVERTEDHAMMER( int startIdx,
+                                       int endIdx,
+                                       ReadOnlySpan<float> inOpen,
+                                       ReadOnlySpan<float> inHigh,
+                                       ReadOnlySpan<float> inLow,
+                                       ReadOnlySpan<float> inClose,
+                                       out int outBegIdx,
+                                       out int outNBElement,
+                                       Span<int> outInteger )
+   {
+      try {
+         return CDLINVERTEDHAMMER_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outInteger);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -712,7 +748,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Do the calculation using tight loops. */
       /* Add-up the initial period, except for the last value. */
@@ -890,10 +926,10 @@ public partial class Core
    /// span cannot be null.</exception>
    public CDLINVERTEDHAMMER_Stream CDLINVERTEDHAMMER_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inOpen.IsEmpty ) throw new TaLibArgumentException("inOpen is empty", nameof(inOpen), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       return CDLINVERTEDHAMMER_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
@@ -928,10 +964,10 @@ public partial class Core
    /// output.</exception>
    public CDLINVERTEDHAMMER_Stream CDLINVERTEDHAMMER_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
-      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inOpen.IsEmpty ) throw new TaLibArgumentException("inOpen is empty", nameof(inOpen), RetCode.BadParam);
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       CDLINVERTEDHAMMER_Stream sp = new CDLINVERTEDHAMMER_Stream(this);
       RetCode retCode = CDLINVERTEDHAMMER_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

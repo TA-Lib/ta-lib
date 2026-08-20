@@ -444,7 +444,7 @@ static TA_RetCode TA_TRIX_OpenCore( struct TA_TRIX_Stream **stream, const double
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx )
       {
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       /* Single lockstep pass: EMA1 feeds EMA2 feeds EMA3, output is the
        * roc() of consecutive EMA3 values. Output element j is the TRIX

@@ -29,15 +29,15 @@
       return 0 ;
 
    }
-   RetCode AVGPRICE_Internal( int startIdx,
-                              int endIdx,
-                              double inOpen[],
-                              double inHigh[],
-                              double inLow[],
-                              double inClose[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
+   RetCode AVGPRICE_Body( int startIdx,
+                          int endIdx,
+                          double inOpen[],
+                          double inHigh[],
+                          double inLow[],
+                          double inClose[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -56,15 +56,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode AVGPRICE_Internal( int startIdx,
-                              int endIdx,
-                              float inOpen[],
-                              float inHigh[],
-                              float inLow[],
-                              float inClose[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
+   RetCode AVGPRICE_Body( int startIdx,
+                          int endIdx,
+                          float inOpen[],
+                          float inHigh[],
+                          float inLow[],
+                          float inClose[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -131,6 +131,7 @@
                              double inClose[],
                              double outReal[] )
    {
+      requireIndexRange("AVGPRICE", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, AVGPRICE_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -141,11 +142,32 @@
       requireLength("AVGPRICE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AVGPRICE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      RetCode retCode = AVGPRICE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("AVGPRICE", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode AVGPRICE_Internal( int startIdx,
+                              int endIdx,
+                              double inOpen[],
+                              double inHigh[],
+                              double inLow[],
+                              double inClose[],
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outReal[] )
+   {
+      try {
+         return AVGPRICE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * Average Price: the arithmetic mean of each bar's open, high, low, and
@@ -199,6 +221,7 @@
                              float inClose[],
                              double outReal[] )
    {
+      requireIndexRange("AVGPRICE", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, AVGPRICE_Lookback());
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -209,11 +232,32 @@
       requireLength("AVGPRICE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = AVGPRICE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      RetCode retCode = AVGPRICE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("AVGPRICE", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode AVGPRICE_Internal( int startIdx,
+                              int endIdx,
+                              float inOpen[],
+                              float inHigh[],
+                              float inLow[],
+                              float inClose[],
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outReal[] )
+   {
+      try {
+         return AVGPRICE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -273,7 +317,7 @@
        */
       public double update( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("AVGPRICE update: BadParam");
+            throw new TaLibArgumentException("AVGPRICE update: BadParam", RetCode.BadParam);
          core.AVGPRICE_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outReal;
       }
@@ -287,7 +331,7 @@
        */
       public double peek( double inOpen, double inHigh, double inLow, double inClose ) {
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
-            throw new IllegalArgumentException("AVGPRICE peek: BadParam");
+            throw new TaLibArgumentException("AVGPRICE peek: BadParam", RetCode.BadParam);
          AVGPRICE_Stream scratch = new AVGPRICE_Stream(this);
          core.AVGPRICE_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outReal;
@@ -363,13 +407,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("AVGPRICE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("AVGPRICE openAndFill: internal error");
+         throw new TaLibStateException("AVGPRICE openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("AVGPRICE openAndFill: " + retCode);
+      throw new TaLibArgumentException("AVGPRICE openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind AVGPRICE_Open (composition seam). */
    AVGPRICE_Stream AVGPRICE_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
@@ -379,13 +423,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("AVGPRICE open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("AVGPRICE open: internal error");
+         throw new TaLibStateException("AVGPRICE open: internal error", retCode);
       }
-      throw new IllegalArgumentException("AVGPRICE open: " + retCode);
+      throw new TaLibArgumentException("AVGPRICE open: " + retCode, retCode);
    }
    /**
     * Open a live AVGPRICE stream over the warm-up history; the handle's
@@ -420,11 +464,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("AVGPRICE openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("AVGPRICE openAndFill: internal error");
+         throw new TaLibStateException("AVGPRICE openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("AVGPRICE openAndFill: " + retCode);
+      throw new TaLibArgumentException("AVGPRICE openAndFill: " + retCode, retCode);
    }

@@ -92,15 +92,15 @@ public partial class Core
       return SMA_Lookback(Math.Max(optInFastPeriod, optInSlowPeriod)) ;
 
    }
-   internal RetCode AO( int startIdx,
-                        int endIdx,
-                        ReadOnlySpan<double> inHigh,
-                        ReadOnlySpan<double> inLow,
-                        int optInFastPeriod,
-                        int optInSlowPeriod,
-                        out int outBegIdx,
-                        out int outNBElement,
-                        Span<double> outReal )
+   internal RetCode AO_Body( int startIdx,
+                             int endIdx,
+                             ReadOnlySpan<double> inHigh,
+                             ReadOnlySpan<double> inLow,
+                             int optInFastPeriod,
+                             int optInSlowPeriod,
+                             out int outBegIdx,
+                             out int outNBElement,
+                             Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -230,15 +230,15 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode AO( int startIdx,
-                        int endIdx,
-                        ReadOnlySpan<float> inHigh,
-                        ReadOnlySpan<float> inLow,
-                        int optInFastPeriod,
-                        int optInSlowPeriod,
-                        out int outBegIdx,
-                        out int outNBElement,
-                        Span<double> outReal )
+   internal RetCode AO_Body( int startIdx,
+                             int endIdx,
+                             ReadOnlySpan<float> inHigh,
+                             ReadOnlySpan<float> inLow,
+                             int optInFastPeriod,
+                             int optInSlowPeriod,
+                             out int outBegIdx,
+                             out int outNBElement,
+                             Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -381,11 +381,29 @@ public partial class Core
       RequireLength("AO", "inHigh", inHigh.Length, guardInLen);
       RequireLength("AO", "inLow", inLow.Length, guardInLen);
       RequireLength("AO", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = AO(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = AO_Body(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("AO", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode AO( int startIdx,
+                        int endIdx,
+                        ReadOnlySpan<double> inHigh,
+                        ReadOnlySpan<double> inLow,
+                        int optInFastPeriod,
+                        int optInSlowPeriod,
+                        out int outBegIdx,
+                        out int outNBElement,
+                        Span<double> outReal )
+   {
+      try {
+         return AO_Body(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Bill Williams' Awesome Oscillator (*New Trading Dimensions*, 1998): market
@@ -465,11 +483,29 @@ public partial class Core
       RequireLength("AO", "inHigh", inHigh.Length, guardInLen);
       RequireLength("AO", "inLow", inLow.Length, guardInLen);
       RequireLength("AO", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = AO(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = AO_Body(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("AO", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode AO( int startIdx,
+                        int endIdx,
+                        ReadOnlySpan<float> inHigh,
+                        ReadOnlySpan<float> inLow,
+                        int optInFastPeriod,
+                        int optInSlowPeriod,
+                        out int outBegIdx,
+                        out int outNBElement,
+                        Span<double> outReal )
+   {
+      try {
+         return AO_Body(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -735,7 +771,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       sumFast = 0.0;
       sumSlow = 0.0;
@@ -889,8 +925,8 @@ public partial class Core
    /// span cannot be null.</exception>
    public AO_Stream AO_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInFastPeriod, int optInSlowPeriod )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       return AO_OpenInternal(inHigh, inLow, 0, optInFastPeriod, optInSlowPeriod);
    }
 
@@ -923,8 +959,8 @@ public partial class Core
    /// output.</exception>
    public AO_Stream AO_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInFastPeriod, int optInSlowPeriod, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       AO_Stream sp = new AO_Stream(this);
       RetCode retCode = AO_OpenAndFillBody(sp, inHigh, inLow, optInFastPeriod, optInSlowPeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

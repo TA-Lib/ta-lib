@@ -93,17 +93,17 @@ public partial class Core
       return EMA_Lookback(slowestPeriod) ;
 
    }
-   internal RetCode ADOSC( int startIdx,
-                           int endIdx,
-                           ReadOnlySpan<double> inHigh,
-                           ReadOnlySpan<double> inLow,
-                           ReadOnlySpan<double> inClose,
-                           ReadOnlySpan<double> inVolume,
-                           int optInFastPeriod,
-                           int optInSlowPeriod,
-                           out int outBegIdx,
-                           out int outNBElement,
-                           Span<double> outReal )
+   internal RetCode ADOSC_Body( int startIdx,
+                                int endIdx,
+                                ReadOnlySpan<double> inHigh,
+                                ReadOnlySpan<double> inLow,
+                                ReadOnlySpan<double> inClose,
+                                ReadOnlySpan<double> inVolume,
+                                int optInFastPeriod,
+                                int optInSlowPeriod,
+                                out int outBegIdx,
+                                out int outNBElement,
+                                Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -242,17 +242,17 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode ADOSC( int startIdx,
-                           int endIdx,
-                           ReadOnlySpan<float> inHigh,
-                           ReadOnlySpan<float> inLow,
-                           ReadOnlySpan<float> inClose,
-                           ReadOnlySpan<float> inVolume,
-                           int optInFastPeriod,
-                           int optInSlowPeriod,
-                           out int outBegIdx,
-                           out int outNBElement,
-                           Span<double> outReal )
+   internal RetCode ADOSC_Body( int startIdx,
+                                int endIdx,
+                                ReadOnlySpan<float> inHigh,
+                                ReadOnlySpan<float> inLow,
+                                ReadOnlySpan<float> inClose,
+                                ReadOnlySpan<float> inVolume,
+                                int optInFastPeriod,
+                                int optInSlowPeriod,
+                                out int outBegIdx,
+                                out int outNBElement,
+                                Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -415,11 +415,31 @@ public partial class Core
       RequireLength("ADOSC", "inClose", inClose.Length, guardInLen);
       RequireLength("ADOSC", "inVolume", inVolume.Length, guardInLen);
       RequireLength("ADOSC", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = ADOSC(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ADOSC_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ADOSC", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode ADOSC( int startIdx,
+                           int endIdx,
+                           ReadOnlySpan<double> inHigh,
+                           ReadOnlySpan<double> inLow,
+                           ReadOnlySpan<double> inClose,
+                           ReadOnlySpan<double> inVolume,
+                           int optInFastPeriod,
+                           int optInSlowPeriod,
+                           out int outBegIdx,
+                           out int outNBElement,
+                           Span<double> outReal )
+   {
+      try {
+         return ADOSC_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Chaikin A/D Oscillator: the difference between a fast and a slow EMA of
@@ -495,11 +515,31 @@ public partial class Core
       RequireLength("ADOSC", "inClose", inClose.Length, guardInLen);
       RequireLength("ADOSC", "inVolume", inVolume.Length, guardInLen);
       RequireLength("ADOSC", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = ADOSC(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ADOSC_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ADOSC", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode ADOSC( int startIdx,
+                           int endIdx,
+                           ReadOnlySpan<float> inHigh,
+                           ReadOnlySpan<float> inLow,
+                           ReadOnlySpan<float> inClose,
+                           ReadOnlySpan<float> inVolume,
+                           int optInFastPeriod,
+                           int optInSlowPeriod,
+                           out int outBegIdx,
+                           out int outNBElement,
+                           Span<double> outReal )
+   {
+      try {
+         return ADOSC_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outReal);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -732,7 +772,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outBegIdx = startIdx;
       today = startIdx - lookbackTotal;
@@ -872,10 +912,10 @@ public partial class Core
    /// span cannot be null.</exception>
    public ADOSC_Stream ADOSC_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
-      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
       return ADOSC_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod);
    }
 
@@ -910,10 +950,10 @@ public partial class Core
    /// output.</exception>
    public ADOSC_Stream ADOSC_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod, Span<double> outReal )
    {
-      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
-      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
-      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
-      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
+      if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
+      if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
+      if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
+      if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
       ADOSC_Stream sp = new ADOSC_Stream(this);
       RetCode retCode = ADOSC_OpenAndFillBody(sp, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

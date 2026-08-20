@@ -1328,7 +1328,7 @@ static TA_RetCode TA_HT_SINE_OpenCore( struct TA_HT_SINE_Stream **stream, const 
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
+         return TA_INSUFFICIENT_HISTORY;
       }
       *outBegIdx= startIdx;
       /* Initialize the price smoother, which is simply a weighted

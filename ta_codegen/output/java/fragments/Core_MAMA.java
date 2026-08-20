@@ -65,15 +65,15 @@
       return 32 + this.unstablePeriod[FuncUnstId.MAMA.ordinal()] ;
 
    }
-   RetCode MAMA_Internal( int startIdx,
-                          int endIdx,
-                          double inReal[],
-                          double optInFastLimit,
-                          double optInSlowLimit,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outMAMA[],
-                          double outFAMA[] )
+   RetCode MAMA_Body( int startIdx,
+                      int endIdx,
+                      double inReal[],
+                      double optInFastLimit,
+                      double optInSlowLimit,
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outMAMA[],
+                      double outFAMA[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -460,15 +460,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode MAMA_Internal( int startIdx,
-                          int endIdx,
-                          float inReal[],
-                          double optInFastLimit,
-                          double optInSlowLimit,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outMAMA[],
-                          double outFAMA[] )
+   RetCode MAMA_Body( int startIdx,
+                      int endIdx,
+                      float inReal[],
+                      double optInFastLimit,
+                      double optInSlowLimit,
+                      MInteger outBegIdx,
+                      MInteger outNBElement,
+                      double outMAMA[],
+                      double outFAMA[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -850,6 +850,7 @@
                          double outMAMA[],
                          double outFAMA[] )
    {
+      requireIndexRange("MAMA", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, MAMA_Lookback(optInFastLimit, optInSlowLimit));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -858,11 +859,32 @@
       requireLength("MAMA", "outFAMA", outFAMA, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MAMA_Internal(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
+      RetCode retCode = MAMA_Body(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
       if( retCode != RetCode.Success ) {
          throw failure("MAMA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode MAMA_Internal( int startIdx,
+                          int endIdx,
+                          double inReal[],
+                          double optInFastLimit,
+                          double optInSlowLimit,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outMAMA[],
+                          double outFAMA[] )
+   {
+      try {
+         return MAMA_Body(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * MESA Adaptive Moving Average: an adaptive EMA whose smoothing factor is
@@ -923,6 +945,7 @@
                          double outMAMA[],
                          double outFAMA[] )
    {
+      requireIndexRange("MAMA", startIdx, endIdx);
       int guardStart = clampedStart(startIdx, endIdx, MAMA_Lookback(optInFastLimit, optInSlowLimit));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -931,11 +954,32 @@
       requireLength("MAMA", "outFAMA", outFAMA, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MAMA_Internal(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
+      RetCode retCode = MAMA_Body(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
       if( retCode != RetCode.Success ) {
          throw failure("MAMA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode MAMA_Internal( int startIdx,
+                          int endIdx,
+                          float inReal[],
+                          double optInFastLimit,
+                          double optInSlowLimit,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outMAMA[],
+                          double outFAMA[] )
+   {
+      try {
+         return MAMA_Body(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -1230,7 +1274,7 @@
        */
       public Value update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("MAMA update: BadParam");
+            throw new TaLibArgumentException("MAMA update: BadParam", RetCode.BadParam);
          core.MAMA_StreamStep(this, inReal);
          this.cachedValue = new Value(this.cur_outMAMA, this.cur_outFAMA);
          return this.cachedValue;
@@ -1247,7 +1291,7 @@
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("MAMA peek: BadParam");
+            throw new TaLibArgumentException("MAMA peek: BadParam", RetCode.BadParam);
          MAMA_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new MAMA_Stream(this);
@@ -1558,7 +1602,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outBegIdx.value = startIdx;
       /* Initialize the price smoother, which is simply a weighted
@@ -1941,13 +1985,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MAMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MAMA openAndFill: internal error");
+         throw new TaLibStateException("MAMA openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("MAMA openAndFill: " + retCode);
+      throw new TaLibArgumentException("MAMA openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind MAMA_Open (composition seam). */
    MAMA_Stream MAMA_OpenInternal( double inReal[], int startIdx, double optInFastLimit, double optInSlowLimit )
@@ -1957,13 +2001,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MAMA open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MAMA open: internal error");
+         throw new TaLibStateException("MAMA open: internal error", retCode);
       }
-      throw new IllegalArgumentException("MAMA open: " + retCode);
+      throw new TaLibArgumentException("MAMA open: " + retCode, retCode);
    }
    /**
     * Open a live MAMA stream over the warm-up history; the handle's
@@ -1998,11 +2042,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MAMA openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MAMA openAndFill: internal error");
+         throw new TaLibStateException("MAMA openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("MAMA openAndFill: " + retCode);
+      throw new TaLibArgumentException("MAMA openAndFill: " + retCode, retCode);
    }

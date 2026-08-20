@@ -78,20 +78,20 @@
       return lookbackLargest + MA_Lookback(optInSignalPeriod, optInSignalMAType) ;
 
    }
-   RetCode MACDEXT_Internal( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             int optInFastPeriod,
-                             MAType optInFastMAType,
-                             int optInSlowPeriod,
-                             MAType optInSlowMAType,
-                             int optInSignalPeriod,
-                             MAType optInSignalMAType,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outMACD[],
-                             double outMACDSignal[],
-                             double outMACDHist[] )
+   RetCode MACDEXT_Body( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInFastPeriod,
+                         MAType optInFastMAType,
+                         int optInSlowPeriod,
+                         MAType optInSlowMAType,
+                         int optInSignalPeriod,
+                         MAType optInSignalMAType,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outMACD[],
+                         double outMACDSignal[],
+                         double outMACDHist[] )
    {
       double[] slowMABuffer;
       double[] fastMABuffer;
@@ -152,7 +152,10 @@
           * block to the composed path (issue #181). Keep the comment INSIDE the
           * block: above it, the stream inherits it and reads as if it delegated.
           */
-         return MACD_Internal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist) ;
+         OutRange _xr0 = MACD(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outMACD, outMACDSignal, outMACDHist);
+         outBegIdx.value = _xr0.begIdx();
+         outNBElement.value = _xr0.count();
+         return RetCode.Success ;
       }
       /* Make sure slow is really slower than
        * the fast period! if not, swap...
@@ -200,14 +203,20 @@
        * will start at the requested 'startIdx'.
        */
       tempInteger = startIdx - lookbackSignal;
-      retCode = MA_Internal(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, outBegIdx1, outNbElement1, slowMABuffer);
+      OutRange _xr1 = MA(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, slowMABuffer);
+      outBegIdx1.value = _xr1.begIdx();
+      outNbElement1.value = _xr1.count();
+      retCode = RetCode.Success;
       if( retCode != RetCode.Success ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return retCode ;
       }
       /* Calculate the fast MA. */
-      retCode = MA_Internal(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, outBegIdx2, outNbElement2, fastMABuffer);
+      OutRange _xr2 = MA(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, fastMABuffer);
+      outBegIdx2.value = _xr2.begIdx();
+      outNbElement2.value = _xr2.count();
+      retCode = RetCode.Success;
       if( retCode != RetCode.Success ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
@@ -229,7 +238,10 @@
        */
       System.arraycopy(fastMABuffer, lookbackSignal, outMACD, 0, (endIdx - startIdx + 1) * 1);
       /* Calculate the signal/trigger line. */
-      retCode = MA_Internal(0, outNbElement1.value - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, outBegIdx2, outNbElement2, outMACDSignal);
+      OutRange _xr3 = MA(0, outNbElement1.value - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, outMACDSignal);
+      outBegIdx2.value = _xr3.begIdx();
+      outNbElement2.value = _xr3.count();
+      retCode = RetCode.Success;
       if( retCode != RetCode.Success ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
@@ -244,20 +256,20 @@
       outNBElement.value = outNbElement2.value;
       return RetCode.Success ;
    }
-   RetCode MACDEXT_Internal( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             int optInFastPeriod,
-                             MAType optInFastMAType,
-                             int optInSlowPeriod,
-                             MAType optInSlowMAType,
-                             int optInSignalPeriod,
-                             MAType optInSignalMAType,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outMACD[],
-                             double outMACDSignal[],
-                             double outMACDHist[] )
+   RetCode MACDEXT_Body( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInFastPeriod,
+                         MAType optInFastMAType,
+                         int optInSlowPeriod,
+                         MAType optInSlowMAType,
+                         int optInSignalPeriod,
+                         MAType optInSignalMAType,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outMACD[],
+                         double outMACDSignal[],
+                         double outMACDHist[] )
    {
       double[] slowMABuffer;
       double[] fastMABuffer;
@@ -306,7 +318,10 @@
          return RetCode.BadParam ;
       }
       if( optInFastMAType == MAType.EMA && optInSlowMAType == MAType.EMA && optInSignalMAType == MAType.EMA && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 ) {
-         return MACD_Internal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist) ;
+         OutRange _xr0 = MACD(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outMACD, outMACDSignal, outMACDHist);
+         outBegIdx.value = _xr0.begIdx();
+         outNBElement.value = _xr0.count();
+         return RetCode.Success ;
       }
       if( optInSlowPeriod < optInFastPeriod ) {
          tempInteger = optInSlowPeriod;
@@ -335,13 +350,19 @@
       fastMABuffer = new double[(int)(tempInteger * 1)];
       slowMABuffer = new double[(int)(tempInteger * 1)];
       tempInteger = startIdx - lookbackSignal;
-      retCode = MA_Internal(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, outBegIdx1, outNbElement1, slowMABuffer);
+      OutRange _xr1 = MA(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, slowMABuffer);
+      outBegIdx1.value = _xr1.begIdx();
+      outNbElement1.value = _xr1.count();
+      retCode = RetCode.Success;
       if( retCode != RetCode.Success ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
          return retCode ;
       }
-      retCode = MA_Internal(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, outBegIdx2, outNbElement2, fastMABuffer);
+      OutRange _xr2 = MA(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, fastMABuffer);
+      outBegIdx2.value = _xr2.begIdx();
+      outNbElement2.value = _xr2.count();
+      retCode = RetCode.Success;
       if( retCode != RetCode.Success ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
@@ -356,7 +377,10 @@
          fastMABuffer[i] = fastMABuffer[i] - slowMABuffer[i];
       }
       System.arraycopy(fastMABuffer, lookbackSignal, outMACD, 0, (endIdx - startIdx + 1) * 1);
-      retCode = MA_Internal(0, outNbElement1.value - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, outBegIdx2, outNbElement2, outMACDSignal);
+      OutRange _xr3 = MA(0, outNbElement1.value - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, outMACDSignal);
+      outBegIdx2.value = _xr3.begIdx();
+      outNbElement2.value = _xr3.count();
+      retCode = RetCode.Success;
       if( retCode != RetCode.Success ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
@@ -453,6 +477,10 @@
                             double outMACDSignal[],
                             double outMACDHist[] )
    {
+      requireIndexRange("MACDEXT", startIdx, endIdx);
+      requireArgument("MACDEXT", "optInFastMAType", optInFastMAType);
+      requireArgument("MACDEXT", "optInSlowMAType", optInSlowMAType);
+      requireArgument("MACDEXT", "optInSignalMAType", optInSignalMAType);
       int guardStart = clampedStart(startIdx, endIdx, MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -462,11 +490,37 @@
       requireLength("MACDEXT", "outMACDHist", outMACDHist, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MACDEXT_Internal(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+      RetCode retCode = MACDEXT_Body(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
       if( retCode != RetCode.Success ) {
          throw failure("MACDEXT", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode MACDEXT_Internal( int startIdx,
+                             int endIdx,
+                             double inReal[],
+                             int optInFastPeriod,
+                             MAType optInFastMAType,
+                             int optInSlowPeriod,
+                             MAType optInSlowMAType,
+                             int optInSignalPeriod,
+                             MAType optInSignalMAType,
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             double outMACD[],
+                             double outMACDSignal[],
+                             double outMACDHist[] )
+   {
+      try {
+         return MACDEXT_Body(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
    /**
     * MACD variant where the fast, slow, and signal moving averages each use a
@@ -555,6 +609,10 @@
                             double outMACDSignal[],
                             double outMACDHist[] )
    {
+      requireIndexRange("MACDEXT", startIdx, endIdx);
+      requireArgument("MACDEXT", "optInFastMAType", optInFastMAType);
+      requireArgument("MACDEXT", "optInSlowMAType", optInSlowMAType);
+      requireArgument("MACDEXT", "optInSignalMAType", optInSignalMAType);
       int guardStart = clampedStart(startIdx, endIdx, MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
@@ -564,11 +622,37 @@
       requireLength("MACDEXT", "outMACDHist", outMACDHist, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MACDEXT_Internal(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+      RetCode retCode = MACDEXT_Body(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
       if( retCode != RetCode.Success ) {
          throw failure("MACDEXT", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   RetCode MACDEXT_Internal( int startIdx,
+                             int endIdx,
+                             float inReal[],
+                             int optInFastPeriod,
+                             MAType optInFastMAType,
+                             int optInSlowPeriod,
+                             MAType optInSlowMAType,
+                             int optInSignalPeriod,
+                             MAType optInSignalMAType,
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             double outMACD[],
+                             double outMACDSignal[],
+                             double outMACDHist[] )
+   {
+      try {
+         return MACDEXT_Body(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+      } catch (RuntimeException e) {
+         if (e instanceof TaLibFailure) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return ((TaLibFailure) e).retCode();
+         }
+         throw e;
+      }
    }
 /**** Streaming API *****/
 
@@ -693,7 +777,7 @@
        */
       public Value update( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("MACDEXT update: BadParam");
+            throw new TaLibArgumentException("MACDEXT update: BadParam", RetCode.BadParam);
          core.MACDEXT_StreamStep(this, inReal);
          this.cachedValue = new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
          return this.cachedValue;
@@ -710,7 +794,7 @@
        */
       public Value peek( double inReal ) {
          if( !Double.isFinite(inReal) )
-            throw new IllegalArgumentException("MACDEXT peek: BadParam");
+            throw new TaLibArgumentException("MACDEXT peek: BadParam", RetCode.BadParam);
          MACDEXT_Stream scratch = PEEK_SCRATCH.get();
          if( scratch == null ) {
             scratch = new MACDEXT_Stream(this);
@@ -805,7 +889,7 @@
          optInSignalMAType = MAType.SMA;
       }
       if( historyLen < MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType) + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.InsufficientHistory;
       }
       double[] sc_outMACD = outStride == 1 ? outMACD : new double[historyLen];
       double[] sc_outMACDSignal = outStride == 1 ? outMACDSignal : new double[historyLen];
@@ -842,7 +926,7 @@
       if( startIdx > endIdx ) {
          outBegIdx.value = 0;
          outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       /* Allocate intermediate buffer for fast/slow MA. */
       tempInteger = endIdx - startIdx + 1 + lookbackSignal;
@@ -909,7 +993,7 @@
       outNBElement.value = outNbElement2.value;
       /* Capture the live producer state + sub handles. */
       if( outNBElement.value < 1 ) {
-         return RetCode.OutOfRangeEndIndex;
+         return RetCode.InsufficientHistory;
       }
       sp.optInFastPeriod = optInFastPeriod;
       sp.optInFastMAType = optInFastMAType;
@@ -954,13 +1038,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MACDEXT openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MACDEXT openAndFill: internal error");
+         throw new TaLibStateException("MACDEXT openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("MACDEXT openAndFill: " + retCode);
+      throw new TaLibArgumentException("MACDEXT openAndFill: " + retCode, retCode);
    }
    /* Internal startIdx-anchored open behind MACDEXT_Open (composition seam). */
    MACDEXT_Stream MACDEXT_OpenInternal( double inReal[], int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
@@ -970,13 +1054,13 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MACDEXT open: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MACDEXT open: internal error");
+         throw new TaLibStateException("MACDEXT open: internal error", retCode);
       }
-      throw new IllegalArgumentException("MACDEXT open: " + retCode);
+      throw new TaLibArgumentException("MACDEXT open: " + retCode, retCode);
    }
    /**
     * Open a live MACDEXT stream over the warm-up history; the handle's
@@ -1011,11 +1095,11 @@
       if( retCode == RetCode.Success ) {
          return sp;
       }
-      if( retCode == RetCode.OutOfRangeEndIndex ) {
+      if( retCode == RetCode.InsufficientHistory ) {
          throw new InsufficientHistoryException("MACDEXT openAndFill: history shorter than lookback + 1");
       }
       if( retCode == RetCode.InternalError ) {
-         throw new IllegalStateException("MACDEXT openAndFill: internal error");
+         throw new TaLibStateException("MACDEXT openAndFill: internal error", retCode);
       }
-      throw new IllegalArgumentException("MACDEXT openAndFill: " + retCode);
+      throw new TaLibArgumentException("MACDEXT openAndFill: " + retCode, retCode);
    }

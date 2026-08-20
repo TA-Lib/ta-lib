@@ -41,7 +41,7 @@ let provisional = s.peek(forming_close)?;            // state left unchanged
 // dropping `s` closes the stream
 ```
 
-`Open` returns a `Result` — `Err(RetCode::BadParam)` if a parameter is out of range or there is too little history. `update` and `peek` return a `Result` too, and after a successful `Open` the only thing they reject is a **non-finite bar**, leaving the handle exactly as it was.
+`Open` returns a `Result` — `Err(RetCode::InsufficientHistory)` if there is too little history (another bar fixes it, so this is the one worth retrying), `Err(RetCode::BadParam)` if a parameter is out of range. `update` and `peek` return a `Result` too, and after a successful `Open` the only thing they reject is a **non-finite bar**, leaving the handle exactly as it was.
 
 One narrow exception to "the handle is unchanged": a *composed* indicator drives its sub-stages through their own public update, so a value the library computed internally is re-checked there. If such an intermediate overflowed to an infinity, the rejection would surface after earlier sub-stages had advanced, and would name the sub-stage. It needs input magnitudes around 1e306 and up — the overflow class TA-Lib already treats as out of scope — but the guarantee is stated for the caller-supplied case, which is the one you can provoke. `update` never allocates.
 

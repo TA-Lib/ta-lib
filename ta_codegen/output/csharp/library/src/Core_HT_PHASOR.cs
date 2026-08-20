@@ -76,13 +76,13 @@ public partial class Core
       return 32 + this.unstablePeriod[(int)FuncUnstId.HT_PHASOR] ;
 
    }
-   internal RetCode HT_PHASOR( int startIdx,
-                               int endIdx,
-                               ReadOnlySpan<double> inReal,
-                               out int outBegIdx,
-                               out int outNBElement,
-                               Span<double> outInPhase,
-                               Span<double> outQuadrature )
+   internal RetCode HT_PHASOR_Body( int startIdx,
+                                    int endIdx,
+                                    ReadOnlySpan<double> inReal,
+                                    out int outBegIdx,
+                                    out int outNBElement,
+                                    Span<double> outInPhase,
+                                    Span<double> outQuadrature )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -428,13 +428,13 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode HT_PHASOR( int startIdx,
-                               int endIdx,
-                               ReadOnlySpan<float> inReal,
-                               out int outBegIdx,
-                               out int outNBElement,
-                               Span<double> outInPhase,
-                               Span<double> outQuadrature )
+   internal RetCode HT_PHASOR_Body( int startIdx,
+                                    int endIdx,
+                                    ReadOnlySpan<float> inReal,
+                                    out int outBegIdx,
+                                    out int outNBElement,
+                                    Span<double> outInPhase,
+                                    Span<double> outQuadrature )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -777,11 +777,27 @@ public partial class Core
       RequireLength("HT_PHASOR", "inReal", inReal.Length, guardInLen);
       RequireLength("HT_PHASOR", "outInPhase", outInPhase.Length, guardOutLen);
       RequireLength("HT_PHASOR", "outQuadrature", outQuadrature.Length, guardOutLen);
-      RetCode retCode = HT_PHASOR(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outInPhase, outQuadrature);
+      RetCode retCode = HT_PHASOR_Body(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outInPhase, outQuadrature);
       if( retCode != RetCode.Success ) {
          throw Failure("HT_PHASOR", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode HT_PHASOR( int startIdx,
+                               int endIdx,
+                               ReadOnlySpan<double> inReal,
+                               out int outBegIdx,
+                               out int outNBElement,
+                               Span<double> outInPhase,
+                               Span<double> outQuadrature )
+   {
+      try {
+         return HT_PHASOR_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outInPhase, outQuadrature);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /// <summary>
    /// Hilbert Transform indicator that decomposes the price series into its
@@ -842,11 +858,27 @@ public partial class Core
       RequireLength("HT_PHASOR", "inReal", inReal.Length, guardInLen);
       RequireLength("HT_PHASOR", "outInPhase", outInPhase.Length, guardOutLen);
       RequireLength("HT_PHASOR", "outQuadrature", outQuadrature.Length, guardOutLen);
-      RetCode retCode = HT_PHASOR(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outInPhase, outQuadrature);
+      RetCode retCode = HT_PHASOR_Body(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outInPhase, outQuadrature);
       if( retCode != RetCode.Success ) {
          throw Failure("HT_PHASOR", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
+   }
+   internal RetCode HT_PHASOR( int startIdx,
+                               int endIdx,
+                               ReadOnlySpan<float> inReal,
+                               out int outBegIdx,
+                               out int outNBElement,
+                               Span<double> outInPhase,
+                               Span<double> outQuadrature )
+   {
+      try {
+         return HT_PHASOR_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outInPhase, outQuadrature);
+      } catch (Exception _e) when (_e is ITaLibFailure) {
+         outBegIdx = 0;
+         outNBElement = 0;
+         return ((ITaLibFailure)_e).RetCode;
+      }
    }
    /**** Streaming API *****/
 
@@ -1415,7 +1447,7 @@ public partial class Core
       if( startIdx > endIdx ) {
          outBegIdx = 0;
          outNBElement = 0;
-         return RetCode.OutOfRangeEndIndex ;
+         return RetCode.InsufficientHistory ;
       }
       outBegIdx = startIdx;
       /* Initialize the price smoother, which is simply a weighted
@@ -1795,7 +1827,7 @@ public partial class Core
    /// span cannot be null.</exception>
    public HT_PHASOR_Stream HT_PHASOR_Open( ReadOnlySpan<double> inReal )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       return HT_PHASOR_OpenInternal(inReal, 0);
    }
 
@@ -1826,7 +1858,7 @@ public partial class Core
    /// output.</exception>
    public HT_PHASOR_Stream HT_PHASOR_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outInPhase, Span<double> outQuadrature )
    {
-      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
       RetCode retCode = HT_PHASOR_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outInPhase, outQuadrature);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
