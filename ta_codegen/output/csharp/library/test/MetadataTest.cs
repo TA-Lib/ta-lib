@@ -441,15 +441,21 @@ public static class MetadataTest
         Check(noOutput == RetCode.OutputNotAllInitialize && rNoOut.Count == 0,
             $"TryInvoke reports an unbound output as a code ({noOutput})");
 
-        /* `(int)value` on an out-of-range double is unspecified in C# and on x86
-           lands on int.MinValue -- the "use the default" sentinel. So an absurd
-           magnitude silently meant "use the default" where the caller meant an
-           error. The sentinel itself stays reachable: asking for the default is a
-           legal request (issue #162). */
+        /* `(int)value` on an out-of-range double is unspecified in ECMA-334, and
+           .NET saturates: a large NEGATIVE value lands on int.MinValue -- which
+           is the "use the default" sentinel -- so it silently meant "use the
+           default" where the caller meant an error. Both signs are probed: the
+           negative one is the case that reaches the sentinel, the positive one
+           lands on int.MaxValue and silently meant a period of 2147483647. The
+           sentinel itself stays reachable: asking for the default is a legal
+           request (issue #162). */
         OptInputInfo smaPeriod = sma.OptInputs[0];
         CheckThrows<ArgumentOutOfRangeException>(
             () => sma.CreateCall().SetParam(smaPeriod, 1e18),
             "SetParam rejects a magnitude no integer parameter can hold");
+        CheckThrows<ArgumentOutOfRangeException>(
+            () => sma.CreateCall().SetParam(smaPeriod, -1e18),
+            "SetParam rejects the negative magnitude that saturates ONTO the sentinel");
         CheckThrows<ArgumentOutOfRangeException>(
             () => sma.CreateCall().SetParam(smaPeriod, double.NaN), "SetParam rejects NaN");
         Check(sma.CreateCall().SetParam(smaPeriod, int.MinValue) is not null,

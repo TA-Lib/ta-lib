@@ -344,12 +344,14 @@ public sealed class FunctionCall
         };
     }
 
-    /* `(int)value` on a double outside the int range is unspecified in C#, and on
-       x86 it lands on int.MinValue -- which is the "use the default" sentinel. So
-       SetParam(p, 1e18) silently meant "use the default" where the caller plainly
-       meant an error. Reject what the integer domain cannot represent. The
-       sentinel itself stays reachable: asking for the default IS a legal request
-       (issue #162). */
+    /* `(int)value` on a double outside the int range is unspecified in ECMA-334.
+       .NET saturates: a large POSITIVE value lands on int.MaxValue, a large
+       NEGATIVE one on int.MinValue -- and int.MinValue IS the "use the default"
+       sentinel. So SetParam(p, -1e18) silently meant "use the default", and
+       SetParam(p, 1e18) silently meant a period of 2147483647, where the caller
+       plainly meant an error in both cases; NaN lands on 0. Reject what the
+       integer domain cannot represent. The sentinel itself stays reachable:
+       asking for the default IS a legal request (issue #162). */
     private static int ToIntegerOperand(OptInputInfo parameter, double value)
     {
         if (double.IsNaN(value) || value < int.MinValue || value > int.MaxValue)
