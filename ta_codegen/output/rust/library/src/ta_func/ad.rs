@@ -74,7 +74,7 @@ impl Core {
     }
     /// C-shaped body behind [`Core::AD`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
-    pub(crate) fn AD_Internal(
+    pub(crate) fn AD_Impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -225,7 +225,7 @@ impl Core {
     ) -> Result<OutRange, RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.AD_Internal(
+        let retCode = self.AD_Impl(
             startIdx,
             endIdx,
             inHigh,
@@ -305,7 +305,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::AD_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::AD_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn AD_OpenCore(
+    pub(crate) fn AD_OpenPass(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<AD_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inVolume.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() || inVolume.len() != inHigh.len() {
@@ -374,7 +374,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.AD_OpenCore(inHigh, inLow, inClose, inVolume, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.AD_OpenPass(inHigh, inLow, inClose, inVolume, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -420,7 +420,7 @@ impl Core {
     ) -> Result<(AD_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.AD_OpenCore(inHigh, inLow, inClose, inVolume, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.AD_OpenPass(inHigh, inLow, inClose, inVolume, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -429,7 +429,7 @@ impl Core {
     pub(crate) fn AD_OpenAndFillInternal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<AD_Stream, RetCode> {
-        self.AD_OpenCore(inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1)
+        self.AD_OpenPass(inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

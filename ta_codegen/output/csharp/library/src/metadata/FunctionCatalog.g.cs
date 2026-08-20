@@ -347,7 +347,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.AC_Lookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.AC_Body(
+            RetCode rc = core.AC_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -375,7 +375,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.ACCBANDS_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ACCBANDS_Body(
+            RetCode rc = core.ACCBANDS_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
             return new CallOutcome(rc, b, n);
         });
@@ -398,7 +398,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.ACOS_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ACOS_Body(
+            RetCode rc = core.ACOS_Impl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -421,7 +421,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.AD_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.AD_Body(
+            RetCode rc = core.AD_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -445,7 +445,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.ADD_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ADD_Body(
+            RetCode rc = core.ADD_Impl(
                 startIdx, endIdx, c.Series(0), c.Series(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -472,7 +472,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.ADOSC_Lookback(c.IntOpt(0), c.IntOpt(1)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ADOSC_Body(
+            RetCode rc = core.ADOSC_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), c.IntOpt(0), c.IntOpt(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -498,7 +498,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.ADX_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ADX_Body(
+            RetCode rc = core.ADX_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -524,7 +524,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.ADXR_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ADXR_Body(
+            RetCode rc = core.ADXR_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -551,7 +551,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.AO_Lookback(c.IntOpt(0), c.IntOpt(1)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.AO_Body(
+            RetCode rc = core.AO_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -579,7 +579,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.APO_Lookback(c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.APO_Body(
+            RetCode rc = core.APO_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -606,7 +606,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.AROON_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.AROON_Body(
+            RetCode rc = core.AROON_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), out int b, out int n, c.RealOut(0), c.RealOut(1));
             return new CallOutcome(rc, b, n);
         });
@@ -632,7 +632,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.AROONOSC_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.AROONOSC_Body(
+            RetCode rc = core.AROONOSC_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -655,7 +655,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.ASIN_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ASIN_Body(
+            RetCode rc = core.ASIN_Impl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -678,7 +678,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.ATAN_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ATAN_Body(
+            RetCode rc = core.ATAN_Impl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -704,7 +704,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.ATR_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ATR_Body(
+            RetCode rc = core.ATR_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -730,7 +730,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.AVGDEV_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.AVGDEV_Body(
+            RetCode rc = core.AVGDEV_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -753,7 +753,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.AVGPRICE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.AVGPRICE_Body(
+            RetCode rc = core.AVGPRICE_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -784,7 +784,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.BBANDS_Lookback(c.IntOpt(0), c.RealOpt(1), c.RealOpt(2), (MAType)c.IntOpt(3)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.BBANDS_Body(
+            RetCode rc = core.BBANDS_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), c.RealOpt(2), (MAType)c.IntOpt(3), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
             return new CallOutcome(rc, b, n);
         });
@@ -811,7 +811,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.BETA_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.BETA_Body(
+            RetCode rc = core.BETA_Impl(
                 startIdx, endIdx, c.Series(0), c.Series(1), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -834,7 +834,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.BOP_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.BOP_Body(
+            RetCode rc = core.BOP_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -860,7 +860,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CCI_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CCI_Body(
+            RetCode rc = core.CCI_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -883,7 +883,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDL2CROWS_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDL2CROWS_Body(
+            RetCode rc = core.CDL2CROWS_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -906,7 +906,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDL3BLACKCROWS_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDL3BLACKCROWS_Body(
+            RetCode rc = core.CDL3BLACKCROWS_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -929,7 +929,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDL3INSIDE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDL3INSIDE_Body(
+            RetCode rc = core.CDL3INSIDE_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -952,7 +952,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDL3LINESTRIKE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDL3LINESTRIKE_Body(
+            RetCode rc = core.CDL3LINESTRIKE_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -975,7 +975,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDL3OUTSIDE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDL3OUTSIDE_Body(
+            RetCode rc = core.CDL3OUTSIDE_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -998,7 +998,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDL3STARSINSOUTH_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDL3STARSINSOUTH_Body(
+            RetCode rc = core.CDL3STARSINSOUTH_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1021,7 +1021,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDL3WHITESOLDIERS_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDL3WHITESOLDIERS_Body(
+            RetCode rc = core.CDL3WHITESOLDIERS_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1047,7 +1047,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLABANDONEDBABY_Lookback(c.RealOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLABANDONEDBABY_Body(
+            RetCode rc = core.CDLABANDONEDBABY_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1070,7 +1070,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLADVANCEBLOCK_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLADVANCEBLOCK_Body(
+            RetCode rc = core.CDLADVANCEBLOCK_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1093,7 +1093,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLBELTHOLD_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLBELTHOLD_Body(
+            RetCode rc = core.CDLBELTHOLD_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1116,7 +1116,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLBREAKAWAY_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLBREAKAWAY_Body(
+            RetCode rc = core.CDLBREAKAWAY_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1139,7 +1139,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLCLOSINGMARUBOZU_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLCLOSINGMARUBOZU_Body(
+            RetCode rc = core.CDLCLOSINGMARUBOZU_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1162,7 +1162,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLCONCEALBABYSWALL_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLCONCEALBABYSWALL_Body(
+            RetCode rc = core.CDLCONCEALBABYSWALL_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1185,7 +1185,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLCOUNTERATTACK_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLCOUNTERATTACK_Body(
+            RetCode rc = core.CDLCOUNTERATTACK_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1211,7 +1211,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLDARKCLOUDCOVER_Lookback(c.RealOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLDARKCLOUDCOVER_Body(
+            RetCode rc = core.CDLDARKCLOUDCOVER_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1234,7 +1234,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLDOJI_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLDOJI_Body(
+            RetCode rc = core.CDLDOJI_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1257,7 +1257,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLDOJISTAR_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLDOJISTAR_Body(
+            RetCode rc = core.CDLDOJISTAR_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1280,7 +1280,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLDRAGONFLYDOJI_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLDRAGONFLYDOJI_Body(
+            RetCode rc = core.CDLDRAGONFLYDOJI_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1303,7 +1303,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLENGULFING_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLENGULFING_Body(
+            RetCode rc = core.CDLENGULFING_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1329,7 +1329,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLEVENINGDOJISTAR_Lookback(c.RealOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLEVENINGDOJISTAR_Body(
+            RetCode rc = core.CDLEVENINGDOJISTAR_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1355,7 +1355,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLEVENINGSTAR_Lookback(c.RealOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLEVENINGSTAR_Body(
+            RetCode rc = core.CDLEVENINGSTAR_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1378,7 +1378,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLGAPSIDESIDEWHITE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLGAPSIDESIDEWHITE_Body(
+            RetCode rc = core.CDLGAPSIDESIDEWHITE_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1401,7 +1401,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLGRAVESTONEDOJI_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLGRAVESTONEDOJI_Body(
+            RetCode rc = core.CDLGRAVESTONEDOJI_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1424,7 +1424,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLHAMMER_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLHAMMER_Body(
+            RetCode rc = core.CDLHAMMER_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1447,7 +1447,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLHANGINGMAN_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLHANGINGMAN_Body(
+            RetCode rc = core.CDLHANGINGMAN_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1470,7 +1470,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLHARAMI_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLHARAMI_Body(
+            RetCode rc = core.CDLHARAMI_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1493,7 +1493,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLHARAMICROSS_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLHARAMICROSS_Body(
+            RetCode rc = core.CDLHARAMICROSS_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1516,7 +1516,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLHIGHWAVE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLHIGHWAVE_Body(
+            RetCode rc = core.CDLHIGHWAVE_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1539,7 +1539,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLHIKKAKE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLHIKKAKE_Body(
+            RetCode rc = core.CDLHIKKAKE_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1562,7 +1562,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLHIKKAKEMOD_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLHIKKAKEMOD_Body(
+            RetCode rc = core.CDLHIKKAKEMOD_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1585,7 +1585,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLHOMINGPIGEON_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLHOMINGPIGEON_Body(
+            RetCode rc = core.CDLHOMINGPIGEON_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1608,7 +1608,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLIDENTICAL3CROWS_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLIDENTICAL3CROWS_Body(
+            RetCode rc = core.CDLIDENTICAL3CROWS_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1631,7 +1631,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLINNECK_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLINNECK_Body(
+            RetCode rc = core.CDLINNECK_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1654,7 +1654,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLINVERTEDHAMMER_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLINVERTEDHAMMER_Body(
+            RetCode rc = core.CDLINVERTEDHAMMER_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1677,7 +1677,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLKICKING_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLKICKING_Body(
+            RetCode rc = core.CDLKICKING_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1700,7 +1700,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLKICKINGBYLENGTH_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLKICKINGBYLENGTH_Body(
+            RetCode rc = core.CDLKICKINGBYLENGTH_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1723,7 +1723,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLLADDERBOTTOM_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLLADDERBOTTOM_Body(
+            RetCode rc = core.CDLLADDERBOTTOM_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1746,7 +1746,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLLONGLEGGEDDOJI_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLLONGLEGGEDDOJI_Body(
+            RetCode rc = core.CDLLONGLEGGEDDOJI_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1769,7 +1769,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLLONGLINE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLLONGLINE_Body(
+            RetCode rc = core.CDLLONGLINE_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1792,7 +1792,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLMARUBOZU_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLMARUBOZU_Body(
+            RetCode rc = core.CDLMARUBOZU_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1815,7 +1815,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLMATCHINGLOW_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLMATCHINGLOW_Body(
+            RetCode rc = core.CDLMATCHINGLOW_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1841,7 +1841,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLMATHOLD_Lookback(c.RealOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLMATHOLD_Body(
+            RetCode rc = core.CDLMATHOLD_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1867,7 +1867,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLMORNINGDOJISTAR_Lookback(c.RealOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLMORNINGDOJISTAR_Body(
+            RetCode rc = core.CDLMORNINGDOJISTAR_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1893,7 +1893,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLMORNINGSTAR_Lookback(c.RealOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLMORNINGSTAR_Body(
+            RetCode rc = core.CDLMORNINGSTAR_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1916,7 +1916,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLONNECK_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLONNECK_Body(
+            RetCode rc = core.CDLONNECK_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1939,7 +1939,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLPIERCING_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLPIERCING_Body(
+            RetCode rc = core.CDLPIERCING_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1962,7 +1962,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLRICKSHAWMAN_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLRICKSHAWMAN_Body(
+            RetCode rc = core.CDLRICKSHAWMAN_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1985,7 +1985,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLRISEFALL3METHODS_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLRISEFALL3METHODS_Body(
+            RetCode rc = core.CDLRISEFALL3METHODS_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2008,7 +2008,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLSEPARATINGLINES_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLSEPARATINGLINES_Body(
+            RetCode rc = core.CDLSEPARATINGLINES_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2031,7 +2031,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLSHOOTINGSTAR_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLSHOOTINGSTAR_Body(
+            RetCode rc = core.CDLSHOOTINGSTAR_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2054,7 +2054,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLSHORTLINE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLSHORTLINE_Body(
+            RetCode rc = core.CDLSHORTLINE_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2077,7 +2077,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLSPINNINGTOP_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLSPINNINGTOP_Body(
+            RetCode rc = core.CDLSPINNINGTOP_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2100,7 +2100,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLSTALLEDPATTERN_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLSTALLEDPATTERN_Body(
+            RetCode rc = core.CDLSTALLEDPATTERN_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2123,7 +2123,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLSTICKSANDWICH_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLSTICKSANDWICH_Body(
+            RetCode rc = core.CDLSTICKSANDWICH_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2146,7 +2146,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLTAKURI_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLTAKURI_Body(
+            RetCode rc = core.CDLTAKURI_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2169,7 +2169,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLTASUKIGAP_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLTASUKIGAP_Body(
+            RetCode rc = core.CDLTASUKIGAP_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2192,7 +2192,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLTHRUSTING_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLTHRUSTING_Body(
+            RetCode rc = core.CDLTHRUSTING_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2215,7 +2215,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLTRISTAR_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLTRISTAR_Body(
+            RetCode rc = core.CDLTRISTAR_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2238,7 +2238,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLUNIQUE3RIVER_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLUNIQUE3RIVER_Body(
+            RetCode rc = core.CDLUNIQUE3RIVER_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2261,7 +2261,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLUPSIDEGAP2CROWS_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLUPSIDEGAP2CROWS_Body(
+            RetCode rc = core.CDLUPSIDEGAP2CROWS_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2284,7 +2284,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CDLXSIDEGAP3METHODS_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CDLXSIDEGAP3METHODS_Body(
+            RetCode rc = core.CDLXSIDEGAP3METHODS_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2307,7 +2307,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CEIL_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CEIL_Body(
+            RetCode rc = core.CEIL_Impl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2333,7 +2333,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CMF_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CMF_Body(
+            RetCode rc = core.CMF_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2359,7 +2359,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CMO_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CMO_Body(
+            RetCode rc = core.CMO_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2385,7 +2385,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CMOU_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CMOU_Body(
+            RetCode rc = core.CMOU_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2412,7 +2412,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.CORREL_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CORREL_Body(
+            RetCode rc = core.CORREL_Impl(
                 startIdx, endIdx, c.Series(0), c.Series(1), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2435,7 +2435,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.COS_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.COS_Body(
+            RetCode rc = core.COS_Impl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2458,7 +2458,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.COSH_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.COSH_Body(
+            RetCode rc = core.COSH_Impl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2484,7 +2484,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.DEMA_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.DEMA_Body(
+            RetCode rc = core.DEMA_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2508,7 +2508,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.DIV_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.DIV_Body(
+            RetCode rc = core.DIV_Impl(
                 startIdx, endIdx, c.Series(0), c.Series(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2534,7 +2534,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.DX_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.DX_Body(
+            RetCode rc = core.DX_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2560,7 +2560,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.EFI_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.EFI_Body(
+            RetCode rc = core.EFI_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2586,7 +2586,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.EMA_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.EMA_Body(
+            RetCode rc = core.EMA_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2609,7 +2609,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.EXP_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.EXP_Body(
+            RetCode rc = core.EXP_Impl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2632,7 +2632,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.FLOOR_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.FLOOR_Body(
+            RetCode rc = core.FLOOR_Impl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2658,7 +2658,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.HMA_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.HMA_Body(
+            RetCode rc = core.HMA_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2681,7 +2681,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.HT_DCPERIOD_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.HT_DCPERIOD_Body(
+            RetCode rc = core.HT_DCPERIOD_Impl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2704,7 +2704,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.HT_DCPHASE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.HT_DCPHASE_Body(
+            RetCode rc = core.HT_DCPHASE_Impl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2728,7 +2728,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.HT_PHASOR_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.HT_PHASOR_Body(
+            RetCode rc = core.HT_PHASOR_Impl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0), c.RealOut(1));
             return new CallOutcome(rc, b, n);
         });
@@ -2752,7 +2752,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.HT_SINE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.HT_SINE_Body(
+            RetCode rc = core.HT_SINE_Impl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0), c.RealOut(1));
             return new CallOutcome(rc, b, n);
         });
@@ -2775,7 +2775,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.HT_TRENDLINE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.HT_TRENDLINE_Body(
+            RetCode rc = core.HT_TRENDLINE_Impl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2798,7 +2798,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.HT_TRENDMODE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.HT_TRENDMODE_Body(
+            RetCode rc = core.HT_TRENDMODE_Impl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2824,7 +2824,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.IMI_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.IMI_Body(
+            RetCode rc = core.IMI_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2850,7 +2850,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.KAMA_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.KAMA_Body(
+            RetCode rc = core.KAMA_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2876,7 +2876,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.LINEARREG_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.LINEARREG_Body(
+            RetCode rc = core.LINEARREG_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2902,7 +2902,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.LINEARREG_ANGLE_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.LINEARREG_ANGLE_Body(
+            RetCode rc = core.LINEARREG_ANGLE_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2928,7 +2928,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.LINEARREG_INTERCEPT_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.LINEARREG_INTERCEPT_Body(
+            RetCode rc = core.LINEARREG_INTERCEPT_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2954,7 +2954,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.LINEARREG_SLOPE_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.LINEARREG_SLOPE_Body(
+            RetCode rc = core.LINEARREG_SLOPE_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2977,7 +2977,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.LN_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.LN_Body(
+            RetCode rc = core.LN_Impl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3000,7 +3000,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.LOG10_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.LOG10_Body(
+            RetCode rc = core.LOG10_Impl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3027,7 +3027,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.MA_Lookback(c.IntOpt(0), (MAType)c.IntOpt(1)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MA_Body(
+            RetCode rc = core.MA_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), (MAType)c.IntOpt(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3057,7 +3057,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.MACD_Lookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MACD_Body(
+            RetCode rc = core.MACD_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
             return new CallOutcome(rc, b, n);
         });
@@ -3090,7 +3090,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.MACDEXT_Lookback(c.IntOpt(0), (MAType)c.IntOpt(1), c.IntOpt(2), (MAType)c.IntOpt(3), c.IntOpt(4), (MAType)c.IntOpt(5)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MACDEXT_Body(
+            RetCode rc = core.MACDEXT_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), (MAType)c.IntOpt(1), c.IntOpt(2), (MAType)c.IntOpt(3), c.IntOpt(4), (MAType)c.IntOpt(5), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
             return new CallOutcome(rc, b, n);
         });
@@ -3118,7 +3118,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.MACDFIX_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MACDFIX_Body(
+            RetCode rc = core.MACDFIX_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
             return new CallOutcome(rc, b, n);
         });
@@ -3146,7 +3146,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.MAMA_Lookback(c.RealOpt(0), c.RealOpt(1)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MAMA_Body(
+            RetCode rc = core.MAMA_Impl(
                 startIdx, endIdx, c.Series(0), c.RealOpt(0), c.RealOpt(1), out int b, out int n, c.RealOut(0), c.RealOut(1));
             return new CallOutcome(rc, b, n);
         });
@@ -3169,7 +3169,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.MARKETFI_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MARKETFI_Body(
+            RetCode rc = core.MARKETFI_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Volume), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3198,7 +3198,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.MAVP_Lookback(c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MAVP_Body(
+            RetCode rc = core.MAVP_Impl(
                 startIdx, endIdx, c.Series(0), c.Series(1), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3224,7 +3224,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.MAX_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MAX_Body(
+            RetCode rc = core.MAX_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3250,7 +3250,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.MAXINDEX_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MAXINDEX_Body(
+            RetCode rc = core.MAXINDEX_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3273,7 +3273,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.MEDPRICE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MEDPRICE_Body(
+            RetCode rc = core.MEDPRICE_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3299,7 +3299,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.MFI_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MFI_Body(
+            RetCode rc = core.MFI_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3325,7 +3325,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.MIDPOINT_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MIDPOINT_Body(
+            RetCode rc = core.MIDPOINT_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3351,7 +3351,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.MIDPRICE_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MIDPRICE_Body(
+            RetCode rc = core.MIDPRICE_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3377,7 +3377,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.MIN_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MIN_Body(
+            RetCode rc = core.MIN_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3403,7 +3403,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.MININDEX_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MININDEX_Body(
+            RetCode rc = core.MININDEX_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3430,7 +3430,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.MINMAX_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MINMAX_Body(
+            RetCode rc = core.MINMAX_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0), c.RealOut(1));
             return new CallOutcome(rc, b, n);
         });
@@ -3457,7 +3457,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.MINMAXINDEX_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MINMAXINDEX_Body(
+            RetCode rc = core.MINMAXINDEX_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.IntOut(0), c.IntOut(1));
             return new CallOutcome(rc, b, n);
         });
@@ -3483,7 +3483,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.MINUS_DI_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MINUS_DI_Body(
+            RetCode rc = core.MINUS_DI_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3509,7 +3509,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.MINUS_DM_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MINUS_DM_Body(
+            RetCode rc = core.MINUS_DM_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3535,7 +3535,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.MOM_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MOM_Body(
+            RetCode rc = core.MOM_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3559,7 +3559,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.MULT_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MULT_Body(
+            RetCode rc = core.MULT_Impl(
                 startIdx, endIdx, c.Series(0), c.Series(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3585,7 +3585,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.NATR_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.NATR_Body(
+            RetCode rc = core.NATR_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3608,7 +3608,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.NVI_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.NVI_Body(
+            RetCode rc = core.NVI_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3632,7 +3632,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.OBV_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.OBV_Body(
+            RetCode rc = core.OBV_Impl(
                 startIdx, endIdx, c.Series(0), c.Price(1, PriceComponents.Volume), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3658,7 +3658,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.PLUS_DI_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.PLUS_DI_Body(
+            RetCode rc = core.PLUS_DI_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3684,7 +3684,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.PLUS_DM_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.PLUS_DM_Body(
+            RetCode rc = core.PLUS_DM_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3712,7 +3712,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.PPO_Lookback(c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.PPO_Body(
+            RetCode rc = core.PPO_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3735,7 +3735,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.PVI_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.PVI_Body(
+            RetCode rc = core.PVI_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3763,7 +3763,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.PVO_Lookback(c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.PVO_Body(
+            RetCode rc = core.PVO_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Volume), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3789,7 +3789,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.QSTICK_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.QSTICK_Body(
+            RetCode rc = core.QSTICK_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3815,7 +3815,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.ROC_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ROC_Body(
+            RetCode rc = core.ROC_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3841,7 +3841,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.ROCP_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ROCP_Body(
+            RetCode rc = core.ROCP_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3867,7 +3867,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.ROCR_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ROCR_Body(
+            RetCode rc = core.ROCR_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3893,7 +3893,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.ROCR100_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ROCR100_Body(
+            RetCode rc = core.ROCR100_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3919,7 +3919,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.RSI_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.RSI_Body(
+            RetCode rc = core.RSI_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3946,7 +3946,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.SAR_Lookback(c.RealOpt(0), c.RealOpt(1)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.SAR_Body(
+            RetCode rc = core.SAR_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.RealOpt(0), c.RealOpt(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3979,7 +3979,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.SAREXT_Lookback(c.RealOpt(0), c.RealOpt(1), c.RealOpt(2), c.RealOpt(3), c.RealOpt(4), c.RealOpt(5), c.RealOpt(6), c.RealOpt(7)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.SAREXT_Body(
+            RetCode rc = core.SAREXT_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.RealOpt(0), c.RealOpt(1), c.RealOpt(2), c.RealOpt(3), c.RealOpt(4), c.RealOpt(5), c.RealOpt(6), c.RealOpt(7), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4002,7 +4002,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.SIN_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.SIN_Body(
+            RetCode rc = core.SIN_Impl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4025,7 +4025,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.SINH_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.SINH_Body(
+            RetCode rc = core.SINH_Impl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4051,7 +4051,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.SMA_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.SMA_Body(
+            RetCode rc = core.SMA_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4074,7 +4074,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.SQRT_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.SQRT_Body(
+            RetCode rc = core.SQRT_Impl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4101,7 +4101,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.STDDEV_Lookback(c.IntOpt(0), c.RealOpt(1)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.STDDEV_Body(
+            RetCode rc = core.STDDEV_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4132,7 +4132,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.STOCH_Lookback(c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), c.IntOpt(3), (MAType)c.IntOpt(4)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.STOCH_Body(
+            RetCode rc = core.STOCH_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), c.IntOpt(3), (MAType)c.IntOpt(4), out int b, out int n, c.RealOut(0), c.RealOut(1));
             return new CallOutcome(rc, b, n);
         });
@@ -4161,7 +4161,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.STOCHF_Lookback(c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.STOCHF_Body(
+            RetCode rc = core.STOCHF_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), out int b, out int n, c.RealOut(0), c.RealOut(1));
             return new CallOutcome(rc, b, n);
         });
@@ -4191,7 +4191,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.STOCHRSI_Lookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), (MAType)c.IntOpt(3)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.STOCHRSI_Body(
+            RetCode rc = core.STOCHRSI_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), (MAType)c.IntOpt(3), out int b, out int n, c.RealOut(0), c.RealOut(1));
             return new CallOutcome(rc, b, n);
         });
@@ -4215,7 +4215,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.SUB_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.SUB_Body(
+            RetCode rc = core.SUB_Impl(
                 startIdx, endIdx, c.Series(0), c.Series(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4241,7 +4241,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.SUM_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.SUM_Body(
+            RetCode rc = core.SUM_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4268,7 +4268,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.T3_Lookback(c.IntOpt(0), c.RealOpt(1)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.T3_Body(
+            RetCode rc = core.T3_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4291,7 +4291,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.TAN_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.TAN_Body(
+            RetCode rc = core.TAN_Impl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4314,7 +4314,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.TANH_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.TANH_Body(
+            RetCode rc = core.TANH_Impl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4340,7 +4340,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.TEMA_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.TEMA_Body(
+            RetCode rc = core.TEMA_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4363,7 +4363,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.TRANGE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.TRANGE_Body(
+            RetCode rc = core.TRANGE_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4389,7 +4389,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.TRIMA_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.TRIMA_Body(
+            RetCode rc = core.TRIMA_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4415,7 +4415,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.TRIX_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.TRIX_Body(
+            RetCode rc = core.TRIX_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4441,7 +4441,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.TSF_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.TSF_Body(
+            RetCode rc = core.TSF_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4464,7 +4464,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.TYPPRICE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.TYPPRICE_Body(
+            RetCode rc = core.TYPPRICE_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4492,7 +4492,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.ULTOSC_Lookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.ULTOSC_Body(
+            RetCode rc = core.ULTOSC_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4519,7 +4519,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.VAR_Lookback(c.IntOpt(0), c.RealOpt(1)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.VAR_Body(
+            RetCode rc = core.VAR_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4546,7 +4546,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.VWMA_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.VWMA_Body(
+            RetCode rc = core.VWMA_Impl(
                 startIdx, endIdx, c.Series(0), c.Price(1, PriceComponents.Volume), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4569,7 +4569,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.WAD_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.WAD_Body(
+            RetCode rc = core.WAD_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4592,7 +4592,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.WCLPRICE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.WCLPRICE_Body(
+            RetCode rc = core.WCLPRICE_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4618,7 +4618,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.WILLR_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.WILLR_Body(
+            RetCode rc = core.WILLR_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4644,7 +4644,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.WMA_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.WMA_Body(
+            RetCode rc = core.WMA_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });

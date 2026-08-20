@@ -28,7 +28,7 @@
       return 0 ;
 
    }
-   RetCode NVI_Body( int startIdx,
+   RetCode NVI_Impl( int startIdx,
                      int endIdx,
                      double inClose[],
                      double inVolume[],
@@ -90,7 +90,7 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode NVI_Body( int startIdx,
+   RetCode NVI_Impl( int startIdx,
                      int endIdx,
                      float inClose[],
                      float inVolume[],
@@ -196,7 +196,7 @@
       requireLength("NVI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = NVI_Body(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = NVI_Impl(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("NVI", retCode);
       }
@@ -267,7 +267,7 @@
       requireLength("NVI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = NVI_Body(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = NVI_Impl(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("NVI", retCode);
       }
@@ -412,7 +412,7 @@
       sp.prevClose = tempClose;
       sp.prevVolume = tempVolume;
    }
-   private RetCode NVI_OpenCore( NVI_Stream sp, double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode NVI_OpenPass( NVI_Stream sp, double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int i = 0;
       int outIdx = 0;
@@ -476,29 +476,29 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode NVI_OpenBody( NVI_Stream sp, double inClose[], double inVolume[], int startIdx )
+   private RetCode NVI_OpenImpl( NVI_Stream sp, double inClose[], double inVolume[], int startIdx )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return NVI_OpenCore( sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
+      return NVI_OpenPass( sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode NVI_OpenAndFillBody( NVI_Stream sp, double inClose[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode NVI_OpenAndFillImpl( NVI_Stream sp, double inClose[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
          return RetCode.BadParam;
       }
-      return NVI_OpenCore( sp, inClose, inVolume, 0, outBegIdx, outNBElement, outReal, 1 );
+      return NVI_OpenPass( sp, inClose, inVolume, 0, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode NVI_OpenAndFillInternalBody( NVI_Stream sp, double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode NVI_OpenAndFillInternalImpl( NVI_Stream sp, double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return NVI_OpenCore(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
+      return NVI_OpenPass(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
    }
    /* NVI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    NVI_Stream NVI_OpenAndFillInternal( double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       NVI_Stream sp = new NVI_Stream(this);
-      RetCode retCode = NVI_OpenAndFillInternalBody(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = NVI_OpenAndFillInternalImpl(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -514,7 +514,7 @@
    NVI_Stream NVI_OpenInternal( double inClose[], double inVolume[], int startIdx )
    {
       NVI_Stream sp = new NVI_Stream(this);
-      RetCode retCode = NVI_OpenBody(sp, inClose, inVolume, startIdx);
+      RetCode retCode = NVI_OpenImpl(sp, inClose, inVolume, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -554,7 +554,7 @@
       NVI_Stream sp = new NVI_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = NVI_OpenAndFillBody(sp, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = NVI_OpenAndFillImpl(sp, inClose, inVolume, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

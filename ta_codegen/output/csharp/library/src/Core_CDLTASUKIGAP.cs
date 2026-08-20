@@ -73,7 +73,7 @@ public partial class Core
       return Near_avgPeriod + 2 ;
 
    }
-   internal RetCode CDLTASUKIGAP_Body( int startIdx,
+   internal RetCode CDLTASUKIGAP_Impl( int startIdx,
                                        int endIdx,
                                        ReadOnlySpan<double> inOpen,
                                        ReadOnlySpan<double> inHigh,
@@ -170,7 +170,7 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CDLTASUKIGAP_Body( int startIdx,
+   internal RetCode CDLTASUKIGAP_Impl( int startIdx,
                                        int endIdx,
                                        ReadOnlySpan<float> inOpen,
                                        ReadOnlySpan<float> inHigh,
@@ -289,7 +289,7 @@ public partial class Core
       RequireLength("CDLTASUKIGAP", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLTASUKIGAP", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLTASUKIGAP", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLTASUKIGAP_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLTASUKIGAP_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLTASUKIGAP", retCode);
       }
@@ -362,7 +362,7 @@ public partial class Core
       RequireLength("CDLTASUKIGAP", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLTASUKIGAP", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLTASUKIGAP", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLTASUKIGAP_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLTASUKIGAP_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLTASUKIGAP", retCode);
       }
@@ -565,7 +565,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLTASUKIGAP_OpenCore( CDLTASUKIGAP_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CDLTASUKIGAP_OpenPass( CDLTASUKIGAP_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -683,29 +683,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CDLTASUKIGAP_OpenBody( CDLTASUKIGAP_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   private RetCode CDLTASUKIGAP_OpenImpl( CDLTASUKIGAP_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       int[] sink_outInteger = new int[1];
-      return CDLTASUKIGAP_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
+      return CDLTASUKIGAP_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
    }
 
-   private RetCode CDLTASUKIGAP_OpenAndFillBody( CDLTASUKIGAP_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLTASUKIGAP_OpenAndFillImpl( CDLTASUKIGAP_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      return CDLTASUKIGAP_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
+      return CDLTASUKIGAP_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
    }
 
-   private RetCode CDLTASUKIGAP_OpenAndFillInternalBody( CDLTASUKIGAP_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLTASUKIGAP_OpenAndFillInternalImpl( CDLTASUKIGAP_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      return CDLTASUKIGAP_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+      return CDLTASUKIGAP_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
    }
 
    /* CDLTASUKIGAP_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal CDLTASUKIGAP_Stream CDLTASUKIGAP_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       CDLTASUKIGAP_Stream sp = new CDLTASUKIGAP_Stream(this);
-      RetCode retCode = CDLTASUKIGAP_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
+      RetCode retCode = CDLTASUKIGAP_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -716,7 +716,7 @@ public partial class Core
    internal CDLTASUKIGAP_Stream CDLTASUKIGAP_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       CDLTASUKIGAP_Stream sp = new CDLTASUKIGAP_Stream(this);
-      RetCode retCode = CDLTASUKIGAP_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      RetCode retCode = CDLTASUKIGAP_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -786,7 +786,7 @@ public partial class Core
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       CDLTASUKIGAP_Stream sp = new CDLTASUKIGAP_Stream(this);
-      RetCode retCode = CDLTASUKIGAP_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLTASUKIGAP_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

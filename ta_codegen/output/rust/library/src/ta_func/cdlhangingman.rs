@@ -95,7 +95,7 @@ impl Core {
     }
     /// C-shaped body behind [`Core::CDLHANGINGMAN`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
-    pub(crate) fn CDLHANGINGMAN_Internal(
+    pub(crate) fn CDLHANGINGMAN_Impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -508,7 +508,7 @@ impl Core {
     ) -> Result<OutRange, RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.CDLHANGINGMAN_Internal(
+        let retCode = self.CDLHANGINGMAN_Impl(
             startIdx,
             endIdx,
             inOpen,
@@ -869,7 +869,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::CDLHANGINGMAN_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::CDLHANGINGMAN_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn CDLHANGINGMAN_OpenCore(
+    pub(crate) fn CDLHANGINGMAN_OpenPass(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
     ) -> Result<CDLHANGINGMAN_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
@@ -1265,7 +1265,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outInteger = [0_i32; 1];
-        let handle = self.CDLHANGINGMAN_OpenCore(inOpen, inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
+        let handle = self.CDLHANGINGMAN_OpenPass(inOpen, inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
         Ok((handle, sink_outInteger[0]))
     }
 
@@ -1311,7 +1311,7 @@ impl Core {
     ) -> Result<(CDLHANGINGMAN_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.CDLHANGINGMAN_OpenCore(inOpen, inHigh, inLow, inClose, 0, &mut outBegIdx, &mut outNBElement, outInteger, 1)?;
+        let handle = self.CDLHANGINGMAN_OpenPass(inOpen, inHigh, inLow, inClose, 0, &mut outBegIdx, &mut outNBElement, outInteger, 1)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -1320,7 +1320,7 @@ impl Core {
     pub(crate) fn CDLHANGINGMAN_OpenAndFillInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
     ) -> Result<CDLHANGINGMAN_Stream, RetCode> {
-        self.CDLHANGINGMAN_OpenCore(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1)
+        self.CDLHANGINGMAN_OpenPass(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1)
     }
 
 }

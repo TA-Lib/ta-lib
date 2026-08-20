@@ -76,7 +76,7 @@ public partial class Core
       return optInTimePeriod - 1 ;
 
    }
-   internal RetCode AVGDEV_Body( int startIdx,
+   internal RetCode AVGDEV_Impl( int startIdx,
                                  int endIdx,
                                  ReadOnlySpan<double> inReal,
                                  int optInTimePeriod,
@@ -136,7 +136,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode AVGDEV_Body( int startIdx,
+   internal RetCode AVGDEV_Impl( int startIdx,
                                  int endIdx,
                                  ReadOnlySpan<float> inReal,
                                  int optInTimePeriod,
@@ -244,7 +244,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("AVGDEV", "inReal", inReal.Length, guardInLen);
       RequireLength("AVGDEV", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = AVGDEV_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = AVGDEV_Impl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("AVGDEV", retCode);
       }
@@ -309,7 +309,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("AVGDEV", "inReal", inReal.Length, guardInLen);
       RequireLength("AVGDEV", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = AVGDEV_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = AVGDEV_Impl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("AVGDEV", retCode);
       }
@@ -456,7 +456,7 @@ public partial class Core
       }
    }
 
-   private RetCode AVGDEV_OpenCore( AVGDEV_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode AVGDEV_OpenPass( AVGDEV_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -522,32 +522,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode AVGDEV_OpenBody( AVGDEV_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
+   private RetCode AVGDEV_OpenImpl( AVGDEV_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
-      return AVGDEV_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+      return AVGDEV_OpenPass( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode AVGDEV_OpenAndFillBody( AVGDEV_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode AVGDEV_OpenAndFillImpl( AVGDEV_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
-      return AVGDEV_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+      return AVGDEV_OpenPass( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode AVGDEV_OpenAndFillInternalBody( AVGDEV_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode AVGDEV_OpenAndFillInternalImpl( AVGDEV_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return AVGDEV_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      return AVGDEV_OpenPass(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* AVGDEV_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal AVGDEV_Stream AVGDEV_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       AVGDEV_Stream sp = new AVGDEV_Stream(this);
-      RetCode retCode = AVGDEV_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = AVGDEV_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -558,7 +558,7 @@ public partial class Core
    internal AVGDEV_Stream AVGDEV_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       AVGDEV_Stream sp = new AVGDEV_Stream(this);
-      RetCode retCode = AVGDEV_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      RetCode retCode = AVGDEV_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -616,7 +616,7 @@ public partial class Core
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       AVGDEV_Stream sp = new AVGDEV_Stream(this);
-      RetCode retCode = AVGDEV_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = AVGDEV_OpenAndFillImpl(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

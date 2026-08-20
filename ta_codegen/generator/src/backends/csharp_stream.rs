@@ -1398,7 +1398,7 @@ fn emit_open_body_scalar_wrapper(o: &mut String, func: &FuncDef) {
         args.push(format!("sink_{}", out.name));
     }
     args.push("0".to_string());
-    let _ = writeln!(o, "      return {base}_OpenCore( {} );", args.join(", "));
+    let _ = writeln!(o, "      return {base}_OpenPass( {} );", args.join(", "));
     let _ = writeln!(o, "   }}");
 }
 
@@ -1425,7 +1425,7 @@ fn emit_open_and_fill_wrapper(o: &mut String, func: &FuncDef) {
         args.push(out.name.clone());
     }
     args.push("1".to_string());
-    let _ = writeln!(o, "      return {base}_OpenCore( {} );", args.join(", "));
+    let _ = writeln!(o, "      return {base}_OpenPass( {} );", args.join(", "));
     let _ = writeln!(o, "   }}");
 }
 
@@ -1574,7 +1574,7 @@ fn build_open_body_cs(model: &StreamModel, body: &[Statement]) -> Vec<Statement>
     streaming::rewrite_stmts(&body, &fe, &fs)
 }
 
-/// The open-body emitter: the merged `private RetCode <base>_OpenCore(...)`.
+/// The open-body emitter: the merged `private RetCode <base>_OpenPass(...)`.
 #[allow(clippy::too_many_arguments)]
 fn emit_open_body(
     o: &mut String,
@@ -1624,17 +1624,17 @@ fn emit_open_body_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
         params.push(format!("{} {}", opt_param_type_str(p), p.name));
     }
     let name = match mode {
-        OutMode::Scalar => format!("{base}_OpenBody"),
+        OutMode::Scalar => format!("{base}_OpenImpl"),
         // The merged worker: both entry points' inputs, plus the stride that
         // selects where the per-bar writes land.
         OutMode::Core => {
             push_out_tail(&mut params, func);
             params.push("int outStride".to_string());
-            format!("{base}_OpenCore")
+            format!("{base}_OpenPass")
         }
         OutMode::Fill => {
             push_out_tail(&mut params, func);
-            format!("{base}_OpenAndFillBody")
+            format!("{base}_OpenAndFillImpl")
         }
         OutMode::FillInternal => {
             params.insert(
@@ -1642,7 +1642,7 @@ fn emit_open_body_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
                 "int startIdx".to_string(),
             );
             push_out_tail(&mut params, func);
-            format!("{base}_OpenAndFillInternalBody")
+            format!("{base}_OpenAndFillInternalImpl")
         }
     };
     let _ = writeln!(o, "\n   private RetCode {name}( {} )", params.join(", "));
@@ -2209,7 +2209,7 @@ fn emit_reject_conversion(o: &mut String, func: &FuncDef, what: &str) {
     let _ = writeln!(o, "      throw StreamFailure(\"{n}\", \"{what}\", retCode);");
 }
 
-/// `<base>_OpenAndFillInternalBody` for a tier that owns an `OpenCore`: the same
+/// `<base>_OpenAndFillInternalImpl` for a tier that owns an `OpenCore`: the same
 /// single pass as `OpenAndFillBody`, at the caller's `startIdx`.
 fn emit_open_and_fill_internal_body(o: &mut String, func: &FuncDef) {
     let base = base_name(func);
@@ -2226,7 +2226,7 @@ fn emit_open_and_fill_internal_body(o: &mut String, func: &FuncDef) {
         args.push(out.name.clone());
     }
     args.push("1".to_string());
-    let _ = writeln!(o, "      return {base}_OpenCore({});", args.join(", "));
+    let _ = writeln!(o, "      return {base}_OpenPass({});", args.join(", "));
     let _ = writeln!(o, "   }}");
 }
 
@@ -2279,7 +2279,7 @@ fn emit_open_and_fill_internal_wrapper(o: &mut String, func: &FuncDef) {
     fi_args.extend(outs.iter().cloned());
     let _ = writeln!(
         o,
-        "      RetCode retCode = {base}_OpenAndFillInternalBody({});",
+        "      RetCode retCode = {base}_OpenAndFillInternalImpl({});",
         fi_args.join(", ")
     );
     emit_reject_conversion(o, func, "openAndFill");
@@ -2333,7 +2333,7 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef) {
     let _ = writeln!(o, "      {class} sp = new {class}(this);");
     let _ = writeln!(
         o,
-        "      RetCode retCode = {base}_OpenBody(sp, {}, startIdx{opt_fwd_str});",
+        "      RetCode retCode = {base}_OpenImpl(sp, {}, startIdx{opt_fwd_str});",
         in_fwd.join(", ")
     );
     emit_reject_conversion(o, func, "open");
@@ -2496,7 +2496,7 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef) {
     let _ = writeln!(o, "      {class} sp = new {class}(this);");
     let _ = writeln!(
         o,
-        "      RetCode retCode = {base}_OpenAndFillBody(sp, {});",
+        "      RetCode retCode = {base}_OpenAndFillImpl(sp, {});",
         fill_fwd.join(", ")
     );
     let _ = writeln!(o, "      sp.fillRange = new OutRange(outBegIdx, outNBElement);");
@@ -3737,14 +3737,14 @@ fn emit_composed_open(
         // `SubCallStep::is_fusable()`, and that predicate compares DESTINATIONS
         // against sources and against each other — never sources against each
         // other. So sharing one buffer across a callee's inputs is sound only
-        // while no `_OpenCore` ever writes through an input array. That holds
+        // while no `_OpenPass` ever writes through an input array. That holds
         // for all 172 today. A future body that wrote into an input would break
         // this silently, and no value gate would see it: both arms of the
         // stream-vs-batch compare would read the same corrupted buffer.
         //
         // Sizing note for the same reason: `Array.Copy` throws where Java's
         // `copyOfRange` would zero-pad a short source, and that throw is inside
-        // `_OpenCore`, so it would escape the RetCode -> `Core.StreamFailure`
+        // `_OpenPass`, so it would escape the RetCode -> `Core.StreamFailure`
         // mapping and reach the caller without the stable "<NAME> open: "
         // prefix. Unreachable as long as every `subLen` is bounded by the
         // buffer it copies from, which is true at all five sites (STOCH x2,

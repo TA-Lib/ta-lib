@@ -38,7 +38,7 @@
       return 63 + this.unstablePeriod[FuncUnstId.HT_DCPHASE.ordinal()] ;
 
    }
-   RetCode HT_DCPHASE_Body( int startIdx,
+   RetCode HT_DCPHASE_Impl( int startIdx,
                             int endIdx,
                             double inReal[],
                             MInteger outBegIdx,
@@ -446,7 +446,7 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode HT_DCPHASE_Body( int startIdx,
+   RetCode HT_DCPHASE_Impl( int startIdx,
                             int endIdx,
                             float inReal[],
                             MInteger outBegIdx,
@@ -841,7 +841,7 @@
       requireLength("HT_DCPHASE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_DCPHASE_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HT_DCPHASE_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("HT_DCPHASE", retCode);
       }
@@ -903,7 +903,7 @@
       requireLength("HT_DCPHASE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_DCPHASE_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HT_DCPHASE_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("HT_DCPHASE", retCode);
       }
@@ -1451,7 +1451,7 @@
       }
       sp.streamParity = 1 - sp.streamParity;
    }
-   private RetCode HT_DCPHASE_OpenCore( HT_DCPHASE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode HT_DCPHASE_OpenPass( HT_DCPHASE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -1936,29 +1936,29 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode HT_DCPHASE_OpenBody( HT_DCPHASE_Stream sp, double inReal[], int startIdx )
+   private RetCode HT_DCPHASE_OpenImpl( HT_DCPHASE_Stream sp, double inReal[], int startIdx )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return HT_DCPHASE_OpenCore( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
+      return HT_DCPHASE_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode HT_DCPHASE_OpenAndFillBody( HT_DCPHASE_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode HT_DCPHASE_OpenAndFillImpl( HT_DCPHASE_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      return HT_DCPHASE_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
+      return HT_DCPHASE_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode HT_DCPHASE_OpenAndFillInternalBody( HT_DCPHASE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode HT_DCPHASE_OpenAndFillInternalImpl( HT_DCPHASE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return HT_DCPHASE_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+      return HT_DCPHASE_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
    }
    /* HT_DCPHASE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    HT_DCPHASE_Stream HT_DCPHASE_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       HT_DCPHASE_Stream sp = new HT_DCPHASE_Stream(this);
-      RetCode retCode = HT_DCPHASE_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HT_DCPHASE_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1974,7 +1974,7 @@
    HT_DCPHASE_Stream HT_DCPHASE_OpenInternal( double inReal[], int startIdx )
    {
       HT_DCPHASE_Stream sp = new HT_DCPHASE_Stream(this);
-      RetCode retCode = HT_DCPHASE_OpenBody(sp, inReal, startIdx);
+      RetCode retCode = HT_DCPHASE_OpenImpl(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -2014,7 +2014,7 @@
       HT_DCPHASE_Stream sp = new HT_DCPHASE_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_DCPHASE_OpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HT_DCPHASE_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

@@ -83,7 +83,7 @@ public partial class Core
       return 63 + this.unstablePeriod[(int)FuncUnstId.HT_SINE] ;
 
    }
-   internal RetCode HT_SINE_Body( int startIdx,
+   internal RetCode HT_SINE_Impl( int startIdx,
                                   int endIdx,
                                   ReadOnlySpan<double> inReal,
                                   out int outBegIdx,
@@ -503,7 +503,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode HT_SINE_Body( int startIdx,
+   internal RetCode HT_SINE_Impl( int startIdx,
                                   int endIdx,
                                   ReadOnlySpan<float> inReal,
                                   out int outBegIdx,
@@ -904,7 +904,7 @@ public partial class Core
       RequireLength("HT_SINE", "inReal", inReal.Length, guardInLen);
       RequireLength("HT_SINE", "outSine", outSine.Length, guardOutLen);
       RequireLength("HT_SINE", "outLeadSine", outLeadSine.Length, guardOutLen);
-      RetCode retCode = HT_SINE_Body(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outSine, outLeadSine);
+      RetCode retCode = HT_SINE_Impl(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outSine, outLeadSine);
       if( retCode != RetCode.Success ) {
          throw Failure("HT_SINE", retCode);
       }
@@ -966,7 +966,7 @@ public partial class Core
       RequireLength("HT_SINE", "inReal", inReal.Length, guardInLen);
       RequireLength("HT_SINE", "outSine", outSine.Length, guardOutLen);
       RequireLength("HT_SINE", "outLeadSine", outLeadSine.Length, guardOutLen);
-      RetCode retCode = HT_SINE_Body(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outSine, outLeadSine);
+      RetCode retCode = HT_SINE_Impl(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outSine, outLeadSine);
       if( retCode != RetCode.Success ) {
          throw Failure("HT_SINE", retCode);
       }
@@ -1542,7 +1542,7 @@ public partial class Core
       sp.streamParity = 1 - sp.streamParity;
    }
 
-   private RetCode HT_SINE_OpenCore( HT_SINE_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outSine, Span<double> outLeadSine, int outStride )
+   private RetCode HT_SINE_OpenPass( HT_SINE_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outSine, Span<double> outLeadSine, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -2035,33 +2035,33 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode HT_SINE_OpenBody( HT_SINE_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
+   private RetCode HT_SINE_OpenImpl( HT_SINE_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
    {
       double[] sink_outSine = new double[1];
       double[] sink_outLeadSine = new double[1];
-      return HT_SINE_OpenCore( sp, inReal, startIdx, out _, out _, sink_outSine, sink_outLeadSine, 0 );
+      return HT_SINE_OpenPass( sp, inReal, startIdx, out _, out _, sink_outSine, sink_outLeadSine, 0 );
    }
 
-   private RetCode HT_SINE_OpenAndFillBody( HT_SINE_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outSine, Span<double> outLeadSine )
+   private RetCode HT_SINE_OpenAndFillImpl( HT_SINE_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outSine, Span<double> outLeadSine )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outSine.Overlaps(inReal) || outLeadSine.Overlaps(inReal) || outSine.Overlaps(outLeadSine) ) {
          return RetCode.BadParam;
       }
-      return HT_SINE_OpenCore( sp, inReal, 0, out outBegIdx, out outNBElement, outSine, outLeadSine, 1 );
+      return HT_SINE_OpenPass( sp, inReal, 0, out outBegIdx, out outNBElement, outSine, outLeadSine, 1 );
    }
 
-   private RetCode HT_SINE_OpenAndFillInternalBody( HT_SINE_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outSine, Span<double> outLeadSine )
+   private RetCode HT_SINE_OpenAndFillInternalImpl( HT_SINE_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outSine, Span<double> outLeadSine )
    {
-      return HT_SINE_OpenCore(sp, inReal, startIdx, out outBegIdx, out outNBElement, outSine, outLeadSine, 1);
+      return HT_SINE_OpenPass(sp, inReal, startIdx, out outBegIdx, out outNBElement, outSine, outLeadSine, 1);
    }
 
    /* HT_SINE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal HT_SINE_Stream HT_SINE_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outSine, Span<double> outLeadSine )
    {
       HT_SINE_Stream sp = new HT_SINE_Stream(this);
-      RetCode retCode = HT_SINE_OpenAndFillInternalBody(sp, inReal, startIdx, out outBegIdx, out outNBElement, outSine, outLeadSine);
+      RetCode retCode = HT_SINE_OpenAndFillInternalImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outSine, outLeadSine);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -2072,7 +2072,7 @@ public partial class Core
    internal HT_SINE_Stream HT_SINE_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
       HT_SINE_Stream sp = new HT_SINE_Stream(this);
-      RetCode retCode = HT_SINE_OpenBody(sp, inReal, startIdx);
+      RetCode retCode = HT_SINE_OpenImpl(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -2128,7 +2128,7 @@ public partial class Core
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       HT_SINE_Stream sp = new HT_SINE_Stream(this);
-      RetCode retCode = HT_SINE_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outSine, outLeadSine);
+      RetCode retCode = HT_SINE_OpenAndFillImpl(sp, inReal, out int outBegIdx, out int outNBElement, outSine, outLeadSine);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

@@ -77,7 +77,7 @@ impl Core {
     }
     /// C-shaped body behind [`Core::CDLPIERCING`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
-    pub(crate) fn CDLPIERCING_Internal(
+    pub(crate) fn CDLPIERCING_Impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -90,13 +90,13 @@ impl Core {
         outInteger: &mut [i32],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, CDLPIERCING_Internal_fma, CDLPIERCING_Internal_impl, (startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger));
+        return ta_lib_dispatch::dispatch_fma!(self, CDLPIERCING_Impl_fma, CDLPIERCING_Impl_impl, (startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger));
         #[cfg(not(target_arch = "x86_64"))]
-        self.CDLPIERCING_Internal_impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger)
+        self.CDLPIERCING_Impl_impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn CDLPIERCING_Internal_fma(
+    fn CDLPIERCING_Impl_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -108,10 +108,10 @@ impl Core {
         outNBElement: &mut usize,
         outInteger: &mut [i32],
     ) -> RetCode {
-        self.CDLPIERCING_Internal_impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger)
+        self.CDLPIERCING_Impl_impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger)
     }
     #[inline(always)]
-    fn CDLPIERCING_Internal_impl(
+    fn CDLPIERCING_Impl_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -358,7 +358,7 @@ impl Core {
     ) -> Result<OutRange, RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.CDLPIERCING_Internal(
+        let retCode = self.CDLPIERCING_Impl(
             startIdx,
             endIdx,
             inOpen,
@@ -530,7 +530,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::CDLPIERCING_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::CDLPIERCING_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn CDLPIERCING_OpenCore(
+    pub(crate) fn CDLPIERCING_OpenPass(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
     ) -> Result<CDLPIERCING_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
@@ -737,7 +737,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outInteger = [0_i32; 1];
-        let handle = self.CDLPIERCING_OpenCore(inOpen, inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
+        let handle = self.CDLPIERCING_OpenPass(inOpen, inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
         Ok((handle, sink_outInteger[0]))
     }
 
@@ -783,7 +783,7 @@ impl Core {
     ) -> Result<(CDLPIERCING_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.CDLPIERCING_OpenCore(inOpen, inHigh, inLow, inClose, 0, &mut outBegIdx, &mut outNBElement, outInteger, 1)?;
+        let handle = self.CDLPIERCING_OpenPass(inOpen, inHigh, inLow, inClose, 0, &mut outBegIdx, &mut outNBElement, outInteger, 1)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -792,7 +792,7 @@ impl Core {
     pub(crate) fn CDLPIERCING_OpenAndFillInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
     ) -> Result<CDLPIERCING_Stream, RetCode> {
-        self.CDLPIERCING_OpenCore(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1)
+        self.CDLPIERCING_OpenPass(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1)
     }
 
 }

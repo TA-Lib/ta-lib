@@ -25,7 +25,7 @@
       return 0 ;
 
    }
-   RetCode ACOS_Body( int startIdx,
+   RetCode ACOS_Impl( int startIdx,
                       int endIdx,
                       double inReal[],
                       MInteger outBegIdx,
@@ -47,7 +47,7 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode ACOS_Body( int startIdx,
+   RetCode ACOS_Impl( int startIdx,
                       int endIdx,
                       float inReal[],
                       MInteger outBegIdx,
@@ -123,7 +123,7 @@
       requireLength("ACOS", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ACOS_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ACOS_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ACOS", retCode);
       }
@@ -186,7 +186,7 @@
       requireLength("ACOS", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ACOS_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ACOS_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ACOS", retCode);
       }
@@ -291,7 +291,7 @@
    {
       sp.cur_outReal = Math.acos(inReal);
    }
-   private RetCode ACOS_OpenCore( ACOS_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode ACOS_OpenPass( ACOS_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -312,29 +312,29 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode ACOS_OpenBody( ACOS_Stream sp, double inReal[], int startIdx )
+   private RetCode ACOS_OpenImpl( ACOS_Stream sp, double inReal[], int startIdx )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return ACOS_OpenCore( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
+      return ACOS_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode ACOS_OpenAndFillBody( ACOS_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode ACOS_OpenAndFillImpl( ACOS_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      return ACOS_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
+      return ACOS_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode ACOS_OpenAndFillInternalBody( ACOS_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode ACOS_OpenAndFillInternalImpl( ACOS_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return ACOS_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+      return ACOS_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
    }
    /* ACOS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    ACOS_Stream ACOS_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       ACOS_Stream sp = new ACOS_Stream(this);
-      RetCode retCode = ACOS_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ACOS_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -350,7 +350,7 @@
    ACOS_Stream ACOS_OpenInternal( double inReal[], int startIdx )
    {
       ACOS_Stream sp = new ACOS_Stream(this);
-      RetCode retCode = ACOS_OpenBody(sp, inReal, startIdx);
+      RetCode retCode = ACOS_OpenImpl(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -390,7 +390,7 @@
       ACOS_Stream sp = new ACOS_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ACOS_OpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ACOS_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

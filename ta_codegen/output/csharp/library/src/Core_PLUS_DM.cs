@@ -87,7 +87,7 @@ public partial class Core
       }
 
    }
-   internal RetCode PLUS_DM_Body( int startIdx,
+   internal RetCode PLUS_DM_Impl( int startIdx,
                                   int endIdx,
                                   ReadOnlySpan<double> inHigh,
                                   ReadOnlySpan<double> inLow,
@@ -305,7 +305,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode PLUS_DM_Body( int startIdx,
+   internal RetCode PLUS_DM_Impl( int startIdx,
                                   int endIdx,
                                   ReadOnlySpan<float> inHigh,
                                   ReadOnlySpan<float> inLow,
@@ -484,7 +484,7 @@ public partial class Core
       RequireLength("PLUS_DM", "inHigh", inHigh.Length, guardInLen);
       RequireLength("PLUS_DM", "inLow", inLow.Length, guardInLen);
       RequireLength("PLUS_DM", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = PLUS_DM_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = PLUS_DM_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("PLUS_DM", retCode);
       }
@@ -554,7 +554,7 @@ public partial class Core
       RequireLength("PLUS_DM", "inHigh", inHigh.Length, guardInLen);
       RequireLength("PLUS_DM", "inLow", inLow.Length, guardInLen);
       RequireLength("PLUS_DM", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = PLUS_DM_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = PLUS_DM_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("PLUS_DM", retCode);
       }
@@ -724,7 +724,7 @@ public partial class Core
       }
    }
 
-   private RetCode PLUS_DM_OpenCore( PLUS_DM_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode PLUS_DM_OpenPass( PLUS_DM_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1049,32 +1049,32 @@ public partial class Core
       }
    }
 
-   private RetCode PLUS_DM_OpenBody( PLUS_DM_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod )
+   private RetCode PLUS_DM_OpenImpl( PLUS_DM_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
-      return PLUS_DM_OpenCore( sp, inHigh, inLow, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+      return PLUS_DM_OpenPass( sp, inHigh, inLow, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode PLUS_DM_OpenAndFillBody( PLUS_DM_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode PLUS_DM_OpenAndFillImpl( PLUS_DM_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
          return RetCode.BadParam;
       }
-      return PLUS_DM_OpenCore( sp, inHigh, inLow, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+      return PLUS_DM_OpenPass( sp, inHigh, inLow, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode PLUS_DM_OpenAndFillInternalBody( PLUS_DM_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode PLUS_DM_OpenAndFillInternalImpl( PLUS_DM_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return PLUS_DM_OpenCore(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      return PLUS_DM_OpenPass(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* PLUS_DM_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal PLUS_DM_Stream PLUS_DM_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       PLUS_DM_Stream sp = new PLUS_DM_Stream(this);
-      RetCode retCode = PLUS_DM_OpenAndFillInternalBody(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = PLUS_DM_OpenAndFillInternalImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1085,7 +1085,7 @@ public partial class Core
    internal PLUS_DM_Stream PLUS_DM_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod )
    {
       PLUS_DM_Stream sp = new PLUS_DM_Stream(this);
-      RetCode retCode = PLUS_DM_OpenBody(sp, inHigh, inLow, startIdx, optInTimePeriod);
+      RetCode retCode = PLUS_DM_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1147,7 +1147,7 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       PLUS_DM_Stream sp = new PLUS_DM_Stream(this);
-      RetCode retCode = PLUS_DM_OpenAndFillBody(sp, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = PLUS_DM_OpenAndFillImpl(sp, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

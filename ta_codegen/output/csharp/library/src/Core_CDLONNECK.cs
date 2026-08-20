@@ -76,7 +76,7 @@ public partial class Core
       return Math.Max(Equal_avgPeriod, BodyLong_avgPeriod) + 1 ;
 
    }
-   internal RetCode CDLONNECK_Body( int startIdx,
+   internal RetCode CDLONNECK_Impl( int startIdx,
                                     int endIdx,
                                     ReadOnlySpan<double> inOpen,
                                     ReadOnlySpan<double> inHigh,
@@ -176,7 +176,7 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CDLONNECK_Body( int startIdx,
+   internal RetCode CDLONNECK_Impl( int startIdx,
                                     int endIdx,
                                     ReadOnlySpan<float> inOpen,
                                     ReadOnlySpan<float> inHigh,
@@ -312,7 +312,7 @@ public partial class Core
       RequireLength("CDLONNECK", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLONNECK", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLONNECK", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLONNECK_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLONNECK_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLONNECK", retCode);
       }
@@ -388,7 +388,7 @@ public partial class Core
       RequireLength("CDLONNECK", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLONNECK", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLONNECK", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLONNECK_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLONNECK_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLONNECK", retCode);
       }
@@ -621,7 +621,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLONNECK_OpenCore( CDLONNECK_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CDLONNECK_OpenPass( CDLONNECK_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -758,29 +758,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CDLONNECK_OpenBody( CDLONNECK_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   private RetCode CDLONNECK_OpenImpl( CDLONNECK_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       int[] sink_outInteger = new int[1];
-      return CDLONNECK_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
+      return CDLONNECK_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
    }
 
-   private RetCode CDLONNECK_OpenAndFillBody( CDLONNECK_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLONNECK_OpenAndFillImpl( CDLONNECK_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      return CDLONNECK_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
+      return CDLONNECK_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
    }
 
-   private RetCode CDLONNECK_OpenAndFillInternalBody( CDLONNECK_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLONNECK_OpenAndFillInternalImpl( CDLONNECK_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      return CDLONNECK_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+      return CDLONNECK_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
    }
 
    /* CDLONNECK_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal CDLONNECK_Stream CDLONNECK_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       CDLONNECK_Stream sp = new CDLONNECK_Stream(this);
-      RetCode retCode = CDLONNECK_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
+      RetCode retCode = CDLONNECK_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -791,7 +791,7 @@ public partial class Core
    internal CDLONNECK_Stream CDLONNECK_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       CDLONNECK_Stream sp = new CDLONNECK_Stream(this);
-      RetCode retCode = CDLONNECK_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      RetCode retCode = CDLONNECK_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -860,7 +860,7 @@ public partial class Core
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       CDLONNECK_Stream sp = new CDLONNECK_Stream(this);
-      RetCode retCode = CDLONNECK_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLONNECK_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

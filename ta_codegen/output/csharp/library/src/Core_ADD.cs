@@ -69,7 +69,7 @@ public partial class Core
       return 0 ;
 
    }
-   internal RetCode ADD_Body( int startIdx,
+   internal RetCode ADD_Impl( int startIdx,
                               int endIdx,
                               ReadOnlySpan<double> inReal0,
                               ReadOnlySpan<double> inReal1,
@@ -97,7 +97,7 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode ADD_Body( int startIdx,
+   internal RetCode ADD_Impl( int startIdx,
                               int endIdx,
                               ReadOnlySpan<float> inReal0,
                               ReadOnlySpan<float> inReal1,
@@ -173,7 +173,7 @@ public partial class Core
       RequireLength("ADD", "inReal0", inReal0.Length, guardInLen);
       RequireLength("ADD", "inReal1", inReal1.Length, guardInLen);
       RequireLength("ADD", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = ADD_Body(startIdx, endIdx, inReal0, inReal1, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ADD_Impl(startIdx, endIdx, inReal0, inReal1, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ADD", retCode);
       }
@@ -236,7 +236,7 @@ public partial class Core
       RequireLength("ADD", "inReal0", inReal0.Length, guardInLen);
       RequireLength("ADD", "inReal1", inReal1.Length, guardInLen);
       RequireLength("ADD", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = ADD_Body(startIdx, endIdx, inReal0, inReal1, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ADD_Impl(startIdx, endIdx, inReal0, inReal1, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ADD", retCode);
       }
@@ -352,7 +352,7 @@ public partial class Core
       sp.cur_outReal = inReal0 + inReal1;
    }
 
-   private RetCode ADD_OpenCore( ADD_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode ADD_OpenPass( ADD_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -376,32 +376,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode ADD_OpenBody( ADD_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx )
+   private RetCode ADD_OpenImpl( ADD_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx )
    {
       double[] sink_outReal = new double[1];
-      return ADD_OpenCore( sp, inReal0, inReal1, startIdx, out _, out _, sink_outReal, 0 );
+      return ADD_OpenPass( sp, inReal0, inReal1, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode ADD_OpenAndFillBody( ADD_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode ADD_OpenAndFillImpl( ADD_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inReal0) || outReal.Overlaps(inReal1) ) {
          return RetCode.BadParam;
       }
-      return ADD_OpenCore( sp, inReal0, inReal1, 0, out outBegIdx, out outNBElement, outReal, 1 );
+      return ADD_OpenPass( sp, inReal0, inReal1, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode ADD_OpenAndFillInternalBody( ADD_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode ADD_OpenAndFillInternalImpl( ADD_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return ADD_OpenCore(sp, inReal0, inReal1, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      return ADD_OpenPass(sp, inReal0, inReal1, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* ADD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal ADD_Stream ADD_OpenAndFillInternal( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       ADD_Stream sp = new ADD_Stream(this);
-      RetCode retCode = ADD_OpenAndFillInternalBody(sp, inReal0, inReal1, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = ADD_OpenAndFillInternalImpl(sp, inReal0, inReal1, startIdx, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -412,7 +412,7 @@ public partial class Core
    internal ADD_Stream ADD_OpenInternal( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx )
    {
       ADD_Stream sp = new ADD_Stream(this);
-      RetCode retCode = ADD_OpenBody(sp, inReal0, inReal1, startIdx);
+      RetCode retCode = ADD_OpenImpl(sp, inReal0, inReal1, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -470,7 +470,7 @@ public partial class Core
       if( inReal0.IsEmpty ) throw new TaLibArgumentException("inReal0 is empty", nameof(inReal0), RetCode.BadParam);
       if( inReal1.IsEmpty ) throw new TaLibArgumentException("inReal1 is empty", nameof(inReal1), RetCode.BadParam);
       ADD_Stream sp = new ADD_Stream(this);
-      RetCode retCode = ADD_OpenAndFillBody(sp, inReal0, inReal1, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ADD_OpenAndFillImpl(sp, inReal0, inReal1, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

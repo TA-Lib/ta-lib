@@ -95,7 +95,7 @@ impl Core {
     }
     /// C-shaped body behind [`Core::SAR`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
-    pub(crate) fn SAR_Internal(
+    pub(crate) fn SAR_Impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -108,13 +108,13 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, SAR_Internal_fma, SAR_Internal_impl, (startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, SAR_Impl_fma, SAR_Impl_impl, (startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.SAR_Internal_impl(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal)
+        self.SAR_Impl_impl(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn SAR_Internal_fma(
+    fn SAR_Impl_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -126,10 +126,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.SAR_Internal_impl(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal)
+        self.SAR_Impl_impl(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn SAR_Internal_impl(
+    fn SAR_Impl_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -241,7 +241,7 @@ impl Core {
         // (ep is just used as a temp buffer here, the name
         //  of the parameter is not significant).
         let mut _dup_out: usize = 0_usize;
-        retCode = self.MINUS_DM_Internal(startIdx, startIdx, inHigh, inLow, 1, &mut tempInt, &mut _dup_out, &mut ep_temp);
+        retCode = self.MINUS_DM_Impl(startIdx, startIdx, inHigh, inLow, 1, &mut tempInt, &mut _dup_out, &mut ep_temp);
         if ep_temp[0] > 0_f64 {
             isLong = 0;
         } else {
@@ -474,7 +474,7 @@ impl Core {
     ) -> Result<OutRange, RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.SAR_Internal(
+        let retCode = self.SAR_Impl(
             startIdx,
             endIdx,
             inHigh,
@@ -665,7 +665,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::SAR_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::SAR_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn SAR_OpenCore(
+    pub(crate) fn SAR_OpenPass(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInAcceleration: f64, mut optInMaximum: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<SAR_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inLow.len() != inHigh.len() {
@@ -767,7 +767,7 @@ impl Core {
         // (ep is just used as a temp buffer here, the name
         //  of the parameter is not significant).
         let mut _dup_out: usize = 0_usize;
-        retCode = self.MINUS_DM_Internal(startIdx, startIdx, inHigh, inLow, 1, &mut tempInt, &mut _dup_out, &mut ep_temp);
+        retCode = self.MINUS_DM_Impl(startIdx, startIdx, inHigh, inLow, 1, &mut tempInt, &mut _dup_out, &mut ep_temp);
         if ep_temp[0] > 0_f64 {
             isLong = 0;
         } else {
@@ -928,7 +928,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.SAR_OpenCore(inHigh, inLow, startIdx, optInAcceleration, optInMaximum, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.SAR_OpenPass(inHigh, inLow, startIdx, optInAcceleration, optInMaximum, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -968,7 +968,7 @@ impl Core {
     ) -> Result<(SAR_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.SAR_OpenCore(inHigh, inLow, 0, optInAcceleration, optInMaximum, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.SAR_OpenPass(inHigh, inLow, 0, optInAcceleration, optInMaximum, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -977,7 +977,7 @@ impl Core {
     pub(crate) fn SAR_OpenAndFillInternal(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInAcceleration: f64, mut optInMaximum: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<SAR_Stream, RetCode> {
-        self.SAR_OpenCore(inHigh, inLow, startIdx, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal, 1)
+        self.SAR_OpenPass(inHigh, inLow, startIdx, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

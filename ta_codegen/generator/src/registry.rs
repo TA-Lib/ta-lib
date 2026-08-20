@@ -106,10 +106,10 @@ impl Registry {
         // C, Java and C# resolve it to the PUBLIC entry point, which is what C
         // has always done (`TA_MA` is C's public API, declared in ta_func.h).
         // RUST IS THE EXCEPTION: the bare name it gets back here is the public
-        // one, and `rust_lang::internal_callee` then appends `_Internal` itself,
+        // one, and `rust_lang::internal_callee` then appends `_Impl` itself,
         // because its public tier is a thin `Result` adapter that adds no checks
         // the body's asserts do not already make (see CLAUDE.md).
-        // Java used to route to the package-private `…_Internal` so the caller
+        // Java used to route to the package-private `…_Impl` so the caller
         // could pass the C-shaped MInteger out-params; the call sites now bind
         // the returned `OutRange` instead (#236 step 3), which is what puts the
         // callee's argument checks on the composed path. C# needs no change of
@@ -214,7 +214,7 @@ mod tests {
 
         // Bare indicator names resolve to the PUBLIC entry point — the one a
         // user can reach — in every backend. Java used to route to the
-        // package-private `…_Internal` so the caller could hand the C-shaped
+        // package-private `…_Impl` so the caller could hand the C-shaped
         // MInteger out-params straight through; the call sites bind the returned
         // OutRange instead since #236 step 3, which is what puts the callee's
         // argument checks on the composed path. C# needs no name change at all:

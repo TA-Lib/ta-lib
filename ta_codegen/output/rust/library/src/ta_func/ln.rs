@@ -70,7 +70,7 @@ impl Core {
     }
     /// C-shaped body behind [`Core::LN`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
-    pub(crate) fn LN_Internal(
+    pub(crate) fn LN_Impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -176,7 +176,7 @@ impl Core {
     ) -> Result<OutRange, RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.LN_Internal(
+        let retCode = self.LN_Impl(
             startIdx,
             endIdx,
             inReal,
@@ -240,7 +240,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::LN_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::LN_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn LN_OpenCore(
+    pub(crate) fn LN_OpenPass(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<LN_Stream, RetCode> {
         if inReal.is_empty() {
@@ -280,7 +280,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.LN_OpenCore(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.LN_OpenPass(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -319,7 +319,7 @@ impl Core {
     ) -> Result<(LN_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.LN_OpenCore(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.LN_OpenPass(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -328,7 +328,7 @@ impl Core {
     pub(crate) fn LN_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<LN_Stream, RetCode> {
-        self.LN_OpenCore(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
+        self.LN_OpenPass(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

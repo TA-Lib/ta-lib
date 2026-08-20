@@ -70,7 +70,7 @@ impl Core {
     }
     /// C-shaped body behind [`Core::COS`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
-    pub(crate) fn COS_Internal(
+    pub(crate) fn COS_Impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -171,7 +171,7 @@ impl Core {
     ) -> Result<OutRange, RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.COS_Internal(
+        let retCode = self.COS_Impl(
             startIdx,
             endIdx,
             inReal,
@@ -235,7 +235,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::COS_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::COS_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn COS_OpenCore(
+    pub(crate) fn COS_OpenPass(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<COS_Stream, RetCode> {
         if inReal.is_empty() {
@@ -275,7 +275,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.COS_OpenCore(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.COS_OpenPass(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -314,7 +314,7 @@ impl Core {
     ) -> Result<(COS_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.COS_OpenCore(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.COS_OpenPass(inReal, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -323,7 +323,7 @@ impl Core {
     pub(crate) fn COS_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<COS_Stream, RetCode> {
-        self.COS_OpenCore(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
+        self.COS_OpenPass(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

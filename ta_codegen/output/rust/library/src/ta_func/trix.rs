@@ -93,7 +93,7 @@ impl Core {
     }
     /// C-shaped body behind [`Core::TRIX`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
-    pub(crate) fn TRIX_Internal(
+    pub(crate) fn TRIX_Impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -104,13 +104,13 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, TRIX_Internal_fma, TRIX_Internal_impl, (startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, TRIX_Impl_fma, TRIX_Impl_impl, (startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.TRIX_Internal_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
+        self.TRIX_Impl_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn TRIX_Internal_fma(
+    fn TRIX_Impl_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -120,10 +120,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.TRIX_Internal_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
+        self.TRIX_Impl_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn TRIX_Internal_impl(
+    fn TRIX_Impl_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -350,7 +350,7 @@ impl Core {
     ) -> Result<OutRange, RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.TRIX_Internal(
+        let retCode = self.TRIX_Impl(
             startIdx,
             endIdx,
             inReal,
@@ -434,7 +434,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::TRIX_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::TRIX_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn TRIX_OpenCore(
+    pub(crate) fn TRIX_OpenPass(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<TRIX_Stream, RetCode> {
         if inReal.is_empty() {
@@ -587,7 +587,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.TRIX_OpenCore(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.TRIX_OpenPass(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -626,7 +626,7 @@ impl Core {
     ) -> Result<(TRIX_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.TRIX_OpenCore(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.TRIX_OpenPass(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -635,7 +635,7 @@ impl Core {
     pub(crate) fn TRIX_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<TRIX_Stream, RetCode> {
-        self.TRIX_OpenCore(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+        self.TRIX_OpenPass(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

@@ -69,7 +69,7 @@ public partial class Core
       return 0 ;
 
    }
-   internal RetCode CEIL_Body( int startIdx,
+   internal RetCode CEIL_Impl( int startIdx,
                                int endIdx,
                                ReadOnlySpan<double> inReal,
                                out int outBegIdx,
@@ -96,7 +96,7 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CEIL_Body( int startIdx,
+   internal RetCode CEIL_Impl( int startIdx,
                                int endIdx,
                                ReadOnlySpan<float> inReal,
                                out int outBegIdx,
@@ -168,7 +168,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("CEIL", "inReal", inReal.Length, guardInLen);
       RequireLength("CEIL", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = CEIL_Body(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = CEIL_Impl(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("CEIL", retCode);
       }
@@ -228,7 +228,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("CEIL", "inReal", inReal.Length, guardInLen);
       RequireLength("CEIL", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = CEIL_Body(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = CEIL_Impl(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("CEIL", retCode);
       }
@@ -342,7 +342,7 @@ public partial class Core
       sp.cur_outReal = Math.Ceiling(inReal);
    }
 
-   private RetCode CEIL_OpenCore( CEIL_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode CEIL_OpenPass( CEIL_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -366,32 +366,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CEIL_OpenBody( CEIL_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
+   private RetCode CEIL_OpenImpl( CEIL_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
    {
       double[] sink_outReal = new double[1];
-      return CEIL_OpenCore( sp, inReal, startIdx, out _, out _, sink_outReal, 0 );
+      return CEIL_OpenPass( sp, inReal, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode CEIL_OpenAndFillBody( CEIL_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode CEIL_OpenAndFillImpl( CEIL_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
-      return CEIL_OpenCore( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
+      return CEIL_OpenPass( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode CEIL_OpenAndFillInternalBody( CEIL_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode CEIL_OpenAndFillInternalImpl( CEIL_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return CEIL_OpenCore(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      return CEIL_OpenPass(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* CEIL_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal CEIL_Stream CEIL_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       CEIL_Stream sp = new CEIL_Stream(this);
-      RetCode retCode = CEIL_OpenAndFillInternalBody(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = CEIL_OpenAndFillInternalImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -402,7 +402,7 @@ public partial class Core
    internal CEIL_Stream CEIL_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
       CEIL_Stream sp = new CEIL_Stream(this);
-      RetCode retCode = CEIL_OpenBody(sp, inReal, startIdx);
+      RetCode retCode = CEIL_OpenImpl(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -456,7 +456,7 @@ public partial class Core
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       CEIL_Stream sp = new CEIL_Stream(this);
-      RetCode retCode = CEIL_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = CEIL_OpenAndFillImpl(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

@@ -980,7 +980,7 @@ static void TA_HT_PHASOR_StepInternal( struct TA_HT_PHASOR_Stream *sp, double in
    sp->streamParity = 1 - sp->streamParity;
 }
 
-static TA_RetCode TA_HT_PHASOR_OpenCore( struct TA_HT_PHASOR_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outInPhase[], double outQuadrature[], int outStride )
+static TA_RetCode TA_HT_PHASOR_OpenPass( struct TA_HT_PHASOR_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outInPhase[], double outQuadrature[], int outStride )
 {
    struct TA_HT_PHASOR_Stream *sp;
    int endIdx;
@@ -1418,7 +1418,7 @@ TA_RetCode TA_HT_PHASOR_OpenInternal( struct TA_HT_PHASOR_Stream **stream, const
    int dummyNBElement = 0;
    double sink_outInPhase = 0.0;
    double sink_outQuadrature = 0.0;
-   retCode = TA_HT_PHASOR_OpenCore( stream, inReal, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outInPhase, &sink_outQuadrature, 0 );
+   retCode = TA_HT_PHASOR_OpenPass( stream, inReal, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outInPhase, &sink_outQuadrature, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outInPhase = sink_outInPhase;
@@ -1446,13 +1446,13 @@ TA_LIB_API TA_RetCode TA_HT_PHASOR_OpenAndFill( TA_HT_PHASOR_Stream **stream, co
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outInPhase == (const void *)inReal || (const void *)outQuadrature == (const void *)inReal || (const void *)outInPhase == (const void *)outQuadrature ) return TA_BAD_PARAM;
-   return TA_HT_PHASOR_OpenCore( stream, inReal, 0, historyLen, outBegIdx, outNBElement, outInPhase, outQuadrature, 1 );
+   return TA_HT_PHASOR_OpenPass( stream, inReal, 0, historyLen, outBegIdx, outNBElement, outInPhase, outQuadrature, 1 );
 }
 
 /* Private function, not in public API. */
 TA_RetCode TA_HT_PHASOR_OpenAndFillInternal( struct TA_HT_PHASOR_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outInPhase[], double outQuadrature[] )
 {
-   return TA_HT_PHASOR_OpenCore( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outInPhase, outQuadrature, 1 );
+   return TA_HT_PHASOR_OpenPass( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outInPhase, outQuadrature, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_HT_PHASOR_Update( TA_HT_PHASOR_Stream *stream, double inReal, double *outInPhase, double *outQuadrature )

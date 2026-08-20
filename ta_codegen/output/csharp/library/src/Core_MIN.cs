@@ -80,7 +80,7 @@ public partial class Core
       return optInTimePeriod - 1 ;
 
    }
-   internal RetCode MIN_Body( int startIdx,
+   internal RetCode MIN_Impl( int startIdx,
                               int endIdx,
                               ReadOnlySpan<double> inReal,
                               int optInTimePeriod,
@@ -232,7 +232,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode MIN_Body( int startIdx,
+   internal RetCode MIN_Impl( int startIdx,
                               int endIdx,
                               ReadOnlySpan<float> inReal,
                               int optInTimePeriod,
@@ -392,7 +392,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("MIN", "inReal", inReal.Length, guardInLen);
       RequireLength("MIN", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = MIN_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MIN_Impl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MIN", retCode);
       }
@@ -454,7 +454,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("MIN", "inReal", inReal.Length, guardInLen);
       RequireLength("MIN", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = MIN_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MIN_Impl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MIN", retCode);
       }
@@ -625,7 +625,7 @@ public partial class Core
       sp.today += 1;
    }
 
-   private RetCode MIN_OpenCore( MIN_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode MIN_OpenPass( MIN_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -735,32 +735,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MIN_OpenBody( MIN_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
+   private RetCode MIN_OpenImpl( MIN_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
-      return MIN_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+      return MIN_OpenPass( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode MIN_OpenAndFillBody( MIN_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode MIN_OpenAndFillImpl( MIN_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
-      return MIN_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+      return MIN_OpenPass( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode MIN_OpenAndFillInternalBody( MIN_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode MIN_OpenAndFillInternalImpl( MIN_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return MIN_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      return MIN_OpenPass(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* MIN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal MIN_Stream MIN_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       MIN_Stream sp = new MIN_Stream(this);
-      RetCode retCode = MIN_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = MIN_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -771,7 +771,7 @@ public partial class Core
    internal MIN_Stream MIN_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       MIN_Stream sp = new MIN_Stream(this);
-      RetCode retCode = MIN_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      RetCode retCode = MIN_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -831,7 +831,7 @@ public partial class Core
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       MIN_Stream sp = new MIN_Stream(this);
-      RetCode retCode = MIN_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MIN_OpenAndFillImpl(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

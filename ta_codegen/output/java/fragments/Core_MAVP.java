@@ -59,7 +59,7 @@
       return MA_Lookback(optInMaxPeriod, optInMAType) ;
 
    }
-   RetCode MAVP_Body( int startIdx,
+   RetCode MAVP_Impl( int startIdx,
                       int endIdx,
                       double inReal[],
                       double inPeriods[],
@@ -350,7 +350,7 @@
       outNBElement.value = outputSize;
       return RetCode.Success ;
    }
-   RetCode MAVP_Body( int startIdx,
+   RetCode MAVP_Impl( int startIdx,
                       int endIdx,
                       float inReal[],
                       float inPeriods[],
@@ -611,7 +611,7 @@
       requireLength("MAVP", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MAVP_Body(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MAVP_Impl(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MAVP", retCode);
       }
@@ -691,7 +691,7 @@
       requireLength("MAVP", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MAVP_Body(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MAVP_Impl(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MAVP", retCode);
       }
@@ -844,7 +844,7 @@
          }
       }
    }
-   private RetCode MAVP_OpenBody( MAVP_Stream sp, double inReal[], double inPeriods[], int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
+   private RetCode MAVP_OpenImpl( MAVP_Stream sp, double inReal[], double inPeriods[], int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
       int historyLen = inReal.length;
       if( historyLen < 1 || inPeriods.length != inReal.length ) {
@@ -898,7 +898,7 @@
       sp.cur_outReal = bank[cp - optInMinPeriod].cur_outReal;
       return RetCode.Success;
    }
-   private RetCode MAVP_OpenAndFillBody( MAVP_Stream sp, double inReal[], double inPeriods[], int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode MAVP_OpenAndFillImpl( MAVP_Stream sp, double inReal[], double inPeriods[], int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int historyLen = inReal.length;
       if( historyLen < 1 || inPeriods.length != inReal.length ) {
@@ -974,7 +974,7 @@
    MAVP_Stream MAVP_OpenInternal( double inReal[], double inPeriods[], int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
       MAVP_Stream sp = new MAVP_Stream(this);
-      RetCode retCode = MAVP_OpenBody(sp, inReal, inPeriods, startIdx, optInMinPeriod, optInMaxPeriod, optInMAType);
+      RetCode retCode = MAVP_OpenImpl(sp, inReal, inPeriods, startIdx, optInMinPeriod, optInMaxPeriod, optInMAType);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1014,7 +1014,7 @@
       MAVP_Stream sp = new MAVP_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MAVP_OpenAndFillBody(sp, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MAVP_OpenAndFillImpl(sp, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

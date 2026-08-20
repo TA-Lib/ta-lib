@@ -707,7 +707,7 @@ fn emit_factory(s: &mut String, r: &FuncRow, by_name: &HashMap<&str, &FuncDef>) 
     // throw. `FunctionCall.TryInvoke` -- whose contract is a code, not an
     // exception -- converts it in that one place rather than in 174 thunks.
     s.push_str("        invoke: static (core, c, startIdx, endIdx) =>\n        {\n");
-    let _ = writeln!(s, "            RetCode rc = core.{method}_Body(");
+    let _ = writeln!(s, "            RetCode rc = core.{method}_Impl(");
     let _ = writeln!(s, "                {});", call_args.join(", "));
     s.push_str("            return new CallOutcome(rc, b, n);\n");
     s.push_str("        });\n\n");
@@ -1785,10 +1785,21 @@ public sealed class FunctionCall
         }
         catch (Exception _e) when (_e is ITaLibFailure)
         {
-            // The thunk calls the public overload, which reports a rejection by
-            // throwing. This method's contract is a code, so it converts here --
-            // once, rather than in every thunk. Only the library's own failure is
+            // Reachable only through a COMPOSED function. The thunk calls the
+            // body, which answers a code and does not throw; but a composed
+            // body cross-calls its callee's PUBLIC tier -- `OutRange _xr0 =
+            // MA(startIdx, endIdx, ...)` in APO -- and that throws. This
+            // method's contract is a code, so it converts here, once, rather
+            // than in every thunk. Only the library's own failure is
             // converted; anything else is not ours to relabel.
+            //
+            // So this catch is coupled to the #236 step 3 debt: it is live
+            // only while composed bodies call the public callee, which is the
+            // same mechanism that put ten cores in NoPhantomIoTest's
+            // CROSS_CALL_GUARDED list. If that debt is ever paid down by
+            // routing cross-calls to `_Impl`, this goes dead and TryInvoke
+            // silently stops converting anything -- delete it in that change,
+            // do not leave it standing as reassurance.
             range = new OutRange(0, 0);
             return ((ITaLibFailure)_e).RetCode;
         }

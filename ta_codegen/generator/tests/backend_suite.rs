@@ -202,13 +202,13 @@ fn check_java_variants(j: &str, name: &str) {
     // #236 step 5 deleted the C-shaped tier. The body is what is left below
     // the public wrapper, and it is what must exist.
     assert!(
-        j.contains(&format!("RetCode {name}_Body("))
-            || j.contains(&format!("RetCode {name}_Body (")),
+        j.contains(&format!("RetCode {name}_Impl("))
+            || j.contains(&format!("RetCode {name}_Impl (")),
         "{name}: Java missing {name} body"
     );
     assert!(
         !j.contains(&format!("{name}_Internal")),
-        "{name}: the C-shaped tier must not come back"
+        "{name}: the deleted C-shaped tier must not come back"
     );
     assert!(
         !j.contains("Unguarded"),
@@ -446,7 +446,7 @@ fn test_ma_java_cross_calls() {
     assert!(j.contains("= SMA("), "Java: MA should call the public SMA");
     assert!(j.contains("= EMA("), "Java: MA should call the public EMA");
     assert!(
-        !j.contains("SMA_Internal(") && !j.contains("EMA_Internal("),
+        !j.contains("SMA_Impl(") && !j.contains("EMA_Impl("),
         "Java: MA must not call a callee's C-shaped tier"
     );
     assert!(
@@ -475,12 +475,12 @@ fn test_ma_rust_cross_calls() {
     // transcribed body has nowhere to put. `self.` makes these calls rather
     // than definitions, so the negatives below are real.
     assert!(
-        r.contains("self.SMA_Internal("),
-        "Rust: MA should call self.SMA_Internal"
+        r.contains("self.SMA_Impl("),
+        "Rust: MA should call self.SMA_Impl"
     );
     assert!(
-        r.contains("self.EMA_Internal("),
-        "Rust: MA should call self.EMA_Internal"
+        r.contains("self.EMA_Impl("),
+        "Rust: MA should call self.EMA_Impl"
     );
     assert!(
         !r.contains("self.SMA(") && !r.contains("self.EMA("),
@@ -581,7 +581,7 @@ fn test_java_sma_guarded_has_validation() {
     // Extract the double-precision core, bounded before the float overload
     // Bounded to the DOUBLE core alone: the float twin is an overload with the
     // same name, so a marker that spans both would let it satisfy the assertion.
-    let guarded = extract_section(&out.java, "RetCode SMA_Body( int startIdx", "double inReal[]");
+    let guarded = extract_section(&out.java, "RetCode SMA_Impl( int startIdx", "double inReal[]");
     let guarded = format!("{guarded}{}", extract_section(&out.java, "double inReal[]", "float inReal[]"));
     assert!(
         guarded.contains("OutOfRangeStartIndex"),
@@ -594,7 +594,7 @@ fn test_java_synth_private_omits_validation() {
     let (func, enums) = load_synth("synth4");
     let out = generate_all(&func, &enums);
 
-    let private = extract_section(&out.java, "RetCode SYNTH4_Private(", "RetCode SYNTH4_Body(");
+    let private = extract_section(&out.java, "RetCode SYNTH4_Private(", "RetCode SYNTH4_Impl(");
     assert!(
         !private.contains("OutOfRangeStartIndex"),
         "Java SYNTH4_Private should NOT have start index validation"
@@ -608,7 +608,7 @@ fn test_rust_sma_guarded_has_validation() {
 
     // The guarded Rust function holds the algorithm and validates first, bounded
     // by the end of the impl block.
-    let guarded = extract_section(&out.rust, "pub(crate) fn SMA_Internal(", "\n}\n");
+    let guarded = extract_section(&out.rust, "pub(crate) fn SMA_Impl(", "\n}\n");
     assert!(
         guarded.contains("endIdx < startIdx"),
         "Rust guarded SMA should have endIdx < startIdx check"
@@ -2720,7 +2720,7 @@ fn candle_settings_unpacking_in_lookback() {
         "Rust lookback should contain candle settings unpacking"
     );
 
-    let java_lookback_end = java_out.find("RetCode CDL2CROWS_Body(").unwrap();
+    let java_lookback_end = java_out.find("RetCode CDL2CROWS_Impl(").unwrap();
     let java_lookback = &java_out[..java_lookback_end];
     assert!(
         java_lookback.contains("this.candleSettings[CandleSettingType.BodyLong.ordinal()]"),
@@ -3734,12 +3734,12 @@ fn rust_cross_indicator_call_via_generate() {
 
     // Cross-indicator calls resolve to the guarded, C-shaped entry point
     assert!(
-        rust_out.contains("self.SMA_Internal("),
-        "MA Rust should call self.SMA_Internal(): {rust_out}"
+        rust_out.contains("self.SMA_Impl("),
+        "MA Rust should call self.SMA_Impl(): {rust_out}"
     );
     assert!(
-        rust_out.contains("self.EMA_Internal("),
-        "MA Rust should call self.EMA_Internal(): {rust_out}"
+        rust_out.contains("self.EMA_Impl("),
+        "MA Rust should call self.EMA_Impl(): {rust_out}"
     );
     // `self.` makes this a call, not a definition, so the negative is real.
     // step 1 still emits — so the negative is real, not vacuous.
@@ -3790,8 +3790,8 @@ fn rust_private_cross_indicator_call() {
     let (func, enums) = load_indicator("ma");
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
     assert!(
-        rust_out.contains("self.EMA_Internal("),
-        "MA Rust dispatch should call self.EMA_Internal(): {rust_out}"
+        rust_out.contains("self.EMA_Impl("),
+        "MA Rust dispatch should call self.EMA_Impl(): {rust_out}"
     );
 
     let synth_registry = make_synth_registry();
@@ -3881,7 +3881,7 @@ fn rust_cross_indicator_vec_input_gets_ref() {
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
 
     assert!(
-        rust_out.contains("self.MA_Internal(") && rust_out.contains("&tempBuffer"),
+        rust_out.contains("self.MA_Impl(") && rust_out.contains("&tempBuffer"),
         "STOCH Rust should pass &tempBuffer into self.MA(): {rust_out}"
     );
 }
@@ -3944,7 +3944,7 @@ fn rust_lookback_code_with_vars() {
 
     // CDL indicators have local vars in their lookback body (e.g., lookbackTotal)
     // They should be declared as `let mut` or `let`
-    let lookback_section = extract_section(&rust_out, "_Lookback(", "pub(crate) fn CDLKICKING_Internal(");
+    let lookback_section = extract_section(&rust_out, "_Lookback(", "pub(crate) fn CDLKICKING_Impl(");
     assert!(
         lookback_section.contains("let ") || lookback_section.contains("let mut "),
         "Lookback code should declare local variables: {lookback_section}"
@@ -3959,7 +3959,7 @@ fn rust_lookback_literal_renders_return() {
     let helpers = make_helpers();
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
 
-    let lookback_section = extract_section(&rust_out, "_Lookback(", "pub(crate) fn MULT_Internal(");
+    let lookback_section = extract_section(&rust_out, "_Lookback(", "pub(crate) fn MULT_Impl(");
     assert!(
         lookback_section.contains("return"),
         "Lookback should have return statement: {lookback_section}"
@@ -4717,7 +4717,7 @@ fn rust_lookback_none() {
     let helpers = HelperRegistry::empty();
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
 
-    let lookback_section = extract_section(&rust_out, "_Lookback(", "pub(crate) fn TEST_Internal(");
+    let lookback_section = extract_section(&rust_out, "_Lookback(", "pub(crate) fn TEST_Impl(");
     assert!(
         lookback_section.contains("return 0"),
         "None lookback should return 0: {lookback_section}"
@@ -4921,7 +4921,7 @@ fn rust_lookback_code_renders_var_types_correctly() {
     let helpers = HelperRegistry::empty();
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
 
-    let lookback_section = extract_section(&rust_out, "_Lookback(", "pub(crate) fn TEST_Internal(");
+    let lookback_section = extract_section(&rust_out, "_Lookback(", "pub(crate) fn TEST_Impl(");
     // sum has no assignments in the body, so count_assignments returns 0 => `let` not `let mut`
     assert!(
         lookback_section.contains("let sum: f64 = 0.0_f64"),
@@ -6395,7 +6395,7 @@ fn java_macd_lookback_code_rendering() {
     let out = generate_all(&func, &enums);
     let j = &out.java;
 
-    let lookback_end = j.find("RetCode MACD_Body(").unwrap();
+    let lookback_end = j.find("RetCode MACD_Impl(").unwrap();
     let lookback = &j[..lookback_end];
     assert!(
         lookback.contains("MACD_Lookback"),
@@ -7361,7 +7361,7 @@ fn test_c_ht_dcperiod_parity_stream_section() {
         .split("TA_HT_DCPERIOD_StepInternal")
         .nth(1)
         .expect("StepInternal emitted");
-    let step_body = &step[..step.find("TA_HT_DCPERIOD_OpenCore").unwrap_or(step.len())];
+    let step_body = &step[..step.find("TA_HT_DCPERIOD_OpenPass").unwrap_or(step.len())];
     assert!(
         step_body.contains("*outReal= sp->smoothPeriod;"),
         "unconditional smoothPeriod output in the step"
@@ -7409,7 +7409,7 @@ fn test_c_ht_phasor_nested_gate_two_outputs_stream_section() {
         .split("TA_HT_PHASOR_StepInternal")
         .nth(1)
         .expect("StepInternal emitted");
-    let step_body = &step[..step.find("TA_HT_PHASOR_OpenCore").unwrap_or(step.len())];
+    let step_body = &step[..step.find("TA_HT_PHASOR_OpenPass").unwrap_or(step.len())];
     // The step branches on the carried parity, and BOTH outputs are written
     // unconditionally in each arm (the nested `today >= startIdx` gate stripped).
     assert!(step_body.contains("if( sp->streamParity == 0 )"), "parity branch in the step");
@@ -7462,7 +7462,7 @@ fn test_c_ht_sine_two_sin_outputs() {
     let s = ht_stream_section("ht_sine");
     assert!(s.contains("double *cb_smoothPrice;"), "shares DCPHASE's circbuf");
     let step = s.split("TA_HT_SINE_StepInternal").nth(1).unwrap();
-    let step = &step[..step.find("TA_HT_SINE_OpenCore").unwrap_or(step.len())];
+    let step = &step[..step.find("TA_HT_SINE_OpenPass").unwrap_or(step.len())];
     assert!(step.contains("*outSine="), "outSine written unconditionally");
     assert!(step.contains("*outLeadSine="), "outLeadSine written unconditionally");
     assert!(!step.contains("startIdx") && !step.contains("% 2"), "no cursor leak in the step");
@@ -7476,7 +7476,7 @@ fn test_c_ht_trendline_raw_price_window() {
     assert!(s.contains("double *win_i_inReal;"), "rescan window over raw inReal");
     assert!(!s.contains("cb_smoothPrice"), "no smoothPrice circbuf (removed, issue #88)");
     let step = s.split("TA_HT_TRENDLINE_StepInternal").nth(1).unwrap();
-    let step = &step[..step.find("TA_HT_TRENDLINE_OpenCore").unwrap_or(step.len())];
+    let step = &step[..step.find("TA_HT_TRENDLINE_OpenPass").unwrap_or(step.len())];
     assert!(step.contains("sp->win_i_inReal[(sp->winPos_i + sp->winCap_i - sp->i >= sp->winCap_i) ?"), "de-modulo window read of bar today-i");
     assert!(step.contains("if( sp->i < sp->DCPeriodInt )"), "guarded to the first DCPeriodInt bars");
     assert!(step.contains("*outReal= sp->tempReal2;"), "unconditional trendline output");
@@ -7491,7 +7491,7 @@ fn test_c_ht_trendmode_full_union() {
     assert!(s.contains("double *cb_smoothPrice;"), "smoothPrice circbuf");
     assert!(s.contains("double *win_j_inReal;"), "raw-price rescan window (counter j)");
     let step = s.split("TA_HT_TRENDMODE_StepInternal").nth(1).unwrap();
-    let step = &step[..step.find("TA_HT_TRENDMODE_OpenCore").unwrap_or(step.len())];
+    let step = &step[..step.find("TA_HT_TRENDMODE_OpenPass").unwrap_or(step.len())];
     assert!(step.contains("*outInteger="), "integer trend-mode output, unconditional");
     assert!(step.contains("sp->cb_smoothPrice[sp->idx]"), "circbuf DC-phase read");
     assert!(step.contains("sp->win_j_inReal[(sp->winPos_j + sp->winCap_j - sp->j >= sp->winCap_j) ?"), "de-modulo window trendline read");
@@ -7508,7 +7508,7 @@ fn test_c_mama_two_outputs_and_params() {
     assert!(s.contains("double optInFastLimit;") && s.contains("double optInSlowLimit;"), "real params carried in the handle");
     assert!(s.contains("double mama;") && s.contains("double fama;"), "coupled mama/fama carried");
     let step = s.split("TA_MAMA_StepInternal").nth(1).unwrap();
-    let step = &step[..step.find("TA_MAMA_OpenCore").unwrap_or(step.len())];
+    let step = &step[..step.find("TA_MAMA_OpenPass").unwrap_or(step.len())];
     assert!(step.contains("if( sp->streamParity == 0 )"), "parity branch");
     // MAMA line always written; FAMA (nullable) write is NULL-guarded so the
     // step never dereferences a NULL FAMA pointer (the gate itself is stripped).
@@ -7763,7 +7763,7 @@ fn test_c_midprice_stream_uses_the_declared_alternate() {
     // wrong body; these check the emitted CODE. The block scan's scratch and
     // block cursor appear in the batch tier and nowhere in the Open.
     let (batch, open) = c
-        .split_once("TA_MIDPRICE_OpenCore")
+        .split_once("TA_MIDPRICE_OpenPass")
         .expect("OpenCore emitted");
     for marker in ["sufHighest", "preHighest", "blockNext"] {
         assert!(
@@ -8634,12 +8634,12 @@ fn rust_fma_dispatch_fires_for_exactly_the_fusing_functions() {
             let clones = out.matches("#[target_feature(enable = \"fma\")]").count();
             assert_eq!(calls, clones, "{name}: dispatcher/clone count mismatch");
             // The batch variant must carry its clone. Dispatch sits on the
-            // C-shaped `_Internal` entry point, which is where the fused body
+            // C-shaped `_Impl` entry point, which is where the fused body
             // lives; the public `Result`-returning wrapper only forwards. (A
             // future private-delegating fused function would trip the
             // dispatcher/clone balance above on purpose.)
             assert!(
-                out.contains(&format!("fn {}_Internal_fma(", func.name)),
+                out.contains(&format!("fn {}_Impl_fma(", func.name)),
                 "{name}: guarded variant lost its FMA clone"
             );
             // The fused sites live on in the renamed portable impl.

@@ -72,7 +72,7 @@ public partial class Core
       return 0 ;
 
    }
-   internal RetCode MARKETFI_Body( int startIdx,
+   internal RetCode MARKETFI_Impl( int startIdx,
                                    int endIdx,
                                    ReadOnlySpan<double> inHigh,
                                    ReadOnlySpan<double> inLow,
@@ -130,7 +130,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode MARKETFI_Body( int startIdx,
+   internal RetCode MARKETFI_Impl( int startIdx,
                                    int endIdx,
                                    ReadOnlySpan<float> inHigh,
                                    ReadOnlySpan<float> inLow,
@@ -225,7 +225,7 @@ public partial class Core
       RequireLength("MARKETFI", "inLow", inLow.Length, guardInLen);
       RequireLength("MARKETFI", "inVolume", inVolume.Length, guardInLen);
       RequireLength("MARKETFI", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = MARKETFI_Body(startIdx, endIdx, inHigh, inLow, inVolume, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MARKETFI_Impl(startIdx, endIdx, inHigh, inLow, inVolume, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MARKETFI", retCode);
       }
@@ -301,7 +301,7 @@ public partial class Core
       RequireLength("MARKETFI", "inLow", inLow.Length, guardInLen);
       RequireLength("MARKETFI", "inVolume", inVolume.Length, guardInLen);
       RequireLength("MARKETFI", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = MARKETFI_Body(startIdx, endIdx, inHigh, inLow, inVolume, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MARKETFI_Impl(startIdx, endIdx, inHigh, inLow, inVolume, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MARKETFI", retCode);
       }
@@ -434,7 +434,7 @@ public partial class Core
       }
    }
 
-   private RetCode MARKETFI_OpenCore( MARKETFI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode MARKETFI_OpenPass( MARKETFI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -487,32 +487,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MARKETFI_OpenBody( MARKETFI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, int startIdx )
+   private RetCode MARKETFI_OpenImpl( MARKETFI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, int startIdx )
    {
       double[] sink_outReal = new double[1];
-      return MARKETFI_OpenCore( sp, inHigh, inLow, inVolume, startIdx, out _, out _, sink_outReal, 0 );
+      return MARKETFI_OpenPass( sp, inHigh, inLow, inVolume, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode MARKETFI_OpenAndFillBody( MARKETFI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode MARKETFI_OpenAndFillImpl( MARKETFI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inVolume) ) {
          return RetCode.BadParam;
       }
-      return MARKETFI_OpenCore( sp, inHigh, inLow, inVolume, 0, out outBegIdx, out outNBElement, outReal, 1 );
+      return MARKETFI_OpenPass( sp, inHigh, inLow, inVolume, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode MARKETFI_OpenAndFillInternalBody( MARKETFI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode MARKETFI_OpenAndFillInternalImpl( MARKETFI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return MARKETFI_OpenCore(sp, inHigh, inLow, inVolume, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      return MARKETFI_OpenPass(sp, inHigh, inLow, inVolume, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* MARKETFI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal MARKETFI_Stream MARKETFI_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       MARKETFI_Stream sp = new MARKETFI_Stream(this);
-      RetCode retCode = MARKETFI_OpenAndFillInternalBody(sp, inHigh, inLow, inVolume, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = MARKETFI_OpenAndFillInternalImpl(sp, inHigh, inLow, inVolume, startIdx, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -523,7 +523,7 @@ public partial class Core
    internal MARKETFI_Stream MARKETFI_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, int startIdx )
    {
       MARKETFI_Stream sp = new MARKETFI_Stream(this);
-      RetCode retCode = MARKETFI_OpenBody(sp, inHigh, inLow, inVolume, startIdx);
+      RetCode retCode = MARKETFI_OpenImpl(sp, inHigh, inLow, inVolume, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -586,7 +586,7 @@ public partial class Core
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
       MARKETFI_Stream sp = new MARKETFI_Stream(this);
-      RetCode retCode = MARKETFI_OpenAndFillBody(sp, inHigh, inLow, inVolume, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MARKETFI_OpenAndFillImpl(sp, inHigh, inLow, inVolume, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

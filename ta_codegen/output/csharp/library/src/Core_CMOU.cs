@@ -84,7 +84,7 @@ public partial class Core
       return optInTimePeriod ;
 
    }
-   internal RetCode CMOU_Body( int startIdx,
+   internal RetCode CMOU_Impl( int startIdx,
                                int endIdx,
                                ReadOnlySpan<double> inReal,
                                int optInTimePeriod,
@@ -218,7 +218,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode CMOU_Body( int startIdx,
+   internal RetCode CMOU_Impl( int startIdx,
                                int endIdx,
                                ReadOnlySpan<float> inReal,
                                int optInTimePeriod,
@@ -372,7 +372,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("CMOU", "inReal", inReal.Length, guardInLen);
       RequireLength("CMOU", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = CMOU_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = CMOU_Impl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("CMOU", retCode);
       }
@@ -441,7 +441,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("CMOU", "inReal", inReal.Length, guardInLen);
       RequireLength("CMOU", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = CMOU_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = CMOU_Impl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("CMOU", retCode);
       }
@@ -623,7 +623,7 @@ public partial class Core
       }
    }
 
-   private RetCode CMOU_OpenCore( CMOU_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode CMOU_OpenPass( CMOU_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -769,32 +769,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CMOU_OpenBody( CMOU_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
+   private RetCode CMOU_OpenImpl( CMOU_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
-      return CMOU_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+      return CMOU_OpenPass( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode CMOU_OpenAndFillBody( CMOU_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode CMOU_OpenAndFillImpl( CMOU_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
-      return CMOU_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+      return CMOU_OpenPass( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode CMOU_OpenAndFillInternalBody( CMOU_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode CMOU_OpenAndFillInternalImpl( CMOU_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return CMOU_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      return CMOU_OpenPass(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* CMOU_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal CMOU_Stream CMOU_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       CMOU_Stream sp = new CMOU_Stream(this);
-      RetCode retCode = CMOU_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = CMOU_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -805,7 +805,7 @@ public partial class Core
    internal CMOU_Stream CMOU_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       CMOU_Stream sp = new CMOU_Stream(this);
-      RetCode retCode = CMOU_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      RetCode retCode = CMOU_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -863,7 +863,7 @@ public partial class Core
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       CMOU_Stream sp = new CMOU_Stream(this);
-      RetCode retCode = CMOU_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = CMOU_OpenAndFillImpl(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

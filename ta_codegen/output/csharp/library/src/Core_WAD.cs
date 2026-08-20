@@ -75,7 +75,7 @@ public partial class Core
       return 0 ;
 
    }
-   internal RetCode WAD_Body( int startIdx,
+   internal RetCode WAD_Impl( int startIdx,
                               int endIdx,
                               ReadOnlySpan<double> inHigh,
                               ReadOnlySpan<double> inLow,
@@ -161,7 +161,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode WAD_Body( int startIdx,
+   internal RetCode WAD_Impl( int startIdx,
                               int endIdx,
                               ReadOnlySpan<float> inHigh,
                               ReadOnlySpan<float> inLow,
@@ -274,7 +274,7 @@ public partial class Core
       RequireLength("WAD", "inLow", inLow.Length, guardInLen);
       RequireLength("WAD", "inClose", inClose.Length, guardInLen);
       RequireLength("WAD", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = WAD_Body(startIdx, endIdx, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = WAD_Impl(startIdx, endIdx, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("WAD", retCode);
       }
@@ -350,7 +350,7 @@ public partial class Core
       RequireLength("WAD", "inLow", inLow.Length, guardInLen);
       RequireLength("WAD", "inClose", inClose.Length, guardInLen);
       RequireLength("WAD", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = WAD_Body(startIdx, endIdx, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = WAD_Impl(startIdx, endIdx, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("WAD", retCode);
       }
@@ -493,7 +493,7 @@ public partial class Core
       sp.prevClose = close;
    }
 
-   private RetCode WAD_OpenCore( WAD_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode WAD_OpenPass( WAD_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -577,32 +577,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode WAD_OpenBody( WAD_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   private RetCode WAD_OpenImpl( WAD_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       double[] sink_outReal = new double[1];
-      return WAD_OpenCore( sp, inHigh, inLow, inClose, startIdx, out _, out _, sink_outReal, 0 );
+      return WAD_OpenPass( sp, inHigh, inLow, inClose, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode WAD_OpenAndFillBody( WAD_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode WAD_OpenAndFillImpl( WAD_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
          return RetCode.BadParam;
       }
-      return WAD_OpenCore( sp, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outReal, 1 );
+      return WAD_OpenPass( sp, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode WAD_OpenAndFillInternalBody( WAD_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode WAD_OpenAndFillInternalImpl( WAD_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return WAD_OpenCore(sp, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      return WAD_OpenPass(sp, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* WAD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal WAD_Stream WAD_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       WAD_Stream sp = new WAD_Stream(this);
-      RetCode retCode = WAD_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = WAD_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -613,7 +613,7 @@ public partial class Core
    internal WAD_Stream WAD_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       WAD_Stream sp = new WAD_Stream(this);
-      RetCode retCode = WAD_OpenBody(sp, inHigh, inLow, inClose, startIdx);
+      RetCode retCode = WAD_OpenImpl(sp, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -675,7 +675,7 @@ public partial class Core
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       WAD_Stream sp = new WAD_Stream(this);
-      RetCode retCode = WAD_OpenAndFillBody(sp, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = WAD_OpenAndFillImpl(sp, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

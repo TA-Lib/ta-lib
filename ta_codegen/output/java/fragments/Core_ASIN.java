@@ -25,7 +25,7 @@
       return 0 ;
 
    }
-   RetCode ASIN_Body( int startIdx,
+   RetCode ASIN_Impl( int startIdx,
                       int endIdx,
                       double inReal[],
                       MInteger outBegIdx,
@@ -47,7 +47,7 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode ASIN_Body( int startIdx,
+   RetCode ASIN_Impl( int startIdx,
                       int endIdx,
                       float inReal[],
                       MInteger outBegIdx,
@@ -124,7 +124,7 @@
       requireLength("ASIN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ASIN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ASIN_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ASIN", retCode);
       }
@@ -188,7 +188,7 @@
       requireLength("ASIN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ASIN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ASIN_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ASIN", retCode);
       }
@@ -293,7 +293,7 @@
    {
       sp.cur_outReal = Math.asin(inReal);
    }
-   private RetCode ASIN_OpenCore( ASIN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode ASIN_OpenPass( ASIN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -314,29 +314,29 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode ASIN_OpenBody( ASIN_Stream sp, double inReal[], int startIdx )
+   private RetCode ASIN_OpenImpl( ASIN_Stream sp, double inReal[], int startIdx )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return ASIN_OpenCore( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
+      return ASIN_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode ASIN_OpenAndFillBody( ASIN_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode ASIN_OpenAndFillImpl( ASIN_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      return ASIN_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
+      return ASIN_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode ASIN_OpenAndFillInternalBody( ASIN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode ASIN_OpenAndFillInternalImpl( ASIN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return ASIN_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+      return ASIN_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
    }
    /* ASIN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    ASIN_Stream ASIN_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       ASIN_Stream sp = new ASIN_Stream(this);
-      RetCode retCode = ASIN_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ASIN_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -352,7 +352,7 @@
    ASIN_Stream ASIN_OpenInternal( double inReal[], int startIdx )
    {
       ASIN_Stream sp = new ASIN_Stream(this);
-      RetCode retCode = ASIN_OpenBody(sp, inReal, startIdx);
+      RetCode retCode = ASIN_OpenImpl(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -392,7 +392,7 @@
       ASIN_Stream sp = new ASIN_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ASIN_OpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ASIN_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

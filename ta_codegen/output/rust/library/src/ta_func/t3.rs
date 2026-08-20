@@ -103,7 +103,7 @@ impl Core {
     }
     /// C-shaped body behind [`Core::T3`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
-    pub(crate) fn T3_Internal(
+    pub(crate) fn T3_Impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -115,13 +115,13 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, T3_Internal_fma, T3_Internal_impl, (startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, T3_Impl_fma, T3_Impl_impl, (startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.T3_Internal_impl(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal)
+        self.T3_Impl_impl(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn T3_Internal_fma(
+    fn T3_Impl_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -132,10 +132,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.T3_Internal_impl(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal)
+        self.T3_Impl_impl(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn T3_Internal_impl(
+    fn T3_Impl_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -422,7 +422,7 @@ impl Core {
     ) -> Result<OutRange, RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.T3_Internal(
+        let retCode = self.T3_Impl(
             startIdx,
             endIdx,
             inReal,
@@ -526,7 +526,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::T3_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::T3_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn T3_OpenCore(
+    pub(crate) fn T3_OpenPass(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInVFactor: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<T3_Stream, RetCode> {
         if inReal.is_empty() {
@@ -759,7 +759,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.T3_OpenCore(inReal, startIdx, optInTimePeriod, optInVFactor, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.T3_OpenPass(inReal, startIdx, optInTimePeriod, optInVFactor, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -798,7 +798,7 @@ impl Core {
     ) -> Result<(T3_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.T3_OpenCore(inReal, 0, optInTimePeriod, optInVFactor, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.T3_OpenPass(inReal, 0, optInTimePeriod, optInVFactor, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -807,7 +807,7 @@ impl Core {
     pub(crate) fn T3_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInVFactor: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<T3_Stream, RetCode> {
-        self.T3_OpenCore(inReal, startIdx, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal, 1)
+        self.T3_OpenPass(inReal, startIdx, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

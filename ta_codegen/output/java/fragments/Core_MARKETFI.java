@@ -28,7 +28,7 @@
       return 0 ;
 
    }
-   RetCode MARKETFI_Body( int startIdx,
+   RetCode MARKETFI_Impl( int startIdx,
                           int endIdx,
                           double inHigh[],
                           double inLow[],
@@ -81,7 +81,7 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode MARKETFI_Body( int startIdx,
+   RetCode MARKETFI_Impl( int startIdx,
                           int endIdx,
                           float inHigh[],
                           float inLow[],
@@ -178,7 +178,7 @@
       requireLength("MARKETFI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MARKETFI_Body(startIdx, endIdx, inHigh, inLow, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MARKETFI_Impl(startIdx, endIdx, inHigh, inLow, inVolume, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MARKETFI", retCode);
       }
@@ -255,7 +255,7 @@
       requireLength("MARKETFI", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MARKETFI_Body(startIdx, endIdx, inHigh, inLow, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MARKETFI_Impl(startIdx, endIdx, inHigh, inLow, inVolume, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MARKETFI", retCode);
       }
@@ -374,7 +374,7 @@
          sp.cur_outReal = 0.0;
       }
    }
-   private RetCode MARKETFI_OpenCore( MARKETFI_Stream sp, double inHigh[], double inLow[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode MARKETFI_OpenPass( MARKETFI_Stream sp, double inHigh[], double inLow[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -424,29 +424,29 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode MARKETFI_OpenBody( MARKETFI_Stream sp, double inHigh[], double inLow[], double inVolume[], int startIdx )
+   private RetCode MARKETFI_OpenImpl( MARKETFI_Stream sp, double inHigh[], double inLow[], double inVolume[], int startIdx )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return MARKETFI_OpenCore( sp, inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
+      return MARKETFI_OpenPass( sp, inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode MARKETFI_OpenAndFillBody( MARKETFI_Stream sp, double inHigh[], double inLow[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode MARKETFI_OpenAndFillImpl( MARKETFI_Stream sp, double inHigh[], double inLow[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inVolume ) {
          return RetCode.BadParam;
       }
-      return MARKETFI_OpenCore( sp, inHigh, inLow, inVolume, 0, outBegIdx, outNBElement, outReal, 1 );
+      return MARKETFI_OpenPass( sp, inHigh, inLow, inVolume, 0, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode MARKETFI_OpenAndFillInternalBody( MARKETFI_Stream sp, double inHigh[], double inLow[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode MARKETFI_OpenAndFillInternalImpl( MARKETFI_Stream sp, double inHigh[], double inLow[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return MARKETFI_OpenCore(sp, inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
+      return MARKETFI_OpenPass(sp, inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
    }
    /* MARKETFI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MARKETFI_Stream MARKETFI_OpenAndFillInternal( double inHigh[], double inLow[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       MARKETFI_Stream sp = new MARKETFI_Stream(this);
-      RetCode retCode = MARKETFI_OpenAndFillInternalBody(sp, inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MARKETFI_OpenAndFillInternalImpl(sp, inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -462,7 +462,7 @@
    MARKETFI_Stream MARKETFI_OpenInternal( double inHigh[], double inLow[], double inVolume[], int startIdx )
    {
       MARKETFI_Stream sp = new MARKETFI_Stream(this);
-      RetCode retCode = MARKETFI_OpenBody(sp, inHigh, inLow, inVolume, startIdx);
+      RetCode retCode = MARKETFI_OpenImpl(sp, inHigh, inLow, inVolume, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -502,7 +502,7 @@
       MARKETFI_Stream sp = new MARKETFI_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MARKETFI_OpenAndFillBody(sp, inHigh, inLow, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MARKETFI_OpenAndFillImpl(sp, inHigh, inLow, inVolume, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

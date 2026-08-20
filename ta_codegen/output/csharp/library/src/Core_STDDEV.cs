@@ -88,7 +88,7 @@ public partial class Core
       return VAR_Lookback(optInTimePeriod, optInNbDev) ;
 
    }
-   internal RetCode STDDEV_Body( int startIdx,
+   internal RetCode STDDEV_Impl( int startIdx,
                                  int endIdx,
                                  ReadOnlySpan<double> inReal,
                                  int optInTimePeriod,
@@ -155,7 +155,7 @@ public partial class Core
       }
       return RetCode.Success ;
    }
-   internal RetCode STDDEV_Body( int startIdx,
+   internal RetCode STDDEV_Impl( int startIdx,
                                  int endIdx,
                                  ReadOnlySpan<float> inReal,
                                  int optInTimePeriod,
@@ -270,7 +270,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("STDDEV", "inReal", inReal.Length, guardInLen);
       RequireLength("STDDEV", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = STDDEV_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = STDDEV_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("STDDEV", retCode);
       }
@@ -339,7 +339,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("STDDEV", "inReal", inReal.Length, guardInLen);
       RequireLength("STDDEV", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = STDDEV_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = STDDEV_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("STDDEV", retCode);
       }
@@ -487,7 +487,7 @@ public partial class Core
       sp.cur_outReal = cur_outReal;
    }
 
-   private RetCode STDDEV_OpenCore( STDDEV_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDev, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode STDDEV_OpenPass( STDDEV_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDev, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -559,32 +559,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode STDDEV_OpenBody( STDDEV_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDev )
+   private RetCode STDDEV_OpenImpl( STDDEV_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDev )
    {
       double[] sink_outReal = new double[1];
-      return STDDEV_OpenCore( sp, inReal, startIdx, optInTimePeriod, optInNbDev, out _, out _, sink_outReal, 0 );
+      return STDDEV_OpenPass( sp, inReal, startIdx, optInTimePeriod, optInNbDev, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode STDDEV_OpenAndFillBody( STDDEV_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDev, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode STDDEV_OpenAndFillImpl( STDDEV_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDev, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
-      return STDDEV_OpenCore( sp, inReal, 0, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal, 1 );
+      return STDDEV_OpenPass( sp, inReal, 0, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode STDDEV_OpenAndFillInternalBody( STDDEV_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDev, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode STDDEV_OpenAndFillInternalImpl( STDDEV_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDev, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return STDDEV_OpenCore(sp, inReal, startIdx, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal, 1);
+      return STDDEV_OpenPass(sp, inReal, startIdx, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* STDDEV_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal STDDEV_Stream STDDEV_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDev, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       STDDEV_Stream sp = new STDDEV_Stream(this);
-      RetCode retCode = STDDEV_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = STDDEV_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -595,7 +595,7 @@ public partial class Core
    internal STDDEV_Stream STDDEV_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDev )
    {
       STDDEV_Stream sp = new STDDEV_Stream(this);
-      RetCode retCode = STDDEV_OpenBody(sp, inReal, startIdx, optInTimePeriod, optInNbDev);
+      RetCode retCode = STDDEV_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInNbDev);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -657,7 +657,7 @@ public partial class Core
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       STDDEV_Stream sp = new STDDEV_Stream(this);
-      RetCode retCode = STDDEV_OpenAndFillBody(sp, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = STDDEV_OpenAndFillImpl(sp, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

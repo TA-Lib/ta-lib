@@ -295,7 +295,7 @@ fn every_streamable_func_emits_rust_stream() {
 // Merged Open family (`OpenCore` + stride)
 // ---------------------------------------------------------------------------
 //
-// `OpenInternal` and `OpenAndFill` are one emission: `<sn>_OpenCore(..., outStride:
+// `OpenInternal` and `OpenAndFill` are one emission: `<sn>_OpenPass(..., outStride:
 // usize)`. Fill passes stride 1 and the caller's slice; the scalar path passes
 // stride 0 and a one-element sink, so every write collapses onto slot 0 and that
 // slot ends holding the last history value. `Dispatch` (MA) and `PeriodBank`
@@ -305,7 +305,7 @@ fn every_streamable_func_emits_rust_stream() {
 fn rust_open_family_is_one_core_with_two_wrappers() {
     let s = rust_stream_section("cdlhammer");
     assert_eq!(
-        s.matches("fn CDLHAMMER_OpenCore(").count(),
+        s.matches("fn CDLHAMMER_OpenPass(").count(),
         1,
         "the core is emitted exactly once"
     );
@@ -314,7 +314,7 @@ fn rust_open_family_is_one_core_with_two_wrappers() {
     for w in ["fn CDLHAMMER_OpenInternal(", "pub fn CDLHAMMER_OpenAndFill("] {
         let at = s.find(w).unwrap_or_else(|| panic!("missing {w}"));
         let body = &s[at..at + 900.min(s.len() - at)];
-        assert!(body.contains("CDLHAMMER_OpenCore("), "{w} delegates to the core");
+        assert!(body.contains("CDLHAMMER_OpenPass("), "{w} delegates to the core");
         assert!(
             !body.contains("BodyPeriodTotal"),
             "{w} must not re-transcribe the algorithm"
@@ -378,7 +378,7 @@ fn rust_exempt_tiers_keep_their_own_bodies() {
     for (name, upper) in [("ma", "MA"), ("mavp", "MAVP")] {
         let s = rust_stream_section(name);
         assert!(
-            !s.contains(&format!("fn {upper}_OpenCore(")),
+            !s.contains(&format!("fn {upper}_OpenPass(")),
             "{upper} is an exempt tier and must keep its own bodies"
         );
         assert!(s.contains(&format!("fn {upper}_OpenInternal(")));

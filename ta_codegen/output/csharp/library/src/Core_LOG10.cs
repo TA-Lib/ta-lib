@@ -69,7 +69,7 @@ public partial class Core
       return 0 ;
 
    }
-   internal RetCode LOG10_Body( int startIdx,
+   internal RetCode LOG10_Impl( int startIdx,
                                 int endIdx,
                                 ReadOnlySpan<double> inReal,
                                 out int outBegIdx,
@@ -96,7 +96,7 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode LOG10_Body( int startIdx,
+   internal RetCode LOG10_Impl( int startIdx,
                                 int endIdx,
                                 ReadOnlySpan<float> inReal,
                                 out int outBegIdx,
@@ -171,7 +171,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("LOG10", "inReal", inReal.Length, guardInLen);
       RequireLength("LOG10", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = LOG10_Body(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = LOG10_Impl(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("LOG10", retCode);
       }
@@ -234,7 +234,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("LOG10", "inReal", inReal.Length, guardInLen);
       RequireLength("LOG10", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = LOG10_Body(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = LOG10_Impl(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("LOG10", retCode);
       }
@@ -348,7 +348,7 @@ public partial class Core
       sp.cur_outReal = Math.Log10(inReal);
    }
 
-   private RetCode LOG10_OpenCore( LOG10_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode LOG10_OpenPass( LOG10_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -372,32 +372,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode LOG10_OpenBody( LOG10_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
+   private RetCode LOG10_OpenImpl( LOG10_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
    {
       double[] sink_outReal = new double[1];
-      return LOG10_OpenCore( sp, inReal, startIdx, out _, out _, sink_outReal, 0 );
+      return LOG10_OpenPass( sp, inReal, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode LOG10_OpenAndFillBody( LOG10_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode LOG10_OpenAndFillImpl( LOG10_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
-      return LOG10_OpenCore( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
+      return LOG10_OpenPass( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode LOG10_OpenAndFillInternalBody( LOG10_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode LOG10_OpenAndFillInternalImpl( LOG10_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return LOG10_OpenCore(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      return LOG10_OpenPass(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* LOG10_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal LOG10_Stream LOG10_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       LOG10_Stream sp = new LOG10_Stream(this);
-      RetCode retCode = LOG10_OpenAndFillInternalBody(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = LOG10_OpenAndFillInternalImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -408,7 +408,7 @@ public partial class Core
    internal LOG10_Stream LOG10_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
       LOG10_Stream sp = new LOG10_Stream(this);
-      RetCode retCode = LOG10_OpenBody(sp, inReal, startIdx);
+      RetCode retCode = LOG10_OpenImpl(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -462,7 +462,7 @@ public partial class Core
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       LOG10_Stream sp = new LOG10_Stream(this);
-      RetCode retCode = LOG10_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = LOG10_OpenAndFillImpl(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

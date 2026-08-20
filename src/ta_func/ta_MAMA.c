@@ -1150,7 +1150,7 @@ static void TA_MAMA_StepInternal( struct TA_MAMA_Stream *sp, double inReal, doub
    sp->streamParity = 1 - sp->streamParity;
 }
 
-static TA_RetCode TA_MAMA_OpenCore( struct TA_MAMA_Stream **stream, const double inReal[], int startIdx, int historyLen, double optInFastLimit, double optInSlowLimit, int *outBegIdx, int *outNBElement, double outMAMA[], double outFAMA[], int outStride )
+static TA_RetCode TA_MAMA_OpenPass( struct TA_MAMA_Stream **stream, const double inReal[], int startIdx, int historyLen, double optInFastLimit, double optInSlowLimit, int *outBegIdx, int *outNBElement, double outMAMA[], double outFAMA[], int outStride )
 {
    struct TA_MAMA_Stream *sp;
    int endIdx;
@@ -1645,7 +1645,7 @@ TA_RetCode TA_MAMA_OpenInternal( struct TA_MAMA_Stream **stream, const double in
    int dummyNBElement = 0;
    double sink_outMAMA = 0.0;
    double sink_outFAMA = 0.0;
-   retCode = TA_MAMA_OpenCore( stream, inReal, startIdx, historyLen, optInFastLimit, optInSlowLimit, &dummyBegIdx, &dummyNBElement, &sink_outMAMA, outFAMA ? &sink_outFAMA : NULL, 0 );
+   retCode = TA_MAMA_OpenPass( stream, inReal, startIdx, historyLen, optInFastLimit, optInSlowLimit, &dummyBegIdx, &dummyNBElement, &sink_outMAMA, outFAMA ? &sink_outFAMA : NULL, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outMAMA = sink_outMAMA;
@@ -1673,13 +1673,13 @@ TA_LIB_API TA_RetCode TA_MAMA_OpenAndFill( TA_MAMA_Stream **stream, const double
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outMAMA == (const void *)inReal || (const void *)outFAMA == (const void *)inReal || (const void *)outMAMA == (const void *)outFAMA ) return TA_BAD_PARAM;
-   return TA_MAMA_OpenCore( stream, inReal, 0, historyLen, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1 );
+   return TA_MAMA_OpenPass( stream, inReal, 0, historyLen, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1 );
 }
 
 /* Private function, not in public API. */
 TA_RetCode TA_MAMA_OpenAndFillInternal( struct TA_MAMA_Stream **stream, const double inReal[], int startIdx, int historyLen, double optInFastLimit, double optInSlowLimit, int *outBegIdx, int *outNBElement, double outMAMA[], double outFAMA[] )
 {
-   return TA_MAMA_OpenCore( stream, inReal, startIdx, historyLen, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1 );
+   return TA_MAMA_OpenPass( stream, inReal, startIdx, historyLen, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_MAMA_Update( TA_MAMA_Stream *stream, double inReal, double *outMAMA, double *outFAMA )

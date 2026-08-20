@@ -83,7 +83,7 @@ public partial class Core
       return 63 + this.unstablePeriod[(int)FuncUnstId.HT_DCPHASE] ;
 
    }
-   internal RetCode HT_DCPHASE_Body( int startIdx,
+   internal RetCode HT_DCPHASE_Impl( int startIdx,
                                      int endIdx,
                                      ReadOnlySpan<double> inReal,
                                      out int outBegIdx,
@@ -496,7 +496,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode HT_DCPHASE_Body( int startIdx,
+   internal RetCode HT_DCPHASE_Impl( int startIdx,
                                      int endIdx,
                                      ReadOnlySpan<float> inReal,
                                      out int outBegIdx,
@@ -887,7 +887,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("HT_DCPHASE", "inReal", inReal.Length, guardInLen);
       RequireLength("HT_DCPHASE", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = HT_DCPHASE_Body(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = HT_DCPHASE_Impl(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("HT_DCPHASE", retCode);
       }
@@ -946,7 +946,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("HT_DCPHASE", "inReal", inReal.Length, guardInLen);
       RequireLength("HT_DCPHASE", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = HT_DCPHASE_Body(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = HT_DCPHASE_Impl(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("HT_DCPHASE", retCode);
       }
@@ -1502,7 +1502,7 @@ public partial class Core
       sp.streamParity = 1 - sp.streamParity;
    }
 
-   private RetCode HT_DCPHASE_OpenCore( HT_DCPHASE_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode HT_DCPHASE_OpenPass( HT_DCPHASE_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1990,32 +1990,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode HT_DCPHASE_OpenBody( HT_DCPHASE_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
+   private RetCode HT_DCPHASE_OpenImpl( HT_DCPHASE_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
    {
       double[] sink_outReal = new double[1];
-      return HT_DCPHASE_OpenCore( sp, inReal, startIdx, out _, out _, sink_outReal, 0 );
+      return HT_DCPHASE_OpenPass( sp, inReal, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode HT_DCPHASE_OpenAndFillBody( HT_DCPHASE_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode HT_DCPHASE_OpenAndFillImpl( HT_DCPHASE_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
-      return HT_DCPHASE_OpenCore( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
+      return HT_DCPHASE_OpenPass( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode HT_DCPHASE_OpenAndFillInternalBody( HT_DCPHASE_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode HT_DCPHASE_OpenAndFillInternalImpl( HT_DCPHASE_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return HT_DCPHASE_OpenCore(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      return HT_DCPHASE_OpenPass(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* HT_DCPHASE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal HT_DCPHASE_Stream HT_DCPHASE_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       HT_DCPHASE_Stream sp = new HT_DCPHASE_Stream(this);
-      RetCode retCode = HT_DCPHASE_OpenAndFillInternalBody(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = HT_DCPHASE_OpenAndFillInternalImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -2026,7 +2026,7 @@ public partial class Core
    internal HT_DCPHASE_Stream HT_DCPHASE_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
       HT_DCPHASE_Stream sp = new HT_DCPHASE_Stream(this);
-      RetCode retCode = HT_DCPHASE_OpenBody(sp, inReal, startIdx);
+      RetCode retCode = HT_DCPHASE_OpenImpl(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -2082,7 +2082,7 @@ public partial class Core
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       HT_DCPHASE_Stream sp = new HT_DCPHASE_Stream(this);
-      RetCode retCode = HT_DCPHASE_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = HT_DCPHASE_OpenAndFillImpl(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

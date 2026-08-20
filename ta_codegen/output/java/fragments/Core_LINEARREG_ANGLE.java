@@ -40,7 +40,7 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode LINEARREG_ANGLE_Body( int startIdx,
+   RetCode LINEARREG_ANGLE_Impl( int startIdx,
                                  int endIdx,
                                  double inReal[],
                                  int optInTimePeriod,
@@ -143,7 +143,7 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode LINEARREG_ANGLE_Body( int startIdx,
+   RetCode LINEARREG_ANGLE_Impl( int startIdx,
                                  int endIdx,
                                  float inReal[],
                                  int optInTimePeriod,
@@ -269,7 +269,7 @@
       requireLength("LINEARREG_ANGLE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = LINEARREG_ANGLE_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LINEARREG_ANGLE_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("LINEARREG_ANGLE", retCode);
       }
@@ -334,7 +334,7 @@
       requireLength("LINEARREG_ANGLE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = LINEARREG_ANGLE_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LINEARREG_ANGLE_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("LINEARREG_ANGLE", retCode);
       }
@@ -483,7 +483,7 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode LINEARREG_ANGLE_OpenCore( LINEARREG_ANGLE_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode LINEARREG_ANGLE_OpenPass( LINEARREG_ANGLE_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int today = 0;
@@ -600,29 +600,29 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode LINEARREG_ANGLE_OpenBody( LINEARREG_ANGLE_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode LINEARREG_ANGLE_OpenImpl( LINEARREG_ANGLE_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return LINEARREG_ANGLE_OpenCore( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
+      return LINEARREG_ANGLE_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode LINEARREG_ANGLE_OpenAndFillBody( LINEARREG_ANGLE_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode LINEARREG_ANGLE_OpenAndFillImpl( LINEARREG_ANGLE_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      return LINEARREG_ANGLE_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
+      return LINEARREG_ANGLE_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode LINEARREG_ANGLE_OpenAndFillInternalBody( LINEARREG_ANGLE_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode LINEARREG_ANGLE_OpenAndFillInternalImpl( LINEARREG_ANGLE_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return LINEARREG_ANGLE_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      return LINEARREG_ANGLE_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
    }
    /* LINEARREG_ANGLE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    LINEARREG_ANGLE_Stream LINEARREG_ANGLE_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       LINEARREG_ANGLE_Stream sp = new LINEARREG_ANGLE_Stream(this);
-      RetCode retCode = LINEARREG_ANGLE_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LINEARREG_ANGLE_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -638,7 +638,7 @@
    LINEARREG_ANGLE_Stream LINEARREG_ANGLE_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       LINEARREG_ANGLE_Stream sp = new LINEARREG_ANGLE_Stream(this);
-      RetCode retCode = LINEARREG_ANGLE_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      RetCode retCode = LINEARREG_ANGLE_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -678,7 +678,7 @@
       LINEARREG_ANGLE_Stream sp = new LINEARREG_ANGLE_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = LINEARREG_ANGLE_OpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LINEARREG_ANGLE_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

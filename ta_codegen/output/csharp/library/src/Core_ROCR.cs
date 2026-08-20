@@ -78,7 +78,7 @@ public partial class Core
       return optInTimePeriod ;
 
    }
-   internal RetCode ROCR_Body( int startIdx,
+   internal RetCode ROCR_Impl( int startIdx,
                                int endIdx,
                                ReadOnlySpan<double> inReal,
                                int optInTimePeriod,
@@ -167,7 +167,7 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode ROCR_Body( int startIdx,
+   internal RetCode ROCR_Impl( int startIdx,
                                int endIdx,
                                ReadOnlySpan<float> inReal,
                                int optInTimePeriod,
@@ -268,7 +268,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("ROCR", "inReal", inReal.Length, guardInLen);
       RequireLength("ROCR", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = ROCR_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ROCR_Impl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ROCR", retCode);
       }
@@ -332,7 +332,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("ROCR", "inReal", inReal.Length, guardInLen);
       RequireLength("ROCR", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = ROCR_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ROCR_Impl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ROCR", retCode);
       }
@@ -476,7 +476,7 @@ public partial class Core
       }
    }
 
-   private RetCode ROCR_OpenCore( ROCR_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode ROCR_OpenPass( ROCR_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -572,32 +572,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode ROCR_OpenBody( ROCR_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
+   private RetCode ROCR_OpenImpl( ROCR_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
-      return ROCR_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+      return ROCR_OpenPass( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode ROCR_OpenAndFillBody( ROCR_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode ROCR_OpenAndFillImpl( ROCR_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
-      return ROCR_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+      return ROCR_OpenPass( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode ROCR_OpenAndFillInternalBody( ROCR_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode ROCR_OpenAndFillInternalImpl( ROCR_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return ROCR_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      return ROCR_OpenPass(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* ROCR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal ROCR_Stream ROCR_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       ROCR_Stream sp = new ROCR_Stream(this);
-      RetCode retCode = ROCR_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = ROCR_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -608,7 +608,7 @@ public partial class Core
    internal ROCR_Stream ROCR_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       ROCR_Stream sp = new ROCR_Stream(this);
-      RetCode retCode = ROCR_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      RetCode retCode = ROCR_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -666,7 +666,7 @@ public partial class Core
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       ROCR_Stream sp = new ROCR_Stream(this);
-      RetCode retCode = ROCR_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ROCR_OpenAndFillImpl(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

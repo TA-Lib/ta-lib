@@ -37,7 +37,7 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode MIDPOINT_Body( int startIdx,
+   RetCode MIDPOINT_Impl( int startIdx,
                           int endIdx,
                           double inReal[],
                           int optInTimePeriod,
@@ -225,7 +225,7 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode MIDPOINT_Body( int startIdx,
+   RetCode MIDPOINT_Impl( int startIdx,
                           int endIdx,
                           float inReal[],
                           int optInTimePeriod,
@@ -419,7 +419,7 @@
       requireLength("MIDPOINT", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MIDPOINT_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MIDPOINT_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MIDPOINT", retCode);
       }
@@ -482,7 +482,7 @@
       requireLength("MIDPOINT", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MIDPOINT_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MIDPOINT_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MIDPOINT", retCode);
       }
@@ -672,7 +672,7 @@
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode MIDPOINT_OpenCore( MIDPOINT_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode MIDPOINT_OpenPass( MIDPOINT_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double lowest = 0;
       double highest = 0;
@@ -820,29 +820,29 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode MIDPOINT_OpenBody( MIDPOINT_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode MIDPOINT_OpenImpl( MIDPOINT_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return MIDPOINT_OpenCore( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
+      return MIDPOINT_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode MIDPOINT_OpenAndFillBody( MIDPOINT_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode MIDPOINT_OpenAndFillImpl( MIDPOINT_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      return MIDPOINT_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
+      return MIDPOINT_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode MIDPOINT_OpenAndFillInternalBody( MIDPOINT_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode MIDPOINT_OpenAndFillInternalImpl( MIDPOINT_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return MIDPOINT_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      return MIDPOINT_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
    }
    /* MIDPOINT_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    MIDPOINT_Stream MIDPOINT_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       MIDPOINT_Stream sp = new MIDPOINT_Stream(this);
-      RetCode retCode = MIDPOINT_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MIDPOINT_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -858,7 +858,7 @@
    MIDPOINT_Stream MIDPOINT_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       MIDPOINT_Stream sp = new MIDPOINT_Stream(this);
-      RetCode retCode = MIDPOINT_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      RetCode retCode = MIDPOINT_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -898,7 +898,7 @@
       MIDPOINT_Stream sp = new MIDPOINT_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MIDPOINT_OpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MIDPOINT_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

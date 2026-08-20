@@ -25,7 +25,7 @@
       return 0 ;
 
    }
-   RetCode CEIL_Body( int startIdx,
+   RetCode CEIL_Impl( int startIdx,
                       int endIdx,
                       double inReal[],
                       MInteger outBegIdx,
@@ -47,7 +47,7 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode CEIL_Body( int startIdx,
+   RetCode CEIL_Impl( int startIdx,
                       int endIdx,
                       float inReal[],
                       MInteger outBegIdx,
@@ -117,7 +117,7 @@
       requireLength("CEIL", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CEIL_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CEIL_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("CEIL", retCode);
       }
@@ -174,7 +174,7 @@
       requireLength("CEIL", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CEIL_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CEIL_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("CEIL", retCode);
       }
@@ -279,7 +279,7 @@
    {
       sp.cur_outReal = Math.ceil(inReal);
    }
-   private RetCode CEIL_OpenCore( CEIL_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode CEIL_OpenPass( CEIL_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -300,29 +300,29 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode CEIL_OpenBody( CEIL_Stream sp, double inReal[], int startIdx )
+   private RetCode CEIL_OpenImpl( CEIL_Stream sp, double inReal[], int startIdx )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return CEIL_OpenCore( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
+      return CEIL_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode CEIL_OpenAndFillBody( CEIL_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode CEIL_OpenAndFillImpl( CEIL_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      return CEIL_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
+      return CEIL_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode CEIL_OpenAndFillInternalBody( CEIL_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode CEIL_OpenAndFillInternalImpl( CEIL_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return CEIL_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+      return CEIL_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
    }
    /* CEIL_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    CEIL_Stream CEIL_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       CEIL_Stream sp = new CEIL_Stream(this);
-      RetCode retCode = CEIL_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CEIL_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -338,7 +338,7 @@
    CEIL_Stream CEIL_OpenInternal( double inReal[], int startIdx )
    {
       CEIL_Stream sp = new CEIL_Stream(this);
-      RetCode retCode = CEIL_OpenBody(sp, inReal, startIdx);
+      RetCode retCode = CEIL_OpenImpl(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -378,7 +378,7 @@
       CEIL_Stream sp = new CEIL_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = CEIL_OpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CEIL_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

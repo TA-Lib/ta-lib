@@ -84,7 +84,7 @@ public partial class Core
       return EMA_Lookback(optInTimePeriod) * 2 ;
 
    }
-   internal RetCode DEMA_Body( int startIdx,
+   internal RetCode DEMA_Impl( int startIdx,
                                int endIdx,
                                ReadOnlySpan<double> inReal,
                                int optInTimePeriod,
@@ -244,7 +244,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode DEMA_Body( int startIdx,
+   internal RetCode DEMA_Impl( int startIdx,
                                int endIdx,
                                ReadOnlySpan<float> inReal,
                                int optInTimePeriod,
@@ -381,7 +381,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("DEMA", "inReal", inReal.Length, guardInLen);
       RequireLength("DEMA", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = DEMA_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = DEMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("DEMA", retCode);
       }
@@ -446,7 +446,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("DEMA", "inReal", inReal.Length, guardInLen);
       RequireLength("DEMA", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = DEMA_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = DEMA_Impl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("DEMA", retCode);
       }
@@ -578,7 +578,7 @@ public partial class Core
       sp.cur_outReal = 2.0 * sp.prevEMA1 - sp.prevEMA2;
    }
 
-   private RetCode DEMA_OpenCore( DEMA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode DEMA_OpenPass( DEMA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -739,32 +739,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode DEMA_OpenBody( DEMA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
+   private RetCode DEMA_OpenImpl( DEMA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
-      return DEMA_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+      return DEMA_OpenPass( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode DEMA_OpenAndFillBody( DEMA_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode DEMA_OpenAndFillImpl( DEMA_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
-      return DEMA_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+      return DEMA_OpenPass( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode DEMA_OpenAndFillInternalBody( DEMA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode DEMA_OpenAndFillInternalImpl( DEMA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return DEMA_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      return DEMA_OpenPass(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* DEMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal DEMA_Stream DEMA_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       DEMA_Stream sp = new DEMA_Stream(this);
-      RetCode retCode = DEMA_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = DEMA_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -775,7 +775,7 @@ public partial class Core
    internal DEMA_Stream DEMA_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       DEMA_Stream sp = new DEMA_Stream(this);
-      RetCode retCode = DEMA_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      RetCode retCode = DEMA_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -833,7 +833,7 @@ public partial class Core
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       DEMA_Stream sp = new DEMA_Stream(this);
-      RetCode retCode = DEMA_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = DEMA_OpenAndFillImpl(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

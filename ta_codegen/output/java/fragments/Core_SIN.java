@@ -25,7 +25,7 @@
       return 0 ;
 
    }
-   RetCode SIN_Body( int startIdx,
+   RetCode SIN_Impl( int startIdx,
                      int endIdx,
                      double inReal[],
                      MInteger outBegIdx,
@@ -47,7 +47,7 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode SIN_Body( int startIdx,
+   RetCode SIN_Impl( int startIdx,
                      int endIdx,
                      float inReal[],
                      MInteger outBegIdx,
@@ -119,7 +119,7 @@
       requireLength("SIN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SIN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SIN_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("SIN", retCode);
       }
@@ -178,7 +178,7 @@
       requireLength("SIN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SIN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SIN_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("SIN", retCode);
       }
@@ -283,7 +283,7 @@
    {
       sp.cur_outReal = Math.sin(inReal);
    }
-   private RetCode SIN_OpenCore( SIN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode SIN_OpenPass( SIN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -304,29 +304,29 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode SIN_OpenBody( SIN_Stream sp, double inReal[], int startIdx )
+   private RetCode SIN_OpenImpl( SIN_Stream sp, double inReal[], int startIdx )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return SIN_OpenCore( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
+      return SIN_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode SIN_OpenAndFillBody( SIN_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode SIN_OpenAndFillImpl( SIN_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      return SIN_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
+      return SIN_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode SIN_OpenAndFillInternalBody( SIN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode SIN_OpenAndFillInternalImpl( SIN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return SIN_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+      return SIN_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
    }
    /* SIN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    SIN_Stream SIN_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       SIN_Stream sp = new SIN_Stream(this);
-      RetCode retCode = SIN_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SIN_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -342,7 +342,7 @@
    SIN_Stream SIN_OpenInternal( double inReal[], int startIdx )
    {
       SIN_Stream sp = new SIN_Stream(this);
-      RetCode retCode = SIN_OpenBody(sp, inReal, startIdx);
+      RetCode retCode = SIN_OpenImpl(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -382,7 +382,7 @@
       SIN_Stream sp = new SIN_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SIN_OpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SIN_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

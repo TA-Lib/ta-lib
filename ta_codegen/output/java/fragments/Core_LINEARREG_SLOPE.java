@@ -37,7 +37,7 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode LINEARREG_SLOPE_Body( int startIdx,
+   RetCode LINEARREG_SLOPE_Impl( int startIdx,
                                  int endIdx,
                                  double inReal[],
                                  int optInTimePeriod,
@@ -137,7 +137,7 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode LINEARREG_SLOPE_Body( int startIdx,
+   RetCode LINEARREG_SLOPE_Impl( int startIdx,
                                  int endIdx,
                                  float inReal[],
                                  int optInTimePeriod,
@@ -262,7 +262,7 @@
       requireLength("LINEARREG_SLOPE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = LINEARREG_SLOPE_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LINEARREG_SLOPE_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("LINEARREG_SLOPE", retCode);
       }
@@ -329,7 +329,7 @@
       requireLength("LINEARREG_SLOPE", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = LINEARREG_SLOPE_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LINEARREG_SLOPE_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("LINEARREG_SLOPE", retCode);
       }
@@ -476,7 +476,7 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode LINEARREG_SLOPE_OpenCore( LINEARREG_SLOPE_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode LINEARREG_SLOPE_OpenPass( LINEARREG_SLOPE_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int today = 0;
@@ -590,29 +590,29 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode LINEARREG_SLOPE_OpenBody( LINEARREG_SLOPE_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode LINEARREG_SLOPE_OpenImpl( LINEARREG_SLOPE_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return LINEARREG_SLOPE_OpenCore( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
+      return LINEARREG_SLOPE_OpenPass( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode LINEARREG_SLOPE_OpenAndFillBody( LINEARREG_SLOPE_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode LINEARREG_SLOPE_OpenAndFillImpl( LINEARREG_SLOPE_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      return LINEARREG_SLOPE_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
+      return LINEARREG_SLOPE_OpenPass( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode LINEARREG_SLOPE_OpenAndFillInternalBody( LINEARREG_SLOPE_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode LINEARREG_SLOPE_OpenAndFillInternalImpl( LINEARREG_SLOPE_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return LINEARREG_SLOPE_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      return LINEARREG_SLOPE_OpenPass(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
    }
    /* LINEARREG_SLOPE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    LINEARREG_SLOPE_Stream LINEARREG_SLOPE_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       LINEARREG_SLOPE_Stream sp = new LINEARREG_SLOPE_Stream(this);
-      RetCode retCode = LINEARREG_SLOPE_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LINEARREG_SLOPE_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -628,7 +628,7 @@
    LINEARREG_SLOPE_Stream LINEARREG_SLOPE_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
       LINEARREG_SLOPE_Stream sp = new LINEARREG_SLOPE_Stream(this);
-      RetCode retCode = LINEARREG_SLOPE_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      RetCode retCode = LINEARREG_SLOPE_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -668,7 +668,7 @@
       LINEARREG_SLOPE_Stream sp = new LINEARREG_SLOPE_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = LINEARREG_SLOPE_OpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LINEARREG_SLOPE_OpenAndFillImpl(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

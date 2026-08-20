@@ -25,7 +25,7 @@
       return 0 ;
 
    }
-   RetCode COSH_Body( int startIdx,
+   RetCode COSH_Impl( int startIdx,
                       int endIdx,
                       double inReal[],
                       MInteger outBegIdx,
@@ -47,7 +47,7 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode COSH_Body( int startIdx,
+   RetCode COSH_Impl( int startIdx,
                       int endIdx,
                       float inReal[],
                       MInteger outBegIdx,
@@ -119,7 +119,7 @@
       requireLength("COSH", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = COSH_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = COSH_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("COSH", retCode);
       }
@@ -178,7 +178,7 @@
       requireLength("COSH", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = COSH_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = COSH_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("COSH", retCode);
       }
@@ -283,7 +283,7 @@
    {
       sp.cur_outReal = Math.cosh(inReal);
    }
-   private RetCode COSH_OpenCore( COSH_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode COSH_OpenPass( COSH_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -304,29 +304,29 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode COSH_OpenBody( COSH_Stream sp, double inReal[], int startIdx )
+   private RetCode COSH_OpenImpl( COSH_Stream sp, double inReal[], int startIdx )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return COSH_OpenCore( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
+      return COSH_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode COSH_OpenAndFillBody( COSH_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode COSH_OpenAndFillImpl( COSH_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      return COSH_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
+      return COSH_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode COSH_OpenAndFillInternalBody( COSH_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode COSH_OpenAndFillInternalImpl( COSH_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return COSH_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+      return COSH_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
    }
    /* COSH_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    COSH_Stream COSH_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       COSH_Stream sp = new COSH_Stream(this);
-      RetCode retCode = COSH_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = COSH_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -342,7 +342,7 @@
    COSH_Stream COSH_OpenInternal( double inReal[], int startIdx )
    {
       COSH_Stream sp = new COSH_Stream(this);
-      RetCode retCode = COSH_OpenBody(sp, inReal, startIdx);
+      RetCode retCode = COSH_OpenImpl(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -382,7 +382,7 @@
       COSH_Stream sp = new COSH_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = COSH_OpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = COSH_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

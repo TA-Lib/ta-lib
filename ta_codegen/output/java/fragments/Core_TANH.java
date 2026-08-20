@@ -25,7 +25,7 @@
       return 0 ;
 
    }
-   RetCode TANH_Body( int startIdx,
+   RetCode TANH_Impl( int startIdx,
                       int endIdx,
                       double inReal[],
                       MInteger outBegIdx,
@@ -47,7 +47,7 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode TANH_Body( int startIdx,
+   RetCode TANH_Impl( int startIdx,
                       int endIdx,
                       float inReal[],
                       MInteger outBegIdx,
@@ -118,7 +118,7 @@
       requireLength("TANH", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TANH_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TANH_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("TANH", retCode);
       }
@@ -176,7 +176,7 @@
       requireLength("TANH", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TANH_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TANH_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("TANH", retCode);
       }
@@ -281,7 +281,7 @@
    {
       sp.cur_outReal = Math.tanh(inReal);
    }
-   private RetCode TANH_OpenCore( TANH_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode TANH_OpenPass( TANH_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -302,29 +302,29 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode TANH_OpenBody( TANH_Stream sp, double inReal[], int startIdx )
+   private RetCode TANH_OpenImpl( TANH_Stream sp, double inReal[], int startIdx )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return TANH_OpenCore( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
+      return TANH_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode TANH_OpenAndFillBody( TANH_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode TANH_OpenAndFillImpl( TANH_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      return TANH_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
+      return TANH_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode TANH_OpenAndFillInternalBody( TANH_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode TANH_OpenAndFillInternalImpl( TANH_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return TANH_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+      return TANH_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
    }
    /* TANH_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    TANH_Stream TANH_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       TANH_Stream sp = new TANH_Stream(this);
-      RetCode retCode = TANH_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TANH_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -340,7 +340,7 @@
    TANH_Stream TANH_OpenInternal( double inReal[], int startIdx )
    {
       TANH_Stream sp = new TANH_Stream(this);
-      RetCode retCode = TANH_OpenBody(sp, inReal, startIdx);
+      RetCode retCode = TANH_OpenImpl(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -380,7 +380,7 @@
       TANH_Stream sp = new TANH_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TANH_OpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TANH_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

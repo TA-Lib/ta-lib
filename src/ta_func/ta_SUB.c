@@ -138,7 +138,7 @@ static void TA_SUB_StepInternal( struct TA_SUB_Stream *sp, double inReal0, doubl
    *outReal= inReal0 - inReal1;
 }
 
-static TA_RetCode TA_SUB_OpenCore( struct TA_SUB_Stream **stream, const double inReal0[], const double inReal1[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+static TA_RetCode TA_SUB_OpenPass( struct TA_SUB_Stream **stream, const double inReal0[], const double inReal1[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_SUB_Stream *sp;
    int endIdx;
@@ -183,7 +183,7 @@ TA_RetCode TA_SUB_OpenInternal( struct TA_SUB_Stream **stream, const double inRe
    int dummyBegIdx = 0;
    int dummyNBElement = 0;
    double sink_outReal = 0.0;
-   retCode = TA_SUB_OpenCore( stream, inReal0, inReal1, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   retCode = TA_SUB_OpenPass( stream, inReal0, inReal1, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outReal = sink_outReal;
@@ -210,13 +210,13 @@ TA_LIB_API TA_RetCode TA_SUB_OpenAndFill( TA_SUB_Stream **stream, const double i
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inReal0 || (const void *)outReal == (const void *)inReal1 ) return TA_BAD_PARAM;
-   return TA_SUB_OpenCore( stream, inReal0, inReal1, 0, historyLen, outBegIdx, outNBElement, outReal, 1 );
+   return TA_SUB_OpenPass( stream, inReal0, inReal1, 0, historyLen, outBegIdx, outNBElement, outReal, 1 );
 }
 
 /* Private function, not in public API. */
 TA_RetCode TA_SUB_OpenAndFillInternal( struct TA_SUB_Stream **stream, const double inReal0[], const double inReal1[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] )
 {
-   return TA_SUB_OpenCore( stream, inReal0, inReal1, startIdx, historyLen, outBegIdx, outNBElement, outReal, 1 );
+   return TA_SUB_OpenPass( stream, inReal0, inReal1, startIdx, historyLen, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_SUB_Update( TA_SUB_Stream *stream, double inReal0, double inReal1, double *outReal )

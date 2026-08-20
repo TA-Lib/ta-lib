@@ -84,7 +84,7 @@ public partial class Core
       return optInTimePeriod - 1 ;
 
    }
-   internal RetCode MIDPRICE_Body( int startIdx,
+   internal RetCode MIDPRICE_Impl( int startIdx,
                                    int endIdx,
                                    ReadOnlySpan<double> inHigh,
                                    ReadOnlySpan<double> inLow,
@@ -279,7 +279,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode MIDPRICE_Body( int startIdx,
+   internal RetCode MIDPRICE_Impl( int startIdx,
                                    int endIdx,
                                    ReadOnlySpan<float> inHigh,
                                    ReadOnlySpan<float> inLow,
@@ -480,7 +480,7 @@ public partial class Core
       RequireLength("MIDPRICE", "inHigh", inHigh.Length, guardInLen);
       RequireLength("MIDPRICE", "inLow", inLow.Length, guardInLen);
       RequireLength("MIDPRICE", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = MIDPRICE_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MIDPRICE_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MIDPRICE", retCode);
       }
@@ -547,7 +547,7 @@ public partial class Core
       RequireLength("MIDPRICE", "inHigh", inHigh.Length, guardInLen);
       RequireLength("MIDPRICE", "inLow", inLow.Length, guardInLen);
       RequireLength("MIDPRICE", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = MIDPRICE_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MIDPRICE_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MIDPRICE", retCode);
       }
@@ -762,7 +762,7 @@ public partial class Core
       sp.today += 1;
    }
 
-   private RetCode MIDPRICE_OpenCore( MIDPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode MIDPRICE_OpenPass( MIDPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -912,32 +912,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MIDPRICE_OpenBody( MIDPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod )
+   private RetCode MIDPRICE_OpenImpl( MIDPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
-      return MIDPRICE_OpenCore( sp, inHigh, inLow, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+      return MIDPRICE_OpenPass( sp, inHigh, inLow, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode MIDPRICE_OpenAndFillBody( MIDPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode MIDPRICE_OpenAndFillImpl( MIDPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
          return RetCode.BadParam;
       }
-      return MIDPRICE_OpenCore( sp, inHigh, inLow, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+      return MIDPRICE_OpenPass( sp, inHigh, inLow, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode MIDPRICE_OpenAndFillInternalBody( MIDPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode MIDPRICE_OpenAndFillInternalImpl( MIDPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return MIDPRICE_OpenCore(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      return MIDPRICE_OpenPass(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* MIDPRICE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal MIDPRICE_Stream MIDPRICE_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       MIDPRICE_Stream sp = new MIDPRICE_Stream(this);
-      RetCode retCode = MIDPRICE_OpenAndFillInternalBody(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = MIDPRICE_OpenAndFillInternalImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -948,7 +948,7 @@ public partial class Core
    internal MIDPRICE_Stream MIDPRICE_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod )
    {
       MIDPRICE_Stream sp = new MIDPRICE_Stream(this);
-      RetCode retCode = MIDPRICE_OpenBody(sp, inHigh, inLow, startIdx, optInTimePeriod);
+      RetCode retCode = MIDPRICE_OpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1011,7 +1011,7 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       MIDPRICE_Stream sp = new MIDPRICE_Stream(this);
-      RetCode retCode = MIDPRICE_OpenAndFillBody(sp, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MIDPRICE_OpenAndFillImpl(sp, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

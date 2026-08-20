@@ -86,7 +86,7 @@ impl Core {
     }
     /// C-shaped body behind [`Core::ROCP`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
-    pub(crate) fn ROCP_Internal(
+    pub(crate) fn ROCP_Impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -251,7 +251,7 @@ impl Core {
     ) -> Result<OutRange, RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.ROCP_Internal(
+        let retCode = self.ROCP_Impl(
             startIdx,
             endIdx,
             inReal,
@@ -338,7 +338,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::ROCP_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::ROCP_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn ROCP_OpenCore(
+    pub(crate) fn ROCP_OpenPass(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<ROCP_Stream, RetCode> {
         if inReal.is_empty() {
@@ -444,7 +444,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.ROCP_OpenCore(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.ROCP_OpenPass(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -483,7 +483,7 @@ impl Core {
     ) -> Result<(ROCP_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.ROCP_OpenCore(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.ROCP_OpenPass(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -492,7 +492,7 @@ impl Core {
     pub(crate) fn ROCP_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<ROCP_Stream, RetCode> {
-        self.ROCP_OpenCore(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+        self.ROCP_OpenPass(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

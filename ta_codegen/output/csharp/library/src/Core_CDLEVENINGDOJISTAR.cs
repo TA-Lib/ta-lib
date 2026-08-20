@@ -87,7 +87,7 @@ public partial class Core
       return Math.Max(Math.Max(BodyDoji_avgPeriod, BodyLong_avgPeriod), BodyShort_avgPeriod) + 2 ;
 
    }
-   internal RetCode CDLEVENINGDOJISTAR_Body( int startIdx,
+   internal RetCode CDLEVENINGDOJISTAR_Impl( int startIdx,
                                              int endIdx,
                                              ReadOnlySpan<double> inOpen,
                                              ReadOnlySpan<double> inHigh,
@@ -212,7 +212,7 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CDLEVENINGDOJISTAR_Body( int startIdx,
+   internal RetCode CDLEVENINGDOJISTAR_Impl( int startIdx,
                                              int endIdx,
                                              ReadOnlySpan<float> inOpen,
                                              ReadOnlySpan<float> inHigh,
@@ -366,7 +366,7 @@ public partial class Core
       RequireLength("CDLEVENINGDOJISTAR", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLEVENINGDOJISTAR", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLEVENINGDOJISTAR", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLEVENINGDOJISTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLEVENINGDOJISTAR_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLEVENINGDOJISTAR", retCode);
       }
@@ -440,7 +440,7 @@ public partial class Core
       RequireLength("CDLEVENINGDOJISTAR", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLEVENINGDOJISTAR", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLEVENINGDOJISTAR", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLEVENINGDOJISTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLEVENINGDOJISTAR_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLEVENINGDOJISTAR", retCode);
       }
@@ -730,7 +730,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLEVENINGDOJISTAR_OpenCore( CDLEVENINGDOJISTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CDLEVENINGDOJISTAR_OpenPass( CDLEVENINGDOJISTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -908,29 +908,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CDLEVENINGDOJISTAR_OpenBody( CDLEVENINGDOJISTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration )
+   private RetCode CDLEVENINGDOJISTAR_OpenImpl( CDLEVENINGDOJISTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration )
    {
       int[] sink_outInteger = new int[1];
-      return CDLEVENINGDOJISTAR_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out _, out _, sink_outInteger, 0 );
+      return CDLEVENINGDOJISTAR_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out _, out _, sink_outInteger, 0 );
    }
 
-   private RetCode CDLEVENINGDOJISTAR_OpenAndFillBody( CDLEVENINGDOJISTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLEVENINGDOJISTAR_OpenAndFillImpl( CDLEVENINGDOJISTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      return CDLEVENINGDOJISTAR_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, optInPenetration, out outBegIdx, out outNBElement, outInteger, 1 );
+      return CDLEVENINGDOJISTAR_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, optInPenetration, out outBegIdx, out outNBElement, outInteger, 1 );
    }
 
-   private RetCode CDLEVENINGDOJISTAR_OpenAndFillInternalBody( CDLEVENINGDOJISTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLEVENINGDOJISTAR_OpenAndFillInternalImpl( CDLEVENINGDOJISTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      return CDLEVENINGDOJISTAR_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out outBegIdx, out outNBElement, outInteger, 1);
+      return CDLEVENINGDOJISTAR_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out outBegIdx, out outNBElement, outInteger, 1);
    }
 
    /* CDLEVENINGDOJISTAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal CDLEVENINGDOJISTAR_Stream CDLEVENINGDOJISTAR_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       CDLEVENINGDOJISTAR_Stream sp = new CDLEVENINGDOJISTAR_Stream(this);
-      RetCode retCode = CDLEVENINGDOJISTAR_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out outBegIdx, out outNBElement, outInteger);
+      RetCode retCode = CDLEVENINGDOJISTAR_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out outBegIdx, out outNBElement, outInteger);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -941,7 +941,7 @@ public partial class Core
    internal CDLEVENINGDOJISTAR_Stream CDLEVENINGDOJISTAR_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration )
    {
       CDLEVENINGDOJISTAR_Stream sp = new CDLEVENINGDOJISTAR_Stream(this);
-      RetCode retCode = CDLEVENINGDOJISTAR_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration);
+      RetCode retCode = CDLEVENINGDOJISTAR_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1017,7 +1017,7 @@ public partial class Core
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       CDLEVENINGDOJISTAR_Stream sp = new CDLEVENINGDOJISTAR_Stream(this);
-      RetCode retCode = CDLEVENINGDOJISTAR_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLEVENINGDOJISTAR_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

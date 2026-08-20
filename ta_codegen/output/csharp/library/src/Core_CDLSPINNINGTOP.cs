@@ -73,7 +73,7 @@ public partial class Core
       return BodyShort_avgPeriod ;
 
    }
-   internal RetCode CDLSPINNINGTOP_Body( int startIdx,
+   internal RetCode CDLSPINNINGTOP_Impl( int startIdx,
                                          int endIdx,
                                          ReadOnlySpan<double> inOpen,
                                          ReadOnlySpan<double> inHigh,
@@ -151,7 +151,7 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CDLSPINNINGTOP_Body( int startIdx,
+   internal RetCode CDLSPINNINGTOP_Impl( int startIdx,
                                          int endIdx,
                                          ReadOnlySpan<float> inOpen,
                                          ReadOnlySpan<float> inHigh,
@@ -267,7 +267,7 @@ public partial class Core
       RequireLength("CDLSPINNINGTOP", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLSPINNINGTOP", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLSPINNINGTOP", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLSPINNINGTOP_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLSPINNINGTOP_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLSPINNINGTOP", retCode);
       }
@@ -338,7 +338,7 @@ public partial class Core
       RequireLength("CDLSPINNINGTOP", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLSPINNINGTOP", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLSPINNINGTOP", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLSPINNINGTOP_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLSPINNINGTOP_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLSPINNINGTOP", retCode);
       }
@@ -503,7 +503,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLSPINNINGTOP_OpenCore( CDLSPINNINGTOP_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CDLSPINNINGTOP_OpenPass( CDLSPINNINGTOP_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -594,29 +594,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CDLSPINNINGTOP_OpenBody( CDLSPINNINGTOP_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   private RetCode CDLSPINNINGTOP_OpenImpl( CDLSPINNINGTOP_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       int[] sink_outInteger = new int[1];
-      return CDLSPINNINGTOP_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
+      return CDLSPINNINGTOP_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
    }
 
-   private RetCode CDLSPINNINGTOP_OpenAndFillBody( CDLSPINNINGTOP_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLSPINNINGTOP_OpenAndFillImpl( CDLSPINNINGTOP_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      return CDLSPINNINGTOP_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
+      return CDLSPINNINGTOP_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
    }
 
-   private RetCode CDLSPINNINGTOP_OpenAndFillInternalBody( CDLSPINNINGTOP_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLSPINNINGTOP_OpenAndFillInternalImpl( CDLSPINNINGTOP_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      return CDLSPINNINGTOP_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+      return CDLSPINNINGTOP_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
    }
 
    /* CDLSPINNINGTOP_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal CDLSPINNINGTOP_Stream CDLSPINNINGTOP_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       CDLSPINNINGTOP_Stream sp = new CDLSPINNINGTOP_Stream(this);
-      RetCode retCode = CDLSPINNINGTOP_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
+      RetCode retCode = CDLSPINNINGTOP_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -627,7 +627,7 @@ public partial class Core
    internal CDLSPINNINGTOP_Stream CDLSPINNINGTOP_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       CDLSPINNINGTOP_Stream sp = new CDLSPINNINGTOP_Stream(this);
-      RetCode retCode = CDLSPINNINGTOP_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      RetCode retCode = CDLSPINNINGTOP_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -697,7 +697,7 @@ public partial class Core
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       CDLSPINNINGTOP_Stream sp = new CDLSPINNINGTOP_Stream(this);
-      RetCode retCode = CDLSPINNINGTOP_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLSPINNINGTOP_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

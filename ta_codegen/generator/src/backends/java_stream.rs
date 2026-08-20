@@ -479,7 +479,7 @@ fn emit_open_body_scalar_wrapper(o: &mut String, func: &FuncDef) {
         args.push(format!("sink_{}", out.name));
     }
     args.push("0".to_string());
-    let _ = writeln!(o, "      return {base}_OpenCore( {} );", args.join(", "));
+    let _ = writeln!(o, "      return {base}_OpenPass( {} );", args.join(", "));
     let _ = writeln!(o, "   }}");
 }
 
@@ -521,7 +521,7 @@ fn emit_open_and_fill_wrapper(o: &mut String, func: &FuncDef) {
         args.push((*out).to_string());
     }
     args.push("1".to_string());
-    let _ = writeln!(o, "      return {base}_OpenCore( {} );", args.join(", "));
+    let _ = writeln!(o, "      return {base}_OpenPass( {} );", args.join(", "));
     let _ = writeln!(o, "   }}");
 }
 
@@ -1266,7 +1266,7 @@ fn emit_open_body_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
         params.push(format!("{} {}", opt_param_java_type(&p.param_type), p.name));
     }
     let name = match mode {
-        OutMode::Scalar => format!("{base}_OpenBody"),
+        OutMode::Scalar => format!("{base}_OpenImpl"),
         // The merged worker: both entry points' inputs, plus the stride that
         // selects where the per-bar writes land.
         OutMode::Core => {
@@ -1276,7 +1276,7 @@ fn emit_open_body_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
                 params.push(format!("{} {}[]", out_java_type(func, &out.name), out.name));
             }
             params.push("int outStride".to_string());
-            format!("{base}_OpenCore")
+            format!("{base}_OpenPass")
         }
         OutMode::Fill => {
             params.push("MInteger outBegIdx".to_string());
@@ -1284,7 +1284,7 @@ fn emit_open_body_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
             for out in &func.outputs {
                 params.push(format!("{} {}[]", out_java_type(func, &out.name), out.name));
             }
-            format!("{base}_OpenAndFillBody")
+            format!("{base}_OpenAndFillImpl")
         }
         OutMode::FillInternal => {
             params.insert(1 + streaming::input_array_names(func).len(), "int startIdx".to_string());
@@ -1293,7 +1293,7 @@ fn emit_open_body_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
             for out in &func.outputs {
                 params.push(format!("{} {}[]", out_java_type(func, &out.name), out.name));
             }
-            format!("{base}_OpenAndFillInternalBody")
+            format!("{base}_OpenAndFillInternalImpl")
         }
     };
     let _ = writeln!(o, "   private RetCode {name}( {} )\n   {{", params.join(", "));
@@ -1920,7 +1920,7 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef) {
     let _ = writeln!(o, "      {class} sp = new {class}(this);");
     let _ = writeln!(
         o,
-        "      RetCode retCode = {base}_OpenBody(sp, {}, startIdx{opt_fwd_str});",
+        "      RetCode retCode = {base}_OpenImpl(sp, {}, startIdx{opt_fwd_str});",
         in_fwd.join(", ")
     );
     emit_reject_conversion(o, func, "open");
@@ -1990,7 +1990,7 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef) {
     let _ = writeln!(o, "      MInteger outNBElement = new MInteger();");
     let _ = writeln!(
         o,
-        "      RetCode retCode = {base}_OpenAndFillBody(sp, {});",
+        "      RetCode retCode = {base}_OpenAndFillImpl(sp, {});",
         fill_fwd.join(", ")
     );
     let _ = writeln!(
@@ -3378,7 +3378,7 @@ fn emit_composed(
     emit_open_wrappers(o, func);
 }
 
-/// `<base>_OpenAndFillInternalBody` for a tier that owns an `OpenCore`: the same
+/// `<base>_OpenAndFillInternalImpl` for a tier that owns an `OpenCore`: the same
 /// single pass as `OpenAndFillBody`, at the caller's `startIdx`. The Dispatch
 /// tier renders its own body instead (it has no `OpenCore`), and PeriodBank
 /// renders none at all.
@@ -3397,7 +3397,7 @@ fn emit_open_and_fill_internal_body(o: &mut String, func: &FuncDef) {
         args.push(out.name.clone());
     }
     args.push("1".to_string());
-    let _ = writeln!(o, "      return {base}_OpenCore({});", args.join(", "));
+    let _ = writeln!(o, "      return {base}_OpenPass({});", args.join(", "));
     let _ = writeln!(o, "   }}");
 }
 
@@ -3450,7 +3450,7 @@ fn emit_open_and_fill_internal_wrapper(o: &mut String, func: &FuncDef) {
     fi_args.extend(outs.iter().cloned());
     let _ = writeln!(
         o,
-        "      RetCode retCode = {base}_OpenAndFillInternalBody({});",
+        "      RetCode retCode = {base}_OpenAndFillInternalImpl({});",
         fi_args.join(", ")
     );
     emit_reject_conversion(o, func, "openAndFill");

@@ -106,7 +106,7 @@ public partial class Core
       return MA_Lookback(optInMaxPeriod, optInMAType) ;
 
    }
-   internal RetCode MAVP_Body( int startIdx,
+   internal RetCode MAVP_Impl( int startIdx,
                                int endIdx,
                                ReadOnlySpan<double> inReal,
                                ReadOnlySpan<double> inPeriods,
@@ -404,7 +404,7 @@ public partial class Core
       outNBElement = outputSize;
       return RetCode.Success ;
    }
-   internal RetCode MAVP_Body( int startIdx,
+   internal RetCode MAVP_Impl( int startIdx,
                                int endIdx,
                                ReadOnlySpan<float> inReal,
                                ReadOnlySpan<float> inPeriods,
@@ -660,7 +660,7 @@ public partial class Core
       RequireLength("MAVP", "inReal", inReal.Length, guardInLen);
       RequireLength("MAVP", "inPeriods", inPeriods.Length, guardInLen);
       RequireLength("MAVP", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = MAVP_Body(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MAVP_Impl(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MAVP", retCode);
       }
@@ -739,7 +739,7 @@ public partial class Core
       RequireLength("MAVP", "inReal", inReal.Length, guardInLen);
       RequireLength("MAVP", "inPeriods", inPeriods.Length, guardInLen);
       RequireLength("MAVP", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = MAVP_Body(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MAVP_Impl(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MAVP", retCode);
       }
@@ -902,7 +902,7 @@ public partial class Core
       }
    }
 
-   private RetCode MAVP_OpenBody( MAVP_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
+   private RetCode MAVP_OpenImpl( MAVP_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
       int historyLen = inReal.Length;
       if( historyLen < 1 || inPeriods.Length != inReal.Length ) {
@@ -959,7 +959,7 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MAVP_OpenAndFillBody( MAVP_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode MAVP_OpenAndFillImpl( MAVP_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1041,7 +1041,7 @@ public partial class Core
    internal MAVP_Stream MAVP_OpenInternal( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
       MAVP_Stream sp = new MAVP_Stream(this);
-      RetCode retCode = MAVP_OpenBody(sp, inReal, inPeriods, startIdx, optInMinPeriod, optInMaxPeriod, optInMAType);
+      RetCode retCode = MAVP_OpenImpl(sp, inReal, inPeriods, startIdx, optInMinPeriod, optInMaxPeriod, optInMAType);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1111,7 +1111,7 @@ public partial class Core
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       if( inPeriods.IsEmpty ) throw new TaLibArgumentException("inPeriods is empty", nameof(inPeriods), RetCode.BadParam);
       MAVP_Stream sp = new MAVP_Stream(this);
-      RetCode retCode = MAVP_OpenAndFillBody(sp, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MAVP_OpenAndFillImpl(sp, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

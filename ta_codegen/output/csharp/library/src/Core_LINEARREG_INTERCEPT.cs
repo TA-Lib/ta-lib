@@ -81,7 +81,7 @@ public partial class Core
       return optInTimePeriod - 1 ;
 
    }
-   internal RetCode LINEARREG_INTERCEPT_Body( int startIdx,
+   internal RetCode LINEARREG_INTERCEPT_Impl( int startIdx,
                                               int endIdx,
                                               ReadOnlySpan<double> inReal,
                                               int optInTimePeriod,
@@ -189,7 +189,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode LINEARREG_INTERCEPT_Body( int startIdx,
+   internal RetCode LINEARREG_INTERCEPT_Impl( int startIdx,
                                               int endIdx,
                                               ReadOnlySpan<float> inReal,
                                               int optInTimePeriod,
@@ -315,7 +315,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("LINEARREG_INTERCEPT", "inReal", inReal.Length, guardInLen);
       RequireLength("LINEARREG_INTERCEPT", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = LINEARREG_INTERCEPT_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = LINEARREG_INTERCEPT_Impl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("LINEARREG_INTERCEPT", retCode);
       }
@@ -381,7 +381,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("LINEARREG_INTERCEPT", "inReal", inReal.Length, guardInLen);
       RequireLength("LINEARREG_INTERCEPT", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = LINEARREG_INTERCEPT_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = LINEARREG_INTERCEPT_Impl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("LINEARREG_INTERCEPT", retCode);
       }
@@ -540,7 +540,7 @@ public partial class Core
       }
    }
 
-   private RetCode LINEARREG_INTERCEPT_OpenCore( LINEARREG_INTERCEPT_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode LINEARREG_INTERCEPT_OpenPass( LINEARREG_INTERCEPT_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -660,32 +660,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode LINEARREG_INTERCEPT_OpenBody( LINEARREG_INTERCEPT_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
+   private RetCode LINEARREG_INTERCEPT_OpenImpl( LINEARREG_INTERCEPT_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
-      return LINEARREG_INTERCEPT_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+      return LINEARREG_INTERCEPT_OpenPass( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode LINEARREG_INTERCEPT_OpenAndFillBody( LINEARREG_INTERCEPT_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode LINEARREG_INTERCEPT_OpenAndFillImpl( LINEARREG_INTERCEPT_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
-      return LINEARREG_INTERCEPT_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+      return LINEARREG_INTERCEPT_OpenPass( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode LINEARREG_INTERCEPT_OpenAndFillInternalBody( LINEARREG_INTERCEPT_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode LINEARREG_INTERCEPT_OpenAndFillInternalImpl( LINEARREG_INTERCEPT_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return LINEARREG_INTERCEPT_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      return LINEARREG_INTERCEPT_OpenPass(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* LINEARREG_INTERCEPT_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal LINEARREG_INTERCEPT_Stream LINEARREG_INTERCEPT_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       LINEARREG_INTERCEPT_Stream sp = new LINEARREG_INTERCEPT_Stream(this);
-      RetCode retCode = LINEARREG_INTERCEPT_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = LINEARREG_INTERCEPT_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -696,7 +696,7 @@ public partial class Core
    internal LINEARREG_INTERCEPT_Stream LINEARREG_INTERCEPT_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       LINEARREG_INTERCEPT_Stream sp = new LINEARREG_INTERCEPT_Stream(this);
-      RetCode retCode = LINEARREG_INTERCEPT_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      RetCode retCode = LINEARREG_INTERCEPT_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -760,7 +760,7 @@ public partial class Core
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       LINEARREG_INTERCEPT_Stream sp = new LINEARREG_INTERCEPT_Stream(this);
-      RetCode retCode = LINEARREG_INTERCEPT_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = LINEARREG_INTERCEPT_OpenAndFillImpl(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

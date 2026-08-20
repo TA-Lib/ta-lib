@@ -87,7 +87,7 @@
       return retValue ;
 
    }
-   RetCode MA_Body( int startIdx,
+   RetCode MA_Impl( int startIdx,
                     int endIdx,
                     double inReal[],
                     int optInTimePeriod,
@@ -198,7 +198,7 @@
       }
       return retCode ;
    }
-   RetCode MA_Body( int startIdx,
+   RetCode MA_Impl( int startIdx,
                     int endIdx,
                     float inReal[],
                     int optInTimePeriod,
@@ -375,7 +375,7 @@
       requireLength("MA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MA_Body(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MA_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MA", retCode);
       }
@@ -457,7 +457,7 @@
       requireLength("MA", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MA_Body(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MA_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MA", retCode);
       }
@@ -748,7 +748,7 @@
          break; /* unreachable: open rejects arms without a sub-stream */
       }
    }
-   private RetCode MA_OpenBody( MA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MAType optInMAType )
+   private RetCode MA_OpenImpl( MA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MAType optInMAType )
    {
       int historyLen = inReal.length;
       if( historyLen < 1 ) {
@@ -847,7 +847,7 @@
       sp.optInMAType = optInMAType;
       return RetCode.Success;
    }
-   private RetCode MA_OpenAndFillBody( MA_Stream sp, double inReal[], int optInTimePeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode MA_OpenAndFillImpl( MA_Stream sp, double inReal[], int optInTimePeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int historyLen = inReal.length;
       if( historyLen < 1 ) {
@@ -975,7 +975,7 @@
       sp.optInMAType = optInMAType;
       return RetCode.Success;
    }
-   private RetCode MA_OpenAndFillInternalBody( MA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode MA_OpenAndFillInternalImpl( MA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int historyLen = inReal.length;
       if( historyLen < 1 ) {
@@ -1088,7 +1088,7 @@
    MA_Stream MA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod, MAType optInMAType )
    {
       MA_Stream sp = new MA_Stream(this);
-      RetCode retCode = MA_OpenBody(sp, inReal, startIdx, optInTimePeriod, optInMAType);
+      RetCode retCode = MA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInMAType);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1128,7 +1128,7 @@
       MA_Stream sp = new MA_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = MA_OpenAndFillBody(sp, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MA_OpenAndFillImpl(sp, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
@@ -1145,7 +1145,7 @@
    MA_Stream MA_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       MA_Stream sp = new MA_Stream(this);
-      RetCode retCode = MA_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MA_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }

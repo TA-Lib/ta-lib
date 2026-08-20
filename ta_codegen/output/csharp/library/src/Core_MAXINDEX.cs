@@ -76,7 +76,7 @@ public partial class Core
       return optInTimePeriod - 1 ;
 
    }
-   internal RetCode MAXINDEX_Body( int startIdx,
+   internal RetCode MAXINDEX_Impl( int startIdx,
                                    int endIdx,
                                    ReadOnlySpan<double> inReal,
                                    int optInTimePeriod,
@@ -159,7 +159,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode MAXINDEX_Body( int startIdx,
+   internal RetCode MAXINDEX_Impl( int startIdx,
                                    int endIdx,
                                    ReadOnlySpan<float> inReal,
                                    int optInTimePeriod,
@@ -282,7 +282,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("MAXINDEX", "inReal", inReal.Length, guardInLen);
       RequireLength("MAXINDEX", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = MAXINDEX_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = MAXINDEX_Impl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("MAXINDEX", retCode);
       }
@@ -349,7 +349,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("MAXINDEX", "inReal", inReal.Length, guardInLen);
       RequireLength("MAXINDEX", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = MAXINDEX_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = MAXINDEX_Impl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("MAXINDEX", retCode);
       }
@@ -524,7 +524,7 @@ public partial class Core
       sp.today += 1;
    }
 
-   private RetCode MAXINDEX_OpenCore( MAXINDEX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode MAXINDEX_OpenPass( MAXINDEX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -626,29 +626,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MAXINDEX_OpenBody( MAXINDEX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
+   private RetCode MAXINDEX_OpenImpl( MAXINDEX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       int[] sink_outInteger = new int[1];
-      return MAXINDEX_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outInteger, 0 );
+      return MAXINDEX_OpenPass( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outInteger, 0 );
    }
 
-   private RetCode MAXINDEX_OpenAndFillBody( MAXINDEX_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode MAXINDEX_OpenAndFillImpl( MAXINDEX_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      return MAXINDEX_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outInteger, 1 );
+      return MAXINDEX_OpenPass( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outInteger, 1 );
    }
 
-   private RetCode MAXINDEX_OpenAndFillInternalBody( MAXINDEX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode MAXINDEX_OpenAndFillInternalImpl( MAXINDEX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      return MAXINDEX_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outInteger, 1);
+      return MAXINDEX_OpenPass(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outInteger, 1);
    }
 
    /* MAXINDEX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal MAXINDEX_Stream MAXINDEX_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       MAXINDEX_Stream sp = new MAXINDEX_Stream(this);
-      RetCode retCode = MAXINDEX_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outInteger);
+      RetCode retCode = MAXINDEX_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outInteger);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -659,7 +659,7 @@ public partial class Core
    internal MAXINDEX_Stream MAXINDEX_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       MAXINDEX_Stream sp = new MAXINDEX_Stream(this);
-      RetCode retCode = MAXINDEX_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      RetCode retCode = MAXINDEX_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -718,7 +718,7 @@ public partial class Core
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       MAXINDEX_Stream sp = new MAXINDEX_Stream(this);
-      RetCode retCode = MAXINDEX_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = MAXINDEX_OpenAndFillImpl(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

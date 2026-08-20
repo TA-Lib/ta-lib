@@ -30,7 +30,7 @@
       return 0 ;
 
    }
-   RetCode OBV_Body( int startIdx,
+   RetCode OBV_Impl( int startIdx,
                      int endIdx,
                      double inReal[],
                      double inVolume[],
@@ -66,7 +66,7 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode OBV_Body( int startIdx,
+   RetCode OBV_Impl( int startIdx,
                      int endIdx,
                      float inReal[],
                      float inVolume[],
@@ -152,7 +152,7 @@
       requireLength("OBV", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = OBV_Body(startIdx, endIdx, inReal, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = OBV_Impl(startIdx, endIdx, inReal, inVolume, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("OBV", retCode);
       }
@@ -211,7 +211,7 @@
       requireLength("OBV", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = OBV_Body(startIdx, endIdx, inReal, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = OBV_Impl(startIdx, endIdx, inReal, inVolume, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("OBV", retCode);
       }
@@ -330,7 +330,7 @@
       sp.cur_outReal = sp.prevOBV;
       sp.prevReal = tempReal;
    }
-   private RetCode OBV_OpenCore( OBV_Stream sp, double inReal[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode OBV_OpenPass( OBV_Stream sp, double inReal[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int i = 0;
       int outIdx = 0;
@@ -366,29 +366,29 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode OBV_OpenBody( OBV_Stream sp, double inReal[], double inVolume[], int startIdx )
+   private RetCode OBV_OpenImpl( OBV_Stream sp, double inReal[], double inVolume[], int startIdx )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return OBV_OpenCore( sp, inReal, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
+      return OBV_OpenPass( sp, inReal, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode OBV_OpenAndFillBody( OBV_Stream sp, double inReal[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode OBV_OpenAndFillImpl( OBV_Stream sp, double inReal[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inReal || (Object)outReal == (Object)inVolume ) {
          return RetCode.BadParam;
       }
-      return OBV_OpenCore( sp, inReal, inVolume, 0, outBegIdx, outNBElement, outReal, 1 );
+      return OBV_OpenPass( sp, inReal, inVolume, 0, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode OBV_OpenAndFillInternalBody( OBV_Stream sp, double inReal[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode OBV_OpenAndFillInternalImpl( OBV_Stream sp, double inReal[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return OBV_OpenCore(sp, inReal, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
+      return OBV_OpenPass(sp, inReal, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
    }
    /* OBV_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    OBV_Stream OBV_OpenAndFillInternal( double inReal[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       OBV_Stream sp = new OBV_Stream(this);
-      RetCode retCode = OBV_OpenAndFillInternalBody(sp, inReal, inVolume, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = OBV_OpenAndFillInternalImpl(sp, inReal, inVolume, startIdx, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -404,7 +404,7 @@
    OBV_Stream OBV_OpenInternal( double inReal[], double inVolume[], int startIdx )
    {
       OBV_Stream sp = new OBV_Stream(this);
-      RetCode retCode = OBV_OpenBody(sp, inReal, inVolume, startIdx);
+      RetCode retCode = OBV_OpenImpl(sp, inReal, inVolume, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -444,7 +444,7 @@
       OBV_Stream sp = new OBV_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = OBV_OpenAndFillBody(sp, inReal, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = OBV_OpenAndFillImpl(sp, inReal, inVolume, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

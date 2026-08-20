@@ -92,7 +92,7 @@ impl Core {
     }
     /// C-shaped body behind [`Core::MACDFIX`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
-    pub(crate) fn MACDFIX_Internal(
+    pub(crate) fn MACDFIX_Impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -105,13 +105,13 @@ impl Core {
         outMACDHist: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, MACDFIX_Internal_fma, MACDFIX_Internal_impl, (startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist));
+        return ta_lib_dispatch::dispatch_fma!(self, MACDFIX_Impl_fma, MACDFIX_Impl_impl, (startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist));
         #[cfg(not(target_arch = "x86_64"))]
-        self.MACDFIX_Internal_impl(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist)
+        self.MACDFIX_Impl_impl(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn MACDFIX_Internal_fma(
+    fn MACDFIX_Impl_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -123,10 +123,10 @@ impl Core {
         outMACDSignal: &mut [f64],
         outMACDHist: &mut [f64],
     ) -> RetCode {
-        self.MACDFIX_Internal_impl(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist)
+        self.MACDFIX_Impl_impl(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist)
     }
     #[inline(always)]
-    fn MACDFIX_Internal_impl(
+    fn MACDFIX_Impl_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -413,7 +413,7 @@ impl Core {
     ) -> Result<OutRange, RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.MACDFIX_Internal(
+        let retCode = self.MACDFIX_Impl(
             startIdx,
             endIdx,
             inReal,
@@ -507,7 +507,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::MACDFIX_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::MACDFIX_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn MACDFIX_OpenCore(
+    pub(crate) fn MACDFIX_OpenPass(
         &self, inReal: &[f64], startIdx: usize, mut optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64], outStride: usize,
     ) -> Result<MACDFIX_Stream, RetCode> {
         if inReal.is_empty() {
@@ -712,7 +712,7 @@ impl Core {
         let mut sink_outMACD = [0.0_f64; 1];
         let mut sink_outMACDSignal = [0.0_f64; 1];
         let mut sink_outMACDHist = [0.0_f64; 1];
-        let handle = self.MACDFIX_OpenCore(inReal, startIdx, optInSignalPeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outMACD, &mut sink_outMACDSignal, &mut sink_outMACDHist, 0)?;
+        let handle = self.MACDFIX_OpenPass(inReal, startIdx, optInSignalPeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outMACD, &mut sink_outMACDSignal, &mut sink_outMACDHist, 0)?;
         Ok((handle, (sink_outMACD[0], sink_outMACDSignal[0], sink_outMACDHist[0])))
     }
 
@@ -762,7 +762,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.MACDFIX_OpenCore(inReal, 0, optInSignalPeriod, &mut outBegIdx, &mut outNBElement, outMACD, outMACDSignal, outMACDHist, 1)?;
+        let handle = self.MACDFIX_OpenPass(inReal, 0, optInSignalPeriod, &mut outBegIdx, &mut outNBElement, outMACD, outMACDSignal, outMACDHist, 1)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -771,7 +771,7 @@ impl Core {
     pub(crate) fn MACDFIX_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64],
     ) -> Result<MACDFIX_Stream, RetCode> {
-        self.MACDFIX_OpenCore(inReal, startIdx, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1)
+        self.MACDFIX_OpenPass(inReal, startIdx, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1)
     }
 
 }

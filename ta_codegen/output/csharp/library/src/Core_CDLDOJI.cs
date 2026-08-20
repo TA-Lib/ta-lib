@@ -73,7 +73,7 @@ public partial class Core
       return BodyDoji_avgPeriod ;
 
    }
-   internal RetCode CDLDOJI_Body( int startIdx,
+   internal RetCode CDLDOJI_Impl( int startIdx,
                                   int endIdx,
                                   ReadOnlySpan<double> inOpen,
                                   ReadOnlySpan<double> inHigh,
@@ -151,7 +151,7 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CDLDOJI_Body( int startIdx,
+   internal RetCode CDLDOJI_Impl( int startIdx,
                                   int endIdx,
                                   ReadOnlySpan<float> inOpen,
                                   ReadOnlySpan<float> inHigh,
@@ -266,7 +266,7 @@ public partial class Core
       RequireLength("CDLDOJI", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLDOJI", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLDOJI", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLDOJI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLDOJI_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLDOJI", retCode);
       }
@@ -336,7 +336,7 @@ public partial class Core
       RequireLength("CDLDOJI", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLDOJI", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLDOJI", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLDOJI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLDOJI_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLDOJI", retCode);
       }
@@ -501,7 +501,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLDOJI_OpenCore( CDLDOJI_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CDLDOJI_OpenPass( CDLDOJI_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -592,29 +592,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CDLDOJI_OpenBody( CDLDOJI_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   private RetCode CDLDOJI_OpenImpl( CDLDOJI_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       int[] sink_outInteger = new int[1];
-      return CDLDOJI_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
+      return CDLDOJI_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
    }
 
-   private RetCode CDLDOJI_OpenAndFillBody( CDLDOJI_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLDOJI_OpenAndFillImpl( CDLDOJI_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      return CDLDOJI_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
+      return CDLDOJI_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
    }
 
-   private RetCode CDLDOJI_OpenAndFillInternalBody( CDLDOJI_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLDOJI_OpenAndFillInternalImpl( CDLDOJI_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      return CDLDOJI_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+      return CDLDOJI_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
    }
 
    /* CDLDOJI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal CDLDOJI_Stream CDLDOJI_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       CDLDOJI_Stream sp = new CDLDOJI_Stream(this);
-      RetCode retCode = CDLDOJI_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
+      RetCode retCode = CDLDOJI_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -625,7 +625,7 @@ public partial class Core
    internal CDLDOJI_Stream CDLDOJI_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       CDLDOJI_Stream sp = new CDLDOJI_Stream(this);
-      RetCode retCode = CDLDOJI_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      RetCode retCode = CDLDOJI_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -691,7 +691,7 @@ public partial class Core
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       CDLDOJI_Stream sp = new CDLDOJI_Stream(this);
-      RetCode retCode = CDLDOJI_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLDOJI_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

@@ -73,7 +73,7 @@ public partial class Core
       return 0 ;
 
    }
-   internal RetCode MEDPRICE_Body( int startIdx,
+   internal RetCode MEDPRICE_Impl( int startIdx,
                                    int endIdx,
                                    ReadOnlySpan<double> inHigh,
                                    ReadOnlySpan<double> inLow,
@@ -108,7 +108,7 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode MEDPRICE_Body( int startIdx,
+   internal RetCode MEDPRICE_Impl( int startIdx,
                                    int endIdx,
                                    ReadOnlySpan<float> inHigh,
                                    ReadOnlySpan<float> inLow,
@@ -185,7 +185,7 @@ public partial class Core
       RequireLength("MEDPRICE", "inHigh", inHigh.Length, guardInLen);
       RequireLength("MEDPRICE", "inLow", inLow.Length, guardInLen);
       RequireLength("MEDPRICE", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = MEDPRICE_Body(startIdx, endIdx, inHigh, inLow, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MEDPRICE_Impl(startIdx, endIdx, inHigh, inLow, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MEDPRICE", retCode);
       }
@@ -248,7 +248,7 @@ public partial class Core
       RequireLength("MEDPRICE", "inHigh", inHigh.Length, guardInLen);
       RequireLength("MEDPRICE", "inLow", inLow.Length, guardInLen);
       RequireLength("MEDPRICE", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = MEDPRICE_Body(startIdx, endIdx, inHigh, inLow, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MEDPRICE_Impl(startIdx, endIdx, inHigh, inLow, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MEDPRICE", retCode);
       }
@@ -365,7 +365,7 @@ public partial class Core
       sp.cur_outReal = (inHigh + inLow) / 2.0;
    }
 
-   private RetCode MEDPRICE_OpenCore( MEDPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode MEDPRICE_OpenPass( MEDPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -396,32 +396,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MEDPRICE_OpenBody( MEDPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx )
+   private RetCode MEDPRICE_OpenImpl( MEDPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx )
    {
       double[] sink_outReal = new double[1];
-      return MEDPRICE_OpenCore( sp, inHigh, inLow, startIdx, out _, out _, sink_outReal, 0 );
+      return MEDPRICE_OpenPass( sp, inHigh, inLow, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode MEDPRICE_OpenAndFillBody( MEDPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode MEDPRICE_OpenAndFillImpl( MEDPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
          return RetCode.BadParam;
       }
-      return MEDPRICE_OpenCore( sp, inHigh, inLow, 0, out outBegIdx, out outNBElement, outReal, 1 );
+      return MEDPRICE_OpenPass( sp, inHigh, inLow, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode MEDPRICE_OpenAndFillInternalBody( MEDPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode MEDPRICE_OpenAndFillInternalImpl( MEDPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return MEDPRICE_OpenCore(sp, inHigh, inLow, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      return MEDPRICE_OpenPass(sp, inHigh, inLow, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* MEDPRICE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal MEDPRICE_Stream MEDPRICE_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       MEDPRICE_Stream sp = new MEDPRICE_Stream(this);
-      RetCode retCode = MEDPRICE_OpenAndFillInternalBody(sp, inHigh, inLow, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = MEDPRICE_OpenAndFillInternalImpl(sp, inHigh, inLow, startIdx, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -432,7 +432,7 @@ public partial class Core
    internal MEDPRICE_Stream MEDPRICE_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx )
    {
       MEDPRICE_Stream sp = new MEDPRICE_Stream(this);
-      RetCode retCode = MEDPRICE_OpenBody(sp, inHigh, inLow, startIdx);
+      RetCode retCode = MEDPRICE_OpenImpl(sp, inHigh, inLow, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -491,7 +491,7 @@ public partial class Core
       if( inHigh.IsEmpty ) throw new TaLibArgumentException("inHigh is empty", nameof(inHigh), RetCode.BadParam);
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       MEDPRICE_Stream sp = new MEDPRICE_Stream(this);
-      RetCode retCode = MEDPRICE_OpenAndFillBody(sp, inHigh, inLow, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MEDPRICE_OpenAndFillImpl(sp, inHigh, inLow, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

@@ -87,7 +87,7 @@ impl Core {
     }
     /// C-shaped body behind [`Core::MAX`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
-    pub(crate) fn MAX_Internal(
+    pub(crate) fn MAX_Impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -324,7 +324,7 @@ impl Core {
     ) -> Result<OutRange, RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.MAX_Internal(
+        let retCode = self.MAX_Impl(
             startIdx,
             endIdx,
             inReal,
@@ -434,7 +434,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::MAX_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::MAX_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn MAX_OpenCore(
+    pub(crate) fn MAX_OpenPass(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<MAX_Stream, RetCode> {
         if inReal.is_empty() {
@@ -557,7 +557,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.MAX_OpenCore(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.MAX_OpenPass(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -596,7 +596,7 @@ impl Core {
     ) -> Result<(MAX_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.MAX_OpenCore(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.MAX_OpenPass(inReal, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -605,7 +605,7 @@ impl Core {
     pub(crate) fn MAX_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<MAX_Stream, RetCode> {
-        self.MAX_OpenCore(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+        self.MAX_OpenPass(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

@@ -79,7 +79,7 @@ public partial class Core
       return Math.Max(Math.Max(BodyDoji_avgPeriod, ShadowVeryShort_avgPeriod), ShadowVeryLong_avgPeriod) ;
 
    }
-   internal RetCode CDLTAKURI_Body( int startIdx,
+   internal RetCode CDLTAKURI_Impl( int startIdx,
                                     int endIdx,
                                     ReadOnlySpan<double> inOpen,
                                     ReadOnlySpan<double> inHigh,
@@ -187,7 +187,7 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CDLTAKURI_Body( int startIdx,
+   internal RetCode CDLTAKURI_Impl( int startIdx,
                                     int endIdx,
                                     ReadOnlySpan<float> inOpen,
                                     ReadOnlySpan<float> inHigh,
@@ -332,7 +332,7 @@ public partial class Core
       RequireLength("CDLTAKURI", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLTAKURI", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLTAKURI", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLTAKURI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLTAKURI_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLTAKURI", retCode);
       }
@@ -404,7 +404,7 @@ public partial class Core
       RequireLength("CDLTAKURI", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLTAKURI", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLTAKURI", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLTAKURI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLTAKURI_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLTAKURI", retCode);
       }
@@ -652,7 +652,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLTAKURI_OpenCore( CDLTAKURI_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CDLTAKURI_OpenPass( CDLTAKURI_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -805,29 +805,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CDLTAKURI_OpenBody( CDLTAKURI_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   private RetCode CDLTAKURI_OpenImpl( CDLTAKURI_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       int[] sink_outInteger = new int[1];
-      return CDLTAKURI_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
+      return CDLTAKURI_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
    }
 
-   private RetCode CDLTAKURI_OpenAndFillBody( CDLTAKURI_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLTAKURI_OpenAndFillImpl( CDLTAKURI_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      return CDLTAKURI_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
+      return CDLTAKURI_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
    }
 
-   private RetCode CDLTAKURI_OpenAndFillInternalBody( CDLTAKURI_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLTAKURI_OpenAndFillInternalImpl( CDLTAKURI_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      return CDLTAKURI_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+      return CDLTAKURI_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
    }
 
    /* CDLTAKURI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal CDLTAKURI_Stream CDLTAKURI_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       CDLTAKURI_Stream sp = new CDLTAKURI_Stream(this);
-      RetCode retCode = CDLTAKURI_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
+      RetCode retCode = CDLTAKURI_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -838,7 +838,7 @@ public partial class Core
    internal CDLTAKURI_Stream CDLTAKURI_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       CDLTAKURI_Stream sp = new CDLTAKURI_Stream(this);
-      RetCode retCode = CDLTAKURI_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      RetCode retCode = CDLTAKURI_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -907,7 +907,7 @@ public partial class Core
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       CDLTAKURI_Stream sp = new CDLTAKURI_Stream(this);
-      RetCode retCode = CDLTAKURI_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLTAKURI_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

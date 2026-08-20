@@ -131,7 +131,7 @@ static void TA_COSH_StepInternal( struct TA_COSH_Stream *sp, double inReal, doub
    *outReal= cosh(inReal);
 }
 
-static TA_RetCode TA_COSH_OpenCore( struct TA_COSH_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
+static TA_RetCode TA_COSH_OpenPass( struct TA_COSH_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_COSH_Stream *sp;
    int endIdx;
@@ -175,7 +175,7 @@ TA_RetCode TA_COSH_OpenInternal( struct TA_COSH_Stream **stream, const double in
    int dummyBegIdx = 0;
    int dummyNBElement = 0;
    double sink_outReal = 0.0;
-   retCode = TA_COSH_OpenCore( stream, inReal, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   retCode = TA_COSH_OpenPass( stream, inReal, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
    if( retCode == TA_SUCCESS )
    {
       *outReal = sink_outReal;
@@ -202,13 +202,13 @@ TA_LIB_API TA_RetCode TA_COSH_OpenAndFill( TA_COSH_Stream **stream, const double
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
-   return TA_COSH_OpenCore( stream, inReal, 0, historyLen, outBegIdx, outNBElement, outReal, 1 );
+   return TA_COSH_OpenPass( stream, inReal, 0, historyLen, outBegIdx, outNBElement, outReal, 1 );
 }
 
 /* Private function, not in public API. */
 TA_RetCode TA_COSH_OpenAndFillInternal( struct TA_COSH_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] )
 {
-   return TA_COSH_OpenCore( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outReal, 1 );
+   return TA_COSH_OpenPass( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_COSH_Update( TA_COSH_Stream *stream, double inReal, double *outReal )

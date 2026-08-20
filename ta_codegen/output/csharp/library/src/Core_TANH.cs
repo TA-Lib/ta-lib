@@ -69,7 +69,7 @@ public partial class Core
       return 0 ;
 
    }
-   internal RetCode TANH_Body( int startIdx,
+   internal RetCode TANH_Impl( int startIdx,
                                int endIdx,
                                ReadOnlySpan<double> inReal,
                                out int outBegIdx,
@@ -96,7 +96,7 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode TANH_Body( int startIdx,
+   internal RetCode TANH_Impl( int startIdx,
                                int endIdx,
                                ReadOnlySpan<float> inReal,
                                out int outBegIdx,
@@ -167,7 +167,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("TANH", "inReal", inReal.Length, guardInLen);
       RequireLength("TANH", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = TANH_Body(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = TANH_Impl(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("TANH", retCode);
       }
@@ -226,7 +226,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("TANH", "inReal", inReal.Length, guardInLen);
       RequireLength("TANH", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = TANH_Body(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = TANH_Impl(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("TANH", retCode);
       }
@@ -340,7 +340,7 @@ public partial class Core
       sp.cur_outReal = Math.Tanh(inReal);
    }
 
-   private RetCode TANH_OpenCore( TANH_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode TANH_OpenPass( TANH_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -364,32 +364,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode TANH_OpenBody( TANH_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
+   private RetCode TANH_OpenImpl( TANH_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
    {
       double[] sink_outReal = new double[1];
-      return TANH_OpenCore( sp, inReal, startIdx, out _, out _, sink_outReal, 0 );
+      return TANH_OpenPass( sp, inReal, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode TANH_OpenAndFillBody( TANH_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode TANH_OpenAndFillImpl( TANH_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
-      return TANH_OpenCore( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
+      return TANH_OpenPass( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode TANH_OpenAndFillInternalBody( TANH_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode TANH_OpenAndFillInternalImpl( TANH_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return TANH_OpenCore(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      return TANH_OpenPass(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* TANH_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal TANH_Stream TANH_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       TANH_Stream sp = new TANH_Stream(this);
-      RetCode retCode = TANH_OpenAndFillInternalBody(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = TANH_OpenAndFillInternalImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -400,7 +400,7 @@ public partial class Core
    internal TANH_Stream TANH_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
       TANH_Stream sp = new TANH_Stream(this);
-      RetCode retCode = TANH_OpenBody(sp, inReal, startIdx);
+      RetCode retCode = TANH_OpenImpl(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -454,7 +454,7 @@ public partial class Core
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       TANH_Stream sp = new TANH_Stream(this);
-      RetCode retCode = TANH_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = TANH_OpenAndFillImpl(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

@@ -25,7 +25,7 @@
       return 0 ;
 
    }
-   RetCode EXP_Body( int startIdx,
+   RetCode EXP_Impl( int startIdx,
                      int endIdx,
                      double inReal[],
                      MInteger outBegIdx,
@@ -47,7 +47,7 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode EXP_Body( int startIdx,
+   RetCode EXP_Impl( int startIdx,
                      int endIdx,
                      float inReal[],
                      MInteger outBegIdx,
@@ -118,7 +118,7 @@
       requireLength("EXP", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = EXP_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = EXP_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("EXP", retCode);
       }
@@ -176,7 +176,7 @@
       requireLength("EXP", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = EXP_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = EXP_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("EXP", retCode);
       }
@@ -281,7 +281,7 @@
    {
       sp.cur_outReal = Math.exp(inReal);
    }
-   private RetCode EXP_OpenCore( EXP_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode EXP_OpenPass( EXP_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -302,29 +302,29 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode EXP_OpenBody( EXP_Stream sp, double inReal[], int startIdx )
+   private RetCode EXP_OpenImpl( EXP_Stream sp, double inReal[], int startIdx )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return EXP_OpenCore( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
+      return EXP_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode EXP_OpenAndFillBody( EXP_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode EXP_OpenAndFillImpl( EXP_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      return EXP_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
+      return EXP_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode EXP_OpenAndFillInternalBody( EXP_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode EXP_OpenAndFillInternalImpl( EXP_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return EXP_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+      return EXP_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
    }
    /* EXP_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    EXP_Stream EXP_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       EXP_Stream sp = new EXP_Stream(this);
-      RetCode retCode = EXP_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = EXP_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -340,7 +340,7 @@
    EXP_Stream EXP_OpenInternal( double inReal[], int startIdx )
    {
       EXP_Stream sp = new EXP_Stream(this);
-      RetCode retCode = EXP_OpenBody(sp, inReal, startIdx);
+      RetCode retCode = EXP_OpenImpl(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -380,7 +380,7 @@
       EXP_Stream sp = new EXP_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = EXP_OpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = EXP_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

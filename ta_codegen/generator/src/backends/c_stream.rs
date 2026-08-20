@@ -151,7 +151,7 @@ fn out_params_sig(func: &FuncDef) -> String {
         .join(", ")
 }
 
-/// `Open` and `OpenAndFill` are ONE emission: `TA_<N>_OpenCore`, whose per-bar
+/// `Open` and `OpenAndFill` are ONE emission: `TA_<N>_OpenPass`, whose per-bar
 /// output writes are subscripted `out[(<idx>) * outStride]`.
 ///
 /// `OpenAndFill` passes stride 1 and the caller's array, so the array is
@@ -258,7 +258,7 @@ fn open_core_signature(func: &FuncDef) -> String {
         let _ = write!(history, "const double {a}[], ");
     }
     format!(
-        "static TA_RetCode TA_{n}_OpenCore( struct TA_{n}_Stream **stream, {}int startIdx, int historyLen, {}int *outBegIdx, int *outNBElement, {}, int {OUT_STRIDE} )",
+        "static TA_RetCode TA_{n}_OpenPass( struct TA_{n}_Stream **stream, {}int startIdx, int historyLen, {}int *outBegIdx, int *outNBElement, {}, int {OUT_STRIDE} )",
         history,
         opt_params_sig(func),
         out_fill_arrays_sig(func)
@@ -456,7 +456,7 @@ fn emit_open_internal_wrapper(o: &mut String, func: &FuncDef) {
         .collect();
     let _ = writeln!(
         o,
-        "   retCode = TA_{n}_OpenCore( {}&dummyBegIdx, &dummyNBElement, {}, 0 );",
+        "   retCode = TA_{n}_OpenPass( {}&dummyBegIdx, &dummyNBElement, {}, 0 );",
         open_core_call_head(func, "startIdx"),
         sinks.join(", ")
     );
@@ -514,7 +514,7 @@ fn emit_open_and_fill_wrapper(o: &mut String, func: &FuncDef) {
     }
     let _ = writeln!(
         o,
-        "   return TA_{n}_OpenCore( {}outBegIdx, outNBElement, {}, 1 );",
+        "   return TA_{n}_OpenPass( {}outBegIdx, outNBElement, {}, 1 );",
         open_core_call_head(func, "0"),
         outs.join(", ")
     );
@@ -530,7 +530,7 @@ fn emit_open_and_fill_internal_wrapper(o: &mut String, func: &FuncDef) {
     let _ = writeln!(o, "/* Private function, not in public API. */\n{}\n{{", open_and_fill_internal_signature(func));
     let _ = writeln!(
         o,
-        "   return TA_{n}_OpenCore( {}outBegIdx, outNBElement, {}, 1 );",
+        "   return TA_{n}_OpenPass( {}outBegIdx, outNBElement, {}, 1 );",
         open_core_call_head(func, "startIdx"),
         outs.join(", ")
     );

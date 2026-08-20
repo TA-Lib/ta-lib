@@ -69,7 +69,7 @@ public partial class Core
       return 0 ;
 
    }
-   internal RetCode ATAN_Body( int startIdx,
+   internal RetCode ATAN_Impl( int startIdx,
                                int endIdx,
                                ReadOnlySpan<double> inReal,
                                out int outBegIdx,
@@ -97,7 +97,7 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode ATAN_Body( int startIdx,
+   internal RetCode ATAN_Impl( int startIdx,
                                int endIdx,
                                ReadOnlySpan<float> inReal,
                                out int outBegIdx,
@@ -169,7 +169,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("ATAN", "inReal", inReal.Length, guardInLen);
       RequireLength("ATAN", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = ATAN_Body(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ATAN_Impl(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ATAN", retCode);
       }
@@ -229,7 +229,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("ATAN", "inReal", inReal.Length, guardInLen);
       RequireLength("ATAN", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = ATAN_Body(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ATAN_Impl(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ATAN", retCode);
       }
@@ -343,7 +343,7 @@ public partial class Core
       sp.cur_outReal = Math.Atan(inReal);
    }
 
-   private RetCode ATAN_OpenCore( ATAN_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode ATAN_OpenPass( ATAN_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -368,32 +368,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode ATAN_OpenBody( ATAN_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
+   private RetCode ATAN_OpenImpl( ATAN_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
    {
       double[] sink_outReal = new double[1];
-      return ATAN_OpenCore( sp, inReal, startIdx, out _, out _, sink_outReal, 0 );
+      return ATAN_OpenPass( sp, inReal, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode ATAN_OpenAndFillBody( ATAN_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode ATAN_OpenAndFillImpl( ATAN_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
-      return ATAN_OpenCore( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
+      return ATAN_OpenPass( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode ATAN_OpenAndFillInternalBody( ATAN_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode ATAN_OpenAndFillInternalImpl( ATAN_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return ATAN_OpenCore(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      return ATAN_OpenPass(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* ATAN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal ATAN_Stream ATAN_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       ATAN_Stream sp = new ATAN_Stream(this);
-      RetCode retCode = ATAN_OpenAndFillInternalBody(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = ATAN_OpenAndFillInternalImpl(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -404,7 +404,7 @@ public partial class Core
    internal ATAN_Stream ATAN_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
       ATAN_Stream sp = new ATAN_Stream(this);
-      RetCode retCode = ATAN_OpenBody(sp, inReal, startIdx);
+      RetCode retCode = ATAN_OpenImpl(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -458,7 +458,7 @@ public partial class Core
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       ATAN_Stream sp = new ATAN_Stream(this);
-      RetCode retCode = ATAN_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ATAN_OpenAndFillImpl(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

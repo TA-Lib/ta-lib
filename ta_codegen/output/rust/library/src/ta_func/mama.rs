@@ -112,7 +112,7 @@ impl Core {
     }
     /// C-shaped body behind [`Core::MAMA`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
-    pub(crate) fn MAMA_Internal(
+    pub(crate) fn MAMA_Impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -125,13 +125,13 @@ impl Core {
         outFAMA: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, MAMA_Internal_fma, MAMA_Internal_impl, (startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA));
+        return ta_lib_dispatch::dispatch_fma!(self, MAMA_Impl_fma, MAMA_Impl_impl, (startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA));
         #[cfg(not(target_arch = "x86_64"))]
-        self.MAMA_Internal_impl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA)
+        self.MAMA_Impl_impl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn MAMA_Internal_fma(
+    fn MAMA_Impl_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -143,10 +143,10 @@ impl Core {
         outMAMA: &mut [f64],
         outFAMA: &mut [f64],
     ) -> RetCode {
-        self.MAMA_Internal_impl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA)
+        self.MAMA_Impl_impl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA)
     }
     #[inline(always)]
-    fn MAMA_Internal_impl(
+    fn MAMA_Impl_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -629,7 +629,7 @@ impl Core {
     ) -> Result<OutRange, RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.MAMA_Internal(
+        let retCode = self.MAMA_Impl(
             startIdx,
             endIdx,
             inReal,
@@ -989,7 +989,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::MAMA_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::MAMA_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn MAMA_OpenCore(
+    pub(crate) fn MAMA_OpenPass(
         &self, inReal: &[f64], startIdx: usize, mut optInFastLimit: f64, mut optInSlowLimit: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMAMA: &mut [f64], outFAMA: &mut [f64], outStride: usize,
     ) -> Result<MAMA_Stream, RetCode> {
         if inReal.is_empty() {
@@ -1450,7 +1450,7 @@ impl Core {
         let mut dummyNBElement: usize = 0;
         let mut sink_outMAMA = [0.0_f64; 1];
         let mut sink_outFAMA = [0.0_f64; 1];
-        let handle = self.MAMA_OpenCore(inReal, startIdx, optInFastLimit, optInSlowLimit, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outMAMA, &mut sink_outFAMA, 0)?;
+        let handle = self.MAMA_OpenPass(inReal, startIdx, optInFastLimit, optInSlowLimit, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outMAMA, &mut sink_outFAMA, 0)?;
         Ok((handle, (sink_outMAMA[0], sink_outFAMA[0])))
     }
 
@@ -1493,7 +1493,7 @@ impl Core {
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.MAMA_OpenCore(inReal, 0, optInFastLimit, optInSlowLimit, &mut outBegIdx, &mut outNBElement, outMAMA, outFAMA, 1)?;
+        let handle = self.MAMA_OpenPass(inReal, 0, optInFastLimit, optInSlowLimit, &mut outBegIdx, &mut outNBElement, outMAMA, outFAMA, 1)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -1502,7 +1502,7 @@ impl Core {
     pub(crate) fn MAMA_OpenAndFillInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInFastLimit: f64, mut optInSlowLimit: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMAMA: &mut [f64], outFAMA: &mut [f64],
     ) -> Result<MAMA_Stream, RetCode> {
-        self.MAMA_OpenCore(inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1)
+        self.MAMA_OpenPass(inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1)
     }
 
 }

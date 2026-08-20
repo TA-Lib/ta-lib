@@ -31,7 +31,7 @@
       return 32 + this.unstablePeriod[FuncUnstId.HT_PHASOR.ordinal()] ;
 
    }
-   RetCode HT_PHASOR_Body( int startIdx,
+   RetCode HT_PHASOR_Impl( int startIdx,
                            int endIdx,
                            double inReal[],
                            MInteger outBegIdx,
@@ -378,7 +378,7 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode HT_PHASOR_Body( int startIdx,
+   RetCode HT_PHASOR_Impl( int startIdx,
                            int endIdx,
                            float inReal[],
                            MInteger outBegIdx,
@@ -730,7 +730,7 @@
       requireLength("HT_PHASOR", "outQuadrature", outQuadrature, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_PHASOR_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
+      RetCode retCode = HT_PHASOR_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
       if( retCode != RetCode.Success ) {
          throw failure("HT_PHASOR", retCode);
       }
@@ -797,7 +797,7 @@
       requireLength("HT_PHASOR", "outQuadrature", outQuadrature, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_PHASOR_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
+      RetCode retCode = HT_PHASOR_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
       if( retCode != RetCode.Success ) {
          throw failure("HT_PHASOR", retCode);
       }
@@ -1277,7 +1277,7 @@
       }
       sp.streamParity = 1 - sp.streamParity;
    }
-   private RetCode HT_PHASOR_OpenCore( HT_PHASOR_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[], int outStride )
+   private RetCode HT_PHASOR_OpenPass( HT_PHASOR_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -1682,30 +1682,30 @@
       sp.cachedValue = new HT_PHASOR_Stream.Value(sp.cur_outInPhase, sp.cur_outQuadrature);
       return RetCode.Success;
    }
-   private RetCode HT_PHASOR_OpenBody( HT_PHASOR_Stream sp, double inReal[], int startIdx )
+   private RetCode HT_PHASOR_OpenImpl( HT_PHASOR_Stream sp, double inReal[], int startIdx )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outInPhase = new double[1];
       double[] sink_outQuadrature = new double[1];
-      return HT_PHASOR_OpenCore( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outInPhase, sink_outQuadrature, 0 );
+      return HT_PHASOR_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outInPhase, sink_outQuadrature, 0 );
    }
-   private RetCode HT_PHASOR_OpenAndFillBody( HT_PHASOR_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[] )
+   private RetCode HT_PHASOR_OpenAndFillImpl( HT_PHASOR_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[] )
    {
       if( (Object)outInPhase == (Object)inReal || (Object)outQuadrature == (Object)inReal || (Object)outInPhase == (Object)outQuadrature ) {
          return RetCode.BadParam;
       }
-      return HT_PHASOR_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outInPhase, outQuadrature, 1 );
+      return HT_PHASOR_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outInPhase, outQuadrature, 1 );
    }
-   private RetCode HT_PHASOR_OpenAndFillInternalBody( HT_PHASOR_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[] )
+   private RetCode HT_PHASOR_OpenAndFillInternalImpl( HT_PHASOR_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[] )
    {
-      return HT_PHASOR_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outInPhase, outQuadrature, 1);
+      return HT_PHASOR_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outInPhase, outQuadrature, 1);
    }
    /* HT_PHASOR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    HT_PHASOR_Stream HT_PHASOR_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[] )
    {
       HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
-      RetCode retCode = HT_PHASOR_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outInPhase, outQuadrature);
+      RetCode retCode = HT_PHASOR_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outInPhase, outQuadrature);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1721,7 +1721,7 @@
    HT_PHASOR_Stream HT_PHASOR_OpenInternal( double inReal[], int startIdx )
    {
       HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
-      RetCode retCode = HT_PHASOR_OpenBody(sp, inReal, startIdx);
+      RetCode retCode = HT_PHASOR_OpenImpl(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1761,7 +1761,7 @@
       HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_PHASOR_OpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
+      RetCode retCode = HT_PHASOR_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

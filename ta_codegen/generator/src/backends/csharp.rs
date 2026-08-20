@@ -533,7 +533,13 @@ fn render_init_expr(expr: &Expr) -> String {
     }
 }
 
-/// Name of the transcribed body: the numerics, and nothing else.
+/// Name of the implementation tier: the transcribed numerics, and nothing else.
+///
+/// Suffixed `_Impl`, matching the streaming tiers (`_OpenImpl`,
+/// `_OpenAndFillImpl`). `Internal` is deliberately NOT reused: in these two
+/// backends it names a *variant* (`_OpenAndFillInternal` is the composed-open
+/// fusion seam), and until #236 step 5 it named the deleted C-shaped tier, so
+/// one word would carry three meanings across the history.
 ///
 /// C# distinguishes its two PUBLIC-facing tiers by overload — `internal RetCode
 /// <N>(…, out int, out int, …)` beside `public OutRange <N>(…)` — but a third
@@ -542,7 +548,7 @@ fn render_init_expr(expr: &Expr) -> String {
 /// back to a code, so that the body's cross-calls can call the public overload
 /// (which the same call site selects, by omitting the two `out int` arguments).
 fn body_name(base: &str) -> String {
-    format!("{base}_Body")
+    format!("{base}_Impl")
 }
 
 /// Emit the public, `OutRange`-returning wrapper, plus the C-shaped shim beside it.
@@ -2462,7 +2468,7 @@ mod tests {
 
         // The BODY validates. Bounded to the double body's own text so a match
         // inside the float overload cannot stand in for it.
-        let body_pos = output.find("internal RetCode SMA_Body( ").unwrap();
+        let body_pos = output.find("internal RetCode SMA_Impl( ").unwrap();
         let body_end = output[body_pos + 1..]
             .find("   internal RetCode ")
             .map_or(output.len() - body_pos, |i| i + 1);

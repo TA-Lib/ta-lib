@@ -25,7 +25,7 @@
       return 0 ;
 
    }
-   RetCode FLOOR_Body( int startIdx,
+   RetCode FLOOR_Impl( int startIdx,
                        int endIdx,
                        double inReal[],
                        MInteger outBegIdx,
@@ -47,7 +47,7 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode FLOOR_Body( int startIdx,
+   RetCode FLOOR_Impl( int startIdx,
                        int endIdx,
                        float inReal[],
                        MInteger outBegIdx,
@@ -117,7 +117,7 @@
       requireLength("FLOOR", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = FLOOR_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = FLOOR_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("FLOOR", retCode);
       }
@@ -174,7 +174,7 @@
       requireLength("FLOOR", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = FLOOR_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = FLOOR_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("FLOOR", retCode);
       }
@@ -279,7 +279,7 @@
    {
       sp.cur_outReal = Math.floor(inReal);
    }
-   private RetCode FLOOR_OpenCore( FLOOR_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode FLOOR_OpenPass( FLOOR_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -300,29 +300,29 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode FLOOR_OpenBody( FLOOR_Stream sp, double inReal[], int startIdx )
+   private RetCode FLOOR_OpenImpl( FLOOR_Stream sp, double inReal[], int startIdx )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return FLOOR_OpenCore( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
+      return FLOOR_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode FLOOR_OpenAndFillBody( FLOOR_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode FLOOR_OpenAndFillImpl( FLOOR_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      return FLOOR_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
+      return FLOOR_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode FLOOR_OpenAndFillInternalBody( FLOOR_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode FLOOR_OpenAndFillInternalImpl( FLOOR_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return FLOOR_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+      return FLOOR_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
    }
    /* FLOOR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    FLOOR_Stream FLOOR_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       FLOOR_Stream sp = new FLOOR_Stream(this);
-      RetCode retCode = FLOOR_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = FLOOR_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -338,7 +338,7 @@
    FLOOR_Stream FLOOR_OpenInternal( double inReal[], int startIdx )
    {
       FLOOR_Stream sp = new FLOOR_Stream(this);
-      RetCode retCode = FLOOR_OpenBody(sp, inReal, startIdx);
+      RetCode retCode = FLOOR_OpenImpl(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -378,7 +378,7 @@
       FLOOR_Stream sp = new FLOOR_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = FLOOR_OpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = FLOOR_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

@@ -73,7 +73,7 @@ public partial class Core
       return Equal_avgPeriod + 1 ;
 
    }
-   internal RetCode CDLMATCHINGLOW_Body( int startIdx,
+   internal RetCode CDLMATCHINGLOW_Impl( int startIdx,
                                          int endIdx,
                                          ReadOnlySpan<double> inOpen,
                                          ReadOnlySpan<double> inHigh,
@@ -155,7 +155,7 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CDLMATCHINGLOW_Body( int startIdx,
+   internal RetCode CDLMATCHINGLOW_Impl( int startIdx,
                                          int endIdx,
                                          ReadOnlySpan<float> inOpen,
                                          ReadOnlySpan<float> inHigh,
@@ -277,7 +277,7 @@ public partial class Core
       RequireLength("CDLMATCHINGLOW", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLMATCHINGLOW", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLMATCHINGLOW", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLMATCHINGLOW_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLMATCHINGLOW_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLMATCHINGLOW", retCode);
       }
@@ -353,7 +353,7 @@ public partial class Core
       RequireLength("CDLMATCHINGLOW", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLMATCHINGLOW", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLMATCHINGLOW", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLMATCHINGLOW_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLMATCHINGLOW_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLMATCHINGLOW", retCode);
       }
@@ -538,7 +538,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLMATCHINGLOW_OpenCore( CDLMATCHINGLOW_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CDLMATCHINGLOW_OpenPass( CDLMATCHINGLOW_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -639,29 +639,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CDLMATCHINGLOW_OpenBody( CDLMATCHINGLOW_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   private RetCode CDLMATCHINGLOW_OpenImpl( CDLMATCHINGLOW_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       int[] sink_outInteger = new int[1];
-      return CDLMATCHINGLOW_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
+      return CDLMATCHINGLOW_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
    }
 
-   private RetCode CDLMATCHINGLOW_OpenAndFillBody( CDLMATCHINGLOW_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLMATCHINGLOW_OpenAndFillImpl( CDLMATCHINGLOW_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      return CDLMATCHINGLOW_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
+      return CDLMATCHINGLOW_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
    }
 
-   private RetCode CDLMATCHINGLOW_OpenAndFillInternalBody( CDLMATCHINGLOW_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLMATCHINGLOW_OpenAndFillInternalImpl( CDLMATCHINGLOW_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      return CDLMATCHINGLOW_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+      return CDLMATCHINGLOW_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
    }
 
    /* CDLMATCHINGLOW_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal CDLMATCHINGLOW_Stream CDLMATCHINGLOW_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       CDLMATCHINGLOW_Stream sp = new CDLMATCHINGLOW_Stream(this);
-      RetCode retCode = CDLMATCHINGLOW_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
+      RetCode retCode = CDLMATCHINGLOW_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -672,7 +672,7 @@ public partial class Core
    internal CDLMATCHINGLOW_Stream CDLMATCHINGLOW_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       CDLMATCHINGLOW_Stream sp = new CDLMATCHINGLOW_Stream(this);
-      RetCode retCode = CDLMATCHINGLOW_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      RetCode retCode = CDLMATCHINGLOW_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -741,7 +741,7 @@ public partial class Core
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       CDLMATCHINGLOW_Stream sp = new CDLMATCHINGLOW_Stream(this);
-      RetCode retCode = CDLMATCHINGLOW_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLMATCHINGLOW_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

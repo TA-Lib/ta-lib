@@ -73,7 +73,7 @@ public partial class Core
       return ShadowVeryShort_avgPeriod + 3 ;
 
    }
-   internal RetCode CDLCONCEALBABYSWALL_Body( int startIdx,
+   internal RetCode CDLCONCEALBABYSWALL_Impl( int startIdx,
                                               int endIdx,
                                               ReadOnlySpan<double> inOpen,
                                               ReadOnlySpan<double> inHigh,
@@ -175,7 +175,7 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CDLCONCEALBABYSWALL_Body( int startIdx,
+   internal RetCode CDLCONCEALBABYSWALL_Impl( int startIdx,
                                               int endIdx,
                                               ReadOnlySpan<float> inOpen,
                                               ReadOnlySpan<float> inHigh,
@@ -298,7 +298,7 @@ public partial class Core
       RequireLength("CDLCONCEALBABYSWALL", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLCONCEALBABYSWALL", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLCONCEALBABYSWALL", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLCONCEALBABYSWALL_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLCONCEALBABYSWALL_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLCONCEALBABYSWALL", retCode);
       }
@@ -368,7 +368,7 @@ public partial class Core
       RequireLength("CDLCONCEALBABYSWALL", "inLow", inLow.Length, guardInLen);
       RequireLength("CDLCONCEALBABYSWALL", "inClose", inClose.Length, guardInLen);
       RequireLength("CDLCONCEALBABYSWALL", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = CDLCONCEALBABYSWALL_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLCONCEALBABYSWALL_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLCONCEALBABYSWALL", retCode);
       }
@@ -654,7 +654,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLCONCEALBABYSWALL_OpenCore( CDLCONCEALBABYSWALL_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
+   private RetCode CDLCONCEALBABYSWALL_OpenPass( CDLCONCEALBABYSWALL_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -802,29 +802,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CDLCONCEALBABYSWALL_OpenBody( CDLCONCEALBABYSWALL_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
+   private RetCode CDLCONCEALBABYSWALL_OpenImpl( CDLCONCEALBABYSWALL_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       int[] sink_outInteger = new int[1];
-      return CDLCONCEALBABYSWALL_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
+      return CDLCONCEALBABYSWALL_OpenPass( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
    }
 
-   private RetCode CDLCONCEALBABYSWALL_OpenAndFillBody( CDLCONCEALBABYSWALL_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLCONCEALBABYSWALL_OpenAndFillImpl( CDLCONCEALBABYSWALL_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      return CDLCONCEALBABYSWALL_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
+      return CDLCONCEALBABYSWALL_OpenPass( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
    }
 
-   private RetCode CDLCONCEALBABYSWALL_OpenAndFillInternalBody( CDLCONCEALBABYSWALL_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
+   private RetCode CDLCONCEALBABYSWALL_OpenAndFillInternalImpl( CDLCONCEALBABYSWALL_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
-      return CDLCONCEALBABYSWALL_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
+      return CDLCONCEALBABYSWALL_OpenPass(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
    }
 
    /* CDLCONCEALBABYSWALL_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal CDLCONCEALBABYSWALL_Stream CDLCONCEALBABYSWALL_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       CDLCONCEALBABYSWALL_Stream sp = new CDLCONCEALBABYSWALL_Stream(this);
-      RetCode retCode = CDLCONCEALBABYSWALL_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
+      RetCode retCode = CDLCONCEALBABYSWALL_OpenAndFillInternalImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -835,7 +835,7 @@ public partial class Core
    internal CDLCONCEALBABYSWALL_Stream CDLCONCEALBABYSWALL_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       CDLCONCEALBABYSWALL_Stream sp = new CDLCONCEALBABYSWALL_Stream(this);
-      RetCode retCode = CDLCONCEALBABYSWALL_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      RetCode retCode = CDLCONCEALBABYSWALL_OpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -908,7 +908,7 @@ public partial class Core
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       CDLCONCEALBABYSWALL_Stream sp = new CDLCONCEALBABYSWALL_Stream(this);
-      RetCode retCode = CDLCONCEALBABYSWALL_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLCONCEALBABYSWALL_OpenAndFillImpl(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

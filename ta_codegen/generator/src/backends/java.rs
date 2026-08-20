@@ -666,14 +666,20 @@ fn render_init_expr(expr: &Expr) -> String {
     }
 }
 
-/// Name of the transcribed body: the numerics, and nothing else.
+/// Name of the implementation tier: the transcribed numerics, and nothing else.
+///
+/// Suffixed `_Impl`, matching the streaming tiers (`_OpenImpl`,
+/// `_OpenAndFillImpl`). `Internal` is deliberately NOT reused: in these two
+/// backends it names a *variant* (`_OpenAndFillInternal` is the composed-open
+/// fusion seam), and until #236 step 5 it named the deleted C-shaped tier, so
+/// one word would carry three meanings across the history.
 ///
 /// Not public API in any backend. It keeps the C-shaped signature because the
 /// body is a literal transcription of C, which writes its indices through
 /// out-parameters; what changed in #236 step 3 is only that a cross-call inside
 /// it now calls the public callee and does not test a return code.
 fn body_name(base: &str) -> String {
-    format!("{base}_Body")
+    format!("{base}_Impl")
 }
 
 /// Emit the wrapper's array-argument checks (issue #172 C2).
@@ -2677,7 +2683,7 @@ mod tests {
 
         // The BODY validates. Bounded to the double body's own text so a match
         // inside the float overload cannot stand in for it.
-        let body_pos = output.find("RetCode SMA_Body( ").unwrap();
+        let body_pos = output.find("RetCode SMA_Impl( ").unwrap();
         let body_section = &output[body_pos..];
         let body_end = body_section[1..]
             .find("   RetCode ")
@@ -2692,7 +2698,7 @@ mod tests {
         // converted and re-thrown under the outer function's name.
         assert!(output.contains("   public OutRange SMA( "), "Missing public SMA wrapper");
         assert!(
-            output.contains("RetCode retCode = SMA_Body("),
+            output.contains("RetCode retCode = SMA_Impl("),
             "the public wrapper must call the body directly"
         );
         assert!(

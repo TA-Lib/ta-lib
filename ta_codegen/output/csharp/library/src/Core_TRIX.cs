@@ -85,7 +85,7 @@ public partial class Core
       return emaLookback * 3 + ROCR_Lookback(1) ;
 
    }
-   internal RetCode TRIX_Body( int startIdx,
+   internal RetCode TRIX_Impl( int startIdx,
                                int endIdx,
                                ReadOnlySpan<double> inReal,
                                int optInTimePeriod,
@@ -218,7 +218,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode TRIX_Body( int startIdx,
+   internal RetCode TRIX_Impl( int startIdx,
                                int endIdx,
                                ReadOnlySpan<float> inReal,
                                int optInTimePeriod,
@@ -368,7 +368,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("TRIX", "inReal", inReal.Length, guardInLen);
       RequireLength("TRIX", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = TRIX_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = TRIX_Impl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("TRIX", retCode);
       }
@@ -436,7 +436,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("TRIX", "inReal", inReal.Length, guardInLen);
       RequireLength("TRIX", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = TRIX_Body(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = TRIX_Impl(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("TRIX", retCode);
       }
@@ -574,7 +574,7 @@ public partial class Core
       }
    }
 
-   private RetCode TRIX_OpenCore( TRIX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode TRIX_OpenPass( TRIX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -708,32 +708,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode TRIX_OpenBody( TRIX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
+   private RetCode TRIX_OpenImpl( TRIX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
-      return TRIX_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
+      return TRIX_OpenPass( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode TRIX_OpenAndFillBody( TRIX_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode TRIX_OpenAndFillImpl( TRIX_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
-      return TRIX_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
+      return TRIX_OpenPass( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode TRIX_OpenAndFillInternalBody( TRIX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode TRIX_OpenAndFillInternalImpl( TRIX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return TRIX_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
+      return TRIX_OpenPass(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* TRIX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal TRIX_Stream TRIX_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       TRIX_Stream sp = new TRIX_Stream(this);
-      RetCode retCode = TRIX_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = TRIX_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -744,7 +744,7 @@ public partial class Core
    internal TRIX_Stream TRIX_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       TRIX_Stream sp = new TRIX_Stream(this);
-      RetCode retCode = TRIX_OpenBody(sp, inReal, startIdx, optInTimePeriod);
+      RetCode retCode = TRIX_OpenImpl(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -802,7 +802,7 @@ public partial class Core
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       TRIX_Stream sp = new TRIX_Stream(this);
-      RetCode retCode = TRIX_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = TRIX_OpenAndFillImpl(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

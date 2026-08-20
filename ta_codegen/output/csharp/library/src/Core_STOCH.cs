@@ -122,7 +122,7 @@ public partial class Core
       return retValue ;
 
    }
-   internal RetCode STOCH_Body( int startIdx,
+   internal RetCode STOCH_Impl( int startIdx,
                                 int endIdx,
                                 ReadOnlySpan<double> inHigh,
                                 ReadOnlySpan<double> inLow,
@@ -382,7 +382,7 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode STOCH_Body( int startIdx,
+   internal RetCode STOCH_Impl( int startIdx,
                                 int endIdx,
                                 ReadOnlySpan<float> inHigh,
                                 ReadOnlySpan<float> inLow,
@@ -628,7 +628,7 @@ public partial class Core
       RequireLength("STOCH", "inClose", inClose.Length, guardInLen);
       RequireLength("STOCH", "outSlowK", outSlowK.Length, guardOutLen);
       RequireLength("STOCH", "outSlowD", outSlowD.Length, guardOutLen);
-      RetCode retCode = STOCH_Body(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out int outBegIdx, out int outNBElement, outSlowK, outSlowD);
+      RetCode retCode = STOCH_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out int outBegIdx, out int outNBElement, outSlowK, outSlowD);
       if( retCode != RetCode.Success ) {
          throw Failure("STOCH", retCode);
       }
@@ -724,7 +724,7 @@ public partial class Core
       RequireLength("STOCH", "inClose", inClose.Length, guardInLen);
       RequireLength("STOCH", "outSlowK", outSlowK.Length, guardOutLen);
       RequireLength("STOCH", "outSlowD", outSlowD.Length, guardOutLen);
-      RetCode retCode = STOCH_Body(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out int outBegIdx, out int outNBElement, outSlowK, outSlowD);
+      RetCode retCode = STOCH_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out int outBegIdx, out int outNBElement, outSlowK, outSlowD);
       if( retCode != RetCode.Success ) {
          throw Failure("STOCH", retCode);
       }
@@ -1011,7 +1011,7 @@ public partial class Core
       sp.cur_outSlowD = cur_outSlowD;
    }
 
-   private RetCode STOCH_OpenCore( STOCH_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, out int outBegIdx, out int outNBElement, Span<double> outSlowK, Span<double> outSlowD, int outStride )
+   private RetCode STOCH_OpenPass( STOCH_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, out int outBegIdx, out int outNBElement, Span<double> outSlowK, Span<double> outSlowD, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1311,33 +1311,33 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode STOCH_OpenBody( STOCH_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
+   private RetCode STOCH_OpenImpl( STOCH_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
    {
       double[] sink_outSlowK = new double[1];
       double[] sink_outSlowD = new double[1];
-      return STOCH_OpenCore( sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out _, out _, sink_outSlowK, sink_outSlowD, 0 );
+      return STOCH_OpenPass( sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out _, out _, sink_outSlowK, sink_outSlowD, 0 );
    }
 
-   private RetCode STOCH_OpenAndFillBody( STOCH_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, out int outBegIdx, out int outNBElement, Span<double> outSlowK, Span<double> outSlowD )
+   private RetCode STOCH_OpenAndFillImpl( STOCH_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, out int outBegIdx, out int outNBElement, Span<double> outSlowK, Span<double> outSlowD )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outSlowK.Overlaps(inHigh) || outSlowK.Overlaps(inLow) || outSlowK.Overlaps(inClose) || outSlowD.Overlaps(inHigh) || outSlowD.Overlaps(inLow) || outSlowD.Overlaps(inClose) || outSlowK.Overlaps(outSlowD) ) {
          return RetCode.BadParam;
       }
-      return STOCH_OpenCore( sp, inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outSlowK, outSlowD, 1 );
+      return STOCH_OpenPass( sp, inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outSlowK, outSlowD, 1 );
    }
 
-   private RetCode STOCH_OpenAndFillInternalBody( STOCH_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, out int outBegIdx, out int outNBElement, Span<double> outSlowK, Span<double> outSlowD )
+   private RetCode STOCH_OpenAndFillInternalImpl( STOCH_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, out int outBegIdx, out int outNBElement, Span<double> outSlowK, Span<double> outSlowD )
    {
-      return STOCH_OpenCore(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outSlowK, outSlowD, 1);
+      return STOCH_OpenPass(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outSlowK, outSlowD, 1);
    }
 
    /* STOCH_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal STOCH_Stream STOCH_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, out int outBegIdx, out int outNBElement, Span<double> outSlowK, Span<double> outSlowD )
    {
       STOCH_Stream sp = new STOCH_Stream(this);
-      RetCode retCode = STOCH_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outSlowK, outSlowD);
+      RetCode retCode = STOCH_OpenAndFillInternalImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outSlowK, outSlowD);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1348,7 +1348,7 @@ public partial class Core
    internal STOCH_Stream STOCH_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
    {
       STOCH_Stream sp = new STOCH_Stream(this);
-      RetCode retCode = STOCH_OpenBody(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+      RetCode retCode = STOCH_OpenImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1432,7 +1432,7 @@ public partial class Core
       if( inLow.IsEmpty ) throw new TaLibArgumentException("inLow is empty", nameof(inLow), RetCode.BadParam);
       if( inClose.IsEmpty ) throw new TaLibArgumentException("inClose is empty", nameof(inClose), RetCode.BadParam);
       STOCH_Stream sp = new STOCH_Stream(this);
-      RetCode retCode = STOCH_OpenAndFillBody(sp, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out int outBegIdx, out int outNBElement, outSlowK, outSlowD);
+      RetCode retCode = STOCH_OpenAndFillImpl(sp, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out int outBegIdx, out int outNBElement, outSlowK, outSlowD);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

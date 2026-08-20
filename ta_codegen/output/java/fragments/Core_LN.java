@@ -25,7 +25,7 @@
       return 0 ;
 
    }
-   RetCode LN_Body( int startIdx,
+   RetCode LN_Impl( int startIdx,
                     int endIdx,
                     double inReal[],
                     MInteger outBegIdx,
@@ -47,7 +47,7 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode LN_Body( int startIdx,
+   RetCode LN_Impl( int startIdx,
                     int endIdx,
                     float inReal[],
                     MInteger outBegIdx,
@@ -123,7 +123,7 @@
       requireLength("LN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = LN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LN_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("LN", retCode);
       }
@@ -186,7 +186,7 @@
       requireLength("LN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = LN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LN_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("LN", retCode);
       }
@@ -291,7 +291,7 @@
    {
       sp.cur_outReal = Math.log(inReal);
    }
-   private RetCode LN_OpenCore( LN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode LN_OpenPass( LN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -312,29 +312,29 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode LN_OpenBody( LN_Stream sp, double inReal[], int startIdx )
+   private RetCode LN_OpenImpl( LN_Stream sp, double inReal[], int startIdx )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return LN_OpenCore( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
+      return LN_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode LN_OpenAndFillBody( LN_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode LN_OpenAndFillImpl( LN_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      return LN_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
+      return LN_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode LN_OpenAndFillInternalBody( LN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode LN_OpenAndFillInternalImpl( LN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return LN_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+      return LN_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
    }
    /* LN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    LN_Stream LN_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       LN_Stream sp = new LN_Stream(this);
-      RetCode retCode = LN_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LN_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -350,7 +350,7 @@
    LN_Stream LN_OpenInternal( double inReal[], int startIdx )
    {
       LN_Stream sp = new LN_Stream(this);
-      RetCode retCode = LN_OpenBody(sp, inReal, startIdx);
+      RetCode retCode = LN_OpenImpl(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -390,7 +390,7 @@
       LN_Stream sp = new LN_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = LN_OpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LN_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

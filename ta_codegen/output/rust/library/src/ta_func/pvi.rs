@@ -73,7 +73,7 @@ impl Core {
     }
     /// C-shaped body behind [`Core::PVI`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body and its cross-indicator callers expect.
-    pub(crate) fn PVI_Internal(
+    pub(crate) fn PVI_Impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -233,7 +233,7 @@ impl Core {
     ) -> Result<OutRange, RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let retCode = self.PVI_Internal(
+        let retCode = self.PVI_Impl(
             startIdx,
             endIdx,
             inClose,
@@ -332,7 +332,7 @@ impl Core {
 
     /// The single whole-history transcription behind [`Core::PVI_OpenInternal`]
     /// (stride 0, scalar sink) and [`Core::PVI_OpenAndFill`] (stride 1, caller slices).
-    pub(crate) fn PVI_OpenCore(
+    pub(crate) fn PVI_OpenPass(
         &self, inClose: &[f64], inVolume: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<PVI_Stream, RetCode> {
         if inClose.is_empty() || inVolume.is_empty() || inVolume.len() != inClose.len() {
@@ -408,7 +408,7 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sink_outReal = [0.0_f64; 1];
-        let handle = self.PVI_OpenCore(inClose, inVolume, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        let handle = self.PVI_OpenPass(inClose, inVolume, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
         Ok((handle, sink_outReal[0]))
     }
 
@@ -452,7 +452,7 @@ impl Core {
     ) -> Result<(PVI_Stream, OutRange), RetCode> {
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.PVI_OpenCore(inClose, inVolume, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
+        let handle = self.PVI_OpenPass(inClose, inVolume, 0, &mut outBegIdx, &mut outNBElement, outReal, 1)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
@@ -461,7 +461,7 @@ impl Core {
     pub(crate) fn PVI_OpenAndFillInternal(
         &self, inClose: &[f64], inVolume: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<PVI_Stream, RetCode> {
-        self.PVI_OpenCore(inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1)
+        self.PVI_OpenPass(inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

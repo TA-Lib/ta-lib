@@ -133,7 +133,7 @@ public partial class Core
       return retValue ;
 
    }
-   internal RetCode MA_Body( int startIdx,
+   internal RetCode MA_Impl( int startIdx,
                              int endIdx,
                              ReadOnlySpan<double> inReal,
                              int optInTimePeriod,
@@ -251,7 +251,7 @@ public partial class Core
       }
       return retCode ;
    }
-   internal RetCode MA_Body( int startIdx,
+   internal RetCode MA_Impl( int startIdx,
                              int endIdx,
                              ReadOnlySpan<float> inReal,
                              int optInTimePeriod,
@@ -421,7 +421,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("MA", "inReal", inReal.Length, guardInLen);
       RequireLength("MA", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = MA_Body(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MA_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MA", retCode);
       }
@@ -495,7 +495,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("MA", "inReal", inReal.Length, guardInLen);
       RequireLength("MA", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = MA_Body(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MA_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MA", retCode);
       }
@@ -793,7 +793,7 @@ public partial class Core
       }
    }
 
-   private RetCode MA_OpenBody( MA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, MAType optInMAType )
+   private RetCode MA_OpenImpl( MA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, MAType optInMAType )
    {
       int historyLen = inReal.Length;
       if( historyLen < 1 ) {
@@ -895,7 +895,7 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MA_OpenAndFillBody( MA_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode MA_OpenAndFillImpl( MA_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1028,7 +1028,7 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MA_OpenAndFillInternalBody( MA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode MA_OpenAndFillInternalImpl( MA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1146,7 +1146,7 @@ public partial class Core
    internal MA_Stream MA_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, MAType optInMAType )
    {
       MA_Stream sp = new MA_Stream(this);
-      RetCode retCode = MA_OpenBody(sp, inReal, startIdx, optInTimePeriod, optInMAType);
+      RetCode retCode = MA_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInMAType);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1208,7 +1208,7 @@ public partial class Core
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       MA_Stream sp = new MA_Stream(this);
-      RetCode retCode = MA_OpenAndFillBody(sp, inReal, optInTimePeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MA_OpenAndFillImpl(sp, inReal, optInTimePeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;
@@ -1220,7 +1220,7 @@ public partial class Core
    internal MA_Stream MA_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       MA_Stream sp = new MA_Stream(this);
-      RetCode retCode = MA_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = MA_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }

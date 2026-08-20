@@ -46,7 +46,7 @@
       return 63 + this.unstablePeriod[FuncUnstId.HT_TRENDMODE.ordinal()] ;
 
    }
-   RetCode HT_TRENDMODE_Body( int startIdx,
+   RetCode HT_TRENDMODE_Impl( int startIdx,
                               int endIdx,
                               double inReal[],
                               MInteger outBegIdx,
@@ -533,7 +533,7 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode HT_TRENDMODE_Body( int startIdx,
+   RetCode HT_TRENDMODE_Impl( int startIdx,
                               int endIdx,
                               float inReal[],
                               MInteger outBegIdx,
@@ -986,7 +986,7 @@
       requireLength("HT_TRENDMODE", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_TRENDMODE_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = HT_TRENDMODE_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("HT_TRENDMODE", retCode);
       }
@@ -1045,7 +1045,7 @@
       requireLength("HT_TRENDMODE", "outInteger", outInteger, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_TRENDMODE_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = HT_TRENDMODE_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("HT_TRENDMODE", retCode);
       }
@@ -1703,7 +1703,7 @@
       }
       sp.streamParity = 1 - sp.streamParity;
    }
-   private RetCode HT_TRENDMODE_OpenCore( HT_TRENDMODE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
+   private RetCode HT_TRENDMODE_OpenPass( HT_TRENDMODE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -2289,29 +2289,29 @@
       sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode HT_TRENDMODE_OpenBody( HT_TRENDMODE_Stream sp, double inReal[], int startIdx )
+   private RetCode HT_TRENDMODE_OpenImpl( HT_TRENDMODE_Stream sp, double inReal[], int startIdx )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       int[] sink_outInteger = new int[1];
-      return HT_TRENDMODE_OpenCore( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
+      return HT_TRENDMODE_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
    }
-   private RetCode HT_TRENDMODE_OpenAndFillBody( HT_TRENDMODE_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   private RetCode HT_TRENDMODE_OpenAndFillImpl( HT_TRENDMODE_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       if( (Object)outInteger == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      return HT_TRENDMODE_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outInteger, 1 );
+      return HT_TRENDMODE_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outInteger, 1 );
    }
-   private RetCode HT_TRENDMODE_OpenAndFillInternalBody( HT_TRENDMODE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   private RetCode HT_TRENDMODE_OpenAndFillInternalImpl( HT_TRENDMODE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      return HT_TRENDMODE_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outInteger, 1);
+      return HT_TRENDMODE_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outInteger, 1);
    }
    /* HT_TRENDMODE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    HT_TRENDMODE_Stream HT_TRENDMODE_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       HT_TRENDMODE_Stream sp = new HT_TRENDMODE_Stream(this);
-      RetCode retCode = HT_TRENDMODE_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = HT_TRENDMODE_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outInteger);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -2327,7 +2327,7 @@
    HT_TRENDMODE_Stream HT_TRENDMODE_OpenInternal( double inReal[], int startIdx )
    {
       HT_TRENDMODE_Stream sp = new HT_TRENDMODE_Stream(this);
-      RetCode retCode = HT_TRENDMODE_OpenBody(sp, inReal, startIdx);
+      RetCode retCode = HT_TRENDMODE_OpenImpl(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -2367,7 +2367,7 @@
       HT_TRENDMODE_Stream sp = new HT_TRENDMODE_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = HT_TRENDMODE_OpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = HT_TRENDMODE_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

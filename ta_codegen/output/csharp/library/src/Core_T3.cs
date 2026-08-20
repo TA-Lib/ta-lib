@@ -100,7 +100,7 @@ public partial class Core
       return 6 * (optInTimePeriod - 1) + this.unstablePeriod[(int)FuncUnstId.T3] ;
 
    }
-   internal RetCode T3_Body( int startIdx,
+   internal RetCode T3_Impl( int startIdx,
                              int endIdx,
                              ReadOnlySpan<double> inReal,
                              int optInTimePeriod,
@@ -278,7 +278,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode T3_Body( int startIdx,
+   internal RetCode T3_Impl( int startIdx,
                              int endIdx,
                              ReadOnlySpan<float> inReal,
                              int optInTimePeriod,
@@ -477,7 +477,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("T3", "inReal", inReal.Length, guardInLen);
       RequireLength("T3", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = T3_Body(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = T3_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("T3", retCode);
       }
@@ -549,7 +549,7 @@ public partial class Core
       int guardOutLen = guardStart < 0 || guardStart > endIdx ? 0 : endIdx - guardStart + 1;
       RequireLength("T3", "inReal", inReal.Length, guardInLen);
       RequireLength("T3", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = T3_Body(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = T3_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("T3", retCode);
       }
@@ -715,7 +715,7 @@ public partial class Core
       sp.cur_outReal = Math.FusedMultiplyAdd(sp.c4, sp.e3, Math.FusedMultiplyAdd(sp.c3, sp.e4, Math.FusedMultiplyAdd(sp.c1, sp.e6, sp.c2 * sp.e5)));
    }
 
-   private RetCode T3_OpenCore( T3_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInVFactor, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode T3_OpenPass( T3_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInVFactor, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -918,32 +918,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode T3_OpenBody( T3_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInVFactor )
+   private RetCode T3_OpenImpl( T3_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInVFactor )
    {
       double[] sink_outReal = new double[1];
-      return T3_OpenCore( sp, inReal, startIdx, optInTimePeriod, optInVFactor, out _, out _, sink_outReal, 0 );
+      return T3_OpenPass( sp, inReal, startIdx, optInTimePeriod, optInVFactor, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode T3_OpenAndFillBody( T3_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, double optInVFactor, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode T3_OpenAndFillImpl( T3_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, double optInVFactor, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
-      return T3_OpenCore( sp, inReal, 0, optInTimePeriod, optInVFactor, out outBegIdx, out outNBElement, outReal, 1 );
+      return T3_OpenPass( sp, inReal, 0, optInTimePeriod, optInVFactor, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode T3_OpenAndFillInternalBody( T3_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInVFactor, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode T3_OpenAndFillInternalImpl( T3_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInVFactor, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return T3_OpenCore(sp, inReal, startIdx, optInTimePeriod, optInVFactor, out outBegIdx, out outNBElement, outReal, 1);
+      return T3_OpenPass(sp, inReal, startIdx, optInTimePeriod, optInVFactor, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* T3_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal T3_Stream T3_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInVFactor, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       T3_Stream sp = new T3_Stream(this);
-      RetCode retCode = T3_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, optInVFactor, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = T3_OpenAndFillInternalImpl(sp, inReal, startIdx, optInTimePeriod, optInVFactor, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -954,7 +954,7 @@ public partial class Core
    internal T3_Stream T3_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInVFactor )
    {
       T3_Stream sp = new T3_Stream(this);
-      RetCode retCode = T3_OpenBody(sp, inReal, startIdx, optInTimePeriod, optInVFactor);
+      RetCode retCode = T3_OpenImpl(sp, inReal, startIdx, optInTimePeriod, optInVFactor);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1016,7 +1016,7 @@ public partial class Core
    {
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       T3_Stream sp = new T3_Stream(this);
-      RetCode retCode = T3_OpenAndFillBody(sp, inReal, optInTimePeriod, optInVFactor, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = T3_OpenAndFillImpl(sp, inReal, optInTimePeriod, optInVFactor, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

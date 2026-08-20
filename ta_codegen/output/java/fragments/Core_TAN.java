@@ -25,7 +25,7 @@
       return 0 ;
 
    }
-   RetCode TAN_Body( int startIdx,
+   RetCode TAN_Impl( int startIdx,
                      int endIdx,
                      double inReal[],
                      MInteger outBegIdx,
@@ -47,7 +47,7 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode TAN_Body( int startIdx,
+   RetCode TAN_Impl( int startIdx,
                      int endIdx,
                      float inReal[],
                      MInteger outBegIdx,
@@ -120,7 +120,7 @@
       requireLength("TAN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TAN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TAN_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("TAN", retCode);
       }
@@ -180,7 +180,7 @@
       requireLength("TAN", "outReal", outReal, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TAN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TAN_Impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("TAN", retCode);
       }
@@ -285,7 +285,7 @@
    {
       sp.cur_outReal = Math.tan(inReal);
    }
-   private RetCode TAN_OpenCore( TAN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   private RetCode TAN_OpenPass( TAN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
@@ -306,29 +306,29 @@
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
-   private RetCode TAN_OpenBody( TAN_Stream sp, double inReal[], int startIdx )
+   private RetCode TAN_OpenImpl( TAN_Stream sp, double inReal[], int startIdx )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       double[] sink_outReal = new double[1];
-      return TAN_OpenCore( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
+      return TAN_OpenPass( sp, inReal, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
    }
-   private RetCode TAN_OpenAndFillBody( TAN_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode TAN_OpenAndFillImpl( TAN_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      return TAN_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
+      return TAN_OpenPass( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
    }
-   private RetCode TAN_OpenAndFillInternalBody( TAN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode TAN_OpenAndFillInternalImpl( TAN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      return TAN_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+      return TAN_OpenPass(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
    }
    /* TAN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    TAN_Stream TAN_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       TAN_Stream sp = new TAN_Stream(this);
-      RetCode retCode = TAN_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TAN_OpenAndFillInternalImpl(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -344,7 +344,7 @@
    TAN_Stream TAN_OpenInternal( double inReal[], int startIdx )
    {
       TAN_Stream sp = new TAN_Stream(this);
-      RetCode retCode = TAN_OpenBody(sp, inReal, startIdx);
+      RetCode retCode = TAN_OpenImpl(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -384,7 +384,7 @@
       TAN_Stream sp = new TAN_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = TAN_OpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TAN_OpenAndFillImpl(sp, inReal, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

@@ -74,7 +74,7 @@ public partial class Core
       return 0 ;
 
    }
-   internal RetCode OBV_Body( int startIdx,
+   internal RetCode OBV_Impl( int startIdx,
                               int endIdx,
                               ReadOnlySpan<double> inReal,
                               ReadOnlySpan<double> inVolume,
@@ -115,7 +115,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode OBV_Body( int startIdx,
+   internal RetCode OBV_Impl( int startIdx,
                               int endIdx,
                               ReadOnlySpan<float> inReal,
                               ReadOnlySpan<float> inVolume,
@@ -205,7 +205,7 @@ public partial class Core
       RequireLength("OBV", "inReal", inReal.Length, guardInLen);
       RequireLength("OBV", "inVolume", inVolume.Length, guardInLen);
       RequireLength("OBV", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = OBV_Body(startIdx, endIdx, inReal, inVolume, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = OBV_Impl(startIdx, endIdx, inReal, inVolume, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("OBV", retCode);
       }
@@ -269,7 +269,7 @@ public partial class Core
       RequireLength("OBV", "inReal", inReal.Length, guardInLen);
       RequireLength("OBV", "inVolume", inVolume.Length, guardInLen);
       RequireLength("OBV", "outReal", outReal.Length, guardOutLen);
-      RetCode retCode = OBV_Body(startIdx, endIdx, inReal, inVolume, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = OBV_Impl(startIdx, endIdx, inReal, inVolume, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("OBV", retCode);
       }
@@ -399,7 +399,7 @@ public partial class Core
       sp.prevReal = tempReal;
    }
 
-   private RetCode OBV_OpenCore( OBV_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
+   private RetCode OBV_OpenPass( OBV_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -438,32 +438,32 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode OBV_OpenBody( OBV_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx )
+   private RetCode OBV_OpenImpl( OBV_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx )
    {
       double[] sink_outReal = new double[1];
-      return OBV_OpenCore( sp, inReal, inVolume, startIdx, out _, out _, sink_outReal, 0 );
+      return OBV_OpenPass( sp, inReal, inVolume, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode OBV_OpenAndFillBody( OBV_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode OBV_OpenAndFillImpl( OBV_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
       if( outReal.Overlaps(inReal) || outReal.Overlaps(inVolume) ) {
          return RetCode.BadParam;
       }
-      return OBV_OpenCore( sp, inReal, inVolume, 0, out outBegIdx, out outNBElement, outReal, 1 );
+      return OBV_OpenPass( sp, inReal, inVolume, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode OBV_OpenAndFillInternalBody( OBV_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
+   private RetCode OBV_OpenAndFillInternalImpl( OBV_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
-      return OBV_OpenCore(sp, inReal, inVolume, startIdx, out outBegIdx, out outNBElement, outReal, 1);
+      return OBV_OpenPass(sp, inReal, inVolume, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* OBV_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
    internal OBV_Stream OBV_OpenAndFillInternal( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       OBV_Stream sp = new OBV_Stream(this);
-      RetCode retCode = OBV_OpenAndFillInternalBody(sp, inReal, inVolume, startIdx, out outBegIdx, out outNBElement, outReal);
+      RetCode retCode = OBV_OpenAndFillInternalImpl(sp, inReal, inVolume, startIdx, out outBegIdx, out outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -474,7 +474,7 @@ public partial class Core
    internal OBV_Stream OBV_OpenInternal( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx )
    {
       OBV_Stream sp = new OBV_Stream(this);
-      RetCode retCode = OBV_OpenBody(sp, inReal, inVolume, startIdx);
+      RetCode retCode = OBV_OpenImpl(sp, inReal, inVolume, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -532,7 +532,7 @@ public partial class Core
       if( inReal.IsEmpty ) throw new TaLibArgumentException("inReal is empty", nameof(inReal), RetCode.BadParam);
       if( inVolume.IsEmpty ) throw new TaLibArgumentException("inVolume is empty", nameof(inVolume), RetCode.BadParam);
       OBV_Stream sp = new OBV_Stream(this);
-      RetCode retCode = OBV_OpenAndFillBody(sp, inReal, inVolume, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = OBV_OpenAndFillImpl(sp, inReal, inVolume, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
       if( retCode == RetCode.Success ) {
          return sp;

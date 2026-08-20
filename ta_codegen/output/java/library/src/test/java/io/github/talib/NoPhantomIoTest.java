@@ -112,13 +112,13 @@ import java.util.TreeSet;
  *     over-read one.)</li>
  * </ol>
  *
- * <p>The sweeps drive {@code NAME_Body}, the unguarded core, on purpose: the
+ * <p>The sweeps drive {@code NAME_Impl}, the unguarded core, on purpose: the
  * public wrapper's own length validation would reject an undersized array before
  * the body could touch it, which is a different (and already tested) property.
  *
  * <p>They drove {@code NAME_Internal} until #236 step 5 deleted it. That tier
  * was a catch-and-convert shim over this same body, so the retarget is a rename:
- * {@code NAME_Body} has the identical C-shaped signature, is package-private for
+ * {@code NAME_Impl} has the identical C-shaped signature, is package-private for
  * the same reason, and is the tier the shim was calling all along.
  *
  * <p>The C# suite of the same name carries sweeps 1 and 2. Running both is not
@@ -269,10 +269,10 @@ public class NoPhantomIoTest {
         Map<String, Method> lookbacks = new HashMap<>();
         for (Method m : Core.class.getDeclaredMethods()) {
             String n = m.getName();
-            if (n.endsWith("_Body")) {
+            if (n.endsWith("_Impl")) {
                 boolean isFloat = m.getParameterTypes()[2] == float[].class;
                 if (isFloat == wantFloat) {
-                    cores.put(n.substring(0, n.length() - "_Body".length()), m);
+                    cores.put(n.substring(0, n.length() - "_Impl".length()), m);
                 }
             } else if (n.endsWith("_Lookback")) {
                 lookbacks.put(n.substring(0, n.length() - "_Lookback".length()), m);
@@ -535,6 +535,14 @@ public class NoPhantomIoTest {
      * <p>An explicit list, not a symptom test: a core that starts answering
      * {@code BadParam} here for any other reason is still a hard failure. The
      * size is asserted, so the debt can be paid down but not quietly grown.
+     *
+     * <p><b>Paying it down has a second edge.</b> The mechanism that withholds
+     * these ten — a composed body cross-calling its callee's public tier — is
+     * the only thing that makes C#'s {@code FunctionCall.TryInvoke} catch
+     * reachable, since its thunks call the body, which answers a code. Route
+     * cross-calls to {@code _Impl} and this list empties, but that catch goes
+     * dead and {@code TryInvoke} silently stops converting anything. The two
+     * move together; change them together.
      */
     private static final java.util.Set<String> CROSS_CALL_GUARDED = java.util.Set.of(
         "ADXR", "APO", "MA", "MACDEXT", "PPO", "PVO", "SAR", "SAREXT", "STDDEV",
@@ -1131,11 +1139,11 @@ public class NoPhantomIoTest {
         MInteger n = new MInteger();
 
         // 1. sub-lookback: the quiet case, then one bar longer.
-        RetCode quiet = core.SMA_Body(0, lookback - 1, new double[0], 30, b, n,
+        RetCode quiet = core.SMA_Impl(0, lookback - 1, new double[0], 30, b, n,
                                           new double[0]);
         check(quiet == RetCode.Success && n.value == 0,
               "a sub-lookback range with zero-length arrays is a silent success");
-        check(throwsOob(() -> core.SMA_Body(0, lookback, new double[0], 30, b, n,
+        check(throwsOob(() -> core.SMA_Impl(0, lookback, new double[0], 30, b, n,
                                                 new double[0])),
               "one bar longer DOES touch the arrays, so sweep 1 can detect I/O");
 
@@ -1147,13 +1155,13 @@ public class NoPhantomIoTest {
         for (int i = 0; i < in.length; i++) {
             in[i] = bar("inReal", i);
         }
-        check(core.SMA_Body(0, endIdx, in, 30, b, n, new double[count])
+        check(core.SMA_Impl(0, endIdx, in, 30, b, n, new double[count])
                   == RetCode.Success && n.value == count,
               "exactly-sized input and output are enough for SMA");
-        check(throwsOob(() -> core.SMA_Body(0, endIdx, in, 30, b, n,
+        check(throwsOob(() -> core.SMA_Impl(0, endIdx, in, 30, b, n,
                                                 new double[count - 1])),
               "an output one short of the count throws, so sweep 2 sees over-writes");
-        check(throwsOob(() -> core.SMA_Body(0, endIdx, Arrays.copyOf(in, endIdx),
+        check(throwsOob(() -> core.SMA_Impl(0, endIdx, Arrays.copyOf(in, endIdx),
                                                 30, b, n, new double[count])),
               "an input one short of endIdx+1 throws, so sweep 2 sees over-reads");
 
@@ -1163,7 +1171,7 @@ public class NoPhantomIoTest {
         for (int i = 0; i < bars.length; i++) {
             bars[i] = bar("close", i);
         }
-        check(throwsOob(() -> core.MEDPRICE_Body(0, endIdx, new double[0], bars,
+        check(throwsOob(() -> core.MEDPRICE_Impl(0, endIdx, new double[0], bars,
                                                      b, n, new double[endIdx + 1])),
               "a leg the function reads, given zero length, throws");
 

@@ -568,7 +568,7 @@ fn gen_impl_block(func: &FuncDef, enums: &HashMap<String, EnumDef>, registry: &R
     // inline or delegates to `_private`.
     out.push_str(&fma_dispatch_wrap(
         gen_guarded_func(func, &snake, enums, registry, helpers),
-        &format!("{snake}_Internal"),
+        &format!("{snake}_Impl"),
         "pub(crate) ",
     ));
     out.push_str(&gen_public_entry(func, &snake, enums, registry));
@@ -709,18 +709,18 @@ fn gen_lookback(
 /// The name a transcribed body calls a sibling indicator by.
 ///
 /// C's `TA_MA(...)` is the guarded entry point, which in Rust is now
-/// `MA_Internal` — the C-shaped one. A `_Private` callee already names a
+/// `MA_Impl` — the C-shaped one. A `_Private` callee already names a
 /// distinct function and is left alone.
 fn internal_callee(name: &str) -> String {
     if name.ends_with("_Private") {
         name.to_string()
     } else {
-        format!("{name}_Internal")
+        format!("{name}_Impl")
     }
 }
 
 /// Generate the batch entry point the crate actually exposes: a thin wrapper over
-/// `{snake}_Internal` returning `Result<OutRange, RetCode>`.
+/// `{snake}_Impl` returning `Result<OutRange, RetCode>`.
 ///
 /// This is the same two-tier shape Java and C# ship — their public `SMA` calls the
 /// code-returning one and turns a failure into an exception, returning `OutRange`
@@ -769,7 +769,7 @@ fn gen_public_entry(
     out.push_str("        let mut outNBElement: usize = 0;\n");
     // Always one argument per line: the shortest call in the corpus is already
     // past a sensible width, so a single-line form would be dead code.
-    out.push_str(&format!("        let retCode = self.{snake}_Internal(\n"));
+    out.push_str(&format!("        let retCode = self.{snake}_Impl(\n"));
     for a in &args {
         out.push_str(&format!("            {a},\n"));
     }
@@ -782,7 +782,7 @@ fn gen_public_entry(
     out
 }
 
-/// Generate the guarded entry point — `{snake}_Internal`, crate-private. Validates
+/// Generate the guarded entry point — `{snake}_Impl`, crate-private. Validates
 /// params, then renders the algorithm inline (or delegates to `{snake}_Private`
 /// when the function declares one).
 ///
@@ -790,7 +790,7 @@ fn gen_public_entry(
 /// — because that is what the transcribed bodies are written against: 19 of the 33
 /// cross-indicator call sites hand their own out-params straight to the callee and
 /// read them back, and four guards fold "success with zero output" into the same
-/// condition as the error, which `?` cannot express. Java (`SMA_Internal`) and C#
+/// condition as the error, which `?` cannot express. Java (`SMA_Impl`) and C#
 /// (the `RetCode` overload) route cross-calls the same way. `gen_public_entry`
 /// wraps this into the `Result<OutRange, RetCode>` the crate actually exposes.
 #[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
@@ -807,7 +807,7 @@ fn gen_guarded_func(
     out.push_str(&format!(
         "    /// C-shaped body behind [`Core::{snake}`]: a `RetCode` plus two out-params,\n    /// which is what the transcribed body and its cross-indicator callers expect.\n"
     ));
-    out.push_str(&format!("    pub(crate) fn {snake}_Internal(\n"));
+    out.push_str(&format!("    pub(crate) fn {snake}_Impl(\n"));
     out.push_str("        &self,\n");
     out.push_str("        startIdx: usize,\n");
     out.push_str("        endIdx: usize,\n");
