@@ -276,19 +276,20 @@ is concrete-`f64` only.
 | Variant | Purpose |
 |---------|---------|
 | `pub fn <N>_Lookback(...) -> usize` | Lookback (first valid output index) |
-| `pub fn <N>(...) -> Result<OutRange, RetCode>` | The batch API. A thin generated wrapper with no out-params: it calls `<N>_Internal` and turns `Success` into `Ok(OutRange { beg_idx, count })`. Same two-tier shape Java (`<N>_Internal` + `OutRange`) and C# already ship |
-| `pub(crate) fn <N>_Internal(...) -> RetCode` | The guarded body: validates params, pre-computes optimization values, delegates. Keeps C's shape — a code plus `&mut outBegIdx` / `&mut outNBElement` — because that is what the transcribed bodies are written against, and it is where the FMA dispatch sits |
-| `fn <N>_Private(...)` | Only where the definition declares one. Extra pre-computed params, no validation prologue — its only caller is the guarded body above it. No shipped indicator declares one; the construct is carried by the `SYNTH4` gate fixture (`input_synth/README.md`) |
+| `pub fn <N>(...) -> Result<OutRange, RetCode>` | The batch API. A thin generated wrapper with no out-params: it calls `<N>_Impl` and turns `Success` into `Ok(OutRange { beg_idx, count })`. Same two-tier shape Java (`<N>_Impl` + `OutRange`) and C# (`internal RetCode <N>_Impl` + `public OutRange <N>`) already ship |
+| `pub(crate) fn <N>_Impl(...) -> RetCode` | The body: validates params and the index range, pre-computes optimization values, delegates. Keeps C's shape — a code plus `&mut outBegIdx` / `&mut outNBElement` — because that is what the transcribed bodies are written against, and it is where the FMA dispatch sits |
+| `fn <N>_Private(...)` | Only where the definition declares one. Extra pre-computed params, no validation prologue — its only caller is the `_Impl` body above it. No shipped indicator declares one; the construct is carried by the `SYNTH4` gate fixture (`input_synth/README.md`) |
 
-Cross-indicator calls target **`<N>_Internal`**, the guarded entry point, never
-the public wrapper: 19 of the 33 call sites hand the callee their own
-`&mut outBegIdx` / `&mut outNBElement` and read them back, and four fold "success
-with zero output" into the same conditional as the error, which `?` cannot
-express. `<N>_Internal` carries the bounds-assert preamble; that preamble takes an
-empty-range escape so a call computing nothing cannot panic.
+Cross-indicator calls target **`<N>_Impl`**, never the public wrapper: 19 of the
+33 call sites hand the callee their own `&mut outBegIdx` / `&mut outNBElement`
+and read them back, and four fold "success with zero output" into the same
+conditional as the error, which `?` cannot express. **Rust alone** — since #236
+step 3 Java and C# route a cross-call to the callee's *public* tier, which is
+what C has always done. `<N>_Impl` carries the bounds-assert preamble; that
+preamble takes an empty-range escape so a call computing nothing cannot panic.
 
 `rust_doc::guarded_docs` is the rustdoc for the **public** wrapper, so its
-`# Arguments` list must match that signature — not the internal one.
+`# Arguments` list must match that signature — not the `_Impl` one.
 `rust_public_entry_documents_exactly_its_parameters` pins the two together;
 nothing else can, since rustdoc has no lint for documenting a parameter that does
 not exist.

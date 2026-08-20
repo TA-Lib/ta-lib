@@ -302,7 +302,7 @@ the same declared default" and needs no oracle). The sentinel vector is not a
 refinement: it is the one that exposed the `TA_S_EMA` k-factor defect fixed in
 `2e9767397`, where the float body derived `k` from the raw sentinel because its
 initialiser ran before the prologue substituted it. The same defect was live in
-Java's float `EMA_Internal` and C#'s float `EMA`, and reaching only resolved
+Java's float `EMA_Impl` and C#'s float `EMA`, and reaching only resolved
 defaults, no gate could see it there. Sabotage-proven both ways: reintroducing
 it in the Java and C# float bodies fails the sentinel pass on both, and with the
 sentinel pass switched off the identical sabotage passes clean.
