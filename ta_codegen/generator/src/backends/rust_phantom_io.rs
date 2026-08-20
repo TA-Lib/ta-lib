@@ -8,7 +8,7 @@
 //! **What this reaches that the Java suite does not.** Since #236 step 3 routed
 //! cross-calls through the public callee, ten composed cores are out of the
 //! Java sweep's reach and are withheld by name there. Rust's cross-calls still
-//! target `<N>_Internal`, so it probes all 174. It also covers the *Rust*
+//! target `<N>_Impl`, so it probes all 174. It also covers the *Rust*
 //! emitter: a bug that changes what one backend touches without changing what
 //! it produces is invisible to `--xlang-hash` by construction, so each
 //! backend's phantom-I/O coverage is only ever its own.
@@ -16,7 +16,7 @@
 //! **Why Rust can host it.** Java and C# have a guarded public tier and an
 //! unguarded body, and the probe has to pick the second or it measures the
 //! guard. Rust has no such split: `pub fn SMA` is a thin `Result` mapper over
-//! `SMA_Internal`, and the bounds check lives *in the body* as the `assert!`
+//! `SMA_Impl`, and the bounds check lives *in the body* as the `assert!`
 //! preamble plus the indexing itself, under `#![forbid(unsafe_code)]`. The
 //! public API reaches it directly.
 //!

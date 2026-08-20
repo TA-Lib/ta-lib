@@ -136,7 +136,7 @@ import java.util.TreeSet;
  * Two things it has that the sweeps below do not. It reaches every core: since
  * #236 step 3 routed cross-calls through the public callee, ten composed cores
  * are out of reach here and are named in {@code CROSS_CALL_GUARDED}, while
- * Rust's cross-calls still target {@code NAME_Internal} and so probe all 174.
+ * Rust's cross-calls still target {@code NAME_Impl} and so probe all 174.
  * And it covers the <i>Rust</i> emitter — an emitter bug of the kind described
  * above is invisible to every other backend's probe, by the same argument.
  *
