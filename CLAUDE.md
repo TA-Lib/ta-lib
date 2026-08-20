@@ -52,12 +52,17 @@ See `ta_codegen/generator/CLAUDE.md` for ta_codegen internals and
 
 No hand-coded string literals for type definitions or scaffolding in the codegen.
 
-The managed backends have **three** batch tiers, not two: `public OutRange <N>(...)`
-(guards, then throws), `<N>_Body` (the transcribed numerics), and the C-shaped
-`<N>_Impl` (Java) / `internal RetCode <N>(..., out int, out int, ...)` (C#),
-which is a catch-and-convert shim the JSON-RPC server binds to. A cross-call
-inside a body calls the callee's *public* tier and lets its rejection throw;
-the shim is where that becomes a code again.
+The managed backends have **two** batch tiers: `public OutRange <N>(...)`, which
+validates array lengths and throws on a rejection, and `<N>_Impl` — the
+transcribed numerics, package-private in Java and `internal` in C#, keeping C's
+`RetCode` + out-param shape. There is no third, catch-and-convert tier; #236
+step 5 deleted it.
+
+A cross-call inside a body calls the callee's *public* tier and lets its
+rejection throw, so the callers that need a code back convert it themselves:
+the JSON-RPC servers, and C#'s `FunctionCall.TryInvoke`. That conversion is
+live only while cross-calls go through the public tier — the same fact that
+withholds ten cores from `NoPhantomIoTest`'s sweep — so the two move together.
 
 Do not hand-edit **generated** files under `ta_codegen/output/` — they are
 overwritten on the next `generate`. The converse trap: some hand-written source
@@ -138,7 +143,7 @@ Indicators are methods on a `Core` struct, one file per indicator.
   bounds-assert preamble (the LLVM proof that elides per-access bounds checks);
   it is skipped when the lookback clamp means the call computes nothing, so a
   call that returns `Success` with zero elements cannot panic.
-- **Cross-indicator calls target `<N>_Impl`**, the crate-private guarded entry point that keeps C's `RetCode` + out-param shape. The public batch API is `pub fn <N>(...) -> Result<OutRange, RetCode>`. **Rust alone.** Java and C# route a cross-call to the callee's PUBLIC entry point (#236 step 3), which is what C has always done; Rust did not follow because its public tier is a thin `Result` adapter that adds no checks the body's asserts do not already make, so the move would buy nothing and would still owe the in-place `mem::swap` shim.
+- **Cross-indicator calls target `<N>_Impl`**, the crate-private entry point that keeps C's `RetCode` + out-param shape. (It validates parameters and the index range; array bounds are the `assert!` preamble above, not a length check — say which, because "guarded" once contrasted with a retired `Unguarded` tier and now has no anchor.) The public batch API is `pub fn <N>(...) -> Result<OutRange, RetCode>`. **Rust alone.** Java and C# route a cross-call to the callee's PUBLIC entry point (#236 step 3), which is what C has always done; Rust did not follow because its public tier is a thin `Result` adapter that adds no checks the body's asserts do not already make, so the move would buy nothing and would still owe the in-place `mem::swap` shim.
 - Rustdoc, including a runnable doctest per function, is generated from each
   function's canonical `<name>.md`. Verify with `cargo doc --no-deps`
   (warning-free) and `cargo test --doc` in the crate.

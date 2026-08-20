@@ -112,9 +112,13 @@ import java.util.TreeSet;
  *     over-read one.)</li>
  * </ol>
  *
- * <p>The sweeps drive {@code NAME_Impl}, the unguarded core, on purpose: the
- * public wrapper's own length validation would reject an undersized array before
+ * <p>The sweeps drive {@code NAME_Impl} — the numerics, which validate
+ * parameters and the index range but <i>not</i> array lengths — on purpose: the
+ * public wrapper's length validation would reject an undersized array before
  * the body could touch it, which is a different (and already tested) property.
+ * Named by the check rather than called "unguarded", because that word once
+ * contrasted with a retired {@code Unguarded} tier and now reads as the
+ * opposite of CLAUDE.md's "guarded" for the same tier in Rust.
  *
  * <p>They drove {@code NAME_Internal} until #236 step 5 deleted it. That tier
  * was a catch-and-convert shim over this same body, so the retarget is a rename:
