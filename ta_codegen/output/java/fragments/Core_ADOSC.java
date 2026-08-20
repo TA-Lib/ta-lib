@@ -371,29 +371,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode ADOSC_Internal( int startIdx,
-                           int endIdx,
-                           double inHigh[],
-                           double inLow[],
-                           double inClose[],
-                           double inVolume[],
-                           int optInFastPeriod,
-                           int optInSlowPeriod,
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outReal[] )
-   {
-      try {
-         return ADOSC_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Chaikin A/D Oscillator: the difference between a fast and a slow EMA of
     * the Accumulation/Distribution line. Highlights momentum in
@@ -471,29 +448,6 @@
          throw failure("ADOSC", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode ADOSC_Internal( int startIdx,
-                           int endIdx,
-                           float inHigh[],
-                           float inLow[],
-                           float inClose[],
-                           float inVolume[],
-                           int optInFastPeriod,
-                           int optInSlowPeriod,
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outReal[] )
-   {
-      try {
-         return ADOSC_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

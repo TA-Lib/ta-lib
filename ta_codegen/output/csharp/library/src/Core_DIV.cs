@@ -182,22 +182,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode DIV( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inReal0,
-                         ReadOnlySpan<double> inReal1,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return DIV_Body(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Element-wise division of two input series. Computes the quotient of
    /// corresponding values from two real inputs.
@@ -263,22 +247,6 @@ public partial class Core
          throw Failure("DIV", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode DIV( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inReal0,
-                         ReadOnlySpan<float> inReal1,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return DIV_Body(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

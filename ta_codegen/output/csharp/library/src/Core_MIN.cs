@@ -398,22 +398,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode MIN( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inReal,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return MIN_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Rolling minimum: the lowest input value over the trailing period.
    /// </summary>
@@ -475,22 +459,6 @@ public partial class Core
          throw Failure("MIN", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode MIN( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inReal,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return MIN_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

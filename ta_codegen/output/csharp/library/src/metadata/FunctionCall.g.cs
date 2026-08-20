@@ -518,7 +518,20 @@ public sealed class FunctionCall
             return bound;
         }
 
-        CallOutcome outcome = _info.Invoke(_core, this, startIdx, endIdx);
+        CallOutcome outcome;
+        try
+        {
+            outcome = _info.Invoke(_core, this, startIdx, endIdx);
+        }
+        catch (Exception _e) when (_e is ITaLibFailure)
+        {
+            // The thunk calls the public overload, which reports a rejection by
+            // throwing. This method's contract is a code, so it converts here --
+            // once, rather than in every thunk. Only the library's own failure is
+            // converted; anything else is not ours to relabel.
+            range = new OutRange(0, 0);
+            return ((ITaLibFailure)_e).RetCode;
+        }
         range = new OutRange(outcome.BegIdx, outcome.Count);
         return outcome.Code;
     }

@@ -228,26 +228,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode STDDEV_Internal( int startIdx,
-                            int endIdx,
-                            double inReal[],
-                            int optInTimePeriod,
-                            double optInNbDev,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
-   {
-      try {
-         return STDDEV_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Rolling standard deviation of a series over a window, scaled by a
     * deviations multiplier. Delegates to VAR, then takes the square root.
@@ -316,26 +296,6 @@
          throw failure("STDDEV", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode STDDEV_Internal( int startIdx,
-                            int endIdx,
-                            float inReal[],
-                            int optInTimePeriod,
-                            double optInNbDev,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
-   {
-      try {
-         return STDDEV_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

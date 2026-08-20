@@ -584,24 +584,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode SAR( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inHigh,
-                         ReadOnlySpan<double> inLow,
-                         double optInAcceleration,
-                         double optInMaximum,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return SAR_Body(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Wilder's Parabolic SAR (Stop And Reverse): a trailing stop/reverse level
    /// that accelerates toward price via an acceleration factor. Signals trend
@@ -674,24 +656,6 @@ public partial class Core
          throw Failure("SAR", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode SAR( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inHigh,
-                         ReadOnlySpan<float> inLow,
-                         double optInAcceleration,
-                         double optInMaximum,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return SAR_Body(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

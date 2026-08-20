@@ -254,22 +254,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode PVI( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inClose,
-                         ReadOnlySpan<double> inVolume,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return PVI_Body(startIdx, endIdx, inClose, inVolume, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Positive Volume Index: a running cumulative index that changes only on
    /// days when volume rises versus the prior day, compounding that day's
@@ -344,22 +328,6 @@ public partial class Core
          throw Failure("PVI", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode PVI( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inClose,
-                         ReadOnlySpan<float> inVolume,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return PVI_Body(startIdx, endIdx, inClose, inVolume, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

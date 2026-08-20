@@ -483,23 +483,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode T3( int startIdx,
-                        int endIdx,
-                        ReadOnlySpan<double> inReal,
-                        int optInTimePeriod,
-                        double optInVFactor,
-                        out int outBegIdx,
-                        out int outNBElement,
-                        Span<double> outReal )
-   {
-      try {
-         return T3_Body(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Tillson's T3: a low-lag moving average built from six chained EMAs,
    /// combined via volume-factor-weighted coefficients. Not the same as EMA3,
@@ -571,23 +554,6 @@ public partial class Core
          throw Failure("T3", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode T3( int startIdx,
-                        int endIdx,
-                        ReadOnlySpan<float> inReal,
-                        int optInTimePeriod,
-                        double optInVFactor,
-                        out int outBegIdx,
-                        out int outNBElement,
-                        Span<double> outReal )
-   {
-      try {
-         return T3_Body(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

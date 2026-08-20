@@ -305,26 +305,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode CORREL_Internal( int startIdx,
-                            int endIdx,
-                            double inReal0[],
-                            double inReal1[],
-                            int optInTimePeriod,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
-   {
-      try {
-         return CORREL_Body(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Pearson's correlation coefficient (r) between two input series over a
     * rolling window of optInTimePeriod bars. Measures how linearly the two
@@ -395,26 +375,6 @@
          throw failure("CORREL", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode CORREL_Internal( int startIdx,
-                            int endIdx,
-                            float inReal0[],
-                            float inReal1[],
-                            int optInTimePeriod,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
-   {
-      try {
-         return CORREL_Body(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

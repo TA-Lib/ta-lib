@@ -125,24 +125,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode SQRT_Internal( int startIdx,
-                          int endIdx,
-                          double inReal[],
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
-   {
-      try {
-         return SQRT_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Vector square root: applies the square-root function element-wise to each
     * input value.
@@ -201,24 +183,6 @@
          throw failure("SQRT", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode SQRT_Internal( int startIdx,
-                          int endIdx,
-                          float inReal[],
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
-   {
-      try {
-         return SQRT_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

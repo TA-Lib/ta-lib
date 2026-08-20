@@ -275,25 +275,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode LINEARREG_ANGLE_Internal( int startIdx,
-                                     int endIdx,
-                                     double inReal[],
-                                     int optInTimePeriod,
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     double outReal[] )
-   {
-      try {
-         return LINEARREG_ANGLE_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * The angle, in degrees, of the least-squares best-fit line over the last N
     * points. It is the LINEARREG_SLOPE value passed through atan and converted
@@ -358,25 +339,6 @@
          throw failure("LINEARREG_ANGLE", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode LINEARREG_ANGLE_Internal( int startIdx,
-                                     int endIdx,
-                                     float inReal[],
-                                     int optInTimePeriod,
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     double outReal[] )
-   {
-      try {
-         return LINEARREG_ANGLE_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

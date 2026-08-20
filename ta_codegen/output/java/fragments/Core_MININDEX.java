@@ -246,25 +246,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode MININDEX_Internal( int startIdx,
-                              int endIdx,
-                              double inReal[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              int outInteger[] )
-   {
-      try {
-         return MININDEX_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Returns the absolute index of the lowest value within a rolling window of
     * the given period. Same scan as MIN but outputs the position of the minimum
@@ -333,25 +314,6 @@
          throw failure("MININDEX", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode MININDEX_Internal( int startIdx,
-                              int endIdx,
-                              float inReal[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              int outInteger[] )
-   {
-      try {
-         return MININDEX_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

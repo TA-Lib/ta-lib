@@ -472,22 +472,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode KAMA( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<double> inReal,
-                          int optInTimePeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
-   {
-      try {
-         return KAMA_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Kaufman Adaptive Moving Average: an EMA whose smoothing factor adapts each
    /// bar to an efficiency ratio (directional move vs. total volatility). Reacts
@@ -558,22 +542,6 @@ public partial class Core
          throw Failure("KAMA", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode KAMA( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<float> inReal,
-                          int optInTimePeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
-   {
-      try {
-         return KAMA_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

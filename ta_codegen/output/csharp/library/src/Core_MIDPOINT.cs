@@ -474,22 +474,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode MIDPOINT( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<double> inReal,
-                              int optInTimePeriod,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outReal )
-   {
-      try {
-         return MIDPOINT_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Midpoint over a period: the average of the highest and lowest input values
    /// within the lookback window. A single-series overlap smoother (use MIDPRICE
@@ -553,22 +537,6 @@ public partial class Core
          throw Failure("MIDPOINT", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode MIDPOINT( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<float> inReal,
-                              int optInTimePeriod,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outReal )
-   {
-      try {
-         return MIDPOINT_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

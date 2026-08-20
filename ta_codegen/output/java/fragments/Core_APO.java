@@ -290,27 +290,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode APO_Internal( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         int optInFastPeriod,
-                         int optInSlowPeriod,
-                         MAType optInMAType,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
-   {
-      try {
-         return APO_Body(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Absolute Price Oscillator: the difference between a fast and a slow moving
     * average of the input, in price units. Measures short- vs long-term
@@ -390,27 +369,6 @@
          throw failure("APO", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode APO_Internal( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         int optInFastPeriod,
-                         int optInSlowPeriod,
-                         MAType optInMAType,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
-   {
-      try {
-         return APO_Body(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

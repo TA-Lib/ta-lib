@@ -715,24 +715,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode HT_DCPERIOD_Internal( int startIdx,
-                                 int endIdx,
-                                 double inReal[],
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
-   {
-      try {
-         return HT_DCPERIOD_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Hilbert Transform estimate of the dominant cycle period (in bars) of the
     * price series. Outputs the smoothed instantaneous cycle period. Output is
@@ -791,24 +773,6 @@
          throw failure("HT_DCPERIOD", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode HT_DCPERIOD_Internal( int startIdx,
-                                 int endIdx,
-                                 float inReal[],
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
-   {
-      try {
-         return HT_DCPERIOD_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

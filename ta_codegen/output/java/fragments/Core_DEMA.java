@@ -340,25 +340,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode DEMA_Internal( int startIdx,
-                          int endIdx,
-                          double inReal[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
-   {
-      try {
-         return DEMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Double Exponential Moving Average: an EMA combined with an EMA-of-EMA to
     * reduce lag versus a plain EMA. Overlap Studies overlay on price.
@@ -424,25 +405,6 @@
          throw failure("DEMA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode DEMA_Internal( int startIdx,
-                          int endIdx,
-                          float inReal[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
-   {
-      try {
-         return DEMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

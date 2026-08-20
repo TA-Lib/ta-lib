@@ -425,23 +425,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode VAR( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inReal,
-                         int optInTimePeriod,
-                         double optInNbDev,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return VAR_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Rolling population variance of a real series over a given period. Measures
    /// dispersion of values around their mean. Higher values indicate greater
@@ -512,23 +495,6 @@ public partial class Core
          throw Failure("VAR", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode VAR( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inReal,
-                         int optInTimePeriod,
-                         double optInNbDev,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return VAR_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

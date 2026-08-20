@@ -211,22 +211,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode OBV( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inReal,
-                         ReadOnlySpan<double> inVolume,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return OBV_Body(startIdx, endIdx, inReal, inVolume, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// On Balance Volume: a running cumulative total of volume, added on up-price
    /// bars and subtracted on down-price bars. Relates volume flow to price
@@ -290,22 +274,6 @@ public partial class Core
          throw Failure("OBV", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode OBV( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inReal,
-                         ReadOnlySpan<float> inVolume,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return OBV_Body(startIdx, endIdx, inReal, inVolume, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

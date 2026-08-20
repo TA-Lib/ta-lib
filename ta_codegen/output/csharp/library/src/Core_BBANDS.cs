@@ -716,27 +716,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode BBANDS( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<double> inReal,
-                            int optInTimePeriod,
-                            double optInNbDevUp,
-                            double optInNbDevDn,
-                            MAType optInMAType,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outRealUpperBand,
-                            Span<double> outRealMiddleBand,
-                            Span<double> outRealLowerBand )
-   {
-      try {
-         return BBANDS_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out outBegIdx, out outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Bollinger Bands: a moving-average middle band with upper and lower bands
    /// offset by a multiple of the standard deviation. Used to gauge relative
@@ -833,27 +812,6 @@ public partial class Core
          throw Failure("BBANDS", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode BBANDS( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<float> inReal,
-                            int optInTimePeriod,
-                            double optInNbDevUp,
-                            double optInNbDevDn,
-                            MAType optInMAType,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outRealUpperBand,
-                            Span<double> outRealMiddleBand,
-                            Span<double> outRealLowerBand )
-   {
-      try {
-         return BBANDS_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out outBegIdx, out outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

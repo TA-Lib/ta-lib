@@ -353,24 +353,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode PPO( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inReal,
-                         int optInFastPeriod,
-                         int optInSlowPeriod,
-                         MAType optInMAType,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return PPO_Body(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Percentage Price Oscillator: the difference between a fast and slow moving
    /// average expressed as a percentage of the slow MA. A normalized
@@ -448,24 +430,6 @@ public partial class Core
          throw Failure("PPO", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode PPO( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inReal,
-                         int optInFastPeriod,
-                         int optInSlowPeriod,
-                         MAType optInMAType,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return PPO_Body(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

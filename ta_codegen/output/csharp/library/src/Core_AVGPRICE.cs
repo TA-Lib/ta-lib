@@ -197,24 +197,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode AVGPRICE( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<double> inOpen,
-                              ReadOnlySpan<double> inHigh,
-                              ReadOnlySpan<double> inLow,
-                              ReadOnlySpan<double> inClose,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outReal )
-   {
-      try {
-         return AVGPRICE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Average Price: the arithmetic mean of each bar's open, high, low, and
    /// close. A price-transform overlap condensing OHLC into a single
@@ -284,24 +266,6 @@ public partial class Core
          throw Failure("AVGPRICE", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode AVGPRICE( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<float> inOpen,
-                              ReadOnlySpan<float> inHigh,
-                              ReadOnlySpan<float> inLow,
-                              ReadOnlySpan<float> inClose,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outReal )
-   {
-      try {
-         return AVGPRICE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

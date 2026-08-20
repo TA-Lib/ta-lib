@@ -444,22 +444,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode CMO( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inReal,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return CMO_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Chande Momentum Oscillator: bounded momentum measure from Wilder-smoothed
    /// average up-moves and down-moves. Identical to RSI except the numerator
@@ -527,22 +511,6 @@ public partial class Core
          throw Failure("CMO", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode CMO( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inReal,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return CMO_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

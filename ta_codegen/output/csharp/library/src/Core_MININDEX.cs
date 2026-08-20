@@ -288,22 +288,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode MININDEX( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<double> inReal,
-                              int optInTimePeriod,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<int> outInteger )
-   {
-      try {
-         return MININDEX_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outInteger);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Returns the absolute index of the lowest value within a rolling window of
    /// the given period. Same scan as MIN but outputs the position of the minimum
@@ -370,22 +354,6 @@ public partial class Core
          throw Failure("MININDEX", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode MININDEX( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<float> inReal,
-                              int optInTimePeriod,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<int> outInteger )
-   {
-      try {
-         return MININDEX_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outInteger);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

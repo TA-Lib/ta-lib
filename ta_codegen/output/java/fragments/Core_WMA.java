@@ -304,25 +304,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode WMA_Internal( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
-   {
-      try {
-         return WMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Linearly weighted moving average: each of the last N prices is weighted by
     * its position, oldest getting weight 1 and newest weight N. Smooths price
@@ -391,25 +372,6 @@
          throw failure("WMA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode WMA_Internal( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
-   {
-      try {
-         return WMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

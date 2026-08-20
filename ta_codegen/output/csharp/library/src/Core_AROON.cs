@@ -361,24 +361,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode AROON( int startIdx,
-                           int endIdx,
-                           ReadOnlySpan<double> inHigh,
-                           ReadOnlySpan<double> inLow,
-                           int optInTimePeriod,
-                           out int outBegIdx,
-                           out int outNBElement,
-                           Span<double> outAroonDown,
-                           Span<double> outAroonUp )
-   {
-      try {
-         return AROON_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outAroonDown, outAroonUp);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Aroon reports how recently the highest high and lowest low occurred within
    /// a rolling window of length optInTimePeriod, as two 0-100 oscillators.
@@ -451,24 +433,6 @@ public partial class Core
          throw Failure("AROON", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode AROON( int startIdx,
-                           int endIdx,
-                           ReadOnlySpan<float> inHigh,
-                           ReadOnlySpan<float> inLow,
-                           int optInTimePeriod,
-                           out int outBegIdx,
-                           out int outNBElement,
-                           Span<double> outAroonDown,
-                           Span<double> outAroonUp )
-   {
-      try {
-         return AROON_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outAroonDown, outAroonUp);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

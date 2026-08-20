@@ -148,27 +148,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode AVGPRICE_Internal( int startIdx,
-                              int endIdx,
-                              double inOpen[],
-                              double inHigh[],
-                              double inLow[],
-                              double inClose[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-   {
-      try {
-         return AVGPRICE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Average Price: the arithmetic mean of each bar's open, high, low, and
     * close. A price-transform overlap condensing OHLC into a single
@@ -237,27 +216,6 @@
          throw failure("AVGPRICE", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode AVGPRICE_Internal( int startIdx,
-                              int endIdx,
-                              float inOpen[],
-                              float inHigh[],
-                              float inLow[],
-                              float inClose[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-   {
-      try {
-         return AVGPRICE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

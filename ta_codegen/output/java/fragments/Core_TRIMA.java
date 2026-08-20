@@ -509,25 +509,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode TRIMA_Internal( int startIdx,
-                           int endIdx,
-                           double inReal[],
-                           int optInTimePeriod,
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outReal[] )
-   {
-      try {
-         return TRIMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Triangular Moving Average: a double-smoothed moving average that weights
     * prices toward the middle of the window most heavily. Equivalent to an SMA
@@ -596,25 +577,6 @@
          throw failure("TRIMA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode TRIMA_Internal( int startIdx,
-                           int endIdx,
-                           float inReal[],
-                           int optInTimePeriod,
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outReal[] )
-   {
-      try {
-         return TRIMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

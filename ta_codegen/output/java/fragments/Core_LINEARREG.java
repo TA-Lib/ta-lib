@@ -273,25 +273,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode LINEARREG_Internal( int startIdx,
-                               int endIdx,
-                               double inReal[],
-                               int optInTimePeriod,
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outReal[] )
-   {
-      try {
-         return LINEARREG_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Least-squares straight-line fit over the last optInTimePeriod bars,
     * reported as the fitted line value at the window endpoint (b +
@@ -351,25 +332,6 @@
          throw failure("LINEARREG", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode LINEARREG_Internal( int startIdx,
-                               int endIdx,
-                               float inReal[],
-                               int optInTimePeriod,
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outReal[] )
-   {
-      try {
-         return LINEARREG_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

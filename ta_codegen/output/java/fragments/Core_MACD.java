@@ -500,29 +500,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode MACD_Internal( int startIdx,
-                          int endIdx,
-                          double inReal[],
-                          int optInFastPeriod,
-                          int optInSlowPeriod,
-                          int optInSignalPeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outMACD[],
-                          double outMACDSignal[],
-                          double outMACDHist[] )
-   {
-      try {
-         return MACD_Body(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Moving Average Convergence/Divergence: the difference between a fast and a
     * slow EMA of the input, plus an EMA-smoothed signal line and their
@@ -606,29 +583,6 @@
          throw failure("MACD", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode MACD_Internal( int startIdx,
-                          int endIdx,
-                          float inReal[],
-                          int optInFastPeriod,
-                          int optInSlowPeriod,
-                          int optInSignalPeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outMACD[],
-                          double outMACDSignal[],
-                          double outMACDHist[] )
-   {
-      try {
-         return MACD_Body(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

@@ -2893,9 +2893,12 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         // retCode / outBegIdx / outNBElement wire shape it always did.
         //
         // A request that declares itself TIMED (`"timed":1`, which only ta_bench
-        // sends) keeps calling the C-shaped tier inside the timed loop,
-        // unchanged. These servers ARE the cross-language benchmark, and nothing
-        // measured may quietly acquire the public tier's argument checks.
+        // sends) calls the BODY -- the numerics and nothing else -- inside the
+        // timed loop. These servers ARE the cross-language benchmark, and
+        // nothing measured may quietly acquire the public tier's argument
+        // checks. Before #236 step 5 this went through the C-shaped shim, which
+        // wrapped the same body in a try/catch; the shim is gone and the body is
+        // what it always meant.
         //
         // Declared, not inferred from `iters > 1`: `ta_bench --iters=1` is a
         // legitimate invocation, and inferring would have made it measure the
@@ -2924,7 +2927,14 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             }
             s.push_str("        if (bench_mode == 0) {\n");
             s.push_str("        if (jsonInt(json, \"timed\") != 0) {\n");
-            s.push_str(&format!("            rc = core.{func_base}_Internal({core_args});\n"));
+            s.push_str("            try {\n");
+            s.push_str(&format!("                rc = core.{func_base}_Body({core_args});\n"));
+            s.push_str("            } catch (RuntimeException _e) {\n");
+            s.push_str("                if (!(_e instanceof TaLibFailure)) throw _e;\n");
+            s.push_str("                rc = ((TaLibFailure) _e).retCode();\n");
+            s.push_str("                outBegIdx.value = 0;\n");
+            s.push_str("                outNBElement.value = 0;\n");
+            s.push_str("            }\n");
             s.push_str("        } else {\n");
             s.push_str("            try {\n");
             s.push_str(&format!("                OutRange _pr = core.{func_base}({pub_args});\n"));
@@ -3783,7 +3793,13 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
                 pub_args.push_str(&format!(", outArr{k}"));
             }
             s.push_str("            if (GetInt(p, \"timed\", 0) != 0) {\n");
-            s.push_str(&format!("                rc = core.{base}({call_args});\n"));
+            s.push_str("                try {\n");
+            s.push_str(&format!("                    rc = core.{base}_Body({call_args});\n"));
+            s.push_str("                } catch (Exception _e2) when (_e2 is ITaLibFailure) {\n");
+            s.push_str("                    rc = ((ITaLibFailure)_e2).RetCode;\n");
+            s.push_str("                    outBegIdx = 0;\n");
+            s.push_str("                    outNBElement = 0;\n");
+            s.push_str("                }\n");
             s.push_str("            } else {\n");
             s.push_str("                try {\n");
             s.push_str(&format!("                    OutRange _pr = core.{base}({pub_args});\n"));
@@ -5883,7 +5899,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     // Batch leg.
     let _ = writeln!(
         s,
-        "            RetCode rc = c2.{base}_Internal(0, svN - 1, {full_ins}, {opts_lead}beg, nb{bargs});"
+        "            RetCode rc;\n            try {{ rc = c2.{base}_Body(0, svN - 1, {full_ins}, {opts_lead}beg, nb{bargs}); }}\n            catch (RuntimeException _sve) {{ if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }}"
     );
     let _ = writeln!(s, "            int lb = c2.{base}_Lookback({opts});");
     s.push_str("            if (rc != RetCode.Success || nb.value == 0) {\n");
@@ -6927,7 +6943,7 @@ fn emit_csharp_sv_func(
     // code, including the ones the public surface converts into throws.
     let _ = writeln!(
         s,
-        "            RetCode rc = c2.{base}(0, svN - 1, {full_ins}, {opts_lead}out beg, out nb{bargs});"
+        "            RetCode rc;\n            try {{ rc = c2.{base}_Body(0, svN - 1, {full_ins}, {opts_lead}out beg, out nb{bargs}); }}\n            catch (Exception _sve) when (_sve is ITaLibFailure) {{ rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }}"
     );
     let _ = writeln!(s, "            int lb = c2.{base}_Lookback({opts});");
     s.push_str("            if (rc != RetCode.Success || nb == 0) {\n");
@@ -7359,7 +7375,7 @@ fn emit_csharp_sv_func(
         s.push_str("                        int mBeg = 0, mNb = 0;\n");
         let _ = writeln!(
             s,
-            "                        RetCode mrc = c2.{base}(0, svN - 1, {full_ins}, {opts_lead}out mBeg, out mNb{margs});"
+            "                        RetCode mrc;\n                        try {{ mrc = c2.{base}_Body(0, svN - 1, {full_ins}, {opts_lead}out mBeg, out mNb{margs}); }}\n                        catch (Exception _mve) when (_mve is ITaLibFailure) {{ mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }}"
         );
         s.push_str("                        if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;\n");
         s.push_str("                        else {\n");

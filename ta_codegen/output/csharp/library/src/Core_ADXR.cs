@@ -289,24 +289,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode ADXR( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<double> inHigh,
-                          ReadOnlySpan<double> inLow,
-                          ReadOnlySpan<double> inClose,
-                          int optInTimePeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
-   {
-      try {
-         return ADXR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Smoothed variant of ADX: the average of the current ADX value and the ADX
    /// value from (period-1) bars earlier. Further damps ADX to gauge trend
@@ -380,24 +362,6 @@ public partial class Core
          throw Failure("ADXR", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode ADXR( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<float> inHigh,
-                          ReadOnlySpan<float> inLow,
-                          ReadOnlySpan<float> inClose,
-                          int optInTimePeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
-   {
-      try {
-         return ADXR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

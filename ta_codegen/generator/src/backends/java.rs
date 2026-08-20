@@ -666,18 +666,6 @@ fn render_init_expr(expr: &Expr) -> String {
     }
 }
 
-/// Name of the C-shaped tier: `RetCode` plus `MInteger` out-parameters, the
-/// signature the JSON-RPC server calls and the shape C's own API has.
-///
-/// Since #236 step 3 it is a shim — it calls [`body_name`] and converts a thrown
-/// failure back to its code — so that the transcribed body's cross-calls can
-/// target the PUBLIC callee and let its rejection propagate. The server still
-/// calls this, unchanged, which is what lets that switch land under the existing
-/// cross-language coverage.
-fn internal_core_name(base: &str) -> String {
-    format!("{base}_Internal")
-}
-
 /// Name of the transcribed body: the numerics, and nothing else.
 ///
 /// Not public API in any backend. It keeps the C-shaped signature because the
@@ -862,57 +850,6 @@ fn gen_public_wrapper(
     out.push_str("      return new OutRange(outBegIdx.value, outNBElement.value);\n");
     out.push_str("   }\n");
 
-    // The C-shaped tier, as a shim. It exists for the callers that want a code
-    // rather than a throw -- the JSON-RPC server, and nothing else in the
-    // shipped library since the cross-calls moved to the public entry point.
-    //
-    // The `catch` is not defensive: the body's cross-calls now call the public
-    // callee, which THROWS, so a sub-function rejection reaches here as an
-    // exception and has to become a code again. Only the library's own failures
-    // are converted -- anything else is not ours to relabel.
-    //
-    // It calls the BODY, not the public wrapper: the wrapper's argument checks
-    // are a property of the public API, and putting them on this path would
-    // change what the server sees before the harness is pointed at that API.
-    {
-        let internal = internal_core_name(&base_name);
-        let mut core_params = params.clone();
-        // The two out-parameters sit between the optional inputs and the outputs.
-        let out_at = core_params.len() - func.outputs.len();
-        core_params.insert(out_at, "MInteger outNBElement".to_string());
-        core_params.insert(out_at, "MInteger outBegIdx".to_string());
-        let sig_prefix = format!("   RetCode {internal}( ");
-        let indent = " ".repeat(sig_prefix.len());
-        out.push_str(&sig_prefix);
-        for (i, param) in core_params.iter().enumerate() {
-            if i > 0 {
-                out.push_str(&format!(",\n{indent}"));
-            }
-            out.push_str(param);
-        }
-        out.push_str(" )\n   {\n");
-        out.push_str("      try {\n");
-        let _ = write!(out, "         return {core}(");
-        out.push_str(&args.join(", "));
-        out.push_str(");\n");
-        // `TaLibFailure` is an interface, and Java can only catch a Throwable,
-        // so the type test is inside. Anything that is not the library's own
-        // failure is rethrown: it is not ours to relabel as a return code.
-        out.push_str("      } catch (RuntimeException e) {\n");
-        out.push_str("         if (e instanceof TaLibFailure) {\n");
-        // The reported range goes back to nothing, as C# does and as C's own
-        // bodies do on their reject paths. Without this the two managed
-        // backends answer the same rejection with different out-parameters --
-        // Java leaving whatever the body had written before it threw -- and the
-        // servers put exactly those two numbers on the wire beside the code.
-        out.push_str("            outBegIdx.value = 0;\n");
-        out.push_str("            outNBElement.value = 0;\n");
-        out.push_str("            return ((TaLibFailure) e).retCode();\n");
-        out.push_str("         }\n");
-        out.push_str("         throw e;\n");
-        out.push_str("      }\n");
-        out.push_str("   }\n");
-    }
     out
 }
 
@@ -2728,8 +2665,10 @@ mod tests {
         let registry = make_registry();
         let output = generate(&func, &enums, &registry, &HelperRegistry::empty());
 
-        // The internal core is emitted, package-private (no `public`).
-        assert!(output.contains("   RetCode SMA_Internal("), "Missing guarded core");
+        // #236 step 5: the C-shaped tier is GONE. Two tiers remain -- the
+        // public wrapper and the body it calls -- and nothing in the shipped
+        // library answers a RetCode any more.
+        assert!(!output.contains("SMA_Internal"), "the C-shaped tier must not come back");
         assert!(!output.contains("Unguarded"), "no unguarded tier may exist");
         assert!(
             !output.contains("public RetCode SMA"),
@@ -2746,18 +2685,6 @@ mod tests {
         assert!(
             body_section[..body_end].contains("OutOfRangeStartIndex"),
             "the body should contain validation"
-        );
-
-        // The C-shaped tier is a shim over it, and its `catch` is the whole
-        // reason it exists: since #236 step 3 a cross-call inside the body calls
-        // the callee's PUBLIC entry point, which throws rather than answering a
-        // code, so this is where the code comes back.
-        let shim_pos = output.find("   RetCode SMA_Internal( ").unwrap();
-        let shim = &output[shim_pos..shim_pos + 900];
-        assert!(shim.contains("return SMA_Body("), "the shim must call the body");
-        assert!(
-            shim.contains("catch (RuntimeException e)") && shim.contains("((TaLibFailure) e).retCode()"),
-            "the shim must convert a thrown failure back to its code"
         );
 
         // The public surface is OutRange-returning wrappers, and they call the

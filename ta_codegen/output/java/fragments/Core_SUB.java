@@ -131,25 +131,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode SUB_Internal( int startIdx,
-                         int endIdx,
-                         double inReal0[],
-                         double inReal1[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
-   {
-      try {
-         return SUB_Body(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Element-wise vector subtraction of two input series. Outputs inReal0 minus
     * inReal1 at each index.
@@ -211,25 +192,6 @@
          throw failure("SUB", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode SUB_Internal( int startIdx,
-                         int endIdx,
-                         float inReal0[],
-                         float inReal1[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
-   {
-      try {
-         return SUB_Body(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

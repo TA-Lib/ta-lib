@@ -323,22 +323,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode LINEARREG_ANGLE( int startIdx,
-                                     int endIdx,
-                                     ReadOnlySpan<double> inReal,
-                                     int optInTimePeriod,
-                                     out int outBegIdx,
-                                     out int outNBElement,
-                                     Span<double> outReal )
-   {
-      try {
-         return LINEARREG_ANGLE_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// The angle, in degrees, of the least-squares best-fit line over the last N
    /// points. It is the LINEARREG_SLOPE value passed through atan and converted
@@ -403,22 +387,6 @@ public partial class Core
          throw Failure("LINEARREG_ANGLE", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode LINEARREG_ANGLE( int startIdx,
-                                     int endIdx,
-                                     ReadOnlySpan<float> inReal,
-                                     int optInTimePeriod,
-                                     out int outBegIdx,
-                                     out int outNBElement,
-                                     Span<double> outReal )
-   {
-      try {
-         return LINEARREG_ANGLE_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

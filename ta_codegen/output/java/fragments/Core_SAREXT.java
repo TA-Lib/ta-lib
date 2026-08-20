@@ -760,33 +760,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode SAREXT_Internal( int startIdx,
-                            int endIdx,
-                            double inHigh[],
-                            double inLow[],
-                            double optInStartValue,
-                            double optInOffsetOnReverse,
-                            double optInAccelerationInitLong,
-                            double optInAccelerationLong,
-                            double optInAccelerationMaxLong,
-                            double optInAccelerationInitShort,
-                            double optInAccelerationShort,
-                            double optInAccelerationMaxShort,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
-   {
-      try {
-         return SAREXT_Body(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Extended Parabolic SAR (stop and reverse) giving the caller full control
     * over the initial state and separate acceleration factors for long and
@@ -875,33 +848,6 @@
          throw failure("SAREXT", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode SAREXT_Internal( int startIdx,
-                            int endIdx,
-                            float inHigh[],
-                            float inLow[],
-                            double optInStartValue,
-                            double optInOffsetOnReverse,
-                            double optInAccelerationInitLong,
-                            double optInAccelerationLong,
-                            double optInAccelerationMaxLong,
-                            double optInAccelerationInitShort,
-                            double optInAccelerationShort,
-                            double optInAccelerationMaxShort,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
-   {
-      try {
-         return SAREXT_Body(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

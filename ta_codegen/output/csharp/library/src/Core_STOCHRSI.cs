@@ -387,26 +387,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode STOCHRSI( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<double> inReal,
-                              int optInTimePeriod,
-                              int optInFastK_Period,
-                              int optInFastD_Period,
-                              MAType optInFastD_MAType,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outFastK,
-                              Span<double> outFastD )
-   {
-      try {
-         return STOCHRSI_Body(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastK, outFastD);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Applies the Fast Stochastic (STOCHF) oscillator to an RSI series instead
    /// of price, measuring where RSI sits within its recent min/max range.
@@ -492,26 +472,6 @@ public partial class Core
          throw Failure("STOCHRSI", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode STOCHRSI( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<float> inReal,
-                              int optInTimePeriod,
-                              int optInFastK_Period,
-                              int optInFastD_Period,
-                              MAType optInFastD_MAType,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outFastK,
-                              Span<double> outFastD )
-   {
-      try {
-         return STOCHRSI_Body(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastK, outFastD);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

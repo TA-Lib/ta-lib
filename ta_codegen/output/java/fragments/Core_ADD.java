@@ -130,25 +130,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode ADD_Internal( int startIdx,
-                         int endIdx,
-                         double inReal0[],
-                         double inReal1[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
-   {
-      try {
-         return ADD_Body(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Vector arithmetic addition. Outputs the element-wise sum of two input
     * series.
@@ -210,25 +191,6 @@
          throw failure("ADD", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode ADD_Internal( int startIdx,
-                         int endIdx,
-                         float inReal0[],
-                         float inReal1[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
-   {
-      try {
-         return ADD_Body(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

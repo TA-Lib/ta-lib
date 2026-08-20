@@ -576,29 +576,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode ULTOSC_Internal( int startIdx,
-                            int endIdx,
-                            double inHigh[],
-                            double inLow[],
-                            double inClose[],
-                            int optInTimePeriod1,
-                            int optInTimePeriod2,
-                            int optInTimePeriod3,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
-   {
-      try {
-         return ULTOSC_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Ultimate Oscillator: momentum indicator combining
     * buying-pressure/true-range ratios over three time periods into one 0-100
@@ -682,29 +659,6 @@
          throw failure("ULTOSC", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode ULTOSC_Internal( int startIdx,
-                            int endIdx,
-                            float inHigh[],
-                            float inLow[],
-                            float inClose[],
-                            int optInTimePeriod1,
-                            int optInTimePeriod2,
-                            int optInTimePeriod3,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
-   {
-      try {
-         return ULTOSC_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

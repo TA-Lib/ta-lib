@@ -464,24 +464,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode MACDFIX( int startIdx,
-                             int endIdx,
-                             ReadOnlySpan<double> inReal,
-                             int optInSignalPeriod,
-                             out int outBegIdx,
-                             out int outNBElement,
-                             Span<double> outMACD,
-                             Span<double> outMACDSignal,
-                             Span<double> outMACDHist )
-   {
-      try {
-         return MACDFIX_Body(startIdx, endIdx, inReal, optInSignalPeriod, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// MACD with the fast/slow EMAs fixed to the classic 12/26 periods (with the
    /// classic fixed smoothing factors 0.15 and 0.075), exposing only the signal
@@ -557,24 +539,6 @@ public partial class Core
          throw Failure("MACDFIX", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode MACDFIX( int startIdx,
-                             int endIdx,
-                             ReadOnlySpan<float> inReal,
-                             int optInSignalPeriod,
-                             out int outBegIdx,
-                             out int outNBElement,
-                             Span<double> outMACD,
-                             Span<double> outMACDSignal,
-                             Span<double> outMACDHist )
-   {
-      try {
-         return MACDFIX_Body(startIdx, endIdx, inReal, optInSignalPeriod, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

@@ -478,23 +478,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode MINMAX( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<double> inReal,
-                            int optInTimePeriod,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outMin,
-                            Span<double> outMax )
-   {
-      try {
-         return MINMAX_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outMin, outMax);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Returns both the lowest and highest values of the input over a rolling
    /// window of the last optInTimePeriod bars. An overlap-study companion to MIN
@@ -558,23 +541,6 @@ public partial class Core
          throw Failure("MINMAX", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode MINMAX( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<float> inReal,
-                            int optInTimePeriod,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outMin,
-                            Span<double> outMax )
-   {
-      try {
-         return MINMAX_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outMin, outMax);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

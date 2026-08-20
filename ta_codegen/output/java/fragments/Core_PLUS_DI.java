@@ -643,27 +643,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode PLUS_DI_Internal( int startIdx,
-                             int endIdx,
-                             double inHigh[],
-                             double inLow[],
-                             double inClose[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-   {
-      try {
-         return PLUS_DI_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Plus Directional Indicator: the Wilder-smoothed positive directional
     * movement expressed as a percentage of the true range. Measures the
@@ -744,27 +723,6 @@
          throw failure("PLUS_DI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode PLUS_DI_Internal( int startIdx,
-                             int endIdx,
-                             float inHigh[],
-                             float inLow[],
-                             float inClose[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-   {
-      try {
-         return PLUS_DI_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

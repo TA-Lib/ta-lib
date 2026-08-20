@@ -583,28 +583,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode AC_Internal( int startIdx,
-                            int endIdx,
-                            double inHigh[],
-                            double inLow[],
-                            int optInFastPeriod,
-                            int optInSlowPeriod,
-                            int optInSignalPeriod,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
-       {
-          try {
-             return AC_Body(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Bill Williams' Accelerator/Decelerator Oscillator (*New Trading
         * Dimensions*, 1998): the rate at which market momentum is itself speeding
@@ -696,28 +674,6 @@ class Core {
              throw failure("AC", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode AC_Internal( int startIdx,
-                            int endIdx,
-                            float inHigh[],
-                            float inLow[],
-                            int optInFastPeriod,
-                            int optInSlowPeriod,
-                            int optInSignalPeriod,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
-       {
-          try {
-             return AC_Body(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -1604,29 +1560,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode ACCBANDS_Internal( int startIdx,
-                                  int endIdx,
-                                  double inHigh[],
-                                  double inLow[],
-                                  double inClose[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outRealUpperBand[],
-                                  double outRealMiddleBand[],
-                                  double outRealLowerBand[] )
-       {
-          try {
-             return ACCBANDS_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Acceleration Bands: three overlap lines around price. The middle band is
         * an SMA of the close; the upper/lower bands are SMAs of the high/low scaled
@@ -1704,29 +1637,6 @@ class Core {
              throw failure("ACCBANDS", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode ACCBANDS_Internal( int startIdx,
-                                  int endIdx,
-                                  float inHigh[],
-                                  float inLow[],
-                                  float inClose[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outRealUpperBand[],
-                                  double outRealMiddleBand[],
-                                  double outRealLowerBand[] )
-       {
-          try {
-             return ACCBANDS_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -2323,24 +2233,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode ACOS_Internal( int startIdx,
-                              int endIdx,
-                              double inReal[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return ACOS_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Vector trigonometric arc cosine: applies acos() to each input value. A
         * Math Transform passthrough with zero lookback.
@@ -2403,24 +2295,6 @@ class Core {
              throw failure("ACOS", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode ACOS_Internal( int startIdx,
-                              int endIdx,
-                              float inReal[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return ACOS_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -2833,27 +2707,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode AD_Internal( int startIdx,
-                            int endIdx,
-                            double inHigh[],
-                            double inLow[],
-                            double inClose[],
-                            double inVolume[],
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
-       {
-          try {
-             return AD_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Chaikin Accumulation/Distribution Line, a cumulative volume-flow
         * indicator. Sums a volume-weighted money-flow multiplier per bar to gauge
@@ -2922,27 +2775,6 @@ class Core {
              throw failure("AD", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode AD_Internal( int startIdx,
-                            int endIdx,
-                            float inHigh[],
-                            float inLow[],
-                            float inClose[],
-                            float inVolume[],
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
-       {
-          try {
-             return AD_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -3336,25 +3168,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode ADD_Internal( int startIdx,
-                             int endIdx,
-                             double inReal0[],
-                             double inReal1[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return ADD_Body(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Vector arithmetic addition. Outputs the element-wise sum of two input
         * series.
@@ -3416,25 +3229,6 @@ class Core {
              throw failure("ADD", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode ADD_Internal( int startIdx,
-                             int endIdx,
-                             float inReal0[],
-                             float inReal1[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return ADD_Body(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -4020,29 +3814,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode ADOSC_Internal( int startIdx,
-                               int endIdx,
-                               double inHigh[],
-                               double inLow[],
-                               double inClose[],
-                               double inVolume[],
-                               int optInFastPeriod,
-                               int optInSlowPeriod,
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outReal[] )
-       {
-          try {
-             return ADOSC_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Chaikin A/D Oscillator: the difference between a fast and a slow EMA of
         * the Accumulation/Distribution line. Highlights momentum in
@@ -4120,29 +3891,6 @@ class Core {
              throw failure("ADOSC", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode ADOSC_Internal( int startIdx,
-                               int endIdx,
-                               float inHigh[],
-                               float inLow[],
-                               float inClose[],
-                               float inVolume[],
-                               int optInFastPeriod,
-                               int optInSlowPeriod,
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outReal[] )
-       {
-          try {
-             return ADOSC_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -5223,27 +4971,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode ADX_Internal( int startIdx,
-                             int endIdx,
-                             double inHigh[],
-                             double inLow[],
-                             double inClose[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return ADX_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Wilder's Average Directional Movement Index, a smoothed measure of trend
         * strength derived from the directional indicators (+DI/-DI). Quantifies how
@@ -5323,27 +5050,6 @@ class Core {
              throw failure("ADX", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode ADX_Internal( int startIdx,
-                             int endIdx,
-                             float inHigh[],
-                             float inLow[],
-                             float inClose[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return ADX_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -6241,27 +5947,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode ADXR_Internal( int startIdx,
-                              int endIdx,
-                              double inHigh[],
-                              double inLow[],
-                              double inClose[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return ADXR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Smoothed variant of ADX: the average of the current ADX value and the ADX
         * value from (period-1) bars earlier. Further damps ADX to gauge trend
@@ -6337,27 +6022,6 @@ class Core {
              throw failure("ADXR", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode ADXR_Internal( int startIdx,
-                              int endIdx,
-                              float inHigh[],
-                              float inLow[],
-                              float inClose[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return ADXR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -7010,27 +6674,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode AO_Internal( int startIdx,
-                            int endIdx,
-                            double inHigh[],
-                            double inLow[],
-                            int optInFastPeriod,
-                            int optInSlowPeriod,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
-       {
-          try {
-             return AO_Body(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Bill Williams' Awesome Oscillator (*New Trading Dimensions*, 1998): market
         * momentum read as the spread between a short and a long simple moving
@@ -7115,27 +6758,6 @@ class Core {
              throw failure("AO", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode AO_Internal( int startIdx,
-                            int endIdx,
-                            float inHigh[],
-                            float inLow[],
-                            int optInFastPeriod,
-                            int optInSlowPeriod,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
-       {
-          try {
-             return AO_Body(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -7861,27 +7483,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode APO_Internal( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             int optInFastPeriod,
-                             int optInSlowPeriod,
-                             MAType optInMAType,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return APO_Body(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Absolute Price Oscillator: the difference between a fast and a slow moving
         * average of the input, in price units. Measures short- vs long-term
@@ -7961,27 +7562,6 @@ class Core {
              throw failure("APO", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode APO_Internal( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             int optInFastPeriod,
-                             int optInSlowPeriod,
-                             MAType optInMAType,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return APO_Body(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -8630,27 +8210,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode AROON_Internal( int startIdx,
-                               int endIdx,
-                               double inHigh[],
-                               double inLow[],
-                               int optInTimePeriod,
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outAroonDown[],
-                               double outAroonUp[] )
-       {
-          try {
-             return AROON_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Aroon reports how recently the highest high and lowest low occurred within
         * a rolling window of length optInTimePeriod, as two 0-100 oscillators.
@@ -8725,27 +8284,6 @@ class Core {
              throw failure("AROON", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode AROON_Internal( int startIdx,
-                               int endIdx,
-                               float inHigh[],
-                               float inLow[],
-                               int optInTimePeriod,
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outAroonDown[],
-                               double outAroonUp[] )
-       {
-          try {
-             return AROON_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -9523,26 +9061,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode AROONOSC_Internal( int startIdx,
-                                  int endIdx,
-                                  double inHigh[],
-                                  double inLow[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
-       {
-          try {
-             return AROONOSC_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Aroon Oscillator: AroonUp minus AroonDown over a lookback window. Measures
         * trend direction and strength on a -100..+100 scale. Positive when the high
@@ -9613,26 +9131,6 @@ class Core {
              throw failure("AROONOSC", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode AROONOSC_Internal( int startIdx,
-                                  int endIdx,
-                                  float inHigh[],
-                                  float inLow[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
-       {
-          try {
-             return AROONOSC_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -10223,24 +9721,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode ASIN_Internal( int startIdx,
-                              int endIdx,
-                              double inReal[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return ASIN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Element-wise arcsine (inverse sine) of each input value. A vector math
         * transform, not a market indicator.
@@ -10304,24 +9784,6 @@ class Core {
              throw failure("ASIN", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode ASIN_Internal( int startIdx,
-                              int endIdx,
-                              float inReal[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return ASIN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -10662,24 +10124,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode ATAN_Internal( int startIdx,
-                              int endIdx,
-                              double inReal[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return ATAN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Vector trigonometric arc tangent: applies atan element-wise to each input.
         * Pure math transform with no lookback.
@@ -10738,24 +10182,6 @@ class Core {
              throw failure("ATAN", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode ATAN_Internal( int startIdx,
-                              int endIdx,
-                              float inReal[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return ATAN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -11361,27 +10787,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode ATR_Internal( int startIdx,
-                             int endIdx,
-                             double inHigh[],
-                             double inLow[],
-                             double inClose[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return ATR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Wilder-smoothed average of the True Range over a period, measuring price
         * volatility regardless of direction. Higher ATR means greater volatility;
@@ -11453,27 +10858,6 @@ class Core {
              throw failure("ATR", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode ATR_Internal( int startIdx,
-                             int endIdx,
-                             float inHigh[],
-                             float inLow[],
-                             float inClose[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return ATR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -12069,25 +11453,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode AVGDEV_Internal( int startIdx,
-                                int endIdx,
-                                double inReal[],
-                                int optInTimePeriod,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
-       {
-          try {
-             return AVGDEV_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Rolling average absolute deviation of a series from its own simple moving
         * average over the last N periods. Measures dispersion around the window
@@ -12151,25 +11516,6 @@ class Core {
              throw failure("AVGDEV", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode AVGDEV_Internal( int startIdx,
-                                int endIdx,
-                                float inReal[],
-                                int optInTimePeriod,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
-       {
-          try {
-             return AVGDEV_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -12606,27 +11952,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode AVGPRICE_Internal( int startIdx,
-                                  int endIdx,
-                                  double inOpen[],
-                                  double inHigh[],
-                                  double inLow[],
-                                  double inClose[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
-       {
-          try {
-             return AVGPRICE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Average Price: the arithmetic mean of each bar's open, high, low, and
         * close. A price-transform overlap condensing OHLC into a single
@@ -12695,27 +12020,6 @@ class Core {
              throw failure("AVGPRICE", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode AVGPRICE_Internal( int startIdx,
-                                  int endIdx,
-                                  float inOpen[],
-                                  float inHigh[],
-                                  float inLow[],
-                                  float inClose[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
-       {
-          try {
-             return AVGPRICE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -13609,30 +12913,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode BBANDS_Internal( int startIdx,
-                                int endIdx,
-                                double inReal[],
-                                int optInTimePeriod,
-                                double optInNbDevUp,
-                                double optInNbDevDn,
-                                MAType optInMAType,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outRealUpperBand[],
-                                double outRealMiddleBand[],
-                                double outRealLowerBand[] )
-       {
-          try {
-             return BBANDS_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Bollinger Bands: a moving-average middle band with upper and lower bands
         * offset by a multiple of the standard deviation. Used to gauge relative
@@ -13730,30 +13010,6 @@ class Core {
              throw failure("BBANDS", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode BBANDS_Internal( int startIdx,
-                                int endIdx,
-                                float inReal[],
-                                int optInTimePeriod,
-                                double optInNbDevUp,
-                                double optInNbDevDn,
-                                MAType optInMAType,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outRealUpperBand[],
-                                double outRealMiddleBand[],
-                                double outRealLowerBand[] )
-       {
-          try {
-             return BBANDS_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -14573,26 +13829,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode BETA_Internal( int startIdx,
-                              int endIdx,
-                              double inReal0[],
-                              double inReal1[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return BETA_Body(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Beta: the slope of a least-squares linear regression of one series'
         * percentage returns (y, from inReal1) against another's (x, from inReal0)
@@ -14662,26 +13898,6 @@ class Core {
              throw failure("BETA", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode BETA_Internal( int startIdx,
-                              int endIdx,
-                              float inReal0[],
-                              float inReal1[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return BETA_Body(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -15345,27 +14561,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode BOP_Internal( int startIdx,
-                             int endIdx,
-                             double inOpen[],
-                             double inHigh[],
-                             double inLow[],
-                             double inClose[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return BOP_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Balance Of Power compares where the close sits relative to the open,
         * normalized by the bar's high-low range. A per-bar oscillator with no
@@ -15431,27 +14626,6 @@ class Core {
              throw failure("BOP", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode BOP_Internal( int startIdx,
-                             int endIdx,
-                             float inOpen[],
-                             float inHigh[],
-                             float inLow[],
-                             float inClose[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return BOP_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -15985,27 +15159,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CCI_Internal( int startIdx,
-                             int endIdx,
-                             double inHigh[],
-                             double inLow[],
-                             double inClose[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return CCI_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Commodity Channel Index: measures the current typical price relative to
         * its simple moving average, scaled by mean absolute deviation. Momentum
@@ -16078,27 +15231,6 @@ class Core {
              throw failure("CCI", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CCI_Internal( int startIdx,
-                             int endIdx,
-                             float inHigh[],
-                             float inLow[],
-                             float inClose[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return CCI_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -16712,27 +15844,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDL2CROWS_Internal( int startIdx,
-                                   int endIdx,
-                                   double inOpen[],
-                                   double inHigh[],
-                                   double inLow[],
-                                   double inClose[],
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   int outInteger[] )
-       {
-          try {
-             return CDL2CROWS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Three-candle bearish reversal pattern: a long white candle, then a black
         * candle gapping up, then a black candle that opens inside the second body
@@ -16804,27 +15915,6 @@ class Core {
              throw failure("CDL2CROWS", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDL2CROWS_Internal( int startIdx,
-                                   int endIdx,
-                                   float inOpen[],
-                                   float inHigh[],
-                                   float inLow[],
-                                   float inClose[],
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   int outInteger[] )
-       {
-          try {
-             return CDL2CROWS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -17472,27 +16562,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDL3BLACKCROWS_Internal( int startIdx,
-                                        int endIdx,
-                                        double inOpen[],
-                                        double inHigh[],
-                                        double inLow[],
-                                        double inClose[],
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
-       {
-          try {
-             return CDL3BLACKCROWS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A four-bar pattern: a white candle followed by three consecutive black
         * (down) candles with successively lower closes, each opening inside the
@@ -17562,27 +16631,6 @@ class Core {
              throw failure("CDL3BLACKCROWS", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDL3BLACKCROWS_Internal( int startIdx,
-                                        int endIdx,
-                                        float inOpen[],
-                                        float inHigh[],
-                                        float inLow[],
-                                        float inClose[],
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
-       {
-          try {
-             return CDL3BLACKCROWS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -18356,27 +17404,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDL3INSIDE_Internal( int startIdx,
-                                    int endIdx,
-                                    double inOpen[],
-                                    double inHigh[],
-                                    double inLow[],
-                                    double inClose[],
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    int outInteger[] )
-       {
-          try {
-             return CDL3INSIDE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A three-candle reversal pattern: a long real body, then a short real body
         * totally engulfed by it (a harami), then a third candle of opposite color
@@ -18450,27 +17477,6 @@ class Core {
              throw failure("CDL3INSIDE", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDL3INSIDE_Internal( int startIdx,
-                                    int endIdx,
-                                    float inOpen[],
-                                    float inHigh[],
-                                    float inLow[],
-                                    float inClose[],
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    int outInteger[] )
-       {
-          try {
-             return CDL3INSIDE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -19181,27 +18187,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDL3LINESTRIKE_Internal( int startIdx,
-                                        int endIdx,
-                                        double inOpen[],
-                                        double inHigh[],
-                                        double inLow[],
-                                        double inClose[],
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
-       {
-          try {
-             return CDL3LINESTRIKE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A four-candle pattern: three same-color candles with consecutively higher
         * (or lower) closes, each opening within or near the prior real body, then a
@@ -19275,27 +18260,6 @@ class Core {
              throw failure("CDL3LINESTRIKE", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDL3LINESTRIKE_Internal( int startIdx,
-                                        int endIdx,
-                                        float inOpen[],
-                                        float inHigh[],
-                                        float inLow[],
-                                        float inClose[],
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
-       {
-          try {
-             return CDL3LINESTRIKE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -19990,27 +18954,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDL3OUTSIDE_Internal( int startIdx,
-                                     int endIdx,
-                                     double inOpen[],
-                                     double inHigh[],
-                                     double inLow[],
-                                     double inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outInteger[] )
-       {
-          try {
-             return CDL3OUTSIDE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A three-candle pattern: an engulfing pair (candle 2's body fully engulfs
         * candle 1's body) followed by a third candle that confirms in the engulfing
@@ -20081,27 +19024,6 @@ class Core {
              throw failure("CDL3OUTSIDE", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDL3OUTSIDE_Internal( int startIdx,
-                                     int endIdx,
-                                     float inOpen[],
-                                     float inHigh[],
-                                     float inLow[],
-                                     float inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outInteger[] )
-       {
-          try {
-             return CDL3OUTSIDE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -20739,27 +19661,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDL3STARSINSOUTH_Internal( int startIdx,
-                                          int endIdx,
-                                          double inOpen[],
-                                          double inHigh[],
-                                          double inLow[],
-                                          double inClose[],
-                                          MInteger outBegIdx,
-                                          MInteger outNBElement,
-                                          int outInteger[] )
-       {
-          try {
-             return CDL3STARSINSOUTH_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A three-candle bullish reversal pattern of three consecutive black candles
         * that progressively shrink and stabilize: a long black candle with a long
@@ -20833,27 +19734,6 @@ class Core {
              throw failure("CDL3STARSINSOUTH", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDL3STARSINSOUTH_Internal( int startIdx,
-                                          int endIdx,
-                                          float inOpen[],
-                                          float inHigh[],
-                                          float inLow[],
-                                          float inClose[],
-                                          MInteger outBegIdx,
-                                          MInteger outNBElement,
-                                          int outInteger[] )
-       {
-          try {
-             return CDL3STARSINSOUTH_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -21922,27 +20802,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDL3WHITESOLDIERS_Internal( int startIdx,
-                                           int endIdx,
-                                           double inOpen[],
-                                           double inHigh[],
-                                           double inLow[],
-                                           double inClose[],
-                                           MInteger outBegIdx,
-                                           MInteger outNBElement,
-                                           int outInteger[] )
-       {
-          try {
-             return CDL3WHITESOLDIERS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A three-candle pattern of consecutive white candles with progressively
         * higher closes, each opening within/near the prior body and each with a
@@ -22014,27 +20873,6 @@ class Core {
              throw failure("CDL3WHITESOLDIERS", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDL3WHITESOLDIERS_Internal( int startIdx,
-                                           int endIdx,
-                                           float inOpen[],
-                                           float inHigh[],
-                                           float inLow[],
-                                           float inClose[],
-                                           MInteger outBegIdx,
-                                           MInteger outNBElement,
-                                           int outInteger[] )
-       {
-          try {
-             return CDL3WHITESOLDIERS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -23078,28 +21916,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLABANDONEDBABY_Internal( int startIdx,
-                                          int endIdx,
-                                          double inOpen[],
-                                          double inHigh[],
-                                          double inLow[],
-                                          double inClose[],
-                                          double optInPenetration,
-                                          MInteger outBegIdx,
-                                          MInteger outNBElement,
-                                          int outInteger[] )
-       {
-          try {
-             return CDLABANDONEDBABY_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A three-candle reversal pattern: a long body, then a gapped-away doji,
         * then a body of opposite color that gaps back the other way and closes deep
@@ -23176,28 +21992,6 @@ class Core {
              throw failure("CDLABANDONEDBABY", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLABANDONEDBABY_Internal( int startIdx,
-                                          int endIdx,
-                                          float inOpen[],
-                                          float inHigh[],
-                                          float inLow[],
-                                          float inClose[],
-                                          double optInPenetration,
-                                          MInteger outBegIdx,
-                                          MInteger outNBElement,
-                                          int outInteger[] )
-       {
-          try {
-             return CDLABANDONEDBABY_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -24142,27 +22936,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLADVANCEBLOCK_Internal( int startIdx,
-                                         int endIdx,
-                                         double inOpen[],
-                                         double inHigh[],
-                                         double inLow[],
-                                         double inClose[],
-                                         MInteger outBegIdx,
-                                         MInteger outNBElement,
-                                         int outInteger[] )
-       {
-          try {
-             return CDLADVANCEBLOCK_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Three-candle bearish reversal pattern: three white candles with
         * consecutively higher closes whose advance weakens (progressively smaller
@@ -24234,27 +23007,6 @@ class Core {
              throw failure("CDLADVANCEBLOCK", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLADVANCEBLOCK_Internal( int startIdx,
-                                         int endIdx,
-                                         float inOpen[],
-                                         float inHigh[],
-                                         float inLow[],
-                                         float inClose[],
-                                         MInteger outBegIdx,
-                                         MInteger outNBElement,
-                                         int outInteger[] )
-       {
-          try {
-             return CDLADVANCEBLOCK_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -25309,27 +24061,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLBELTHOLD_Internal( int startIdx,
-                                     int endIdx,
-                                     double inOpen[],
-                                     double inHigh[],
-                                     double inLow[],
-                                     double inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outInteger[] )
-       {
-          try {
-             return CDLBELTHOLD_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Single-candle pattern with a long real body that opens at (or near) its
         * extreme. A bullish belt-hold is a long white candle with no/very short
@@ -25406,27 +24137,6 @@ class Core {
              throw failure("CDLBELTHOLD", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLBELTHOLD_Internal( int startIdx,
-                                     int endIdx,
-                                     float inOpen[],
-                                     float inHigh[],
-                                     float inLow[],
-                                     float inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outInteger[] )
-       {
-          try {
-             return CDLBELTHOLD_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -26074,27 +24784,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLBREAKAWAY_Internal( int startIdx,
-                                      int endIdx,
-                                      double inOpen[],
-                                      double inHigh[],
-                                      double inLow[],
-                                      double inClose[],
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      int outInteger[] )
-       {
-          try {
-             return CDLBREAKAWAY_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A five-candle reversal pattern: a long first candle, a same-colored second
         * candle that gaps away from it by its real body, two more candles extending
@@ -26167,27 +24856,6 @@ class Core {
              throw failure("CDLBREAKAWAY", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLBREAKAWAY_Internal( int startIdx,
-                                      int endIdx,
-                                      float inOpen[],
-                                      float inHigh[],
-                                      float inLow[],
-                                      float inClose[],
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      int outInteger[] )
-       {
-          try {
-             return CDLBREAKAWAY_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -26874,27 +25542,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLCLOSINGMARUBOZU_Internal( int startIdx,
-                                            int endIdx,
-                                            double inOpen[],
-                                            double inHigh[],
-                                            double inLow[],
-                                            double inClose[],
-                                            MInteger outBegIdx,
-                                            MInteger outNBElement,
-                                            int outInteger[] )
-       {
-          try {
-             return CDLCLOSINGMARUBOZU_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Single-candle pattern: a long real body whose closing end has no or very
         * short shadow, so the close sits at the candle's extreme. A strong
@@ -26969,27 +25616,6 @@ class Core {
              throw failure("CDLCLOSINGMARUBOZU", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLCLOSINGMARUBOZU_Internal( int startIdx,
-                                            int endIdx,
-                                            float inOpen[],
-                                            float inHigh[],
-                                            float inLow[],
-                                            float inClose[],
-                                            MInteger outBegIdx,
-                                            MInteger outNBElement,
-                                            int outInteger[] )
-       {
-          try {
-             return CDLCLOSINGMARUBOZU_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -27655,27 +26281,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLCONCEALBABYSWALL_Internal( int startIdx,
-                                             int endIdx,
-                                             double inOpen[],
-                                             double inHigh[],
-                                             double inLow[],
-                                             double inClose[],
-                                             MInteger outBegIdx,
-                                             MInteger outNBElement,
-                                             int outInteger[] )
-       {
-          try {
-             return CDLCONCEALBABYSWALL_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A four-candle pattern: two black marubozus, then a black candle that gaps
         * down but pokes its upper shadow into the prior body, then a larger black
@@ -27745,27 +26350,6 @@ class Core {
              throw failure("CDLCONCEALBABYSWALL", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLCONCEALBABYSWALL_Internal( int startIdx,
-                                             int endIdx,
-                                             float inOpen[],
-                                             float inHigh[],
-                                             float inLow[],
-                                             float inClose[],
-                                             MInteger outBegIdx,
-                                             MInteger outNBElement,
-                                             int outInteger[] )
-       {
-          try {
-             return CDLCONCEALBABYSWALL_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -28548,27 +27132,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLCOUNTERATTACK_Internal( int startIdx,
-                                          int endIdx,
-                                          double inOpen[],
-                                          double inHigh[],
-                                          double inLow[],
-                                          double inClose[],
-                                          MInteger outBegIdx,
-                                          MInteger outNBElement,
-                                          int outInteger[] )
-       {
-          try {
-             return CDLCOUNTERATTACK_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A two-candle pattern of two long, opposite-colored real bodies whose
         * closing prices are (nearly) equal. Emits a bullish signal when the second
@@ -28640,27 +27203,6 @@ class Core {
              throw failure("CDLCOUNTERATTACK", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLCOUNTERATTACK_Internal( int startIdx,
-                                          int endIdx,
-                                          float inOpen[],
-                                          float inHigh[],
-                                          float inLow[],
-                                          float inClose[],
-                                          MInteger outBegIdx,
-                                          MInteger outNBElement,
-                                          int outInteger[] )
-       {
-          try {
-             return CDLCOUNTERATTACK_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -29437,28 +27979,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLDARKCLOUDCOVER_Internal( int startIdx,
-                                           int endIdx,
-                                           double inOpen[],
-                                           double inHigh[],
-                                           double inLow[],
-                                           double inClose[],
-                                           double optInPenetration,
-                                           MInteger outBegIdx,
-                                           MInteger outNBElement,
-                                           int outInteger[] )
-       {
-          try {
-             return CDLDARKCLOUDCOVER_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A two-candle bearish reversal pattern: a long white candle followed by a
         * black candle that opens above the prior high and closes deep into the
@@ -29533,28 +28053,6 @@ class Core {
              throw failure("CDLDARKCLOUDCOVER", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLDARKCLOUDCOVER_Internal( int startIdx,
-                                           int endIdx,
-                                           float inOpen[],
-                                           float inHigh[],
-                                           float inLow[],
-                                           float inClose[],
-                                           double optInPenetration,
-                                           MInteger outBegIdx,
-                                           MInteger outNBElement,
-                                           int outInteger[] )
-       {
-          try {
-             return CDLDARKCLOUDCOVER_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -30154,27 +28652,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLDOJI_Internal( int startIdx,
-                                 int endIdx,
-                                 double inOpen[],
-                                 double inHigh[],
-                                 double inLow[],
-                                 double inClose[],
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 int outInteger[] )
-       {
-          try {
-             return CDLDOJI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Single-candle Doji recognizer: fires when the real body (|close-open|) is
         * at or below the BodyDoji threshold. Market indecision; neither bullish nor
@@ -30244,27 +28721,6 @@ class Core {
              throw failure("CDLDOJI", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLDOJI_Internal( int startIdx,
-                                 int endIdx,
-                                 float inOpen[],
-                                 float inHigh[],
-                                 float inLow[],
-                                 float inClose[],
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 int outInteger[] )
-       {
-          try {
-             return CDLDOJI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -30865,27 +29321,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLDOJISTAR_Internal( int startIdx,
-                                     int endIdx,
-                                     double inOpen[],
-                                     double inHigh[],
-                                     double inLow[],
-                                     double inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outInteger[] )
-       {
-          try {
-             return CDLDOJISTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A two-candle reversal pattern: a long real body followed by a doji whose
         * real body gaps away from it (up after a white body, down after a black
@@ -30966,27 +29401,6 @@ class Core {
              throw failure("CDLDOJISTAR", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLDOJISTAR_Internal( int startIdx,
-                                     int endIdx,
-                                     float inOpen[],
-                                     float inHigh[],
-                                     float inLow[],
-                                     float inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outInteger[] )
-       {
-          try {
-             return CDLDOJISTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -31688,27 +30102,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLDRAGONFLYDOJI_Internal( int startIdx,
-                                          int endIdx,
-                                          double inOpen[],
-                                          double inHigh[],
-                                          double inLow[],
-                                          double inClose[],
-                                          MInteger outBegIdx,
-                                          MInteger outNBElement,
-                                          int outInteger[] )
-       {
-          try {
-             return CDLDRAGONFLYDOJI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Single-candle pattern: a doji (open and close nearly equal) sitting at the
         * top of the range, with no meaningful upper shadow and a long lower shadow.
@@ -31787,27 +30180,6 @@ class Core {
              throw failure("CDLDRAGONFLYDOJI", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLDRAGONFLYDOJI_Internal( int startIdx,
-                                          int endIdx,
-                                          float inOpen[],
-                                          float inHigh[],
-                                          float inLow[],
-                                          float inClose[],
-                                          MInteger outBegIdx,
-                                          MInteger outNBElement,
-                                          int outInteger[] )
-       {
-          try {
-             return CDLDRAGONFLYDOJI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -32425,27 +30797,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLENGULFING_Internal( int startIdx,
-                                      int endIdx,
-                                      double inOpen[],
-                                      double inHigh[],
-                                      double inLow[],
-                                      double inClose[],
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      int outInteger[] )
-       {
-          try {
-             return CDLENGULFING_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A two-candle reversal pattern where the second candle's real body engulfs
         * the first candle's opposite-colored real body. Bullish (white engulfs
@@ -32517,27 +30868,6 @@ class Core {
              throw failure("CDLENGULFING", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLENGULFING_Internal( int startIdx,
-                                      int endIdx,
-                                      float inOpen[],
-                                      float inHigh[],
-                                      float inLow[],
-                                      float inClose[],
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      int outInteger[] )
-       {
-          try {
-             return CDLENGULFING_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -33145,28 +31475,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLEVENINGDOJISTAR_Internal( int startIdx,
-                                            int endIdx,
-                                            double inOpen[],
-                                            double inHigh[],
-                                            double inLow[],
-                                            double inClose[],
-                                            double optInPenetration,
-                                            MInteger outBegIdx,
-                                            MInteger outNBElement,
-                                            int outInteger[] )
-       {
-          try {
-             return CDLEVENINGDOJISTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A three-candle bearish reversal pattern: a long white candle, a doji that
         * gaps up (the star), then a black candle closing well down into the first
@@ -33242,28 +31550,6 @@ class Core {
              throw failure("CDLEVENINGDOJISTAR", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLEVENINGDOJISTAR_Internal( int startIdx,
-                                            int endIdx,
-                                            float inOpen[],
-                                            float inHigh[],
-                                            float inLow[],
-                                            float inClose[],
-                                            double optInPenetration,
-                                            MInteger outBegIdx,
-                                            MInteger outNBElement,
-                                            int outInteger[] )
-       {
-          try {
-             return CDLEVENINGDOJISTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -34108,28 +32394,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLEVENINGSTAR_Internal( int startIdx,
-                                        int endIdx,
-                                        double inOpen[],
-                                        double inHigh[],
-                                        double inLow[],
-                                        double inClose[],
-                                        double optInPenetration,
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
-       {
-          try {
-             return CDLEVENINGSTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A three-candle bearish reversal pattern: a long white candle, a
         * short-bodied star gapping up, then a black candle closing well down into
@@ -34204,28 +32468,6 @@ class Core {
              throw failure("CDLEVENINGSTAR", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLEVENINGSTAR_Internal( int startIdx,
-                                        int endIdx,
-                                        float inOpen[],
-                                        float inHigh[],
-                                        float inLow[],
-                                        float inClose[],
-                                        double optInPenetration,
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
-       {
-          try {
-             return CDLEVENINGSTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -34983,27 +33225,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLGAPSIDESIDEWHITE_Internal( int startIdx,
-                                             int endIdx,
-                                             double inOpen[],
-                                             double inHigh[],
-                                             double inLow[],
-                                             double inClose[],
-                                             MInteger outBegIdx,
-                                             MInteger outNBElement,
-                                             int outInteger[] )
-       {
-          try {
-             return CDLGAPSIDESIDEWHITE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A three-candle pattern: a first candle followed by two white candles of
         * similar body size that both gap the same direction (up or down) from the
@@ -35076,27 +33297,6 @@ class Core {
              throw failure("CDLGAPSIDESIDEWHITE", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLGAPSIDESIDEWHITE_Internal( int startIdx,
-                                             int endIdx,
-                                             float inOpen[],
-                                             float inHigh[],
-                                             float inLow[],
-                                             float inClose[],
-                                             MInteger outBegIdx,
-                                             MInteger outNBElement,
-                                             int outInteger[] )
-       {
-          try {
-             return CDLGAPSIDESIDEWHITE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -35822,27 +34022,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLGRAVESTONEDOJI_Internal( int startIdx,
-                                           int endIdx,
-                                           double inOpen[],
-                                           double inHigh[],
-                                           double inLow[],
-                                           double inClose[],
-                                           MInteger outBegIdx,
-                                           MInteger outNBElement,
-                                           int outInteger[] )
-       {
-          try {
-             return CDLGRAVESTONEDOJI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Single-candle doji whose open and close sit at the low of the day, leaving
         * a long upper shadow and no lower shadow. A doji variant whose
@@ -35921,27 +34100,6 @@ class Core {
              throw failure("CDLGRAVESTONEDOJI", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLGRAVESTONEDOJI_Internal( int startIdx,
-                                           int endIdx,
-                                           float inOpen[],
-                                           float inHigh[],
-                                           float inLow[],
-                                           float inClose[],
-                                           MInteger outBegIdx,
-                                           MInteger outNBElement,
-                                           int outInteger[] )
-       {
-          try {
-             return CDLGRAVESTONEDOJI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -36676,27 +34834,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLHAMMER_Internal( int startIdx,
-                                   int endIdx,
-                                   double inOpen[],
-                                   double inHigh[],
-                                   double inLow[],
-                                   double inClose[],
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   int outInteger[] )
-       {
-          try {
-             return CDLHAMMER_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Single-candle pattern: a small real body at the top of the range with a
         * long lower shadow and little or no upper shadow, sitting at or near the
@@ -36767,27 +34904,6 @@ class Core {
              throw failure("CDLHAMMER", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLHAMMER_Internal( int startIdx,
-                                   int endIdx,
-                                   float inOpen[],
-                                   float inHigh[],
-                                   float inLow[],
-                                   float inClose[],
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   int outInteger[] )
-       {
-          try {
-             return CDLHAMMER_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -37686,27 +35802,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLHANGINGMAN_Internal( int startIdx,
-                                       int endIdx,
-                                       double inOpen[],
-                                       double inHigh[],
-                                       double inLow[],
-                                       double inClose[],
-                                       MInteger outBegIdx,
-                                       MInteger outNBElement,
-                                       int outInteger[] )
-       {
-          try {
-             return CDLHANGINGMAN_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Single candle with a small real body, a long lower shadow, and little/no
         * upper shadow, sitting at or near the highs of the prior candle. Bearish
@@ -37778,27 +35873,6 @@ class Core {
              throw failure("CDLHANGINGMAN", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLHANGINGMAN_Internal( int startIdx,
-                                       int endIdx,
-                                       float inOpen[],
-                                       float inHigh[],
-                                       float inLow[],
-                                       float inClose[],
-                                       MInteger outBegIdx,
-                                       MInteger outNBElement,
-                                       int outInteger[] )
-       {
-          try {
-             return CDLHANGINGMAN_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -38661,27 +36735,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLHARAMI_Internal( int startIdx,
-                                   int endIdx,
-                                   double inOpen[],
-                                   double inHigh[],
-                                   double inLow[],
-                                   double inClose[],
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   int outInteger[] )
-       {
-          try {
-             return CDLHARAMI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Two-candle pattern: a long real body followed by a short real body
         * contained within the first candle's real body. A reversal signal whose
@@ -38752,27 +36805,6 @@ class Core {
              throw failure("CDLHARAMI", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLHARAMI_Internal( int startIdx,
-                                   int endIdx,
-                                   float inOpen[],
-                                   float inHigh[],
-                                   float inLow[],
-                                   float inClose[],
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   int outInteger[] )
-       {
-          try {
-             return CDLHARAMI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -39527,27 +37559,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLHARAMICROSS_Internal( int startIdx,
-                                        int endIdx,
-                                        double inOpen[],
-                                        double inHigh[],
-                                        double inLow[],
-                                        double inClose[],
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
-       {
-          try {
-             return CDLHARAMICROSS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A two-candle reversal pattern: a long real body followed by a doji whose
         * real body is contained within the first candle's real body (the doji
@@ -39619,27 +37630,6 @@ class Core {
              throw failure("CDLHARAMICROSS", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLHARAMICROSS_Internal( int startIdx,
-                                        int endIdx,
-                                        float inOpen[],
-                                        float inHigh[],
-                                        float inLow[],
-                                        float inClose[],
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
-       {
-          try {
-             return CDLHARAMICROSS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -40365,27 +38355,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLHIGHWAVE_Internal( int startIdx,
-                                     int endIdx,
-                                     double inOpen[],
-                                     double inHigh[],
-                                     double inLow[],
-                                     double inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outInteger[] )
-       {
-          try {
-             return CDLHIGHWAVE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Single-candle pattern: a short real body with both a very long upper and a
         * very long lower shadow. Signals market indecision; the output sign reports
@@ -40463,27 +38432,6 @@ class Core {
              throw failure("CDLHIGHWAVE", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLHIGHWAVE_Internal( int startIdx,
-                                     int endIdx,
-                                     float inOpen[],
-                                     float inHigh[],
-                                     float inLow[],
-                                     float inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outInteger[] )
-       {
-          try {
-             return CDLHIGHWAVE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -41167,27 +39115,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLHIKKAKE_Internal( int startIdx,
-                                    int endIdx,
-                                    double inOpen[],
-                                    double inHigh[],
-                                    double inLow[],
-                                    double inClose[],
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    int outInteger[] )
-       {
-          try {
-             return CDLHIKKAKE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A 3-bar pattern: an inside bar followed by a false breakout, optionally
         * later confirmed by a follow-through bar. Signals a bullish or bearish
@@ -41257,27 +39184,6 @@ class Core {
              throw failure("CDLHIKKAKE", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLHIKKAKE_Internal( int startIdx,
-                                    int endIdx,
-                                    float inOpen[],
-                                    float inHigh[],
-                                    float inLow[],
-                                    float inClose[],
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    int outInteger[] )
-       {
-          try {
-             return CDLHIKKAKE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -41959,27 +39865,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLHIKKAKEMOD_Internal( int startIdx,
-                                       int endIdx,
-                                       double inOpen[],
-                                       double inHigh[],
-                                       double inLow[],
-                                       double inClose[],
-                                       MInteger outBegIdx,
-                                       MInteger outNBElement,
-                                       int outInteger[] )
-       {
-          try {
-             return CDLHIKKAKEMOD_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A four-candle pattern: two successively narrower inside bars, then a
         * breakout bar, with the second candle closing near one extreme of its
@@ -42049,27 +39934,6 @@ class Core {
              throw failure("CDLHIKKAKEMOD", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLHIKKAKEMOD_Internal( int startIdx,
-                                       int endIdx,
-                                       float inOpen[],
-                                       float inHigh[],
-                                       float inLow[],
-                                       float inClose[],
-                                       MInteger outBegIdx,
-                                       MInteger outNBElement,
-                                       int outInteger[] )
-       {
-          try {
-             return CDLHIKKAKEMOD_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -42808,27 +40672,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLHOMINGPIGEON_Internal( int startIdx,
-                                         int endIdx,
-                                         double inOpen[],
-                                         double inHigh[],
-                                         double inLow[],
-                                         double inClose[],
-                                         MInteger outBegIdx,
-                                         MInteger outNBElement,
-                                         int outInteger[] )
-       {
-          try {
-             return CDLHOMINGPIGEON_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Two-candle pattern: a long black candle followed by a small black candle
         * whose real body sits inside the prior body. A hit signals a bullish
@@ -42902,27 +40745,6 @@ class Core {
              throw failure("CDLHOMINGPIGEON", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLHOMINGPIGEON_Internal( int startIdx,
-                                         int endIdx,
-                                         float inOpen[],
-                                         float inHigh[],
-                                         float inLow[],
-                                         float inClose[],
-                                         MInteger outBegIdx,
-                                         MInteger outNBElement,
-                                         int outInteger[] )
-       {
-          try {
-             return CDLHOMINGPIGEON_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -43662,27 +41484,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLIDENTICAL3CROWS_Internal( int startIdx,
-                                            int endIdx,
-                                            double inOpen[],
-                                            double inHigh[],
-                                            double inLow[],
-                                            double inClose[],
-                                            MInteger outBegIdx,
-                                            MInteger outNBElement,
-                                            int outInteger[] )
-       {
-          try {
-             return CDLIDENTICAL3CROWS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A three-candle bearish reversal pattern: three consecutive declining black
         * candles, each with a very short (or no) lower shadow, where each candle
@@ -43753,27 +41554,6 @@ class Core {
              throw failure("CDLIDENTICAL3CROWS", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLIDENTICAL3CROWS_Internal( int startIdx,
-                                            int endIdx,
-                                            float inOpen[],
-                                            float inHigh[],
-                                            float inLow[],
-                                            float inClose[],
-                                            MInteger outBegIdx,
-                                            MInteger outNBElement,
-                                            int outInteger[] )
-       {
-          try {
-             return CDLIDENTICAL3CROWS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -44610,27 +42390,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLINNECK_Internal( int startIdx,
-                                   int endIdx,
-                                   double inOpen[],
-                                   double inHigh[],
-                                   double inLow[],
-                                   double inClose[],
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   int outInteger[] )
-       {
-          try {
-             return CDLINNECK_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A two-candle in-neck pattern: a long black candle followed by a white
         * candle that opens below the prior low and closes just barely into the
@@ -44706,27 +42465,6 @@ class Core {
              throw failure("CDLINNECK", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLINNECK_Internal( int startIdx,
-                                   int endIdx,
-                                   float inOpen[],
-                                   float inHigh[],
-                                   float inLow[],
-                                   float inClose[],
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   int outInteger[] )
-       {
-          try {
-             return CDLINNECK_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -45465,27 +43203,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLINVERTEDHAMMER_Internal( int startIdx,
-                                           int endIdx,
-                                           double inOpen[],
-                                           double inHigh[],
-                                           double inLow[],
-                                           double inClose[],
-                                           MInteger outBegIdx,
-                                           MInteger outNBElement,
-                                           int outInteger[] )
-       {
-          try {
-             return CDLINVERTEDHAMMER_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Single-candle pattern: a small real body with a long upper shadow and
         * little-to-no lower shadow that gaps down from the prior candle. A hit
@@ -45556,27 +43273,6 @@ class Core {
              throw failure("CDLINVERTEDHAMMER", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLINVERTEDHAMMER_Internal( int startIdx,
-                                           int endIdx,
-                                           float inOpen[],
-                                           float inHigh[],
-                                           float inLow[],
-                                           float inClose[],
-                                           MInteger outBegIdx,
-                                           MInteger outNBElement,
-                                           int outInteger[] )
-       {
-          try {
-             return CDLINVERTEDHAMMER_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -46351,27 +44047,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLKICKING_Internal( int startIdx,
-                                    int endIdx,
-                                    double inOpen[],
-                                    double inHigh[],
-                                    double inLow[],
-                                    double inClose[],
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    int outInteger[] )
-       {
-          try {
-             return CDLKICKING_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Two-candle pattern of two opposite-color marubozu (long bodies with very
         * short shadows) separated by a price gap. A reversal signal whose direction
@@ -46441,27 +44116,6 @@ class Core {
              throw failure("CDLKICKING", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLKICKING_Internal( int startIdx,
-                                    int endIdx,
-                                    float inOpen[],
-                                    float inHigh[],
-                                    float inLow[],
-                                    float inClose[],
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    int outInteger[] )
-       {
-          try {
-             return CDLKICKING_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -47267,27 +44921,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLKICKINGBYLENGTH_Internal( int startIdx,
-                                            int endIdx,
-                                            double inOpen[],
-                                            double inHigh[],
-                                            double inLow[],
-                                            double inClose[],
-                                            MInteger outBegIdx,
-                                            MInteger outNBElement,
-                                            int outInteger[] )
-       {
-          try {
-             return CDLKICKINGBYLENGTH_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A two-candle pattern of two opposite-color marubozu (long body, very short
         * shadows on both ends) separated by a gap. A strong directional/reversal
@@ -47354,27 +44987,6 @@ class Core {
              throw failure("CDLKICKINGBYLENGTH", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLKICKINGBYLENGTH_Internal( int startIdx,
-                                            int endIdx,
-                                            float inOpen[],
-                                            float inHigh[],
-                                            float inLow[],
-                                            float inClose[],
-                                            MInteger outBegIdx,
-                                            MInteger outNBElement,
-                                            int outInteger[] )
-       {
-          try {
-             return CDLKICKINGBYLENGTH_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -48148,27 +45760,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLLADDERBOTTOM_Internal( int startIdx,
-                                         int endIdx,
-                                         double inOpen[],
-                                         double inHigh[],
-                                         double inLow[],
-                                         double inClose[],
-                                         MInteger outBegIdx,
-                                         MInteger outNBElement,
-                                         int outInteger[] )
-       {
-          try {
-             return CDLLADDERBOTTOM_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Five-candle bullish reversal pattern: three consecutively lower black
         * candles, a fourth black candle with a non-very-short upper shadow, then a
@@ -48241,27 +45832,6 @@ class Core {
              throw failure("CDLLADDERBOTTOM", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLLADDERBOTTOM_Internal( int startIdx,
-                                         int endIdx,
-                                         float inOpen[],
-                                         float inHigh[],
-                                         float inLow[],
-                                         float inClose[],
-                                         MInteger outBegIdx,
-                                         MInteger outNBElement,
-                                         int outInteger[] )
-       {
-          try {
-             return CDLLADDERBOTTOM_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -48930,27 +46500,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLLONGLEGGEDDOJI_Internal( int startIdx,
-                                           int endIdx,
-                                           double inOpen[],
-                                           double inHigh[],
-                                           double inLow[],
-                                           double inClose[],
-                                           MInteger outBegIdx,
-                                           MInteger outNBElement,
-                                           int outInteger[] )
-       {
-          try {
-             return CDLLONGLEGGEDDOJI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Single-candle doji (open ~ close) with at least one long shadow. Signals
         * market indecision, not a directional bias. Marks indecision/uncertainty;
@@ -49026,27 +46575,6 @@ class Core {
              throw failure("CDLLONGLEGGEDDOJI", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLLONGLEGGEDDOJI_Internal( int startIdx,
-                                           int endIdx,
-                                           float inOpen[],
-                                           float inHigh[],
-                                           float inLow[],
-                                           float inClose[],
-                                           MInteger outBegIdx,
-                                           MInteger outNBElement,
-                                           int outInteger[] )
-       {
-          try {
-             return CDLLONGLEGGEDDOJI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -49705,27 +47233,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLLONGLINE_Internal( int startIdx,
-                                     int endIdx,
-                                     double inOpen[],
-                                     double inHigh[],
-                                     double inLow[],
-                                     double inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outInteger[] )
-       {
-          try {
-             return CDLLONGLINE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A single-candle pattern: a long real body with short upper and short lower
         * shadow. The signal direction follows the candle color (bullish if white,
@@ -49793,27 +47300,6 @@ class Core {
              throw failure("CDLLONGLINE", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLLONGLINE_Internal( int startIdx,
-                                     int endIdx,
-                                     float inOpen[],
-                                     float inHigh[],
-                                     float inLow[],
-                                     float inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outInteger[] )
-       {
-          try {
-             return CDLLONGLINE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -50477,27 +47963,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLMARUBOZU_Internal( int startIdx,
-                                     int endIdx,
-                                     double inOpen[],
-                                     double inHigh[],
-                                     double inLow[],
-                                     double inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outInteger[] )
-       {
-          try {
-             return CDLMARUBOZU_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Single candle with a long real body and no/very-short upper and lower
         * shadows, so open and close sit at the range extremes. Bullish (white) or
@@ -50571,27 +48036,6 @@ class Core {
              throw failure("CDLMARUBOZU", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLMARUBOZU_Internal( int startIdx,
-                                     int endIdx,
-                                     float inOpen[],
-                                     float inHigh[],
-                                     float inLow[],
-                                     float inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outInteger[] )
-       {
-          try {
-             return CDLMARUBOZU_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -51230,27 +48674,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLMATCHINGLOW_Internal( int startIdx,
-                                        int endIdx,
-                                        double inOpen[],
-                                        double inHigh[],
-                                        double inLow[],
-                                        double inClose[],
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
-       {
-          try {
-             return CDLMATCHINGLOW_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A two-candle pattern of two consecutive black (bearish) candles with equal
         * closes (within a tolerance). Treated as a bullish reversal signal. A hit
@@ -51324,27 +48747,6 @@ class Core {
              throw failure("CDLMATCHINGLOW", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLMATCHINGLOW_Internal( int startIdx,
-                                        int endIdx,
-                                        float inOpen[],
-                                        float inHigh[],
-                                        float inLow[],
-                                        float inClose[],
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
-       {
-          try {
-             return CDLMATCHINGLOW_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -52023,28 +49425,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLMATHOLD_Internal( int startIdx,
-                                    int endIdx,
-                                    double inOpen[],
-                                    double inHigh[],
-                                    double inLow[],
-                                    double inClose[],
-                                    double optInPenetration,
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    int outInteger[] )
-       {
-          try {
-             return CDLMATHOLD_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A five-candle bullish continuation pattern: a long white candle, an upside
         * real-body-gapped small black candle, two more small falling candles that
@@ -52120,28 +49500,6 @@ class Core {
              throw failure("CDLMATHOLD", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLMATHOLD_Internal( int startIdx,
-                                    int endIdx,
-                                    float inOpen[],
-                                    float inHigh[],
-                                    float inLow[],
-                                    float inClose[],
-                                    double optInPenetration,
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    int outInteger[] )
-       {
-          try {
-             return CDLMATHOLD_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -53084,28 +50442,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLMORNINGDOJISTAR_Internal( int startIdx,
-                                            int endIdx,
-                                            double inOpen[],
-                                            double inHigh[],
-                                            double inLow[],
-                                            double inClose[],
-                                            double optInPenetration,
-                                            MInteger outBegIdx,
-                                            MInteger outNBElement,
-                                            int outInteger[] )
-       {
-          try {
-             return CDLMORNINGDOJISTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A three-candle bullish reversal pattern: a long black candle, then a doji
         * that gaps down, then a white candle closing well up into the first
@@ -53184,28 +50520,6 @@ class Core {
              throw failure("CDLMORNINGDOJISTAR", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLMORNINGDOJISTAR_Internal( int startIdx,
-                                            int endIdx,
-                                            float inOpen[],
-                                            float inHigh[],
-                                            float inLow[],
-                                            float inClose[],
-                                            double optInPenetration,
-                                            MInteger outBegIdx,
-                                            MInteger outNBElement,
-                                            int outInteger[] )
-       {
-          try {
-             return CDLMORNINGDOJISTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -54054,28 +51368,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLMORNINGSTAR_Internal( int startIdx,
-                                        int endIdx,
-                                        double inOpen[],
-                                        double inHigh[],
-                                        double inLow[],
-                                        double inClose[],
-                                        double optInPenetration,
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
-       {
-          try {
-             return CDLMORNINGSTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A three-candle bottom-reversal pattern: a long black candle, a
         * small-bodied star gapping down, then a white candle closing well up into
@@ -54154,28 +51446,6 @@ class Core {
              throw failure("CDLMORNINGSTAR", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLMORNINGSTAR_Internal( int startIdx,
-                                        int endIdx,
-                                        float inOpen[],
-                                        float inHigh[],
-                                        float inLow[],
-                                        float inClose[],
-                                        double optInPenetration,
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
-       {
-          try {
-             return CDLMORNINGSTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -54931,27 +52201,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLONNECK_Internal( int startIdx,
-                                   int endIdx,
-                                   double inOpen[],
-                                   double inHigh[],
-                                   double inLow[],
-                                   double inClose[],
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   int outInteger[] )
-       {
-          try {
-             return CDLONNECK_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A two-candle on-neck pattern: a long black candle followed by a white
         * candle that opens below the prior candle's low and closes right at that
@@ -55026,27 +52275,6 @@ class Core {
              throw failure("CDLONNECK", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLONNECK_Internal( int startIdx,
-                                   int endIdx,
-                                   float inOpen[],
-                                   float inHigh[],
-                                   float inLow[],
-                                   float inClose[],
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   int outInteger[] )
-       {
-          try {
-             return CDLONNECK_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -55737,27 +52965,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLPIERCING_Internal( int startIdx,
-                                     int endIdx,
-                                     double inOpen[],
-                                     double inHigh[],
-                                     double inLow[],
-                                     double inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outInteger[] )
-       {
-          try {
-             return CDLPIERCING_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Two-candle pattern: a long black candle followed by a long white candle
         * that opens below the prior low and closes back above the midpoint of the
@@ -55828,27 +53035,6 @@ class Core {
              throw failure("CDLPIERCING", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLPIERCING_Internal( int startIdx,
-                                     int endIdx,
-                                     float inOpen[],
-                                     float inHigh[],
-                                     float inLow[],
-                                     float inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outInteger[] )
-       {
-          try {
-             return CDLPIERCING_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -56594,27 +53780,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLRICKSHAWMAN_Internal( int startIdx,
-                                        int endIdx,
-                                        double inOpen[],
-                                        double inHigh[],
-                                        double inLow[],
-                                        double inClose[],
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
-       {
-          try {
-             return CDLRICKSHAWMAN_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Single-candle doji with two long shadows whose body sits near the midpoint
         * of the high-low range. It is a neutral indecision signal, not a
@@ -56685,27 +53850,6 @@ class Core {
              throw failure("CDLRICKSHAWMAN", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLRICKSHAWMAN_Internal( int startIdx,
-                                        int endIdx,
-                                        float inOpen[],
-                                        float inHigh[],
-                                        float inLow[],
-                                        float inClose[],
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
-       {
-          try {
-             return CDLRICKSHAWMAN_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -57490,27 +54634,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLRISEFALL3METHODS_Internal( int startIdx,
-                                             int endIdx,
-                                             double inOpen[],
-                                             double inHigh[],
-                                             double inLow[],
-                                             double inClose[],
-                                             MInteger outBegIdx,
-                                             MInteger outNBElement,
-                                             int outInteger[] )
-       {
-          try {
-             return CDLRISEFALL3METHODS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A five-candle continuation pattern: a long candle, three small
         * counter-color candles that stay partly within the first candle's high-low
@@ -57585,27 +54708,6 @@ class Core {
              throw failure("CDLRISEFALL3METHODS", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLRISEFALL3METHODS_Internal( int startIdx,
-                                             int endIdx,
-                                             float inOpen[],
-                                             float inHigh[],
-                                             float inLow[],
-                                             float inClose[],
-                                             MInteger outBegIdx,
-                                             MInteger outNBElement,
-                                             int outInteger[] )
-       {
-          try {
-             return CDLRISEFALL3METHODS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -58511,27 +55613,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLSEPARATINGLINES_Internal( int startIdx,
-                                            int endIdx,
-                                            double inOpen[],
-                                            double inHigh[],
-                                            double inLow[],
-                                            double inClose[],
-                                            MInteger outBegIdx,
-                                            MInteger outNBElement,
-                                            int outInteger[] )
-       {
-          try {
-             return CDLSEPARATINGLINES_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A two-candle continuation pattern: the second candle opposes the first in
         * color, opens at the same price as the first, and is a long-bodied belt
@@ -58604,27 +55685,6 @@ class Core {
              throw failure("CDLSEPARATINGLINES", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLSEPARATINGLINES_Internal( int startIdx,
-                                            int endIdx,
-                                            float inOpen[],
-                                            float inHigh[],
-                                            float inLow[],
-                                            float inClose[],
-                                            MInteger outBegIdx,
-                                            MInteger outNBElement,
-                                            int outInteger[] )
-       {
-          try {
-             return CDLSEPARATINGLINES_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -59428,27 +56488,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLSHOOTINGSTAR_Internal( int startIdx,
-                                         int endIdx,
-                                         double inOpen[],
-                                         double inHigh[],
-                                         double inLow[],
-                                         double inClose[],
-                                         MInteger outBegIdx,
-                                         MInteger outNBElement,
-                                         int outInteger[] )
-       {
-          try {
-             return CDLSHOOTINGSTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Single-candle pattern: a small real body with a long upper shadow and
         * little-to-no lower shadow that gaps up from the prior candle's real body.
@@ -59521,27 +56560,6 @@ class Core {
              throw failure("CDLSHOOTINGSTAR", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLSHOOTINGSTAR_Internal( int startIdx,
-                                         int endIdx,
-                                         float inOpen[],
-                                         float inHigh[],
-                                         float inLow[],
-                                         float inClose[],
-                                         MInteger outBegIdx,
-                                         MInteger outNBElement,
-                                         int outInteger[] )
-       {
-          try {
-             return CDLSHOOTINGSTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -60297,27 +57315,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLSHORTLINE_Internal( int startIdx,
-                                      int endIdx,
-                                      double inOpen[],
-                                      double inHigh[],
-                                      double inLow[],
-                                      double inClose[],
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      int outInteger[] )
-       {
-          try {
-             return CDLSHORTLINE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Single-candle pattern: a short real body with short upper and lower
         * shadows (a small-range candle). Not a directional signal — the output sign
@@ -60392,27 +57389,6 @@ class Core {
              throw failure("CDLSHORTLINE", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLSHORTLINE_Internal( int startIdx,
-                                      int endIdx,
-                                      float inOpen[],
-                                      float inHigh[],
-                                      float inLow[],
-                                      float inClose[],
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      int outInteger[] )
-       {
-          try {
-             return CDLSHORTLINE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -61043,27 +58019,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLSPINNINGTOP_Internal( int startIdx,
-                                        int endIdx,
-                                        double inOpen[],
-                                        double inHigh[],
-                                        double inLow[],
-                                        double inClose[],
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
-       {
-          try {
-             return CDLSPINNINGTOP_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Single-candle pattern: a small real body with both an upper and a lower
         * shadow longer than the body. Signals indecision; the code does not
@@ -61133,27 +58088,6 @@ class Core {
              throw failure("CDLSPINNINGTOP", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLSPINNINGTOP_Internal( int startIdx,
-                                        int endIdx,
-                                        float inOpen[],
-                                        float inHigh[],
-                                        float inLow[],
-                                        float inClose[],
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
-       {
-          try {
-             return CDLSPINNINGTOP_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -61838,27 +58772,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLSTALLEDPATTERN_Internal( int startIdx,
-                                           int endIdx,
-                                           double inOpen[],
-                                           double inHigh[],
-                                           double inLow[],
-                                           double inClose[],
-                                           MInteger outBegIdx,
-                                           MInteger outNBElement,
-                                           int outInteger[] )
-       {
-          try {
-             return CDLSTALLEDPATTERN_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A three-candle pattern of three white candles with consecutively higher
         * closes where the third loses momentum (a small body riding on the shoulder
@@ -61930,27 +58843,6 @@ class Core {
              throw failure("CDLSTALLEDPATTERN", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLSTALLEDPATTERN_Internal( int startIdx,
-                                           int endIdx,
-                                           float inOpen[],
-                                           float inHigh[],
-                                           float inLow[],
-                                           float inClose[],
-                                           MInteger outBegIdx,
-                                           MInteger outNBElement,
-                                           int outInteger[] )
-       {
-          try {
-             return CDLSTALLEDPATTERN_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -62885,27 +59777,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLSTICKSANDWICH_Internal( int startIdx,
-                                          int endIdx,
-                                          double inOpen[],
-                                          double inHigh[],
-                                          double inLow[],
-                                          double inClose[],
-                                          MInteger outBegIdx,
-                                          MInteger outNBElement,
-                                          int outInteger[] )
-       {
-          try {
-             return CDLSTICKSANDWICH_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A three-candle bullish reversal pattern: two black candles (1st and 3rd)
         * sandwiching a white candle, where the 3rd black candle closes at the same
@@ -62976,27 +59847,6 @@ class Core {
              throw failure("CDLSTICKSANDWICH", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLSTICKSANDWICH_Internal( int startIdx,
-                                          int endIdx,
-                                          float inOpen[],
-                                          float inHigh[],
-                                          float inLow[],
-                                          float inClose[],
-                                          MInteger outBegIdx,
-                                          MInteger outNBElement,
-                                          int outInteger[] )
-       {
-          try {
-             return CDLSTICKSANDWICH_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -63673,27 +60523,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLTAKURI_Internal( int startIdx,
-                                   int endIdx,
-                                   double inOpen[],
-                                   double inHigh[],
-                                   double inLow[],
-                                   double inClose[],
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   int outInteger[] )
-       {
-          try {
-             return CDLTAKURI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Single-candle pattern: a doji whose open and close sit at the high
         * (no/very short upper shadow) with a very long lower shadow, i.e. a
@@ -63766,27 +60595,6 @@ class Core {
              throw failure("CDLTAKURI", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLTAKURI_Internal( int startIdx,
-                                   int endIdx,
-                                   float inOpen[],
-                                   float inHigh[],
-                                   float inLow[],
-                                   float inClose[],
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   int outInteger[] )
-       {
-          try {
-             return CDLTAKURI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -64508,27 +61316,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLTASUKIGAP_Internal( int startIdx,
-                                      int endIdx,
-                                      double inOpen[],
-                                      double inHigh[],
-                                      double inLow[],
-                                      double inClose[],
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      int outInteger[] )
-       {
-          try {
-             return CDLTASUKIGAP_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A three-candle pattern: a real-body-gapping candle followed by an
         * opposite-color candle that opens inside its body and closes back into the
@@ -64600,27 +61387,6 @@ class Core {
              throw failure("CDLTASUKIGAP", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLTASUKIGAP_Internal( int startIdx,
-                                      int endIdx,
-                                      float inOpen[],
-                                      float inHigh[],
-                                      float inLow[],
-                                      float inClose[],
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      int outInteger[] )
-       {
-          try {
-             return CDLTASUKIGAP_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -65284,27 +62050,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLTHRUSTING_Internal( int startIdx,
-                                      int endIdx,
-                                      double inOpen[],
-                                      double inHigh[],
-                                      double inLow[],
-                                      double inClose[],
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      int outInteger[] )
-       {
-          try {
-             return CDLTHRUSTING_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A two-candle pattern: a long black candle followed by a white candle that
         * opens below the prior low and closes back into the prior body but below
@@ -65378,27 +62123,6 @@ class Core {
              throw failure("CDLTHRUSTING", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLTHRUSTING_Internal( int startIdx,
-                                      int endIdx,
-                                      float inOpen[],
-                                      float inHigh[],
-                                      float inLow[],
-                                      float inClose[],
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      int outInteger[] )
-       {
-          try {
-             return CDLTHRUSTING_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -66095,27 +62819,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLTRISTAR_Internal( int startIdx,
-                                    int endIdx,
-                                    double inOpen[],
-                                    double inHigh[],
-                                    double inLow[],
-                                    double inClose[],
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    int outInteger[] )
-       {
-          try {
-             return CDLTRISTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A three-candle pattern of three consecutive doji where the middle doji is
         * a star (its body gaps away from the first). Bullish or bearish reversal
@@ -66187,27 +62890,6 @@ class Core {
              throw failure("CDLTRISTAR", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLTRISTAR_Internal( int startIdx,
-                                    int endIdx,
-                                    float inOpen[],
-                                    float inHigh[],
-                                    float inLow[],
-                                    float inClose[],
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    int outInteger[] )
-       {
-          try {
-             return CDLTRISTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -66875,27 +63557,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLUNIQUE3RIVER_Internal( int startIdx,
-                                         int endIdx,
-                                         double inOpen[],
-                                         double inHigh[],
-                                         double inLow[],
-                                         double inClose[],
-                                         MInteger outBegIdx,
-                                         MInteger outNBElement,
-                                         int outInteger[] )
-       {
-          try {
-             return CDLUNIQUE3RIVER_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A three-candle bullish reversal pattern: a long black candle, then a black
         * harami candle that makes a lower low, then a small white candle. Signals a
@@ -66967,27 +63628,6 @@ class Core {
              throw failure("CDLUNIQUE3RIVER", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLUNIQUE3RIVER_Internal( int startIdx,
-                                         int endIdx,
-                                         float inOpen[],
-                                         float inHigh[],
-                                         float inLow[],
-                                         float inClose[],
-                                         MInteger outBegIdx,
-                                         MInteger outNBElement,
-                                         int outInteger[] )
-       {
-          try {
-             return CDLUNIQUE3RIVER_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -67727,27 +64367,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLUPSIDEGAP2CROWS_Internal( int startIdx,
-                                            int endIdx,
-                                            double inOpen[],
-                                            double inHigh[],
-                                            double inLow[],
-                                            double inClose[],
-                                            MInteger outBegIdx,
-                                            MInteger outNBElement,
-                                            int outInteger[] )
-       {
-          try {
-             return CDLUPSIDEGAP2CROWS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A three-candle bearish reversal pattern: a long white candle, then a small
         * black candle gapping up (a gap between the real bodies), then a black
@@ -67819,27 +64438,6 @@ class Core {
              throw failure("CDLUPSIDEGAP2CROWS", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLUPSIDEGAP2CROWS_Internal( int startIdx,
-                                            int endIdx,
-                                            float inOpen[],
-                                            float inHigh[],
-                                            float inLow[],
-                                            float inClose[],
-                                            MInteger outBegIdx,
-                                            MInteger outNBElement,
-                                            int outInteger[] )
-       {
-          try {
-             return CDLUPSIDEGAP2CROWS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -68514,27 +65112,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CDLXSIDEGAP3METHODS_Internal( int startIdx,
-                                             int endIdx,
-                                             double inOpen[],
-                                             double inHigh[],
-                                             double inLow[],
-                                             double inClose[],
-                                             MInteger outBegIdx,
-                                             MInteger outNBElement,
-                                             int outInteger[] )
-       {
-          try {
-             return CDLXSIDEGAP3METHODS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * A three-candle continuation pattern: two same-color candles separated by a
         * real-body gap, followed by an opposite-color candle that fills into the
@@ -68605,27 +65182,6 @@ class Core {
              throw failure("CDLXSIDEGAP3METHODS", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CDLXSIDEGAP3METHODS_Internal( int startIdx,
-                                             int endIdx,
-                                             float inOpen[],
-                                             float inHigh[],
-                                             float inLow[],
-                                             float inClose[],
-                                             MInteger outBegIdx,
-                                             MInteger outNBElement,
-                                             int outInteger[] )
-       {
-          try {
-             return CDLXSIDEGAP3METHODS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -69044,24 +65600,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CEIL_Internal( int startIdx,
-                              int endIdx,
-                              double inReal[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return CEIL_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Vector ceiling: element-wise ceiling of each input value (smallest integer
         * &gt;= input).
@@ -69118,24 +65656,6 @@ class Core {
              throw failure("CEIL", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CEIL_Internal( int startIdx,
-                              int endIdx,
-                              float inReal[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return CEIL_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -69718,28 +66238,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CMF_Internal( int startIdx,
-                             int endIdx,
-                             double inHigh[],
-                             double inLow[],
-                             double inClose[],
-                             double inVolume[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return CMF_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Chaikin Money Flow: over a trailing window of {@code optInTimePeriod}
         * bars, the sum of each bar's money flow volume divided by the sum of its
@@ -69837,28 +66335,6 @@ class Core {
              throw failure("CMF", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CMF_Internal( int startIdx,
-                             int endIdx,
-                             float inHigh[],
-                             float inLow[],
-                             float inClose[],
-                             float inVolume[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return CMF_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -70671,25 +67147,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CMO_Internal( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return CMO_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Chande Momentum Oscillator: bounded momentum measure from Wilder-smoothed
         * average up-moves and down-moves. Identical to RSI except the numerator
@@ -70755,25 +67212,6 @@ class Core {
              throw failure("CMO", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CMO_Internal( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return CMO_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -71508,25 +67946,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CMOU_Internal( int startIdx,
-                              int endIdx,
-                              double inReal[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return CMOU_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Chande Momentum Oscillator: Tushar Chande's original momentum oscillator,
         * computed from **plain moving-window sums** of the up-moves and down-moves
@@ -71593,25 +68012,6 @@ class Core {
              throw failure("CMOU", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CMOU_Internal( int startIdx,
-                              int endIdx,
-                              float inReal[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return CMOU_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -72321,26 +68721,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode CORREL_Internal( int startIdx,
-                                int endIdx,
-                                double inReal0[],
-                                double inReal1[],
-                                int optInTimePeriod,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
-       {
-          try {
-             return CORREL_Body(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Pearson's correlation coefficient (r) between two input series over a
         * rolling window of optInTimePeriod bars. Measures how linearly the two
@@ -72411,26 +68791,6 @@ class Core {
              throw failure("CORREL", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode CORREL_Internal( int startIdx,
-                                int endIdx,
-                                float inReal0[],
-                                float inReal1[],
-                                int optInTimePeriod,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
-       {
-          try {
-             return CORREL_Body(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -72979,24 +69339,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode COS_Internal( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return COS_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Element-wise trigonometric cosine of the input series. Applies the C
         * library cos() to each sample.
@@ -73056,24 +69398,6 @@ class Core {
              throw failure("COS", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode COS_Internal( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return COS_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -73413,24 +69737,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode COSH_Internal( int startIdx,
-                              int endIdx,
-                              double inReal[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return COSH_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Vector hyperbolic cosine: applies cosh element-wise to each input value. A
         * Math Transform primitive with no lookback.
@@ -73489,24 +69795,6 @@ class Core {
              throw failure("COSH", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode COSH_Internal( int startIdx,
-                              int endIdx,
-                              float inReal[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return COSH_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -74061,25 +70349,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode DEMA_Internal( int startIdx,
-                              int endIdx,
-                              double inReal[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return DEMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Double Exponential Moving Average: an EMA combined with an EMA-of-EMA to
         * reduce lag versus a plain EMA. Overlap Studies overlay on price.
@@ -74145,25 +70414,6 @@ class Core {
              throw failure("DEMA", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode DEMA_Internal( int startIdx,
-                              int endIdx,
-                              float inReal[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return DEMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -74667,25 +70917,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode DIV_Internal( int startIdx,
-                             int endIdx,
-                             double inReal0[],
-                             double inReal1[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return DIV_Body(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Element-wise division of two input series. Computes the quotient of
         * corresponding values from two real inputs.
@@ -74751,25 +70982,6 @@ class Core {
              throw failure("DIV", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode DIV_Internal( int startIdx,
-                             int endIdx,
-                             float inReal0[],
-                             float inReal1[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return DIV_Body(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -75589,27 +71801,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode DX_Internal( int startIdx,
-                            int endIdx,
-                            double inHigh[],
-                            double inLow[],
-                            double inClose[],
-                            int optInTimePeriod,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
-       {
-          try {
-             return DX_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Wilder's Directional Movement Index: the normalized spread between +DI and
         * -DI. Measures the strength of directional (trending) movement,
@@ -75688,27 +71879,6 @@ class Core {
              throw failure("DX", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode DX_Internal( int startIdx,
-                            int endIdx,
-                            float inHigh[],
-                            float inLow[],
-                            float inClose[],
-                            int optInTimePeriod,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
-       {
-          try {
-             return DX_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -76638,26 +72808,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode EFI_Internal( int startIdx,
-                             int endIdx,
-                             double inClose[],
-                             double inVolume[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return EFI_Body(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Alexander Elder's Force Index (*Trading for a Living*, 1993):
         * volume-weighted momentum. Each bar's close-to-close move is weighted by
@@ -76736,26 +72886,6 @@ class Core {
              throw failure("EFI", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode EFI_Internal( int startIdx,
-                             int endIdx,
-                             float inClose[],
-                             float inVolume[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return EFI_Body(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -77453,25 +73583,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode EMA_Internal( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return EMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Exponential moving average that weights recent prices more heavily via a
         * recursive smoothing factor. A core building block seeding or composing
@@ -77543,25 +73654,6 @@ class Core {
              throw failure("EMA", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode EMA_Internal( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return EMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -77998,24 +74090,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode EXP_Internal( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return EXP_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Vector arithmetic exponential: applies the base-e exponential to each
         * input value. Element-wise math transform.
@@ -78073,24 +74147,6 @@ class Core {
              throw failure("EXP", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode EXP_Internal( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return EXP_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -78428,24 +74484,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode FLOOR_Internal( int startIdx,
-                               int endIdx,
-                               double inReal[],
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outReal[] )
-       {
-          try {
-             return FLOOR_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Vector floor: rounds each input value down to the nearest integer.
         * Element-wise math transform.
@@ -78502,24 +74540,6 @@ class Core {
              throw failure("FLOOR", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode FLOOR_Internal( int startIdx,
-                               int endIdx,
-                               float inReal[],
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outReal[] )
-       {
-          try {
-             return FLOOR_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -79262,25 +75282,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode HMA_Internal( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return HMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Hull Moving Average, published by Alan Hull in 2005: a moving average
         * built to track price with far less lag than an
@@ -79361,25 +75362,6 @@ class Core {
              throw failure("HMA", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode HMA_Internal( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return HMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -80898,24 +76880,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode HT_DCPERIOD_Internal( int startIdx,
-                                     int endIdx,
-                                     double inReal[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     double outReal[] )
-       {
-          try {
-             return HT_DCPERIOD_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Hilbert Transform estimate of the dominant cycle period (in bars) of the
         * price series. Outputs the smoothed instantaneous cycle period. Output is
@@ -80974,24 +76938,6 @@ class Core {
              throw failure("HT_DCPERIOD", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode HT_DCPERIOD_Internal( int startIdx,
-                                     int endIdx,
-                                     float inReal[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     double outReal[] )
-       {
-          try {
-             return HT_DCPERIOD_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -82789,24 +78735,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode HT_DCPHASE_Internal( int startIdx,
-                                    int endIdx,
-                                    double inReal[],
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    double outReal[] )
-       {
-          try {
-             return HT_DCPHASE_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Hilbert Transform Dominant Cycle Phase: the instantaneous phase (in
         * degrees) of the dominant market cycle, derived from a homodyne
@@ -82868,24 +78796,6 @@ class Core {
              throw failure("HT_DCPHASE", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode HT_DCPHASE_Internal( int startIdx,
-                                    int endIdx,
-                                    float inReal[],
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    double outReal[] )
-       {
-          try {
-             return HT_DCPHASE_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -84743,25 +80653,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode HT_PHASOR_Internal( int startIdx,
-                                   int endIdx,
-                                   double inReal[],
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   double outInPhase[],
-                                   double outQuadrature[] )
-       {
-          try {
-             return HT_PHASOR_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Hilbert Transform indicator that decomposes the price series into its
         * in-phase (I) and quadrature (Q) phasor components. Shares the same
@@ -84828,25 +80719,6 @@ class Core {
              throw failure("HT_PHASOR", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode HT_PHASOR_Internal( int startIdx,
-                                   int endIdx,
-                                   float inReal[],
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   double outInPhase[],
-                                   double outQuadrature[] )
-       {
-          try {
-             return HT_PHASOR_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -86683,25 +82555,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode HT_SINE_Internal( int startIdx,
-                                 int endIdx,
-                                 double inReal[],
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outSine[],
-                                 double outLeadSine[] )
-       {
-          try {
-             return HT_SINE_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Hilbert Transform SineWave: derives the dominant-cycle phase from price
         * and emits its sine plus a 45-degree-lead sine. The two curves cross near
@@ -86764,25 +82617,6 @@ class Core {
              throw failure("HT_SINE", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode HT_SINE_Internal( int startIdx,
-                                 int endIdx,
-                                 float inReal[],
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outSine[],
-                                 double outLeadSine[] )
-       {
-          try {
-             return HT_SINE_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -88730,24 +84564,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode HT_TRENDLINE_Internal( int startIdx,
-                                      int endIdx,
-                                      double inReal[],
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      double outReal[] )
-       {
-          try {
-             return HT_TRENDLINE_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Ehlers' Hilbert Transform Instantaneous Trendline: a smoothed, low-lag
         * overlay whose averaging window adapts to the dominant cycle period
@@ -88804,24 +84620,6 @@ class Core {
              throw failure("HT_TRENDLINE", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode HT_TRENDLINE_Internal( int startIdx,
-                                      int endIdx,
-                                      float inReal[],
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      double outReal[] )
-       {
-          try {
-             return HT_TRENDLINE_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -90883,24 +86681,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode HT_TRENDMODE_Internal( int startIdx,
-                                      int endIdx,
-                                      double inReal[],
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      int outInteger[] )
-       {
-          try {
-             return HT_TRENDMODE_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Hilbert Transform classifier that labels each bar as trending (1) or
         * cycling (0). Reuses the MAMA dominant-cycle/phase DSP plus a
@@ -90959,24 +86739,6 @@ class Core {
              throw failure("HT_TRENDMODE", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode HT_TRENDMODE_Internal( int startIdx,
-                                      int endIdx,
-                                      float inReal[],
-                                      MInteger outBegIdx,
-                                      MInteger outNBElement,
-                                      int outInteger[] )
-       {
-          try {
-             return HT_TRENDMODE_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -92525,26 +88287,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode IMI_Internal( int startIdx,
-                             int endIdx,
-                             double inOpen[],
-                             double inClose[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return IMI_Body(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Intraday Momentum Index: an RSI-like 0-100 oscillator built from the
         * open-to-close body of each bar. Over a rolling window it ratios cumulative
@@ -92609,26 +88351,6 @@ class Core {
              throw failure("IMI", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode IMI_Internal( int startIdx,
-                             int endIdx,
-                             float inOpen[],
-                             float inClose[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return IMI_Body(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -93373,25 +89095,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode KAMA_Internal( int startIdx,
-                              int endIdx,
-                              double inReal[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return KAMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Kaufman Adaptive Moving Average: an EMA whose smoothing factor adapts each
         * bar to an efficiency ratio (directional move vs. total volatility). Reacts
@@ -93462,25 +89165,6 @@ class Core {
              throw failure("KAMA", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode KAMA_Internal( int startIdx,
-                              int endIdx,
-                              float inReal[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return KAMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -94228,25 +89912,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode LINEARREG_Internal( int startIdx,
-                                   int endIdx,
-                                   double inReal[],
-                                   int optInTimePeriod,
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   double outReal[] )
-       {
-          try {
-             return LINEARREG_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Least-squares straight-line fit over the last optInTimePeriod bars,
         * reported as the fitted line value at the window endpoint (b +
@@ -94306,25 +89971,6 @@ class Core {
              throw failure("LINEARREG", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode LINEARREG_Internal( int startIdx,
-                                   int endIdx,
-                                   float inReal[],
-                                   int optInTimePeriod,
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   double outReal[] )
-       {
-          try {
-             return LINEARREG_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -94959,25 +90605,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode LINEARREG_ANGLE_Internal( int startIdx,
-                                         int endIdx,
-                                         double inReal[],
-                                         int optInTimePeriod,
-                                         MInteger outBegIdx,
-                                         MInteger outNBElement,
-                                         double outReal[] )
-       {
-          try {
-             return LINEARREG_ANGLE_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * The angle, in degrees, of the least-squares best-fit line over the last N
         * points. It is the LINEARREG_SLOPE value passed through atan and converted
@@ -95042,25 +90669,6 @@ class Core {
              throw failure("LINEARREG_ANGLE", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode LINEARREG_ANGLE_Internal( int startIdx,
-                                         int endIdx,
-                                         float inReal[],
-                                         int optInTimePeriod,
-                                         MInteger outBegIdx,
-                                         MInteger outNBElement,
-                                         double outReal[] )
-       {
-          try {
-             return LINEARREG_ANGLE_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -95688,25 +91296,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode LINEARREG_INTERCEPT_Internal( int startIdx,
-                                             int endIdx,
-                                             double inReal[],
-                                             int optInTimePeriod,
-                                             MInteger outBegIdx,
-                                             MInteger outNBElement,
-                                             double outReal[] )
-       {
-          try {
-             return LINEARREG_INTERCEPT_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Returns the y-intercept (b) of the least-squares regression line fitted
         * over the last optInTimePeriod values. Part of the linear-regression family
@@ -95772,25 +91361,6 @@ class Core {
              throw failure("LINEARREG_INTERCEPT", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode LINEARREG_INTERCEPT_Internal( int startIdx,
-                                             int endIdx,
-                                             float inReal[],
-                                             int optInTimePeriod,
-                                             MInteger outBegIdx,
-                                             MInteger outNBElement,
-                                             double outReal[] )
-       {
-          try {
-             return LINEARREG_INTERCEPT_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -96413,25 +91983,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode LINEARREG_SLOPE_Internal( int startIdx,
-                                         int endIdx,
-                                         double inReal[],
-                                         int optInTimePeriod,
-                                         MInteger outBegIdx,
-                                         MInteger outNBElement,
-                                         double outReal[] )
-       {
-          try {
-             return LINEARREG_SLOPE_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Slope 'm' of the least-squares best-fit line (y = b + m*x) over the last
         * optInTimePeriod bars. Reports the per-bar rate of change of the fitted
@@ -96498,25 +92049,6 @@ class Core {
              throw failure("LINEARREG_SLOPE", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode LINEARREG_SLOPE_Internal( int startIdx,
-                                         int endIdx,
-                                         float inReal[],
-                                         int optInTimePeriod,
-                                         MInteger outBegIdx,
-                                         MInteger outNBElement,
-                                         double outReal[] )
-       {
-          try {
-             return LINEARREG_SLOPE_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -96995,24 +92527,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode LN_Internal( int startIdx,
-                            int endIdx,
-                            double inReal[],
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
-       {
-          try {
-             return LN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Vector natural logarithm: applies the natural log (base e) elementwise to
         * the input series.
@@ -97075,24 +92589,6 @@ class Core {
              throw failure("LN", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode LN_Internal( int startIdx,
-                            int endIdx,
-                            float inReal[],
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
-       {
-          try {
-             return LN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -97435,24 +92931,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode LOG10_Internal( int startIdx,
-                               int endIdx,
-                               double inReal[],
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outReal[] )
-       {
-          try {
-             return LOG10_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Vector base-10 logarithm. Applies log10 element-wise over each input
         * value.
@@ -97514,24 +92992,6 @@ class Core {
              throw failure("LOG10", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode LOG10_Internal( int startIdx,
-                               int endIdx,
-                               float inReal[],
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outReal[] )
-       {
-          try {
-             return LOG10_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -98127,26 +93587,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode MA_Internal( int startIdx,
-                            int endIdx,
-                            double inReal[],
-                            int optInTimePeriod,
-                            MAType optInMAType,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
-       {
-          try {
-             return MA_Body(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Generic moving-average dispatcher that forwards the job to the MA
         * implementation selected by optInMAType. Single uniform interface over all
@@ -98228,26 +93668,6 @@ class Core {
              throw failure("MA", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode MA_Internal( int startIdx,
-                            int endIdx,
-                            float inReal[],
-                            int optInTimePeriod,
-                            MAType optInMAType,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
-       {
-          try {
-             return MA_Body(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -99445,29 +94865,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode MACD_Internal( int startIdx,
-                              int endIdx,
-                              double inReal[],
-                              int optInFastPeriod,
-                              int optInSlowPeriod,
-                              int optInSignalPeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outMACD[],
-                              double outMACDSignal[],
-                              double outMACDHist[] )
-       {
-          try {
-             return MACD_Body(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Moving Average Convergence/Divergence: the difference between a fast and a
         * slow EMA of the input, plus an EMA-smoothed signal line and their
@@ -99551,29 +94948,6 @@ class Core {
              throw failure("MACD", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode MACD_Internal( int startIdx,
-                              int endIdx,
-                              float inReal[],
-                              int optInFastPeriod,
-                              int optInSlowPeriod,
-                              int optInSignalPeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outMACD[],
-                              double outMACDSignal[],
-                              double outMACDHist[] )
-       {
-          try {
-             return MACD_Body(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -100538,32 +95912,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode MACDEXT_Internal( int startIdx,
-                                 int endIdx,
-                                 double inReal[],
-                                 int optInFastPeriod,
-                                 MAType optInFastMAType,
-                                 int optInSlowPeriod,
-                                 MAType optInSlowMAType,
-                                 int optInSignalPeriod,
-                                 MAType optInSignalMAType,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outMACD[],
-                                 double outMACDSignal[],
-                                 double outMACDHist[] )
-       {
-          try {
-             return MACDEXT_Body(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * MACD variant where the fast, slow, and signal moving averages each use a
         * user-selectable MA type. Outputs the MACD line, its signal line, and their
@@ -100669,32 +96017,6 @@ class Core {
              throw failure("MACDEXT", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode MACDEXT_Internal( int startIdx,
-                                 int endIdx,
-                                 float inReal[],
-                                 int optInFastPeriod,
-                                 MAType optInFastMAType,
-                                 int optInSlowPeriod,
-                                 MAType optInSlowMAType,
-                                 int optInSignalPeriod,
-                                 MAType optInSignalMAType,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outMACD[],
-                                 double outMACDSignal[],
-                                 double outMACDHist[] )
-       {
-          try {
-             return MACDEXT_Body(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -101565,27 +96887,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode MACDFIX_Internal( int startIdx,
-                                 int endIdx,
-                                 double inReal[],
-                                 int optInSignalPeriod,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outMACD[],
-                                 double outMACDSignal[],
-                                 double outMACDHist[] )
-       {
-          try {
-             return MACDFIX_Body(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * MACD with the fast/slow EMAs fixed to the classic 12/26 periods (with the
         * classic fixed smoothing factors 0.15 and 0.075), exposing only the signal
@@ -101663,27 +96964,6 @@ class Core {
              throw failure("MACDFIX", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode MACDFIX_Internal( int startIdx,
-                                 int endIdx,
-                                 float inReal[],
-                                 int optInSignalPeriod,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outMACD[],
-                                 double outMACDSignal[],
-                                 double outMACDHist[] )
-       {
-          try {
-             return MACDFIX_Body(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -102986,27 +98266,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode MAMA_Internal( int startIdx,
-                              int endIdx,
-                              double inReal[],
-                              double optInFastLimit,
-                              double optInSlowLimit,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outMAMA[],
-                              double outFAMA[] )
-       {
-          try {
-             return MAMA_Body(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * MESA Adaptive Moving Average: an adaptive EMA whose smoothing factor is
         * driven by the dominant-cycle phase rate measured with a Hilbert transform.
@@ -103080,27 +98339,6 @@ class Core {
              throw failure("MAMA", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode MAMA_Internal( int startIdx,
-                              int endIdx,
-                              float inReal[],
-                              double optInFastLimit,
-                              double optInSlowLimit,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outMAMA[],
-                              double outFAMA[] )
-       {
-          try {
-             return MAMA_Body(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -104357,26 +99595,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode MARKETFI_Internal( int startIdx,
-                                  int endIdx,
-                                  double inHigh[],
-                                  double inLow[],
-                                  double inVolume[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
-       {
-          try {
-             return MARKETFI_Body(startIdx, endIdx, inHigh, inLow, inVolume, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Bill Williams' Market Facilitation Index (*Trading Chaos*, 1995): the
         * price range a bar travelled per unit of volume traded — how much movement
@@ -104453,26 +99671,6 @@ class Core {
              throw failure("MARKETFI", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode MARKETFI_Internal( int startIdx,
-                                  int endIdx,
-                                  float inHigh[],
-                                  float inLow[],
-                                  float inVolume[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
-       {
-          try {
-             return MARKETFI_Body(startIdx, endIdx, inHigh, inLow, inVolume, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -105347,28 +100545,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode MAVP_Internal( int startIdx,
-                              int endIdx,
-                              double inReal[],
-                              double inPeriods[],
-                              int optInMinPeriod,
-                              int optInMaxPeriod,
-                              MAType optInMAType,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return MAVP_Body(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Moving average whose period varies per bar, driven by a companion period
         * series. For each bar it computes an MA of the selected type over the
@@ -105448,28 +100624,6 @@ class Core {
              throw failure("MAVP", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode MAVP_Internal( int startIdx,
-                              int endIdx,
-                              float inReal[],
-                              float inPeriods[],
-                              int optInMinPeriod,
-                              int optInMaxPeriod,
-                              MAType optInMAType,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return MAVP_Body(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -106154,25 +101308,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode MAX_Internal( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return MAX_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Highest input value over a rolling window of the last optInTimePeriod
         * bars. A moving-window maximum.
@@ -106234,25 +101369,6 @@ class Core {
              throw failure("MAX", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode MAX_Internal( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return MAX_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -106858,25 +101974,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode MAXINDEX_Internal( int startIdx,
-                                  int endIdx,
-                                  double inReal[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  int outInteger[] )
-       {
-          try {
-             return MAXINDEX_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Returns the index of the highest input value within a rolling window of
         * optInTimePeriod bars. Same as MAX but outputs the location instead of the
@@ -106945,25 +102042,6 @@ class Core {
              throw failure("MAXINDEX", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode MAXINDEX_Internal( int startIdx,
-                                  int endIdx,
-                                  float inReal[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  int outInteger[] )
-       {
-          try {
-             return MAXINDEX_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -107454,25 +102532,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode MEDPRICE_Internal( int startIdx,
-                                  int endIdx,
-                                  double inHigh[],
-                                  double inLow[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
-       {
-          try {
-             return MEDPRICE_Body(startIdx, endIdx, inHigh, inLow, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Median Price: the midpoint of each bar's high and low. A price-transform
         * overlay.
@@ -107535,25 +102594,6 @@ class Core {
              throw failure("MEDPRICE", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode MEDPRICE_Internal( int startIdx,
-                                  int endIdx,
-                                  float inHigh[],
-                                  float inLow[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
-       {
-          try {
-             return MEDPRICE_Body(startIdx, endIdx, inHigh, inLow, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -108147,28 +103187,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode MFI_Internal( int startIdx,
-                             int endIdx,
-                             double inHigh[],
-                             double inLow[],
-                             double inClose[],
-                             double inVolume[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return MFI_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Money Flow Index: a volume-weighted momentum oscillator (0-100) comparing
         * positive vs negative money flow over a period. A volume-based analog of
@@ -108244,28 +103262,6 @@ class Core {
              throw failure("MFI", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode MFI_Internal( int startIdx,
-                             int endIdx,
-                             float inHigh[],
-                             float inLow[],
-                             float inClose[],
-                             float inVolume[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return MFI_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -109119,25 +104115,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode MIDPOINT_Internal( int startIdx,
-                                  int endIdx,
-                                  double inReal[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
-       {
-          try {
-             return MIDPOINT_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Midpoint over a period: the average of the highest and lowest input values
         * within the lookback window. A single-series overlap smoother (use MIDPRICE
@@ -109200,25 +104177,6 @@ class Core {
              throw failure("MIDPOINT", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode MIDPOINT_Internal( int startIdx,
-                                  int endIdx,
-                                  float inReal[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
-       {
-          try {
-             return MIDPOINT_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -110083,26 +105041,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode MIDPRICE_Internal( int startIdx,
-                                  int endIdx,
-                                  double inHigh[],
-                                  double inLow[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
-       {
-          try {
-             return MIDPRICE_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Midpoint of the price range over a rolling window: the average of the
         * highest high and lowest low across the last optInTimePeriod bars. An
@@ -110168,26 +105106,6 @@ class Core {
              throw failure("MIDPRICE", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode MIDPRICE_Internal( int startIdx,
-                                  int endIdx,
-                                  float inHigh[],
-                                  float inLow[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
-       {
-          try {
-             return MIDPRICE_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -110977,25 +105895,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode MIN_Internal( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return MIN_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Rolling minimum: the lowest input value over the trailing period.
         * <p><b>Formula</b>
@@ -111056,25 +105955,6 @@ class Core {
              throw failure("MIN", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode MIN_Internal( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return MIN_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -111678,25 +106558,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode MININDEX_Internal( int startIdx,
-                                  int endIdx,
-                                  double inReal[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  int outInteger[] )
-       {
-          try {
-             return MININDEX_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Returns the absolute index of the lowest value within a rolling window of
         * the given period. Same scan as MIN but outputs the position of the minimum
@@ -111765,25 +106626,6 @@ class Core {
              throw failure("MININDEX", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode MININDEX_Internal( int startIdx,
-                                  int endIdx,
-                                  float inReal[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  int outInteger[] )
-       {
-          try {
-             return MININDEX_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -112562,26 +107404,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode MINMAX_Internal( int startIdx,
-                                int endIdx,
-                                double inReal[],
-                                int optInTimePeriod,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outMin[],
-                                double outMax[] )
-       {
-          try {
-             return MINMAX_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Returns both the lowest and highest values of the input over a rolling
         * window of the last optInTimePeriod bars. An overlap-study companion to MIN
@@ -112646,26 +107468,6 @@ class Core {
              throw failure("MINMAX", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode MINMAX_Internal( int startIdx,
-                                int endIdx,
-                                float inReal[],
-                                int optInTimePeriod,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outMin[],
-                                double outMax[] )
-       {
-          try {
-             return MINMAX_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -113413,26 +108215,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode MINMAXINDEX_Internal( int startIdx,
-                                     int endIdx,
-                                     double inReal[],
-                                     int optInTimePeriod,
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outMinIdx[],
-                                     int outMaxIdx[] )
-       {
-          try {
-             return MINMAXINDEX_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Returns the absolute input indices of the lowest and highest values within
         * each rolling window of optInTimePeriod bars. Index variant of MINMAX.
@@ -113504,26 +108286,6 @@ class Core {
              throw failure("MINMAXINDEX", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode MINMAXINDEX_Internal( int startIdx,
-                                     int endIdx,
-                                     float inReal[],
-                                     int optInTimePeriod,
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outMinIdx[],
-                                     int outMaxIdx[] )
-       {
-          try {
-             return MINMAXINDEX_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -114589,27 +109351,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode MINUS_DI_Internal( int startIdx,
-                                  int endIdx,
-                                  double inHigh[],
-                                  double inLow[],
-                                  double inClose[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
-       {
-          try {
-             return MINUS_DI_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Wilder's Minus Directional Indicator: the Wilder-smoothed downward
         * directional movement (-DM) normalized by smoothed True Range. Measures the
@@ -114686,27 +109427,6 @@ class Core {
              throw failure("MINUS_DI", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode MINUS_DI_Internal( int startIdx,
-                                  int endIdx,
-                                  float inHigh[],
-                                  float inLow[],
-                                  float inClose[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
-       {
-          try {
-             return MINUS_DI_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -115907,26 +110627,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode MINUS_DM_Internal( int startIdx,
-                                  int endIdx,
-                                  double inHigh[],
-                                  double inLow[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
-       {
-          try {
-             return MINUS_DM_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Minus Directional Movement, the downward component of Wilder's directional
         * movement system. Measures Wilder-smoothed downward price motion over the
@@ -115999,26 +110699,6 @@ class Core {
              throw failure("MINUS_DM", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode MINUS_DM_Internal( int startIdx,
-                                  int endIdx,
-                                  float inHigh[],
-                                  float inLow[],
-                                  int optInTimePeriod,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
-       {
-          try {
-             return MINUS_DM_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -116802,25 +111482,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode MOM_Internal( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return MOM_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Momentum: current price minus the price optInTimePeriod bars ago. The
         * absolute (unnormalized) rate of change. Positive = price rose over the
@@ -116884,25 +111545,6 @@ class Core {
              throw failure("MOM", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode MOM_Internal( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return MOM_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -117347,25 +111989,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode MULT_Internal( int startIdx,
-                              int endIdx,
-                              double inReal0[],
-                              double inReal1[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return MULT_Body(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Element-wise multiplication of two input series. Produces outReal[i] =
         * inReal0[i] * inReal1[i].
@@ -117427,25 +112050,6 @@ class Core {
              throw failure("MULT", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode MULT_Internal( int startIdx,
-                              int endIdx,
-                              float inReal0[],
-                              float inReal1[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return MULT_Body(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -118118,27 +112722,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode NATR_Internal( int startIdx,
-                              int endIdx,
-                              double inHigh[],
-                              double inLow[],
-                              double inClose[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return NATR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Average True Range expressed as a percentage of the current close, making
         * volatility comparable across price levels and securities. Same computation
@@ -118210,27 +112793,6 @@ class Core {
              throw failure("NATR", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode NATR_Internal( int startIdx,
-                              int endIdx,
-                              float inHigh[],
-                              float inLow[],
-                              float inClose[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return NATR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -118883,25 +113445,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode NVI_Internal( int startIdx,
-                             int endIdx,
-                             double inClose[],
-                             double inVolume[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return NVI_Body(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Negative Volume Index: a running cumulative index that changes only on
         * days when volume falls versus the prior day, compounding that day's
@@ -118972,25 +113515,6 @@ class Core {
              throw failure("NVI", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode NVI_Internal( int startIdx,
-                             int endIdx,
-                             float inClose[],
-                             float inVolume[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return NVI_Body(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -119446,25 +113970,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode OBV_Internal( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             double inVolume[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return OBV_Body(startIdx, endIdx, inReal, inVolume, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * On Balance Volume: a running cumulative total of volume, added on up-price
         * bars and subtracted on down-price bars. Relates volume flow to price
@@ -119523,25 +114028,6 @@ class Core {
              throw failure("OBV", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode OBV_Internal( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             float inVolume[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return OBV_Body(startIdx, endIdx, inReal, inVolume, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -120428,27 +114914,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode PLUS_DI_Internal( int startIdx,
-                                 int endIdx,
-                                 double inHigh[],
-                                 double inLow[],
-                                 double inClose[],
-                                 int optInTimePeriod,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
-       {
-          try {
-             return PLUS_DI_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Plus Directional Indicator: the Wilder-smoothed positive directional
         * movement expressed as a percentage of the true range. Measures the
@@ -120529,27 +114994,6 @@ class Core {
              throw failure("PLUS_DI", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode PLUS_DI_Internal( int startIdx,
-                                 int endIdx,
-                                 float inHigh[],
-                                 float inLow[],
-                                 float inClose[],
-                                 int optInTimePeriod,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
-       {
-          try {
-             return PLUS_DI_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -121750,26 +116194,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode PLUS_DM_Internal( int startIdx,
-                                 int endIdx,
-                                 double inHigh[],
-                                 double inLow[],
-                                 int optInTimePeriod,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
-       {
-          try {
-             return PLUS_DM_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Plus Directional Movement: the Wilder-smoothed accumulation of upward
         * directional movement (+DM1). A component of the Directional Movement
@@ -121841,26 +116265,6 @@ class Core {
              throw failure("PLUS_DM", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode PLUS_DM_Internal( int startIdx,
-                                 int endIdx,
-                                 float inHigh[],
-                                 float inLow[],
-                                 int optInTimePeriod,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
-       {
-          try {
-             return PLUS_DM_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -122729,27 +117133,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode PPO_Internal( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             int optInFastPeriod,
-                             int optInSlowPeriod,
-                             MAType optInMAType,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return PPO_Body(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Percentage Price Oscillator: the difference between a fast and slow moving
         * average expressed as a percentage of the slow MA. A normalized
@@ -122828,27 +117211,6 @@ class Core {
              throw failure("PPO", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode PPO_Internal( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             int optInFastPeriod,
-                             int optInSlowPeriod,
-                             MAType optInMAType,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return PPO_Body(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -123396,25 +117758,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode PVI_Internal( int startIdx,
-                             int endIdx,
-                             double inClose[],
-                             double inVolume[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return PVI_Body(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Positive Volume Index: a running cumulative index that changes only on
         * days when volume rises versus the prior day, compounding that day's
@@ -123485,25 +117828,6 @@ class Core {
              throw failure("PVI", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode PVI_Internal( int startIdx,
-                             int endIdx,
-                             float inClose[],
-                             float inVolume[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return PVI_Body(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -124097,27 +118421,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode PVO_Internal( int startIdx,
-                             int endIdx,
-                             double inVolume[],
-                             int optInFastPeriod,
-                             int optInSlowPeriod,
-                             MAType optInMAType,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return PVO_Body(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Percentage Volume Oscillator: a variation of the [Percentage Price
         * Oscillator](/functions/ppo) (PPO, created by Gerald Appel) applied to the
@@ -124198,27 +118501,6 @@ class Core {
              throw failure("PVO", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode PVO_Internal( int startIdx,
-                             int endIdx,
-                             float inVolume[],
-                             int optInFastPeriod,
-                             int optInSlowPeriod,
-                             MAType optInMAType,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return PVO_Body(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -124815,26 +119097,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode QSTICK_Internal( int startIdx,
-                                int endIdx,
-                                double inOpen[],
-                                double inClose[],
-                                int optInTimePeriod,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
-       {
-          try {
-             return QSTICK_Body(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Tushar Chande and Stanley Kroll's Qstick (*The New Technical Trader*,
         * 1994): a simple moving average of the candle body, close minus open. It
@@ -124906,26 +119168,6 @@ class Core {
              throw failure("QSTICK", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode QSTICK_Internal( int startIdx,
-                                int endIdx,
-                                float inOpen[],
-                                float inClose[],
-                                int optInTimePeriod,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
-       {
-          try {
-             return QSTICK_Body(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -125481,25 +119723,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode ROC_Internal( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return ROC_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Rate-of-change momentum oscillator: the percent change of price versus the
         * price optInTimePeriod bars earlier. Centered at zero with positive and
@@ -125564,25 +119787,6 @@ class Core {
              throw failure("ROC", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode ROC_Internal( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return ROC_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -126125,25 +120329,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode ROCP_Internal( int startIdx,
-                              int endIdx,
-                              double inReal[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return ROCP_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Rate of change expressed as a fraction of the price optInTimePeriod bars
         * ago. Normalized and centered at zero (positive or negative). &gt;0 rising
@@ -126207,25 +120392,6 @@ class Core {
              throw failure("ROCP", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode ROCP_Internal( int startIdx,
-                              int endIdx,
-                              float inReal[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return ROCP_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -126770,25 +120936,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode ROCR_Internal( int startIdx,
-                              int endIdx,
-                              double inReal[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return ROCR_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Rate of Change Ratio: the ratio of the current price to the price
         * optInTimePeriod bars ago. A momentum measure centered at 1. Always
@@ -126853,25 +121000,6 @@ class Core {
              throw failure("ROCR", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode ROCR_Internal( int startIdx,
-                              int endIdx,
-                              float inReal[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return ROCR_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -127417,25 +121545,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode ROCR100_Internal( int startIdx,
-                                 int endIdx,
-                                 double inReal[],
-                                 int optInTimePeriod,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
-       {
-          try {
-             return ROCR100_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Rate-of-change ratio scaled by 100: current price as a percentage of the
         * price optInTimePeriod bars ago. Momentum measure centered at 100 and
@@ -127501,25 +121610,6 @@ class Core {
              throw failure("ROCR100", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode ROCR100_Internal( int startIdx,
-                                 int endIdx,
-                                 float inReal[],
-                                 int optInTimePeriod,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 double outReal[] )
-       {
-          try {
-             return ROCR100_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -128253,25 +122343,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode RSI_Internal( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return RSI_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Wilder's Relative Strength Index, a momentum oscillator bounded 0-100 from
         * the ratio of average gains to average losses over the period. Used to
@@ -128349,25 +122420,6 @@ class Core {
              throw failure("RSI", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode RSI_Internal( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return RSI_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -129318,27 +123370,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode SAR_Internal( int startIdx,
-                             int endIdx,
-                             double inHigh[],
-                             double inLow[],
-                             double optInAcceleration,
-                             double optInMaximum,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return SAR_Body(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Wilder's Parabolic SAR (Stop And Reverse): a trailing stop/reverse level
         * that accelerates toward price via an acceleration factor. Signals trend
@@ -129411,27 +123442,6 @@ class Core {
              throw failure("SAR", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode SAR_Internal( int startIdx,
-                             int endIdx,
-                             float inHigh[],
-                             float inLow[],
-                             double optInAcceleration,
-                             double optInMaximum,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return SAR_Body(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -130785,33 +124795,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode SAREXT_Internal( int startIdx,
-                                int endIdx,
-                                double inHigh[],
-                                double inLow[],
-                                double optInStartValue,
-                                double optInOffsetOnReverse,
-                                double optInAccelerationInitLong,
-                                double optInAccelerationLong,
-                                double optInAccelerationMaxLong,
-                                double optInAccelerationInitShort,
-                                double optInAccelerationShort,
-                                double optInAccelerationMaxShort,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
-       {
-          try {
-             return SAREXT_Body(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Extended Parabolic SAR (stop and reverse) giving the caller full control
         * over the initial state and separate acceleration factors for long and
@@ -130900,33 +124883,6 @@ class Core {
              throw failure("SAREXT", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode SAREXT_Internal( int startIdx,
-                                int endIdx,
-                                float inHigh[],
-                                float inLow[],
-                                double optInStartValue,
-                                double optInOffsetOnReverse,
-                                double optInAccelerationInitLong,
-                                double optInAccelerationLong,
-                                double optInAccelerationMaxLong,
-                                double optInAccelerationInitShort,
-                                double optInAccelerationShort,
-                                double optInAccelerationMaxShort,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
-       {
-          try {
-             return SAREXT_Body(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -131767,24 +125723,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode SIN_Internal( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return SIN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Vector trigonometric sine: applies sin() element-wise to each input value.
         * Part of the Math Transform group.
@@ -131843,24 +125781,6 @@ class Core {
              throw failure("SIN", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode SIN_Internal( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return SIN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -132199,24 +126119,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode SINH_Internal( int startIdx,
-                              int endIdx,
-                              double inReal[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return SINH_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Element-wise hyperbolic sine of the input series. A vector math transform
         * applying sinh() to each value.
@@ -132274,24 +126176,6 @@ class Core {
              throw failure("SINH", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode SINH_Internal( int startIdx,
-                              int endIdx,
-                              float inReal[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return SINH_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -132733,25 +126617,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode SMA_Internal( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return SMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Simple Moving Average: the unweighted arithmetic mean of the last N input
         * values. Used to smooth a series.
@@ -132819,25 +126684,6 @@ class Core {
              throw failure("SMA", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode SMA_Internal( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return SMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -133271,24 +127117,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode SQRT_Internal( int startIdx,
-                              int endIdx,
-                              double inReal[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return SQRT_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Vector square root: applies the square-root function element-wise to each
         * input value.
@@ -133347,24 +127175,6 @@ class Core {
              throw failure("SQRT", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode SQRT_Internal( int startIdx,
-                              int endIdx,
-                              float inReal[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return SQRT_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -133807,26 +127617,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode STDDEV_Internal( int startIdx,
-                                int endIdx,
-                                double inReal[],
-                                int optInTimePeriod,
-                                double optInNbDev,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
-       {
-          try {
-             return STDDEV_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Rolling standard deviation of a series over a window, scaled by a
         * deviations multiplier. Delegates to VAR, then takes the square root.
@@ -133895,26 +127685,6 @@ class Core {
              throw failure("STDDEV", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode STDDEV_Internal( int startIdx,
-                                int endIdx,
-                                float inReal[],
-                                int optInTimePeriod,
-                                double optInNbDev,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
-       {
-          try {
-             return STDDEV_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -134796,32 +128566,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode STOCH_Internal( int startIdx,
-                               int endIdx,
-                               double inHigh[],
-                               double inLow[],
-                               double inClose[],
-                               int optInFastK_Period,
-                               int optInSlowK_Period,
-                               MAType optInSlowK_MAType,
-                               int optInSlowD_Period,
-                               MAType optInSlowD_MAType,
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outSlowK[],
-                               double outSlowD[] )
-       {
-          try {
-             return STOCH_Body(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Slow Stochastic oscillator: locates the close within the high-low range
         * over a lookback period, then double-smooths it. Returns the Slow-%K and
@@ -134922,32 +128666,6 @@ class Core {
              throw failure("STOCH", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode STOCH_Internal( int startIdx,
-                               int endIdx,
-                               float inHigh[],
-                               float inLow[],
-                               float inClose[],
-                               int optInFastK_Period,
-                               int optInSlowK_Period,
-                               MAType optInSlowK_MAType,
-                               int optInSlowD_Period,
-                               MAType optInSlowD_MAType,
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outSlowK[],
-                               double outSlowD[] )
-       {
-          try {
-             return STOCH_Body(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -136126,30 +129844,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode STOCHF_Internal( int startIdx,
-                                int endIdx,
-                                double inHigh[],
-                                double inLow[],
-                                double inClose[],
-                                int optInFastK_Period,
-                                int optInFastD_Period,
-                                MAType optInFastD_MAType,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outFastK[],
-                                double outFastD[] )
-       {
-          try {
-             return STOCHF_Body(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Fast Stochastic Oscillator: the raw %K line and its
         * moving-average-smoothed %D line. Unlike STOCH (which slows both lines),
@@ -136238,30 +129932,6 @@ class Core {
              throw failure("STOCHF", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode STOCHF_Internal( int startIdx,
-                                int endIdx,
-                                float inHigh[],
-                                float inLow[],
-                                float inClose[],
-                                int optInFastK_Period,
-                                int optInFastD_Period,
-                                MAType optInFastD_MAType,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outFastK[],
-                                double outFastD[] )
-       {
-          try {
-             return STOCHF_Body(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -137217,29 +130887,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode STOCHRSI_Internal( int startIdx,
-                                  int endIdx,
-                                  double inReal[],
-                                  int optInTimePeriod,
-                                  int optInFastK_Period,
-                                  int optInFastD_Period,
-                                  MAType optInFastD_MAType,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outFastK[],
-                                  double outFastD[] )
-       {
-          try {
-             return STOCHRSI_Body(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Applies the Fast Stochastic (STOCHF) oscillator to an RSI series instead
         * of price, measuring where RSI sits within its recent min/max range.
@@ -137328,29 +130975,6 @@ class Core {
              throw failure("STOCHRSI", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode STOCHRSI_Internal( int startIdx,
-                                  int endIdx,
-                                  float inReal[],
-                                  int optInTimePeriod,
-                                  int optInFastK_Period,
-                                  int optInFastD_Period,
-                                  MAType optInFastD_MAType,
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outFastK[],
-                                  double outFastD[] )
-       {
-          try {
-             return STOCHRSI_Body(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -137859,25 +131483,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode SUB_Internal( int startIdx,
-                             int endIdx,
-                             double inReal0[],
-                             double inReal1[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return SUB_Body(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Element-wise vector subtraction of two input series. Outputs inReal0 minus
         * inReal1 at each index.
@@ -137939,25 +131544,6 @@ class Core {
              throw failure("SUB", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode SUB_Internal( int startIdx,
-                             int endIdx,
-                             float inReal0[],
-                             float inReal1[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return SUB_Body(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -138383,25 +131969,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode SUM_Internal( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return SUM_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Rolling sum of the input over a fixed period. Each output is the sum of
         * the most recent optInTimePeriod input values.
@@ -138461,25 +132028,6 @@ class Core {
              throw failure("SUM", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode SUM_Internal( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return SUM_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -139220,26 +132768,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode T3_Internal( int startIdx,
-                            int endIdx,
-                            double inReal[],
-                            int optInTimePeriod,
-                            double optInVFactor,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
-       {
-          try {
-             return T3_Body(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Tillson's T3: a low-lag moving average built from six chained EMAs,
         * combined via volume-factor-weighted coefficients. Not the same as EMA3,
@@ -139313,26 +132841,6 @@ class Core {
              throw failure("T3", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode T3_Internal( int startIdx,
-                            int endIdx,
-                            float inReal[],
-                            int optInTimePeriod,
-                            double optInVFactor,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
-       {
-          try {
-             return T3_Body(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -139904,24 +133412,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode TAN_Internal( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return TAN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Vector trigonometric tangent: applies tan() element-wise to each input
         * value.
@@ -139981,24 +133471,6 @@ class Core {
              throw failure("TAN", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode TAN_Internal( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return TAN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -140337,24 +133809,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode TANH_Internal( int startIdx,
-                              int endIdx,
-                              double inReal[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return TANH_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Vector hyperbolic tangent: applies tanh element-wise to the input series.
         * <p><b>Formula</b>
@@ -140412,24 +133866,6 @@ class Core {
              throw failure("TANH", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode TANH_Internal( int startIdx,
-                              int endIdx,
-                              float inReal[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return TANH_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -141023,25 +134459,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode TEMA_Internal( int startIdx,
-                              int endIdx,
-                              double inReal[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return TEMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Triple Exponential Moving Average: a smoothed price overlay built from
         * three successively-applied EMAs to reduce lag versus a plain EMA. Distinct
@@ -141108,25 +134525,6 @@ class Core {
              throw failure("TEMA", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode TEMA_Internal( int startIdx,
-                              int endIdx,
-                              float inReal[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return TEMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -141746,26 +135144,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode TRANGE_Internal( int startIdx,
-                                int endIdx,
-                                double inHigh[],
-                                double inLow[],
-                                double inClose[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
-       {
-          try {
-             return TRANGE_Body(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * True Range: the greatest of today's high-low span and the two gaps between
         * yesterday's close and today's high/low. Base volatility measure used to
@@ -141835,26 +135213,6 @@ class Core {
              throw failure("TRANGE", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode TRANGE_Internal( int startIdx,
-                                int endIdx,
-                                float inHigh[],
-                                float inLow[],
-                                float inClose[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
-       {
-          try {
-             return TRANGE_Body(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -142654,25 +136012,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode TRIMA_Internal( int startIdx,
-                               int endIdx,
-                               double inReal[],
-                               int optInTimePeriod,
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outReal[] )
-       {
-          try {
-             return TRIMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Triangular Moving Average: a double-smoothed moving average that weights
         * prices toward the middle of the window most heavily. Equivalent to an SMA
@@ -142741,25 +136080,6 @@ class Core {
              throw failure("TRIMA", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode TRIMA_Internal( int startIdx,
-                               int endIdx,
-                               float inReal[],
-                               int optInTimePeriod,
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outReal[] )
-       {
-          try {
-             return TRIMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -143850,25 +137170,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode TRIX_Internal( int startIdx,
-                              int endIdx,
-                              double inReal[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return TRIX_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * 1-day Rate-Of-Change of a triple-smoothed EMA of the input. Momentum
         * oscillator that filters out price moves shorter than the chosen period.
@@ -143938,25 +137239,6 @@ class Core {
              throw failure("TRIX", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode TRIX_Internal( int startIdx,
-                              int endIdx,
-                              float inReal[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return TRIX_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -144582,25 +137864,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode TSF_Internal( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return TSF_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Time Series Forecast: fits a least-squares linear regression line over the
         * last N bars and projects it one x-step beyond LINEARREG. Same regression
@@ -144664,25 +137927,6 @@ class Core {
              throw failure("TSF", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode TSF_Internal( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return TSF_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -145184,26 +138428,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode TYPPRICE_Internal( int startIdx,
-                                  int endIdx,
-                                  double inHigh[],
-                                  double inLow[],
-                                  double inClose[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
-       {
-          try {
-             return TYPPRICE_Body(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Typical Price: the average of the high, low, and close of each bar. A
         * single representative price per period.
@@ -145268,26 +138492,6 @@ class Core {
              throw failure("TYPPRICE", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode TYPPRICE_Internal( int startIdx,
-                                  int endIdx,
-                                  float inHigh[],
-                                  float inLow[],
-                                  float inClose[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
-       {
-          try {
-             return TYPPRICE_Body(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -146080,29 +139284,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode ULTOSC_Internal( int startIdx,
-                                int endIdx,
-                                double inHigh[],
-                                double inLow[],
-                                double inClose[],
-                                int optInTimePeriod1,
-                                int optInTimePeriod2,
-                                int optInTimePeriod3,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
-       {
-          try {
-             return ULTOSC_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Ultimate Oscillator: momentum indicator combining
         * buying-pressure/true-range ratios over three time periods into one 0-100
@@ -146186,29 +139367,6 @@ class Core {
              throw failure("ULTOSC", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode ULTOSC_Internal( int startIdx,
-                                int endIdx,
-                                float inHigh[],
-                                float inLow[],
-                                float inClose[],
-                                int optInTimePeriod1,
-                                int optInTimePeriod2,
-                                int optInTimePeriod3,
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
-       {
-          try {
-             return ULTOSC_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -147175,26 +140333,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode VAR_Internal( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             int optInTimePeriod,
-                             double optInNbDev,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return VAR_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Rolling population variance of a real series over a given period. Measures
         * dispersion of values around their mean. Higher values indicate greater
@@ -147263,26 +140401,6 @@ class Core {
              throw failure("VAR", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode VAR_Internal( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             int optInTimePeriod,
-                             double optInNbDev,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return VAR_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -148092,26 +141210,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode VWMA_Internal( int startIdx,
-                              int endIdx,
-                              double inReal[],
-                              double inVolume[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return VWMA_Body(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Volume Weighted Moving Average: the mean price over a trailing window of
         * {@code optInTimePeriod} bars, each bar weighted by its own volume. Heavily
@@ -148190,26 +141288,6 @@ class Core {
              throw failure("VWMA", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode VWMA_Internal( int startIdx,
-                              int endIdx,
-                              float inReal[],
-                              float inVolume[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-       {
-          try {
-             return VWMA_Body(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -148848,26 +141926,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode WAD_Internal( int startIdx,
-                             int endIdx,
-                             double inHigh[],
-                             double inLow[],
-                             double inClose[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return WAD_Body(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Williams' Accumulation/Distribution: a cumulative line that measures each
         * bar's close against the *true range* extreme — the previous close,
@@ -148944,26 +142002,6 @@ class Core {
              throw failure("WAD", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode WAD_Internal( int startIdx,
-                             int endIdx,
-                             float inHigh[],
-                             float inLow[],
-                             float inClose[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return WAD_Body(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -149405,26 +142443,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode WCLPRICE_Internal( int startIdx,
-                                  int endIdx,
-                                  double inHigh[],
-                                  double inLow[],
-                                  double inClose[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
-       {
-          try {
-             return WCLPRICE_Body(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Weighted Close Price: a per-bar price average giving the close double
         * weight relative to high and low.
@@ -149489,26 +142507,6 @@ class Core {
              throw failure("WCLPRICE", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode WCLPRICE_Internal( int startIdx,
-                                  int endIdx,
-                                  float inHigh[],
-                                  float inLow[],
-                                  float inClose[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  double outReal[] )
-       {
-          try {
-             return WCLPRICE_Body(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -150186,27 +143184,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode WILLR_Internal( int startIdx,
-                               int endIdx,
-                               double inHigh[],
-                               double inLow[],
-                               double inClose[],
-                               int optInTimePeriod,
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outReal[] )
-       {
-          try {
-             return WILLR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Williams' %R momentum oscillator over a rolling period, bounded in [-100,
         * 0]. Measures where the current close sits relative to the high-low range
@@ -150276,27 +143253,6 @@ class Core {
              throw failure("WILLR", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode WILLR_Internal( int startIdx,
-                               int endIdx,
-                               float inHigh[],
-                               float inLow[],
-                               float inClose[],
-                               int optInTimePeriod,
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outReal[] )
-       {
-          try {
-             return WILLR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -151073,25 +144029,6 @@ class Core {
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
-       RetCode WMA_Internal( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return WMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
-       }
        /**
         * Linearly weighted moving average: each of the last N prices is weighted by
         * its position, oldest getting weight 1 and newest weight N. Smooths price
@@ -151160,25 +144097,6 @@ class Core {
              throw failure("WMA", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
-       }
-       RetCode WMA_Internal( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-       {
-          try {
-             return WMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-          } catch (RuntimeException e) {
-             if (e instanceof TaLibFailure) {
-                outBegIdx.value = 0;
-                outNBElement.value = 0;
-                return ((TaLibFailure) e).retCode();
-             }
-             throw e;
-          }
        }
     /**** Streaming API *****/
 
@@ -153235,7 +146153,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.AC_Internal(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.AC_Body(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.AC(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outArr0);
@@ -153362,7 +146287,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.ACCBANDS_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+            try {
+                rc = core.ACCBANDS_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.ACCBANDS(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0, outArr1, outArr2);
@@ -153482,7 +146414,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.ACOS_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.ACOS_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.ACOS(startIdx, endIdx, inReal, outArr0);
@@ -153609,7 +146548,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.AD_Internal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.AD_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.AD(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outArr0);
@@ -153732,7 +146678,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.ADD_Internal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.ADD_Body(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.ADD(startIdx, endIdx, inReal0, inReal1, outArr0);
@@ -153863,7 +146816,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.ADOSC_Internal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.ADOSC_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.ADOSC(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outArr0);
@@ -153993,7 +146953,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.ADX_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.ADX_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.ADX(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
@@ -154120,7 +147087,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.ADXR_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.ADXR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.ADXR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
@@ -154243,7 +147217,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.AO_Internal(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.AO_Body(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.AO(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outArr0);
@@ -154360,7 +147341,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.APO_Internal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.APO_Body(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.APO(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
@@ -154479,7 +147467,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.AROON_Internal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outArr0, outArr1);
+            try {
+                rc = core.AROON_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outArr0, outArr1);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.AROON(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outArr0, outArr1);
@@ -154601,7 +147596,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.AROONOSC_Internal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.AROONOSC_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.AROONOSC(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outArr0);
@@ -154715,7 +147717,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.ASIN_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.ASIN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.ASIN(startIdx, endIdx, inReal, outArr0);
@@ -154827,7 +147836,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.ATAN_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.ATAN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.ATAN(startIdx, endIdx, inReal, outArr0);
@@ -154951,7 +147967,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.ATR_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.ATR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.ATR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
@@ -155068,7 +148091,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.AVGDEV_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.AVGDEV_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.AVGDEV(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -155195,7 +148225,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.AVGPRICE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.AVGPRICE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.AVGPRICE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -155319,7 +148356,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.BBANDS_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+            try {
+                rc = core.BBANDS_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.BBANDS(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outArr0, outArr1, outArr2);
@@ -155441,7 +148485,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.BETA_Internal(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.BETA_Body(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.BETA(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outArr0);
@@ -155570,7 +148621,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.BOP_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.BOP_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.BOP(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -155699,7 +148757,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CCI_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CCI_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CCI(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
@@ -155830,7 +148895,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDL2CROWS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDL2CROWS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDL2CROWS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -155963,7 +149035,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDL3BLACKCROWS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDL3BLACKCROWS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDL3BLACKCROWS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -156096,7 +149175,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDL3INSIDE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDL3INSIDE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDL3INSIDE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -156229,7 +149315,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDL3LINESTRIKE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDL3LINESTRIKE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDL3LINESTRIKE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -156362,7 +149455,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDL3OUTSIDE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDL3OUTSIDE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDL3OUTSIDE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -156495,7 +149595,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDL3STARSINSOUTH_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDL3STARSINSOUTH_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDL3STARSINSOUTH(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -156628,7 +149735,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDL3WHITESOLDIERS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDL3WHITESOLDIERS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDL3WHITESOLDIERS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -156762,7 +149876,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLABANDONEDBABY_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLABANDONEDBABY_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLABANDONEDBABY(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
@@ -156895,7 +150016,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLADVANCEBLOCK_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLADVANCEBLOCK_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLADVANCEBLOCK(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -157028,7 +150156,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLBELTHOLD_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLBELTHOLD_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLBELTHOLD(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -157161,7 +150296,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLBREAKAWAY_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLBREAKAWAY_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLBREAKAWAY(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -157294,7 +150436,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLCLOSINGMARUBOZU_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLCLOSINGMARUBOZU_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLCLOSINGMARUBOZU(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -157427,7 +150576,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLCONCEALBABYSWALL_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLCONCEALBABYSWALL_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLCONCEALBABYSWALL(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -157560,7 +150716,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLCOUNTERATTACK_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLCOUNTERATTACK_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLCOUNTERATTACK(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -157694,7 +150857,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLDARKCLOUDCOVER_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLDARKCLOUDCOVER_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLDARKCLOUDCOVER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
@@ -157827,7 +150997,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLDOJI_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLDOJI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLDOJI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -157960,7 +151137,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLDOJISTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLDOJISTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLDOJISTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -158093,7 +151277,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLDRAGONFLYDOJI_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLDRAGONFLYDOJI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLDRAGONFLYDOJI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -158226,7 +151417,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLENGULFING_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLENGULFING_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLENGULFING(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -158360,7 +151558,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLEVENINGDOJISTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLEVENINGDOJISTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLEVENINGDOJISTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
@@ -158494,7 +151699,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLEVENINGSTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLEVENINGSTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLEVENINGSTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
@@ -158627,7 +151839,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLGAPSIDESIDEWHITE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLGAPSIDESIDEWHITE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLGAPSIDESIDEWHITE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -158760,7 +151979,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLGRAVESTONEDOJI_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLGRAVESTONEDOJI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLGRAVESTONEDOJI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -158893,7 +152119,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLHAMMER_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLHAMMER_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLHAMMER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -159026,7 +152259,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLHANGINGMAN_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLHANGINGMAN_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLHANGINGMAN(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -159159,7 +152399,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLHARAMI_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLHARAMI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLHARAMI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -159292,7 +152539,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLHARAMICROSS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLHARAMICROSS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLHARAMICROSS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -159425,7 +152679,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLHIGHWAVE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLHIGHWAVE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLHIGHWAVE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -159558,7 +152819,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLHIKKAKE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLHIKKAKE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLHIKKAKE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -159691,7 +152959,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLHIKKAKEMOD_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLHIKKAKEMOD_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLHIKKAKEMOD(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -159824,7 +153099,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLHOMINGPIGEON_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLHOMINGPIGEON_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLHOMINGPIGEON(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -159957,7 +153239,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLIDENTICAL3CROWS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLIDENTICAL3CROWS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLIDENTICAL3CROWS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -160090,7 +153379,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLINNECK_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLINNECK_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLINNECK(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -160223,7 +153519,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLINVERTEDHAMMER_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLINVERTEDHAMMER_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLINVERTEDHAMMER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -160356,7 +153659,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLKICKING_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLKICKING_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLKICKING(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -160489,7 +153799,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLKICKINGBYLENGTH_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLKICKINGBYLENGTH_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLKICKINGBYLENGTH(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -160622,7 +153939,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLLADDERBOTTOM_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLLADDERBOTTOM_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLLADDERBOTTOM(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -160755,7 +154079,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLLONGLEGGEDDOJI_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLLONGLEGGEDDOJI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLLONGLEGGEDDOJI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -160888,7 +154219,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLLONGLINE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLLONGLINE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLLONGLINE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -161021,7 +154359,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLMARUBOZU_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLMARUBOZU_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLMARUBOZU(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -161154,7 +154499,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLMATCHINGLOW_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLMATCHINGLOW_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLMATCHINGLOW(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -161288,7 +154640,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLMATHOLD_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLMATHOLD_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLMATHOLD(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
@@ -161422,7 +154781,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLMORNINGDOJISTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLMORNINGDOJISTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLMORNINGDOJISTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
@@ -161556,7 +154922,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLMORNINGSTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLMORNINGSTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLMORNINGSTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
@@ -161689,7 +155062,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLONNECK_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLONNECK_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLONNECK(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -161822,7 +155202,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLPIERCING_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLPIERCING_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLPIERCING(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -161955,7 +155342,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLRICKSHAWMAN_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLRICKSHAWMAN_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLRICKSHAWMAN(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -162088,7 +155482,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLRISEFALL3METHODS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLRISEFALL3METHODS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLRISEFALL3METHODS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -162221,7 +155622,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLSEPARATINGLINES_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLSEPARATINGLINES_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLSEPARATINGLINES(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -162354,7 +155762,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLSHOOTINGSTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLSHOOTINGSTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLSHOOTINGSTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -162487,7 +155902,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLSHORTLINE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLSHORTLINE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLSHORTLINE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -162620,7 +156042,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLSPINNINGTOP_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLSPINNINGTOP_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLSPINNINGTOP(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -162753,7 +156182,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLSTALLEDPATTERN_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLSTALLEDPATTERN_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLSTALLEDPATTERN(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -162886,7 +156322,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLSTICKSANDWICH_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLSTICKSANDWICH_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLSTICKSANDWICH(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -163019,7 +156462,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLTAKURI_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLTAKURI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLTAKURI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -163152,7 +156602,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLTASUKIGAP_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLTASUKIGAP_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLTASUKIGAP(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -163285,7 +156742,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLTHRUSTING_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLTHRUSTING_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLTHRUSTING(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -163418,7 +156882,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLTRISTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLTRISTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLTRISTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -163551,7 +157022,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLUNIQUE3RIVER_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLUNIQUE3RIVER_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLUNIQUE3RIVER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -163684,7 +157162,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLUPSIDEGAP2CROWS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLUPSIDEGAP2CROWS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLUPSIDEGAP2CROWS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -163817,7 +157302,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CDLXSIDEGAP3METHODS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CDLXSIDEGAP3METHODS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CDLXSIDEGAP3METHODS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -163935,7 +157427,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CEIL_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CEIL_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CEIL(startIdx, endIdx, inReal, outArr0);
@@ -164063,7 +157562,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CMF_Internal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CMF_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CMF(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outArr0);
@@ -164183,7 +157689,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CMO_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CMO_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CMO(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -164296,7 +157809,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CMOU_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CMOU_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CMOU(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -164414,7 +157934,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.CORREL_Internal(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.CORREL_Body(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.CORREL(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outArr0);
@@ -164528,7 +158055,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.COS_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.COS_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.COS(startIdx, endIdx, inReal, outArr0);
@@ -164640,7 +158174,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.COSH_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.COSH_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.COSH(startIdx, endIdx, inReal, outArr0);
@@ -164753,7 +158294,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.DEMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.DEMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.DEMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -164870,7 +158418,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.DIV_Internal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.DIV_Body(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.DIV(startIdx, endIdx, inReal0, inReal1, outArr0);
@@ -164996,7 +158551,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.DX_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.DX_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.DX(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
@@ -165118,7 +158680,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.EFI_Internal(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.EFI_Body(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.EFI(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outArr0);
@@ -165234,7 +158803,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.EMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.EMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.EMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -165346,7 +158922,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.EXP_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.EXP_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.EXP(startIdx, endIdx, inReal, outArr0);
@@ -165458,7 +159041,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.FLOOR_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.FLOOR_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.FLOOR(startIdx, endIdx, inReal, outArr0);
@@ -165571,7 +159161,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.HMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.HMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.HMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -165684,7 +159281,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.HT_DCPERIOD_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.HT_DCPERIOD_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.HT_DCPERIOD(startIdx, endIdx, inReal, outArr0);
@@ -165797,7 +159401,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.HT_DCPHASE_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.HT_DCPHASE_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.HT_DCPHASE(startIdx, endIdx, inReal, outArr0);
@@ -165911,7 +159522,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.HT_PHASOR_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0, outArr1);
+            try {
+                rc = core.HT_PHASOR_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0, outArr1);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.HT_PHASOR(startIdx, endIdx, inReal, outArr0, outArr1);
@@ -166027,7 +159645,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.HT_SINE_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0, outArr1);
+            try {
+                rc = core.HT_SINE_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0, outArr1);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.HT_SINE(startIdx, endIdx, inReal, outArr0, outArr1);
@@ -166142,7 +159767,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.HT_TRENDLINE_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.HT_TRENDLINE_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.HT_TRENDLINE(startIdx, endIdx, inReal, outArr0);
@@ -166255,7 +159887,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.HT_TRENDMODE_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.HT_TRENDMODE_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.HT_TRENDMODE(startIdx, endIdx, inReal, outArr0);
@@ -166373,7 +160012,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.IMI_Internal(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.IMI_Body(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.IMI(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outArr0);
@@ -166489,7 +160135,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.KAMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.KAMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.KAMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -166602,7 +160255,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.LINEARREG_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.LINEARREG_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.LINEARREG(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -166715,7 +160375,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.LINEARREG_ANGLE_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.LINEARREG_ANGLE_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.LINEARREG_ANGLE(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -166828,7 +160495,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.LINEARREG_INTERCEPT_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.LINEARREG_INTERCEPT_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.LINEARREG_INTERCEPT(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -166941,7 +160615,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.LINEARREG_SLOPE_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.LINEARREG_SLOPE_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.LINEARREG_SLOPE(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -167053,7 +160734,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.LN_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.LN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.LN(startIdx, endIdx, inReal, outArr0);
@@ -167165,7 +160853,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.LOG10_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.LOG10_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.LOG10(startIdx, endIdx, inReal, outArr0);
@@ -167279,7 +160974,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.MA_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.MA_Body(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.MA(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outArr0);
@@ -167396,7 +161098,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.MACD_Internal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+            try {
+                rc = core.MACD_Body(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.MACD(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outArr0, outArr1, outArr2);
@@ -167520,7 +161229,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.MACDEXT_Internal(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+            try {
+                rc = core.MACDEXT_Body(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.MACDEXT(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outArr0, outArr1, outArr2);
@@ -167639,7 +161355,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.MACDFIX_Internal(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+            try {
+                rc = core.MACDFIX_Body(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.MACDFIX(startIdx, endIdx, inReal, optInSignalPeriod, outArr0, outArr1, outArr2);
@@ -167759,7 +161482,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.MAMA_Internal(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outArr0, outArr1);
+            try {
+                rc = core.MAMA_Body(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outArr0, outArr1);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.MAMA(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outArr0, outArr1);
@@ -167883,7 +161613,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.MARKETFI_Internal(startIdx, endIdx, inHigh, inLow, inVolume, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.MARKETFI_Body(startIdx, endIdx, inHigh, inLow, inVolume, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.MARKETFI(startIdx, endIdx, inHigh, inLow, inVolume, outArr0);
@@ -168007,7 +161744,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.MAVP_Internal(startIdx, endIdx, inReal0, inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.MAVP_Body(startIdx, endIdx, inReal0, inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.MAVP(startIdx, endIdx, inReal0, inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, outArr0);
@@ -168122,7 +161866,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.MAX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.MAX_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.MAX(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -168235,7 +161986,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.MAXINDEX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.MAXINDEX_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.MAXINDEX(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -168352,7 +162110,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.MEDPRICE_Internal(startIdx, endIdx, inHigh, inLow, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.MEDPRICE_Body(startIdx, endIdx, inHigh, inLow, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.MEDPRICE(startIdx, endIdx, inHigh, inLow, outArr0);
@@ -168482,7 +162247,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.MFI_Internal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.MFI_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.MFI(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outArr0);
@@ -168601,7 +162373,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.MIDPOINT_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.MIDPOINT_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.MIDPOINT(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -168719,7 +162498,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.MIDPRICE_Internal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.MIDPRICE_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.MIDPRICE(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outArr0);
@@ -168834,7 +162620,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.MIN_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.MIN_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.MIN(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -168947,7 +162740,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.MININDEX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.MININDEX_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.MININDEX(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -169061,7 +162861,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.MINMAX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0, outArr1);
+            try {
+                rc = core.MINMAX_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0, outArr1);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.MINMAX(startIdx, endIdx, inReal, optInTimePeriod, outArr0, outArr1);
@@ -169177,7 +162984,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.MINMAXINDEX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0, outArr1);
+            try {
+                rc = core.MINMAXINDEX_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0, outArr1);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.MINMAXINDEX(startIdx, endIdx, inReal, optInTimePeriod, outArr0, outArr1);
@@ -169303,7 +163117,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.MINUS_DI_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.MINUS_DI_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.MINUS_DI(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
@@ -169426,7 +163247,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.MINUS_DM_Internal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.MINUS_DM_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.MINUS_DM(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outArr0);
@@ -169541,7 +163369,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.MOM_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.MOM_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.MOM(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -169658,7 +163493,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.MULT_Internal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.MULT_Body(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.MULT(startIdx, endIdx, inReal0, inReal1, outArr0);
@@ -169784,7 +163626,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.NATR_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.NATR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.NATR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
@@ -169905,7 +163754,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.NVI_Internal(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.NVI_Body(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.NVI(startIdx, endIdx, inClose, inVolume, outArr0);
@@ -170024,7 +163880,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.OBV_Internal(startIdx, endIdx, inReal, inVolume, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.OBV_Body(startIdx, endIdx, inReal, inVolume, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.OBV(startIdx, endIdx, inReal, inVolume, outArr0);
@@ -170150,7 +164013,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.PLUS_DI_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.PLUS_DI_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.PLUS_DI(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
@@ -170273,7 +164143,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.PLUS_DM_Internal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.PLUS_DM_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.PLUS_DM(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outArr0);
@@ -170390,7 +164267,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.PPO_Internal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.PPO_Body(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.PPO(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
@@ -170507,7 +164391,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.PVI_Internal(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.PVI_Body(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.PVI(startIdx, endIdx, inClose, inVolume, outArr0);
@@ -170624,7 +164515,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.PVO_Internal(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.PVO_Body(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.PVO(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
@@ -170742,7 +164640,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.QSTICK_Internal(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.QSTICK_Body(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.QSTICK(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outArr0);
@@ -170857,7 +164762,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.ROC_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.ROC_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.ROC(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -170970,7 +164882,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.ROCP_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.ROCP_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.ROCP(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -171083,7 +165002,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.ROCR_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.ROCR_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.ROCR(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -171196,7 +165122,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.ROCR100_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.ROCR100_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.ROCR100(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -171310,7 +165243,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.RSI_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.RSI_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.RSI(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -171429,7 +165369,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.SAR_Internal(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.SAR_Body(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.SAR(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outArr0);
@@ -171556,7 +165503,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.SAREXT_Internal(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.SAREXT_Body(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.SAREXT(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outArr0);
@@ -171670,7 +165624,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.SIN_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.SIN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.SIN(startIdx, endIdx, inReal, outArr0);
@@ -171782,7 +165743,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.SINH_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.SINH_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.SINH(startIdx, endIdx, inReal, outArr0);
@@ -171895,7 +165863,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.SMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.SMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.SMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -172007,7 +165982,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.SQRT_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.SQRT_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.SQRT(startIdx, endIdx, inReal, outArr0);
@@ -172121,7 +166103,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.STDDEV_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.STDDEV_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.STDDEV(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outArr0);
@@ -172249,7 +166238,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.STOCH_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outArr0, outArr1);
+            try {
+                rc = core.STOCH_Body(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outArr0, outArr1);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.STOCH(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outArr0, outArr1);
@@ -172381,7 +166377,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.STOCHF_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outArr0, outArr1);
+            try {
+                rc = core.STOCHF_Body(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outArr0, outArr1);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.STOCHF(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outArr0, outArr1);
@@ -172504,7 +166507,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.STOCHRSI_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outArr0, outArr1);
+            try {
+                rc = core.STOCHRSI_Body(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outArr0, outArr1);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.STOCHRSI(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outArr0, outArr1);
@@ -172623,7 +166633,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.SUB_Internal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.SUB_Body(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.SUB(startIdx, endIdx, inReal0, inReal1, outArr0);
@@ -172738,7 +166755,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.SUM_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.SUM_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.SUM(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -172853,7 +166877,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.T3_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.T3_Body(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.T3(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outArr0);
@@ -172965,7 +166996,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.TAN_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.TAN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.TAN(startIdx, endIdx, inReal, outArr0);
@@ -173077,7 +167115,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.TANH_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.TANH_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.TANH(startIdx, endIdx, inReal, outArr0);
@@ -173190,7 +167235,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.TEMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.TEMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.TEMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -173312,7 +167364,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.TRANGE_Internal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.TRANGE_Body(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.TRANGE(startIdx, endIdx, inHigh, inLow, inClose, outArr0);
@@ -173429,7 +167488,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.TRIMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.TRIMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.TRIMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -173542,7 +167608,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.TRIX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.TRIX_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.TRIX(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -173655,7 +167728,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.TSF_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.TSF_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.TSF(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -173777,7 +167857,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.TYPPRICE_Internal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.TYPPRICE_Body(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.TYPPRICE(startIdx, endIdx, inHigh, inLow, inClose, outArr0);
@@ -173906,7 +167993,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.ULTOSC_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.ULTOSC_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.ULTOSC(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outArr0);
@@ -174024,7 +168118,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.VAR_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.VAR_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.VAR(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outArr0);
@@ -174142,7 +168243,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.VWMA_Internal(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.VWMA_Body(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.VWMA(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outArr0);
@@ -174266,7 +168374,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.WAD_Internal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.WAD_Body(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.WAD(startIdx, endIdx, inHigh, inLow, inClose, outArr0);
@@ -174392,7 +168507,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.WCLPRICE_Internal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.WCLPRICE_Body(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.WCLPRICE(startIdx, endIdx, inHigh, inLow, inClose, outArr0);
@@ -174519,7 +168641,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.WILLR_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.WILLR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.WILLR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
@@ -174636,7 +168765,14 @@ public class TaCodegenServe {
         if (_bi == 1) startNs = System.nanoTime();
         if (bench_mode == 0) {
         if (jsonInt(json, "timed") != 0) {
-            rc = core.WMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            try {
+                rc = core.WMA_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
         } else {
             try {
                 OutRange _pr = core.WMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -174887,7 +169023,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.AC_Internal(0, svN - 1, fz_h, fz_l, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.AC_Body(0, svN - 1, fz_h, fz_l, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -174997,7 +169135,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.ACCBANDS_Internal(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0, b1, b2);
+            RetCode rc;
+            try { rc = c2.ACCBANDS_Body(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0, b1, b2); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.ACCBANDS_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -175126,7 +169266,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.ACOS_Internal(0, svN - 1, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.ACOS_Body(0, svN - 1, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.ACOS_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -175228,7 +169370,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.AD_Internal(0, svN - 1, fz_h, fz_l, fz_c, fz_v, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.AD_Body(0, svN - 1, fz_h, fz_l, fz_c, fz_v, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.AD_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -175330,7 +169474,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.ADD_Internal(0, svN - 1, fz_c, fz_v, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.ADD_Body(0, svN - 1, fz_c, fz_v, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.ADD_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -175435,7 +169581,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             c2.unstablePeriod[5] = svK;
-            RetCode rc = c2.ADOSC_Internal(0, svN - 1, fz_h, fz_l, fz_c, fz_v, optInFastPeriod, optInSlowPeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.ADOSC_Body(0, svN - 1, fz_h, fz_l, fz_c, fz_v, optInFastPeriod, optInSlowPeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.ADOSC_Lookback(optInFastPeriod, optInSlowPeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -175544,7 +169692,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             c2.unstablePeriod[0] = svK;
-            RetCode rc = c2.ADX_Internal(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.ADX_Body(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.ADX_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -175653,7 +169803,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             c2.unstablePeriod[0] = svK;
-            RetCode rc = c2.ADXR_Internal(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.ADXR_Body(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.ADXR_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -175762,7 +169914,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.AO_Internal(0, svN - 1, fz_h, fz_l, optInFastPeriod, optInSlowPeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.AO_Body(0, svN - 1, fz_h, fz_l, optInFastPeriod, optInSlowPeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.AO_Lookback(optInFastPeriod, optInSlowPeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -175882,7 +170036,9 @@ public class TaCodegenServe {
             c2.unstablePeriod[14] = svK;
             c2.unstablePeriod[13] = svK;
             c2.unstablePeriod[5] = svK;
-            RetCode rc = c2.APO_Internal(0, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.APO_Body(0, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -175991,7 +170147,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.AROON_Internal(0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0, b1);
+            RetCode rc;
+            try { rc = c2.AROON_Body(0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0, b1); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.AROON_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -176111,7 +170269,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.AROONOSC_Internal(0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.AROONOSC_Body(0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.AROONOSC_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -176218,7 +170378,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.ASIN_Internal(0, svN - 1, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.ASIN_Body(0, svN - 1, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.ASIN_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -176320,7 +170482,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.ATAN_Internal(0, svN - 1, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.ATAN_Body(0, svN - 1, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.ATAN_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -176424,7 +170588,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             c2.unstablePeriod[2] = svK;
-            RetCode rc = c2.ATR_Internal(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.ATR_Body(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.ATR_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -176532,7 +170698,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.AVGDEV_Internal(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.AVGDEV_Body(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.AVGDEV_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -176639,7 +170807,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.AVGPRICE_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.AVGPRICE_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.AVGPRICE_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -176757,7 +170927,9 @@ public class TaCodegenServe {
             c2.unstablePeriod[14] = svK;
             c2.unstablePeriod[13] = svK;
             c2.unstablePeriod[5] = svK;
-            RetCode rc = c2.BBANDS_Internal(0, svN - 1, fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, beg, nb, b0, b1, b2);
+            RetCode rc;
+            try { rc = c2.BBANDS_Body(0, svN - 1, fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, beg, nb, b0, b1, b2); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -176887,7 +171059,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.BETA_Internal(0, svN - 1, fz_c, fz_v, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.BETA_Body(0, svN - 1, fz_c, fz_v, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.BETA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -176994,7 +171168,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.BOP_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.BOP_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.BOP_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -177097,7 +171273,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.CCI_Internal(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CCI_Body(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CCI_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -177206,7 +171384,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDL2CROWS_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDL2CROWS_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDL2CROWS_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -177311,7 +171491,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDL3BLACKCROWS_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDL3BLACKCROWS_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDL3BLACKCROWS_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -177416,7 +171598,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDL3INSIDE_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDL3INSIDE_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDL3INSIDE_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -177521,7 +171705,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDL3LINESTRIKE_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDL3LINESTRIKE_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDL3LINESTRIKE_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -177626,7 +171812,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDL3OUTSIDE_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDL3OUTSIDE_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDL3OUTSIDE_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -177731,7 +171919,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDL3STARSINSOUTH_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDL3STARSINSOUTH_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDL3STARSINSOUTH_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -177836,7 +172026,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDL3WHITESOLDIERS_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDL3WHITESOLDIERS_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDL3WHITESOLDIERS_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -177942,7 +172134,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLABANDONEDBABY_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLABANDONEDBABY_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLABANDONEDBABY_Lookback(optInPenetration);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -178047,7 +172241,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLADVANCEBLOCK_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLADVANCEBLOCK_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLADVANCEBLOCK_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -178152,7 +172348,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLBELTHOLD_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLBELTHOLD_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLBELTHOLD_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -178257,7 +172455,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLBREAKAWAY_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLBREAKAWAY_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLBREAKAWAY_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -178362,7 +172562,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLCLOSINGMARUBOZU_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLCLOSINGMARUBOZU_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLCLOSINGMARUBOZU_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -178467,7 +172669,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLCONCEALBABYSWALL_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLCONCEALBABYSWALL_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLCONCEALBABYSWALL_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -178572,7 +172776,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLCOUNTERATTACK_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLCOUNTERATTACK_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLCOUNTERATTACK_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -178678,7 +172884,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLDARKCLOUDCOVER_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLDARKCLOUDCOVER_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLDARKCLOUDCOVER_Lookback(optInPenetration);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -178783,7 +172991,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLDOJI_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLDOJI_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLDOJI_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -178888,7 +173098,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLDOJISTAR_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLDOJISTAR_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLDOJISTAR_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -178993,7 +173205,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLDRAGONFLYDOJI_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLDRAGONFLYDOJI_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLDRAGONFLYDOJI_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -179098,7 +173312,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLENGULFING_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLENGULFING_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLENGULFING_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -179204,7 +173420,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLEVENINGDOJISTAR_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLEVENINGDOJISTAR_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLEVENINGDOJISTAR_Lookback(optInPenetration);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -179310,7 +173528,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLEVENINGSTAR_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLEVENINGSTAR_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLEVENINGSTAR_Lookback(optInPenetration);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -179415,7 +173635,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLGAPSIDESIDEWHITE_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLGAPSIDESIDEWHITE_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLGAPSIDESIDEWHITE_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -179520,7 +173742,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLGRAVESTONEDOJI_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLGRAVESTONEDOJI_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLGRAVESTONEDOJI_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -179625,7 +173849,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLHAMMER_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLHAMMER_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLHAMMER_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -179730,7 +173956,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLHANGINGMAN_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLHANGINGMAN_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLHANGINGMAN_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -179835,7 +174063,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLHARAMI_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLHARAMI_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLHARAMI_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -179940,7 +174170,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLHARAMICROSS_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLHARAMICROSS_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLHARAMICROSS_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -180045,7 +174277,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLHIGHWAVE_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLHIGHWAVE_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLHIGHWAVE_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -180150,7 +174384,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLHIKKAKE_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLHIKKAKE_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLHIKKAKE_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -180255,7 +174491,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLHIKKAKEMOD_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLHIKKAKEMOD_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLHIKKAKEMOD_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -180360,7 +174598,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLHOMINGPIGEON_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLHOMINGPIGEON_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLHOMINGPIGEON_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -180465,7 +174705,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLIDENTICAL3CROWS_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLIDENTICAL3CROWS_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLIDENTICAL3CROWS_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -180570,7 +174812,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLINNECK_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLINNECK_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLINNECK_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -180675,7 +174919,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLINVERTEDHAMMER_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLINVERTEDHAMMER_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLINVERTEDHAMMER_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -180780,7 +175026,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLKICKING_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLKICKING_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLKICKING_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -180885,7 +175133,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLKICKINGBYLENGTH_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLKICKINGBYLENGTH_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLKICKINGBYLENGTH_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -180990,7 +175240,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLLADDERBOTTOM_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLLADDERBOTTOM_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLLADDERBOTTOM_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -181095,7 +175347,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLLONGLEGGEDDOJI_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLLONGLEGGEDDOJI_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLLONGLEGGEDDOJI_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -181200,7 +175454,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLLONGLINE_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLLONGLINE_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLLONGLINE_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -181305,7 +175561,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLMARUBOZU_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLMARUBOZU_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLMARUBOZU_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -181410,7 +175668,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLMATCHINGLOW_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLMATCHINGLOW_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLMATCHINGLOW_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -181516,7 +175776,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLMATHOLD_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLMATHOLD_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLMATHOLD_Lookback(optInPenetration);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -181622,7 +175884,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLMORNINGDOJISTAR_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLMORNINGDOJISTAR_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLMORNINGDOJISTAR_Lookback(optInPenetration);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -181728,7 +175992,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLMORNINGSTAR_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLMORNINGSTAR_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLMORNINGSTAR_Lookback(optInPenetration);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -181833,7 +176099,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLONNECK_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLONNECK_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLONNECK_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -181938,7 +176206,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLPIERCING_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLPIERCING_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLPIERCING_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -182043,7 +176313,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLRICKSHAWMAN_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLRICKSHAWMAN_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLRICKSHAWMAN_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -182148,7 +176420,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLRISEFALL3METHODS_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLRISEFALL3METHODS_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLRISEFALL3METHODS_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -182253,7 +176527,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLSEPARATINGLINES_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLSEPARATINGLINES_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLSEPARATINGLINES_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -182358,7 +176634,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLSHOOTINGSTAR_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLSHOOTINGSTAR_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLSHOOTINGSTAR_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -182463,7 +176741,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLSHORTLINE_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLSHORTLINE_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLSHORTLINE_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -182568,7 +176848,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLSPINNINGTOP_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLSPINNINGTOP_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLSPINNINGTOP_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -182673,7 +176955,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLSTALLEDPATTERN_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLSTALLEDPATTERN_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLSTALLEDPATTERN_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -182778,7 +177062,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLSTICKSANDWICH_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLSTICKSANDWICH_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLSTICKSANDWICH_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -182883,7 +177169,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLTAKURI_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLTAKURI_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLTAKURI_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -182988,7 +177276,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLTASUKIGAP_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLTASUKIGAP_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLTASUKIGAP_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -183093,7 +177383,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLTHRUSTING_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLTHRUSTING_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLTHRUSTING_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -183198,7 +177490,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLTRISTAR_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLTRISTAR_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLTRISTAR_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -183303,7 +177597,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLUNIQUE3RIVER_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLUNIQUE3RIVER_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLUNIQUE3RIVER_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -183408,7 +177704,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLUPSIDEGAP2CROWS_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLUPSIDEGAP2CROWS_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLUPSIDEGAP2CROWS_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -183513,7 +177811,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             svApplyCandleRound(c2, rd);
-            RetCode rc = c2.CDLXSIDEGAP3METHODS_Internal(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLXSIDEGAP3METHODS_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CDLXSIDEGAP3METHODS_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -183616,7 +177916,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.CEIL_Internal(0, svN - 1, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CEIL_Body(0, svN - 1, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CEIL_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -183719,7 +178021,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.CMF_Internal(0, svN - 1, fz_h, fz_l, fz_c, fz_v, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CMF_Body(0, svN - 1, fz_h, fz_l, fz_c, fz_v, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CMF_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -183828,7 +178132,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             c2.unstablePeriod[3] = svK;
-            RetCode rc = c2.CMO_Internal(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CMO_Body(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CMO_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -183936,7 +178242,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.CMOU_Internal(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CMOU_Body(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CMOU_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -184044,7 +178352,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.CORREL_Internal(0, svN - 1, fz_c, fz_v, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.CORREL_Body(0, svN - 1, fz_c, fz_v, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.CORREL_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -184151,7 +178461,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.COS_Internal(0, svN - 1, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.COS_Body(0, svN - 1, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.COS_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -184253,7 +178565,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.COSH_Internal(0, svN - 1, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.COSH_Body(0, svN - 1, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.COSH_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -184357,7 +178671,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             c2.unstablePeriod[5] = svK;
-            RetCode rc = c2.DEMA_Internal(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.DEMA_Body(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.DEMA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -184464,7 +178780,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.DIV_Internal(0, svN - 1, fz_c, fz_v, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.DIV_Body(0, svN - 1, fz_c, fz_v, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.DIV_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -184568,7 +178886,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             c2.unstablePeriod[4] = svK;
-            RetCode rc = c2.DX_Internal(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.DX_Body(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.DX_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -184676,7 +178996,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.EFI_Internal(0, svN - 1, fz_c, fz_v, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.EFI_Body(0, svN - 1, fz_c, fz_v, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.EFI_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -184785,7 +179107,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             c2.unstablePeriod[5] = svK;
-            RetCode rc = c2.EMA_Internal(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.EMA_Body(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.EMA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -184892,7 +179216,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.EXP_Internal(0, svN - 1, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.EXP_Body(0, svN - 1, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.EXP_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -184994,7 +179320,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.FLOOR_Internal(0, svN - 1, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.FLOOR_Body(0, svN - 1, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.FLOOR_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -185097,7 +179425,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.HMA_Internal(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.HMA_Body(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.HMA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -185205,7 +179535,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             c2.unstablePeriod[6] = svK;
-            RetCode rc = c2.HT_DCPERIOD_Internal(0, svN - 1, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.HT_DCPERIOD_Body(0, svN - 1, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.HT_DCPERIOD_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -185308,7 +179640,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             c2.unstablePeriod[7] = svK;
-            RetCode rc = c2.HT_DCPHASE_Internal(0, svN - 1, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.HT_DCPHASE_Body(0, svN - 1, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.HT_DCPHASE_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -185412,7 +179746,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             c2.unstablePeriod[8] = svK;
-            RetCode rc = c2.HT_PHASOR_Internal(0, svN - 1, fz_c, beg, nb, b0, b1);
+            RetCode rc;
+            try { rc = c2.HT_PHASOR_Body(0, svN - 1, fz_c, beg, nb, b0, b1); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.HT_PHASOR_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -185527,7 +179863,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             c2.unstablePeriod[9] = svK;
-            RetCode rc = c2.HT_SINE_Internal(0, svN - 1, fz_c, beg, nb, b0, b1);
+            RetCode rc;
+            try { rc = c2.HT_SINE_Body(0, svN - 1, fz_c, beg, nb, b0, b1); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.HT_SINE_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -185641,7 +179979,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             c2.unstablePeriod[10] = svK;
-            RetCode rc = c2.HT_TRENDLINE_Internal(0, svN - 1, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.HT_TRENDLINE_Body(0, svN - 1, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.HT_TRENDLINE_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -185744,7 +180084,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             c2.unstablePeriod[11] = svK;
-            RetCode rc = c2.HT_TRENDMODE_Internal(0, svN - 1, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.HT_TRENDMODE_Body(0, svN - 1, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.HT_TRENDMODE_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -185846,7 +180188,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.IMI_Internal(0, svN - 1, fz_o, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.IMI_Body(0, svN - 1, fz_o, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.IMI_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -185955,7 +180299,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             c2.unstablePeriod[13] = svK;
-            RetCode rc = c2.KAMA_Internal(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.KAMA_Body(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.KAMA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -186063,7 +180409,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.LINEARREG_Internal(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.LINEARREG_Body(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.LINEARREG_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -186171,7 +180519,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.LINEARREG_ANGLE_Internal(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.LINEARREG_ANGLE_Body(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.LINEARREG_ANGLE_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -186279,7 +180629,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.LINEARREG_INTERCEPT_Internal(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.LINEARREG_INTERCEPT_Body(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.LINEARREG_INTERCEPT_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -186387,7 +180739,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.LINEARREG_SLOPE_Internal(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.LINEARREG_SLOPE_Body(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.LINEARREG_SLOPE_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -186494,7 +180848,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.LN_Internal(0, svN - 1, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.LN_Body(0, svN - 1, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.LN_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -186596,7 +180952,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.LOG10_Internal(0, svN - 1, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.LOG10_Body(0, svN - 1, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.LOG10_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -186710,7 +181068,9 @@ public class TaCodegenServe {
             c2.unstablePeriod[14] = svK;
             c2.unstablePeriod[13] = svK;
             c2.unstablePeriod[5] = svK;
-            RetCode rc = c2.MA_Internal(0, svN - 1, fz_c, optInTimePeriod, optInMAType, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.MA_Body(0, svN - 1, fz_c, optInTimePeriod, optInMAType, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.MA_Lookback(optInTimePeriod, optInMAType);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -186823,7 +181183,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             c2.unstablePeriod[5] = svK;
-            RetCode rc = c2.MACD_Internal(0, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, beg, nb, b0, b1, b2);
+            RetCode rc;
+            try { rc = c2.MACD_Body(0, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, beg, nb, b0, b1, b2); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -186982,7 +181344,9 @@ public class TaCodegenServe {
             c2.unstablePeriod[14] = svK;
             c2.unstablePeriod[13] = svK;
             c2.unstablePeriod[5] = svK;
-            RetCode rc = c2.MACDEXT_Internal(0, svN - 1, fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, beg, nb, b0, b1, b2);
+            RetCode rc;
+            try { rc = c2.MACDEXT_Body(0, svN - 1, fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, beg, nb, b0, b1, b2); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -187115,7 +181479,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             c2.unstablePeriod[5] = svK;
-            RetCode rc = c2.MACDFIX_Internal(0, svN - 1, fz_c, optInSignalPeriod, beg, nb, b0, b1, b2);
+            RetCode rc;
+            try { rc = c2.MACDFIX_Body(0, svN - 1, fz_c, optInSignalPeriod, beg, nb, b0, b1, b2); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.MACDFIX_Lookback(optInSignalPeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -187248,7 +181614,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             c2.unstablePeriod[14] = svK;
-            RetCode rc = c2.MAMA_Internal(0, svN - 1, fz_c, optInFastLimit, optInSlowLimit, beg, nb, b0, b1);
+            RetCode rc;
+            try { rc = c2.MAMA_Body(0, svN - 1, fz_c, optInFastLimit, optInSlowLimit, beg, nb, b0, b1); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.MAMA_Lookback(optInFastLimit, optInSlowLimit);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -187361,7 +181729,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.MARKETFI_Internal(0, svN - 1, fz_h, fz_l, fz_v, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.MARKETFI_Body(0, svN - 1, fz_h, fz_l, fz_v, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.MARKETFI_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -187477,7 +181847,9 @@ public class TaCodegenServe {
             c2.unstablePeriod[14] = svK;
             c2.unstablePeriod[13] = svK;
             c2.unstablePeriod[5] = svK;
-            RetCode rc = c2.MAVP_Internal(0, svN - 1, fz_c, fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.MAVP_Body(0, svN - 1, fz_c, fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -187585,7 +181957,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.MAX_Internal(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.MAX_Body(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.MAX_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -187693,7 +182067,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.MAXINDEX_Internal(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.MAXINDEX_Body(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.MAXINDEX_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -187799,7 +182175,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.MEDPRICE_Internal(0, svN - 1, fz_h, fz_l, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.MEDPRICE_Body(0, svN - 1, fz_h, fz_l, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.MEDPRICE_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -187902,7 +182280,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.MFI_Internal(0, svN - 1, fz_h, fz_l, fz_c, fz_v, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.MFI_Body(0, svN - 1, fz_h, fz_l, fz_c, fz_v, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.MFI_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -188010,7 +182390,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.MIDPOINT_Internal(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.MIDPOINT_Body(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.MIDPOINT_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -188118,7 +182500,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.MIDPRICE_Internal(0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.MIDPRICE_Body(0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.MIDPRICE_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -188226,7 +182610,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.MIN_Internal(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.MIN_Body(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.MIN_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -188334,7 +182720,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.MININDEX_Internal(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.MININDEX_Body(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.MININDEX_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -188442,7 +182830,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.MINMAX_Internal(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0, b1);
+            RetCode rc;
+            try { rc = c2.MINMAX_Body(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0, b1); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.MINMAX_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -188563,7 +182953,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.MINMAXINDEX_Internal(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0, b1);
+            RetCode rc;
+            try { rc = c2.MINMAXINDEX_Body(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0, b1); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.MINMAXINDEX_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -188682,7 +183074,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             c2.unstablePeriod[16] = svK;
-            RetCode rc = c2.MINUS_DI_Internal(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.MINUS_DI_Body(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.MINUS_DI_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -188791,7 +183185,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             c2.unstablePeriod[17] = svK;
-            RetCode rc = c2.MINUS_DM_Internal(0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.MINUS_DM_Body(0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.MINUS_DM_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -188899,7 +183295,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.MOM_Internal(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.MOM_Body(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.MOM_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -189006,7 +183404,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.MULT_Internal(0, svN - 1, fz_c, fz_v, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.MULT_Body(0, svN - 1, fz_c, fz_v, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.MULT_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -189110,7 +183510,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             c2.unstablePeriod[18] = svK;
-            RetCode rc = c2.NATR_Internal(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.NATR_Body(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.NATR_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -189217,7 +183619,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.NVI_Internal(0, svN - 1, fz_c, fz_v, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.NVI_Body(0, svN - 1, fz_c, fz_v, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.NVI_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -189319,7 +183723,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.OBV_Internal(0, svN - 1, fz_c, fz_v, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.OBV_Body(0, svN - 1, fz_c, fz_v, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.OBV_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -189423,7 +183829,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             c2.unstablePeriod[19] = svK;
-            RetCode rc = c2.PLUS_DI_Internal(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.PLUS_DI_Body(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.PLUS_DI_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -189532,7 +183940,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             c2.unstablePeriod[20] = svK;
-            RetCode rc = c2.PLUS_DM_Internal(0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.PLUS_DM_Body(0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.PLUS_DM_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -189652,7 +184062,9 @@ public class TaCodegenServe {
             c2.unstablePeriod[14] = svK;
             c2.unstablePeriod[13] = svK;
             c2.unstablePeriod[5] = svK;
-            RetCode rc = c2.PPO_Internal(0, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.PPO_Body(0, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -189759,7 +184171,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.PVI_Internal(0, svN - 1, fz_c, fz_v, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.PVI_Body(0, svN - 1, fz_c, fz_v, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.PVI_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -189874,7 +184288,9 @@ public class TaCodegenServe {
             c2.unstablePeriod[14] = svK;
             c2.unstablePeriod[13] = svK;
             c2.unstablePeriod[5] = svK;
-            RetCode rc = c2.PVO_Internal(0, svN - 1, fz_v, optInFastPeriod, optInSlowPeriod, optInMAType, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.PVO_Body(0, svN - 1, fz_v, optInFastPeriod, optInSlowPeriod, optInMAType, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -189982,7 +184398,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.QSTICK_Internal(0, svN - 1, fz_o, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.QSTICK_Body(0, svN - 1, fz_o, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.QSTICK_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -190090,7 +184508,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.ROC_Internal(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.ROC_Body(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.ROC_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -190198,7 +184618,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.ROCP_Internal(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.ROCP_Body(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.ROCP_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -190306,7 +184728,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.ROCR_Internal(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.ROCR_Body(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.ROCR_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -190414,7 +184838,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.ROCR100_Internal(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.ROCR100_Body(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.ROCR100_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -190523,7 +184949,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             c2.unstablePeriod[21] = svK;
-            RetCode rc = c2.RSI_Internal(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.RSI_Body(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.RSI_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -190632,7 +185060,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.SAR_Internal(0, svN - 1, fz_h, fz_l, optInAcceleration, optInMaximum, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.SAR_Body(0, svN - 1, fz_h, fz_l, optInAcceleration, optInMaximum, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.SAR_Lookback(optInAcceleration, optInMaximum);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -190742,7 +185172,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.SAREXT_Internal(0, svN - 1, fz_h, fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.SAREXT_Body(0, svN - 1, fz_h, fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -190844,7 +185276,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.SIN_Internal(0, svN - 1, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.SIN_Body(0, svN - 1, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.SIN_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -190946,7 +185380,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.SINH_Internal(0, svN - 1, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.SINH_Body(0, svN - 1, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.SINH_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -191049,7 +185485,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.SMA_Internal(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.SMA_Body(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.SMA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -191156,7 +185594,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.SQRT_Internal(0, svN - 1, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.SQRT_Body(0, svN - 1, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.SQRT_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -191260,7 +185700,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.STDDEV_Internal(0, svN - 1, fz_c, optInTimePeriod, optInNbDev, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.STDDEV_Body(0, svN - 1, fz_c, optInTimePeriod, optInNbDev, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.STDDEV_Lookback(optInTimePeriod, optInNbDev);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -191389,7 +185831,9 @@ public class TaCodegenServe {
             c2.unstablePeriod[14] = svK;
             c2.unstablePeriod[13] = svK;
             c2.unstablePeriod[5] = svK;
-            RetCode rc = c2.STOCH_Internal(0, svN - 1, fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, beg, nb, b0, b1);
+            RetCode rc;
+            try { rc = c2.STOCH_Body(0, svN - 1, fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, beg, nb, b0, b1); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -191522,7 +185966,9 @@ public class TaCodegenServe {
             c2.unstablePeriod[14] = svK;
             c2.unstablePeriod[13] = svK;
             c2.unstablePeriod[5] = svK;
-            RetCode rc = c2.STOCHF_Internal(0, svN - 1, fz_h, fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, beg, nb, b0, b1);
+            RetCode rc;
+            try { rc = c2.STOCHF_Body(0, svN - 1, fz_h, fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, beg, nb, b0, b1); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -191657,7 +186103,9 @@ public class TaCodegenServe {
             c2.unstablePeriod[13] = svK;
             c2.unstablePeriod[5] = svK;
             c2.unstablePeriod[21] = svK;
-            RetCode rc = c2.STOCHRSI_Internal(0, svN - 1, fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, beg, nb, b0, b1);
+            RetCode rc;
+            try { rc = c2.STOCHRSI_Body(0, svN - 1, fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, beg, nb, b0, b1); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -191776,7 +186224,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.SUB_Internal(0, svN - 1, fz_c, fz_v, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.SUB_Body(0, svN - 1, fz_c, fz_v, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.SUB_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -191879,7 +186329,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.SUM_Internal(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.SUM_Body(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.SUM_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -191989,7 +186441,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             c2.unstablePeriod[23] = svK;
-            RetCode rc = c2.T3_Internal(0, svN - 1, fz_c, optInTimePeriod, optInVFactor, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.T3_Body(0, svN - 1, fz_c, optInTimePeriod, optInVFactor, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.T3_Lookback(optInTimePeriod, optInVFactor);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -192096,7 +186550,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.TAN_Internal(0, svN - 1, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.TAN_Body(0, svN - 1, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.TAN_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -192198,7 +186654,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.TANH_Internal(0, svN - 1, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.TANH_Body(0, svN - 1, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.TANH_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -192302,7 +186760,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             c2.unstablePeriod[5] = svK;
-            RetCode rc = c2.TEMA_Internal(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.TEMA_Body(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.TEMA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -192409,7 +186869,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.TRANGE_Internal(0, svN - 1, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.TRANGE_Body(0, svN - 1, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.TRANGE_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -192512,7 +186974,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.TRIMA_Internal(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.TRIMA_Body(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.TRIMA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -192621,7 +187085,9 @@ public class TaCodegenServe {
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
             c2.unstablePeriod[5] = svK;
-            RetCode rc = c2.TRIX_Internal(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.TRIX_Body(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.TRIX_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -192729,7 +187195,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.TSF_Internal(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.TSF_Body(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.TSF_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -192836,7 +187304,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.TYPPRICE_Internal(0, svN - 1, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.TYPPRICE_Body(0, svN - 1, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.TYPPRICE_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -192941,7 +187411,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.ULTOSC_Internal(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.ULTOSC_Body(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -193050,7 +187522,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.VAR_Internal(0, svN - 1, fz_c, optInTimePeriod, optInNbDev, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.VAR_Body(0, svN - 1, fz_c, optInTimePeriod, optInNbDev, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.VAR_Lookback(optInTimePeriod, optInNbDev);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -193158,7 +187632,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.VWMA_Internal(0, svN - 1, fz_c, fz_v, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.VWMA_Body(0, svN - 1, fz_c, fz_v, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.VWMA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -193265,7 +187741,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.WAD_Internal(0, svN - 1, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.WAD_Body(0, svN - 1, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.WAD_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -193367,7 +187845,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.WCLPRICE_Internal(0, svN - 1, fz_h, fz_l, fz_c, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.WCLPRICE_Body(0, svN - 1, fz_h, fz_l, fz_c, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.WCLPRICE_Lookback();
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -193470,7 +187950,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.WILLR_Internal(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.WILLR_Body(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.WILLR_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;
@@ -193578,7 +188060,9 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
-            RetCode rc = c2.WMA_Internal(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0);
+            RetCode rc;
+            try { rc = c2.WMA_Body(0, svN - 1, fz_c, optInTimePeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
             int lb = c2.WMA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb.value == 0) {
                 boolean openRejects;

@@ -302,26 +302,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode MINMAXINDEX_Internal( int startIdx,
-                                 int endIdx,
-                                 double inReal[],
-                                 int optInTimePeriod,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 int outMinIdx[],
-                                 int outMaxIdx[] )
-   {
-      try {
-         return MINMAXINDEX_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Returns the absolute input indices of the lowest and highest values within
     * each rolling window of optInTimePeriod bars. Index variant of MINMAX.
@@ -393,26 +373,6 @@
          throw failure("MINMAXINDEX", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode MINMAXINDEX_Internal( int startIdx,
-                                 int endIdx,
-                                 float inReal[],
-                                 int optInTimePeriod,
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 int outMinIdx[],
-                                 int outMaxIdx[] )
-   {
-      try {
-         return MINMAXINDEX_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

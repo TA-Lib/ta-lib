@@ -575,22 +575,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode HMA( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inReal,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return HMA_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Hull Moving Average, published by Alan Hull in 2005: a moving average
    /// built to track price with far less lag than an
@@ -670,22 +654,6 @@ public partial class Core
          throw Failure("HMA", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode HMA( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inReal,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return HMA_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

@@ -263,22 +263,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode MOM( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inReal,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return MOM_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Momentum: current price minus the price optInTimePeriod bars ago. The
    /// absolute (unnormalized) rate of change. Positive = price rose over the
@@ -342,22 +326,6 @@ public partial class Core
          throw Failure("MOM", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode MOM( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inReal,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return MOM_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

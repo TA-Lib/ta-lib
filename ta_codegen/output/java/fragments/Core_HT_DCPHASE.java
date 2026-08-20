@@ -847,24 +847,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode HT_DCPHASE_Internal( int startIdx,
-                                int endIdx,
-                                double inReal[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
-   {
-      try {
-         return HT_DCPHASE_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Hilbert Transform Dominant Cycle Phase: the instantaneous phase (in
     * degrees) of the dominant market cycle, derived from a homodyne
@@ -926,24 +908,6 @@
          throw failure("HT_DCPHASE", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode HT_DCPHASE_Internal( int startIdx,
-                                int endIdx,
-                                float inReal[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
-   {
-      try {
-         return HT_DCPHASE_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

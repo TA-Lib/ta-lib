@@ -187,22 +187,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode MULT( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<double> inReal0,
-                          ReadOnlySpan<double> inReal1,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
-   {
-      try {
-         return MULT_Body(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Element-wise multiplication of two input series. Produces outReal[i] =
    /// inReal0[i] * inReal1[i].
@@ -265,22 +249,6 @@ public partial class Core
          throw Failure("MULT", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode MULT( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<float> inReal0,
-                          ReadOnlySpan<float> inReal1,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
-   {
-      try {
-         return MULT_Body(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

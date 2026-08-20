@@ -296,27 +296,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode PVO_Internal( int startIdx,
-                         int endIdx,
-                         double inVolume[],
-                         int optInFastPeriod,
-                         int optInSlowPeriod,
-                         MAType optInMAType,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
-   {
-      try {
-         return PVO_Body(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Percentage Volume Oscillator: a variation of the [Percentage Price
     * Oscillator](/functions/ppo) (PPO, created by Gerald Appel) applied to the
@@ -397,27 +376,6 @@
          throw failure("PVO", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode PVO_Internal( int startIdx,
-                         int endIdx,
-                         float inVolume[],
-                         int optInFastPeriod,
-                         int optInSlowPeriod,
-                         MAType optInMAType,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
-   {
-      try {
-         return PVO_Body(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

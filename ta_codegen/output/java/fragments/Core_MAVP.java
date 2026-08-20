@@ -617,28 +617,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode MAVP_Internal( int startIdx,
-                          int endIdx,
-                          double inReal[],
-                          double inPeriods[],
-                          int optInMinPeriod,
-                          int optInMaxPeriod,
-                          MAType optInMAType,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
-   {
-      try {
-         return MAVP_Body(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Moving average whose period varies per bar, driven by a companion period
     * series. For each bar it computes an MA of the selected type over the
@@ -718,28 +696,6 @@
          throw failure("MAVP", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode MAVP_Internal( int startIdx,
-                          int endIdx,
-                          float inReal[],
-                          float inPeriods[],
-                          int optInMinPeriod,
-                          int optInMaxPeriod,
-                          MAType optInMAType,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
-   {
-      try {
-         return MAVP_Body(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

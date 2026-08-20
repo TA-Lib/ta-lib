@@ -743,24 +743,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode ADX( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inHigh,
-                         ReadOnlySpan<double> inLow,
-                         ReadOnlySpan<double> inClose,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return ADX_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Wilder's Average Directional Movement Index, a smoothed measure of trend
    /// strength derived from the directional indicators (+DI/-DI). Quantifies how
@@ -835,24 +817,6 @@ public partial class Core
          throw Failure("ADX", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode ADX( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inHigh,
-                         ReadOnlySpan<float> inLow,
-                         ReadOnlySpan<float> inClose,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return ADX_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

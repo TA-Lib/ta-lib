@@ -315,27 +315,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode AROON_Internal( int startIdx,
-                           int endIdx,
-                           double inHigh[],
-                           double inLow[],
-                           int optInTimePeriod,
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outAroonDown[],
-                           double outAroonUp[] )
-   {
-      try {
-         return AROON_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Aroon reports how recently the highest high and lowest low occurred within
     * a rolling window of length optInTimePeriod, as two 0-100 oscillators.
@@ -410,27 +389,6 @@
          throw failure("AROON", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode AROON_Internal( int startIdx,
-                           int endIdx,
-                           float inHigh[],
-                           float inLow[],
-                           int optInTimePeriod,
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outAroonDown[],
-                           double outAroonUp[] )
-   {
-      try {
-         return AROON_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

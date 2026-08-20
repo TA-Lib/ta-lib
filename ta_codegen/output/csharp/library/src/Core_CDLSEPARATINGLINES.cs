@@ -347,24 +347,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode CDLSEPARATINGLINES( int startIdx,
-                                        int endIdx,
-                                        ReadOnlySpan<double> inOpen,
-                                        ReadOnlySpan<double> inHigh,
-                                        ReadOnlySpan<double> inLow,
-                                        ReadOnlySpan<double> inClose,
-                                        out int outBegIdx,
-                                        out int outNBElement,
-                                        Span<int> outInteger )
-   {
-      try {
-         return CDLSEPARATINGLINES_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outInteger);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// A two-candle continuation pattern: the second candle opposes the first in
    /// color, opens at the same price as the first, and is a long-bodied belt
@@ -439,24 +421,6 @@ public partial class Core
          throw Failure("CDLSEPARATINGLINES", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode CDLSEPARATINGLINES( int startIdx,
-                                        int endIdx,
-                                        ReadOnlySpan<float> inOpen,
-                                        ReadOnlySpan<float> inHigh,
-                                        ReadOnlySpan<float> inLow,
-                                        ReadOnlySpan<float> inClose,
-                                        out int outBegIdx,
-                                        out int outNBElement,
-                                        Span<int> outInteger )
-   {
-      try {
-         return CDLSEPARATINGLINES_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outInteger);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

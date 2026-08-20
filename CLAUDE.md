@@ -111,8 +111,9 @@ A **correctness** request goes through each language's PUBLIC API, and the
 server turns the exception back into the `retCode` / `outBegIdx` /
 `outNBElement` wire shape — normalisation is the server's job, not the
 library's. In **Java and C#** a request that declares itself timed
-(`"timed":1`, which only `ta_bench` sends) keeps calling the C-shaped tier
-inside the timed loop, because these servers are also the cross-language
+(`"timed":1`, which only `ta_bench` sends) calls the BODY — the numerics and
+nothing else — inside the timed loop, because these servers are also the
+cross-language
 benchmark and nothing measured may quietly acquire the public tier's argument
 checks. Rust has no such split and never did: `tools` is a separate crate, so
 the public entry point is the only one it can reach, and `ta_bench

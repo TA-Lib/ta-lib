@@ -353,25 +353,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode CDLMORNINGSTAR( int startIdx,
-                                    int endIdx,
-                                    ReadOnlySpan<double> inOpen,
-                                    ReadOnlySpan<double> inHigh,
-                                    ReadOnlySpan<double> inLow,
-                                    ReadOnlySpan<double> inClose,
-                                    double optInPenetration,
-                                    out int outBegIdx,
-                                    out int outNBElement,
-                                    Span<int> outInteger )
-   {
-      try {
-         return CDLMORNINGSTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outInteger);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// A three-candle bottom-reversal pattern: a long black candle, a
    /// small-bodied star gapping down, then a white candle closing well up into
@@ -449,25 +430,6 @@ public partial class Core
          throw Failure("CDLMORNINGSTAR", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode CDLMORNINGSTAR( int startIdx,
-                                    int endIdx,
-                                    ReadOnlySpan<float> inOpen,
-                                    ReadOnlySpan<float> inHigh,
-                                    ReadOnlySpan<float> inLow,
-                                    ReadOnlySpan<float> inClose,
-                                    double optInPenetration,
-                                    out int outBegIdx,
-                                    out int outNBElement,
-                                    Span<int> outInteger )
-   {
-      try {
-         return CDLMORNINGSTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outInteger);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

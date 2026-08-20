@@ -677,30 +677,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode BBANDS_Internal( int startIdx,
-                            int endIdx,
-                            double inReal[],
-                            int optInTimePeriod,
-                            double optInNbDevUp,
-                            double optInNbDevDn,
-                            MAType optInMAType,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outRealUpperBand[],
-                            double outRealMiddleBand[],
-                            double outRealLowerBand[] )
-   {
-      try {
-         return BBANDS_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Bollinger Bands: a moving-average middle band with upper and lower bands
     * offset by a multiple of the standard deviation. Used to gauge relative
@@ -798,30 +774,6 @@
          throw failure("BBANDS", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode BBANDS_Internal( int startIdx,
-                            int endIdx,
-                            float inReal[],
-                            int optInTimePeriod,
-                            double optInNbDevUp,
-                            double optInNbDevDn,
-                            MAType optInMAType,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outRealUpperBand[],
-                            double outRealMiddleBand[],
-                            double outRealLowerBand[] )
-   {
-      try {
-         return BBANDS_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

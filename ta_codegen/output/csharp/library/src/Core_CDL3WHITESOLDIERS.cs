@@ -419,24 +419,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode CDL3WHITESOLDIERS( int startIdx,
-                                       int endIdx,
-                                       ReadOnlySpan<double> inOpen,
-                                       ReadOnlySpan<double> inHigh,
-                                       ReadOnlySpan<double> inLow,
-                                       ReadOnlySpan<double> inClose,
-                                       out int outBegIdx,
-                                       out int outNBElement,
-                                       Span<int> outInteger )
-   {
-      try {
-         return CDL3WHITESOLDIERS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outInteger);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// A three-candle pattern of consecutive white candles with progressively
    /// higher closes, each opening within/near the prior body and each with a
@@ -508,24 +490,6 @@ public partial class Core
          throw Failure("CDL3WHITESOLDIERS", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode CDL3WHITESOLDIERS( int startIdx,
-                                       int endIdx,
-                                       ReadOnlySpan<float> inOpen,
-                                       ReadOnlySpan<float> inHigh,
-                                       ReadOnlySpan<float> inLow,
-                                       ReadOnlySpan<float> inClose,
-                                       out int outBegIdx,
-                                       out int outNBElement,
-                                       Span<int> outInteger )
-   {
-      try {
-         return CDL3WHITESOLDIERS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outInteger);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

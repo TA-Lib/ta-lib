@@ -387,24 +387,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode AO( int startIdx,
-                        int endIdx,
-                        ReadOnlySpan<double> inHigh,
-                        ReadOnlySpan<double> inLow,
-                        int optInFastPeriod,
-                        int optInSlowPeriod,
-                        out int outBegIdx,
-                        out int outNBElement,
-                        Span<double> outReal )
-   {
-      try {
-         return AO_Body(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Bill Williams' Awesome Oscillator (*New Trading Dimensions*, 1998): market
    /// momentum read as the spread between a short and a long simple moving
@@ -488,24 +470,6 @@ public partial class Core
          throw Failure("AO", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode AO( int startIdx,
-                        int endIdx,
-                        ReadOnlySpan<float> inHigh,
-                        ReadOnlySpan<float> inLow,
-                        int optInFastPeriod,
-                        int optInSlowPeriod,
-                        out int outBegIdx,
-                        out int outNBElement,
-                        Span<double> outReal )
-   {
-      try {
-         return AO_Body(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

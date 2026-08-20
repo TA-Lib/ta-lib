@@ -381,26 +381,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode MA_Internal( int startIdx,
-                        int endIdx,
-                        double inReal[],
-                        int optInTimePeriod,
-                        MAType optInMAType,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
-   {
-      try {
-         return MA_Body(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Generic moving-average dispatcher that forwards the job to the MA
     * implementation selected by optInMAType. Single uniform interface over all
@@ -482,26 +462,6 @@
          throw failure("MA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode MA_Internal( int startIdx,
-                        int endIdx,
-                        float inReal[],
-                        int optInTimePeriod,
-                        MAType optInMAType,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
-   {
-      try {
-         return MA_Body(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

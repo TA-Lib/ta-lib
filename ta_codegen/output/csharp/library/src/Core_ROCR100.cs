@@ -275,22 +275,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode ROCR100( int startIdx,
-                             int endIdx,
-                             ReadOnlySpan<double> inReal,
-                             int optInTimePeriod,
-                             out int outBegIdx,
-                             out int outNBElement,
-                             Span<double> outReal )
-   {
-      try {
-         return ROCR100_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Rate-of-change ratio scaled by 100: current price as a percentage of the
    /// price optInTimePeriod bars ago. Momentum measure centered at 100 and
@@ -355,22 +339,6 @@ public partial class Core
          throw Failure("ROCR100", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode ROCR100( int startIdx,
-                             int endIdx,
-                             ReadOnlySpan<float> inReal,
-                             int optInTimePeriod,
-                             out int outBegIdx,
-                             out int outNBElement,
-                             Span<double> outReal )
-   {
-      try {
-         return ROCR100_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

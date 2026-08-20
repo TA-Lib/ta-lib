@@ -666,25 +666,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode MAVP( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<double> inReal,
-                          ReadOnlySpan<double> inPeriods,
-                          int optInMinPeriod,
-                          int optInMaxPeriod,
-                          MAType optInMAType,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
-   {
-      try {
-         return MAVP_Body(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Moving average whose period varies per bar, driven by a companion period
    /// series. For each bar it computes an MA of the selected type over the
@@ -763,25 +744,6 @@ public partial class Core
          throw Failure("MAVP", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode MAVP( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<float> inReal,
-                          ReadOnlySpan<float> inPeriods,
-                          int optInMinPeriod,
-                          int optInMaxPeriod,
-                          MAType optInMAType,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
-   {
-      try {
-         return MAVP_Body(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

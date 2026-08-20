@@ -265,23 +265,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode IMI( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inOpen,
-                         ReadOnlySpan<double> inClose,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return IMI_Body(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Intraday Momentum Index: an RSI-like 0-100 oscillator built from the
    /// open-to-close body of each bar. Over a rolling window it ratios cumulative
@@ -348,23 +331,6 @@ public partial class Core
          throw Failure("IMI", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode IMI( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inOpen,
-                         ReadOnlySpan<float> inClose,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return IMI_Body(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

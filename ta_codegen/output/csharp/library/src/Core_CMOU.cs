@@ -378,22 +378,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode CMOU( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<double> inReal,
-                          int optInTimePeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
-   {
-      try {
-         return CMOU_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Chande Momentum Oscillator: Tushar Chande's original momentum oscillator,
    /// computed from **plain moving-window sums** of the up-moves and down-moves
@@ -462,22 +446,6 @@ public partial class Core
          throw Failure("CMOU", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode CMOU( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<float> inReal,
-                          int optInTimePeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
-   {
-      try {
-         return CMOU_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

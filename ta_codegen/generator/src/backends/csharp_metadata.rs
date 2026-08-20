@@ -695,8 +695,19 @@ fn emit_factory(s: &mut String, r: &FuncRow, by_name: &HashMap<&str, &FuncDef>) 
             OutputKind::Integer => format!("c.IntOut({k})"),
         });
     }
+    // The BODY. This bound the C-shaped overload until #236 step 5 deleted that
+    // tier, and the body is what that overload called -- so the binder reaches
+    // the same code, UNGUARDED, exactly as before. Deliberately not the public
+    // overload: `NoPhantomIoTest` drives functions through this binder, and the
+    // public tier's length checks would reject its undersized arrays before the
+    // body could touch them, which is the one thing that probe must not measure.
+    //
+    // What the deleted shim did still has to happen: since step 3 a cross-call
+    // inside the body calls the PUBLIC callee and a rejection arrives as a
+    // throw. `FunctionCall.TryInvoke` -- whose contract is a code, not an
+    // exception -- converts it in that one place rather than in 174 thunks.
     s.push_str("        invoke: static (core, c, startIdx, endIdx) =>\n        {\n");
-    let _ = writeln!(s, "            RetCode rc = core.{method}(");
+    let _ = writeln!(s, "            RetCode rc = core.{method}_Body(");
     let _ = writeln!(s, "                {});", call_args.join(", "));
     s.push_str("            return new CallOutcome(rc, b, n);\n");
     s.push_str("        });\n\n");
@@ -1767,7 +1778,20 @@ public sealed class FunctionCall
             return bound;
         }
 
-        CallOutcome outcome = _info.Invoke(_core, this, startIdx, endIdx);
+        CallOutcome outcome;
+        try
+        {
+            outcome = _info.Invoke(_core, this, startIdx, endIdx);
+        }
+        catch (Exception _e) when (_e is ITaLibFailure)
+        {
+            // The thunk calls the public overload, which reports a rejection by
+            // throwing. This method's contract is a code, so it converts here --
+            // once, rather than in every thunk. Only the library's own failure is
+            // converted; anything else is not ours to relabel.
+            range = new OutRange(0, 0);
+            return ((ITaLibFailure)_e).RetCode;
+        }
         range = new OutRange(outcome.BegIdx, outcome.Count);
         return outcome.Code;
     }

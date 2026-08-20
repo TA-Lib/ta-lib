@@ -436,26 +436,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode T3_Internal( int startIdx,
-                        int endIdx,
-                        double inReal[],
-                        int optInTimePeriod,
-                        double optInVFactor,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
-   {
-      try {
-         return T3_Body(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Tillson's T3: a low-lag moving average built from six chained EMAs,
     * combined via volume-factor-weighted coefficients. Not the same as EMA3,
@@ -529,26 +509,6 @@
          throw failure("T3", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode T3_Internal( int startIdx,
-                        int endIdx,
-                        float inReal[],
-                        int optInTimePeriod,
-                        double optInVFactor,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
-   {
-      try {
-         return T3_Body(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

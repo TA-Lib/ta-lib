@@ -381,23 +381,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode EFI( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inClose,
-                         ReadOnlySpan<double> inVolume,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return EFI_Body(startIdx, endIdx, inClose, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Alexander Elder's Force Index (*Trading for a Living*, 1993):
    /// volume-weighted momentum. Each bar's close-to-close move is weighted by
@@ -474,23 +457,6 @@ public partial class Core
          throw Failure("EFI", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode EFI( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inClose,
-                         ReadOnlySpan<float> inVolume,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return EFI_Body(startIdx, endIdx, inClose, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

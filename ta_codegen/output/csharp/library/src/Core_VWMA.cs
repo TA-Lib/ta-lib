@@ -347,23 +347,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode VWMA( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<double> inReal,
-                          ReadOnlySpan<double> inVolume,
-                          int optInTimePeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
-   {
-      try {
-         return VWMA_Body(startIdx, endIdx, inReal, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Volume Weighted Moving Average: the mean price over a trailing window of
    /// <c>optInTimePeriod</c> bars, each bar weighted by its own volume. Heavily
@@ -441,23 +424,6 @@ public partial class Core
          throw Failure("VWMA", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode VWMA( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<float> inReal,
-                          ReadOnlySpan<float> inVolume,
-                          int optInTimePeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
-   {
-      try {
-         return VWMA_Body(startIdx, endIdx, inReal, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

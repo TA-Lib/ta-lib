@@ -454,24 +454,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode CDLADVANCEBLOCK( int startIdx,
-                                     int endIdx,
-                                     ReadOnlySpan<double> inOpen,
-                                     ReadOnlySpan<double> inHigh,
-                                     ReadOnlySpan<double> inLow,
-                                     ReadOnlySpan<double> inClose,
-                                     out int outBegIdx,
-                                     out int outNBElement,
-                                     Span<int> outInteger )
-   {
-      try {
-         return CDLADVANCEBLOCK_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outInteger);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Three-candle bearish reversal pattern: three white candles with
    /// consecutively higher closes whose advance weakens (progressively smaller
@@ -543,24 +525,6 @@ public partial class Core
          throw Failure("CDLADVANCEBLOCK", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode CDLADVANCEBLOCK( int startIdx,
-                                     int endIdx,
-                                     ReadOnlySpan<float> inOpen,
-                                     ReadOnlySpan<float> inHigh,
-                                     ReadOnlySpan<float> inLow,
-                                     ReadOnlySpan<float> inClose,
-                                     out int outBegIdx,
-                                     out int outNBElement,
-                                     Span<int> outInteger )
-   {
-      try {
-         return CDLADVANCEBLOCK_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outInteger);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

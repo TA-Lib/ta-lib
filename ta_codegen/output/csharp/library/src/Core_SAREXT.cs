@@ -808,30 +808,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode SAREXT( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<double> inHigh,
-                            ReadOnlySpan<double> inLow,
-                            double optInStartValue,
-                            double optInOffsetOnReverse,
-                            double optInAccelerationInitLong,
-                            double optInAccelerationLong,
-                            double optInAccelerationMaxLong,
-                            double optInAccelerationInitShort,
-                            double optInAccelerationShort,
-                            double optInAccelerationMaxShort,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outReal )
-   {
-      try {
-         return SAREXT_Body(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Extended Parabolic SAR (stop and reverse) giving the caller full control
    /// over the initial state and separate acceleration factors for long and
@@ -921,30 +897,6 @@ public partial class Core
          throw Failure("SAREXT", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode SAREXT( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<float> inHigh,
-                            ReadOnlySpan<float> inLow,
-                            double optInStartValue,
-                            double optInOffsetOnReverse,
-                            double optInAccelerationInitLong,
-                            double optInAccelerationLong,
-                            double optInAccelerationMaxLong,
-                            double optInAccelerationInitShort,
-                            double optInAccelerationShort,
-                            double optInAccelerationMaxShort,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outReal )
-   {
-      try {
-         return SAREXT_Body(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

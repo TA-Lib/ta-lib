@@ -449,28 +449,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode AC_Internal( int startIdx,
-                        int endIdx,
-                        double inHigh[],
-                        double inLow[],
-                        int optInFastPeriod,
-                        int optInSlowPeriod,
-                        int optInSignalPeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
-   {
-      try {
-         return AC_Body(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Bill Williams' Accelerator/Decelerator Oscillator (*New Trading
     * Dimensions*, 1998): the rate at which market momentum is itself speeding
@@ -562,28 +540,6 @@
          throw failure("AC", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode AC_Internal( int startIdx,
-                        int endIdx,
-                        float inHigh[],
-                        float inLow[],
-                        int optInFastPeriod,
-                        int optInSlowPeriod,
-                        int optInSignalPeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
-   {
-      try {
-         return AC_Body(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

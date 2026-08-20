@@ -426,22 +426,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode TEMA( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<double> inReal,
-                          int optInTimePeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
-   {
-      try {
-         return TEMA_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Triple Exponential Moving Average: a smoothed price overlay built from
    /// three successively-applied EMAs to reduce lag versus a plain EMA. Distinct
@@ -507,22 +491,6 @@ public partial class Core
          throw Failure("TEMA", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode TEMA( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<float> inReal,
-                          int optInTimePeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
-   {
-      try {
-         return TEMA_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

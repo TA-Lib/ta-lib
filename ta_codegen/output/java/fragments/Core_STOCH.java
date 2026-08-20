@@ -586,32 +586,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode STOCH_Internal( int startIdx,
-                           int endIdx,
-                           double inHigh[],
-                           double inLow[],
-                           double inClose[],
-                           int optInFastK_Period,
-                           int optInSlowK_Period,
-                           MAType optInSlowK_MAType,
-                           int optInSlowD_Period,
-                           MAType optInSlowD_MAType,
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outSlowK[],
-                           double outSlowD[] )
-   {
-      try {
-         return STOCH_Body(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Slow Stochastic oscillator: locates the close within the high-low range
     * over a lookback period, then double-smooths it. Returns the Slow-%K and
@@ -712,32 +686,6 @@
          throw failure("STOCH", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode STOCH_Internal( int startIdx,
-                           int endIdx,
-                           float inHigh[],
-                           float inLow[],
-                           float inClose[],
-                           int optInFastK_Period,
-                           int optInSlowK_Period,
-                           MAType optInSlowK_MAType,
-                           int optInSlowD_Period,
-                           MAType optInSlowD_MAType,
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outSlowK[],
-                           double outSlowD[] )
-   {
-      try {
-         return STOCH_Body(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

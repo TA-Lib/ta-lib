@@ -142,26 +142,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode WCLPRICE_Internal( int startIdx,
-                              int endIdx,
-                              double inHigh[],
-                              double inLow[],
-                              double inClose[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-   {
-      try {
-         return WCLPRICE_Body(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Weighted Close Price: a per-bar price average giving the close double
     * weight relative to high and low.
@@ -226,26 +206,6 @@
          throw failure("WCLPRICE", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode WCLPRICE_Internal( int startIdx,
-                              int endIdx,
-                              float inHigh[],
-                              float inLow[],
-                              float inClose[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-   {
-      try {
-         return WCLPRICE_Body(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

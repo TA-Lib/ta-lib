@@ -1094,7 +1094,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.AC(0, svN - 1, fz_h, fz_l, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.AC_Body(0, svN - 1, fz_h, fz_l, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.AC_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -1243,7 +1245,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.ACCBANDS(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0, b1, b2);
+            RetCode rc;
+            try { rc = c2.ACCBANDS_Body(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0, b1, b2); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ACCBANDS_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -1447,7 +1451,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.ACOS(0, svN - 1, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.ACOS_Body(0, svN - 1, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ACOS_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -1584,7 +1590,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.AD(0, svN - 1, fz_h, fz_l, fz_c, fz_v, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.AD_Body(0, svN - 1, fz_h, fz_l, fz_c, fz_v, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.AD_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -1727,7 +1735,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.ADD(0, svN - 1, fz_c, fz_v, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.ADD_Body(0, svN - 1, fz_c, fz_v, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ADD_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -1869,7 +1879,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.ADOSC(0, svN - 1, fz_h, fz_l, fz_c, fz_v, optInFastPeriod, optInSlowPeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.ADOSC_Body(0, svN - 1, fz_h, fz_l, fz_c, fz_v, optInFastPeriod, optInSlowPeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ADOSC_Lookback(optInFastPeriod, optInSlowPeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -2021,7 +2033,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.ADX(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.ADX_Body(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ADX_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -2171,7 +2185,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.ADXR(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.ADXR_Body(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ADXR_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -2321,7 +2337,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.AO(0, svN - 1, fz_h, fz_l, optInFastPeriod, optInSlowPeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.AO_Body(0, svN - 1, fz_h, fz_l, optInFastPeriod, optInSlowPeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.AO_Lookback(optInFastPeriod, optInSlowPeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -2487,7 +2505,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.APO(0, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.APO_Body(0, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -2633,7 +2653,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.AROON(0, svN - 1, fz_h, fz_l, optInTimePeriod, out beg, out nb, b0, b1);
+            RetCode rc;
+            try { rc = c2.AROON_Body(0, svN - 1, fz_h, fz_l, optInTimePeriod, out beg, out nb, b0, b1); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.AROON_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -2803,7 +2825,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.AROONOSC(0, svN - 1, fz_h, fz_l, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.AROONOSC_Body(0, svN - 1, fz_h, fz_l, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.AROONOSC_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -2949,7 +2973,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.ASIN(0, svN - 1, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.ASIN_Body(0, svN - 1, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ASIN_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -3086,7 +3112,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.ATAN(0, svN - 1, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.ATAN_Body(0, svN - 1, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ATAN_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -3225,7 +3253,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.ATR(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.ATR_Body(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ATR_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -3374,7 +3404,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.AVGDEV(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.AVGDEV_Body(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.AVGDEV_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -3518,7 +3550,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.AVGPRICE(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.AVGPRICE_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.AVGPRICE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -3688,7 +3722,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.BBANDS(0, svN - 1, fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out beg, out nb, b0, b1, b2);
+            RetCode rc;
+            try { rc = c2.BBANDS_Body(0, svN - 1, fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out beg, out nb, b0, b1, b2); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -3881,7 +3917,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.BETA(0, svN - 1, fz_c, fz_v, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.BETA_Body(0, svN - 1, fz_c, fz_v, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.BETA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -4027,7 +4065,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.BOP(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.BOP_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.BOP_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -4171,7 +4211,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CCI(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CCI_Body(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CCI_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -4324,7 +4366,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDL2CROWS(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDL2CROWS_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDL2CROWS_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -4423,7 +4467,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDL2CROWS(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDL2CROWS_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -4489,7 +4535,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDL3BLACKCROWS(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDL3BLACKCROWS_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDL3BLACKCROWS_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -4588,7 +4636,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDL3BLACKCROWS(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDL3BLACKCROWS_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -4654,7 +4704,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDL3INSIDE(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDL3INSIDE_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDL3INSIDE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -4753,7 +4805,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDL3INSIDE(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDL3INSIDE_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -4819,7 +4873,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDL3LINESTRIKE(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDL3LINESTRIKE_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDL3LINESTRIKE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -4918,7 +4974,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDL3LINESTRIKE(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDL3LINESTRIKE_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -4984,7 +5042,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDL3OUTSIDE(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDL3OUTSIDE_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDL3OUTSIDE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -5083,7 +5143,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDL3OUTSIDE(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDL3OUTSIDE_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -5149,7 +5211,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDL3STARSINSOUTH(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDL3STARSINSOUTH_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDL3STARSINSOUTH_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -5248,7 +5312,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDL3STARSINSOUTH(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDL3STARSINSOUTH_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -5314,7 +5380,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDL3WHITESOLDIERS(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDL3WHITESOLDIERS_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDL3WHITESOLDIERS_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -5413,7 +5481,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDL3WHITESOLDIERS(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDL3WHITESOLDIERS_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -5480,7 +5550,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLABANDONEDBABY(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLABANDONEDBABY_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLABANDONEDBABY_Lookback(optInPenetration);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -5579,7 +5651,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLABANDONEDBABY(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLABANDONEDBABY_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -5645,7 +5719,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLADVANCEBLOCK(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLADVANCEBLOCK_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLADVANCEBLOCK_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -5744,7 +5820,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLADVANCEBLOCK(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLADVANCEBLOCK_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -5810,7 +5888,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLBELTHOLD(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLBELTHOLD_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLBELTHOLD_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -5909,7 +5989,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLBELTHOLD(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLBELTHOLD_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -5975,7 +6057,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLBREAKAWAY(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLBREAKAWAY_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLBREAKAWAY_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -6074,7 +6158,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLBREAKAWAY(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLBREAKAWAY_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -6140,7 +6226,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLCLOSINGMARUBOZU(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLCLOSINGMARUBOZU_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLCLOSINGMARUBOZU_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -6239,7 +6327,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLCLOSINGMARUBOZU(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLCLOSINGMARUBOZU_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -6305,7 +6395,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLCONCEALBABYSWALL(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLCONCEALBABYSWALL_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLCONCEALBABYSWALL_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -6404,7 +6496,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLCONCEALBABYSWALL(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLCONCEALBABYSWALL_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -6470,7 +6564,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLCOUNTERATTACK(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLCOUNTERATTACK_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLCOUNTERATTACK_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -6569,7 +6665,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLCOUNTERATTACK(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLCOUNTERATTACK_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -6636,7 +6734,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLDARKCLOUDCOVER(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLDARKCLOUDCOVER_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLDARKCLOUDCOVER_Lookback(optInPenetration);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -6735,7 +6835,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLDARKCLOUDCOVER(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLDARKCLOUDCOVER_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -6801,7 +6903,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLDOJI(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLDOJI_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLDOJI_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -6900,7 +7004,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLDOJI(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLDOJI_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -6966,7 +7072,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLDOJISTAR(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLDOJISTAR_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLDOJISTAR_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -7065,7 +7173,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLDOJISTAR(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLDOJISTAR_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -7131,7 +7241,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLDRAGONFLYDOJI(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLDRAGONFLYDOJI_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLDRAGONFLYDOJI_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -7230,7 +7342,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLDRAGONFLYDOJI(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLDRAGONFLYDOJI_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -7296,7 +7410,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLENGULFING(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLENGULFING_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLENGULFING_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -7395,7 +7511,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLENGULFING(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLENGULFING_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -7462,7 +7580,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLEVENINGDOJISTAR(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLEVENINGDOJISTAR_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLEVENINGDOJISTAR_Lookback(optInPenetration);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -7561,7 +7681,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLEVENINGDOJISTAR(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLEVENINGDOJISTAR_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -7628,7 +7750,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLEVENINGSTAR(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLEVENINGSTAR_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLEVENINGSTAR_Lookback(optInPenetration);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -7727,7 +7851,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLEVENINGSTAR(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLEVENINGSTAR_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -7793,7 +7919,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLGAPSIDESIDEWHITE(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLGAPSIDESIDEWHITE_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLGAPSIDESIDEWHITE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -7892,7 +8020,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLGAPSIDESIDEWHITE(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLGAPSIDESIDEWHITE_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -7958,7 +8088,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLGRAVESTONEDOJI(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLGRAVESTONEDOJI_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLGRAVESTONEDOJI_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -8057,7 +8189,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLGRAVESTONEDOJI(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLGRAVESTONEDOJI_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -8123,7 +8257,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLHAMMER(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLHAMMER_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLHAMMER_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -8222,7 +8358,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLHAMMER(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLHAMMER_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -8288,7 +8426,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLHANGINGMAN(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLHANGINGMAN_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLHANGINGMAN_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -8387,7 +8527,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLHANGINGMAN(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLHANGINGMAN_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -8453,7 +8595,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLHARAMI(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLHARAMI_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLHARAMI_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -8552,7 +8696,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLHARAMI(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLHARAMI_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -8618,7 +8764,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLHARAMICROSS(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLHARAMICROSS_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLHARAMICROSS_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -8717,7 +8865,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLHARAMICROSS(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLHARAMICROSS_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -8783,7 +8933,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLHIGHWAVE(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLHIGHWAVE_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLHIGHWAVE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -8882,7 +9034,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLHIGHWAVE(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLHIGHWAVE_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -8948,7 +9102,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLHIKKAKE(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLHIKKAKE_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLHIKKAKE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -9047,7 +9203,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLHIKKAKE(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLHIKKAKE_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -9113,7 +9271,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLHIKKAKEMOD(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLHIKKAKEMOD_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLHIKKAKEMOD_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -9212,7 +9372,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLHIKKAKEMOD(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLHIKKAKEMOD_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -9278,7 +9440,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLHOMINGPIGEON(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLHOMINGPIGEON_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLHOMINGPIGEON_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -9377,7 +9541,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLHOMINGPIGEON(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLHOMINGPIGEON_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -9443,7 +9609,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLIDENTICAL3CROWS(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLIDENTICAL3CROWS_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLIDENTICAL3CROWS_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -9542,7 +9710,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLIDENTICAL3CROWS(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLIDENTICAL3CROWS_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -9608,7 +9778,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLINNECK(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLINNECK_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLINNECK_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -9707,7 +9879,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLINNECK(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLINNECK_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -9773,7 +9947,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLINVERTEDHAMMER(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLINVERTEDHAMMER_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLINVERTEDHAMMER_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -9872,7 +10048,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLINVERTEDHAMMER(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLINVERTEDHAMMER_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -9938,7 +10116,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLKICKING(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLKICKING_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLKICKING_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -10037,7 +10217,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLKICKING(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLKICKING_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -10103,7 +10285,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLKICKINGBYLENGTH(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLKICKINGBYLENGTH_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLKICKINGBYLENGTH_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -10202,7 +10386,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLKICKINGBYLENGTH(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLKICKINGBYLENGTH_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -10268,7 +10454,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLLADDERBOTTOM(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLLADDERBOTTOM_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLLADDERBOTTOM_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -10367,7 +10555,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLLADDERBOTTOM(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLLADDERBOTTOM_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -10433,7 +10623,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLLONGLEGGEDDOJI(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLLONGLEGGEDDOJI_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLLONGLEGGEDDOJI_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -10532,7 +10724,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLLONGLEGGEDDOJI(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLLONGLEGGEDDOJI_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -10598,7 +10792,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLLONGLINE(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLLONGLINE_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLLONGLINE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -10697,7 +10893,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLLONGLINE(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLLONGLINE_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -10763,7 +10961,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLMARUBOZU(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLMARUBOZU_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLMARUBOZU_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -10862,7 +11062,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLMARUBOZU(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLMARUBOZU_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -10928,7 +11130,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLMATCHINGLOW(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLMATCHINGLOW_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLMATCHINGLOW_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -11027,7 +11231,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLMATCHINGLOW(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLMATCHINGLOW_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -11094,7 +11300,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLMATHOLD(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLMATHOLD_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLMATHOLD_Lookback(optInPenetration);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -11193,7 +11401,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLMATHOLD(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLMATHOLD_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -11260,7 +11470,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLMORNINGDOJISTAR(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLMORNINGDOJISTAR_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLMORNINGDOJISTAR_Lookback(optInPenetration);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -11359,7 +11571,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLMORNINGDOJISTAR(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLMORNINGDOJISTAR_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -11426,7 +11640,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLMORNINGSTAR(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLMORNINGSTAR_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLMORNINGSTAR_Lookback(optInPenetration);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -11525,7 +11741,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLMORNINGSTAR(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLMORNINGSTAR_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, optInPenetration, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -11591,7 +11809,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLONNECK(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLONNECK_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLONNECK_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -11690,7 +11910,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLONNECK(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLONNECK_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -11756,7 +11978,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLPIERCING(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLPIERCING_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLPIERCING_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -11855,7 +12079,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLPIERCING(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLPIERCING_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -11921,7 +12147,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLRICKSHAWMAN(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLRICKSHAWMAN_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLRICKSHAWMAN_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -12020,7 +12248,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLRICKSHAWMAN(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLRICKSHAWMAN_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -12086,7 +12316,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLRISEFALL3METHODS(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLRISEFALL3METHODS_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLRISEFALL3METHODS_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -12185,7 +12417,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLRISEFALL3METHODS(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLRISEFALL3METHODS_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -12251,7 +12485,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLSEPARATINGLINES(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLSEPARATINGLINES_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLSEPARATINGLINES_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -12350,7 +12586,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLSEPARATINGLINES(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLSEPARATINGLINES_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -12416,7 +12654,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLSHOOTINGSTAR(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLSHOOTINGSTAR_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLSHOOTINGSTAR_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -12515,7 +12755,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLSHOOTINGSTAR(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLSHOOTINGSTAR_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -12581,7 +12823,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLSHORTLINE(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLSHORTLINE_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLSHORTLINE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -12680,7 +12924,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLSHORTLINE(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLSHORTLINE_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -12746,7 +12992,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLSPINNINGTOP(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLSPINNINGTOP_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLSPINNINGTOP_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -12845,7 +13093,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLSPINNINGTOP(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLSPINNINGTOP_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -12911,7 +13161,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLSTALLEDPATTERN(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLSTALLEDPATTERN_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLSTALLEDPATTERN_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -13010,7 +13262,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLSTALLEDPATTERN(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLSTALLEDPATTERN_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -13076,7 +13330,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLSTICKSANDWICH(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLSTICKSANDWICH_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLSTICKSANDWICH_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -13175,7 +13431,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLSTICKSANDWICH(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLSTICKSANDWICH_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -13241,7 +13499,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLTAKURI(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLTAKURI_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLTAKURI_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -13340,7 +13600,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLTAKURI(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLTAKURI_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -13406,7 +13668,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLTASUKIGAP(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLTASUKIGAP_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLTASUKIGAP_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -13505,7 +13769,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLTASUKIGAP(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLTASUKIGAP_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -13571,7 +13837,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLTHRUSTING(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLTHRUSTING_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLTHRUSTING_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -13670,7 +13938,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLTHRUSTING(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLTHRUSTING_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -13736,7 +14006,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLTRISTAR(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLTRISTAR_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLTRISTAR_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -13835,7 +14107,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLTRISTAR(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLTRISTAR_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -13901,7 +14175,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLUNIQUE3RIVER(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLUNIQUE3RIVER_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLUNIQUE3RIVER_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -14000,7 +14276,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLUNIQUE3RIVER(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLUNIQUE3RIVER_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -14066,7 +14344,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLUPSIDEGAP2CROWS(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLUPSIDEGAP2CROWS_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLUPSIDEGAP2CROWS_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -14165,7 +14445,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLUPSIDEGAP2CROWS(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLUPSIDEGAP2CROWS_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -14231,7 +14513,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CDLXSIDEGAP3METHODS(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CDLXSIDEGAP3METHODS_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CDLXSIDEGAP3METHODS_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -14330,7 +14614,9 @@ public class TaCodegenServe {
                         SvMutateLiveCandles(c2);
                         candleMutRan = 1;
                         int mBeg = 0, mNb = 0;
-                        RetCode mrc = c2.CDLXSIDEGAP3METHODS(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0);
+                        RetCode mrc;
+                        try { mrc = c2.CDLXSIDEGAP3METHODS_Body(0, svN - 1, fz_o, fz_h, fz_l, fz_c, out mBeg, out mNb, m0); }
+                        catch (Exception _mve) when (_mve is ITaLibFailure) { mrc = ((ITaLibFailure)_mve).RetCode; mBeg = 0; mNb = 0; }
                         if (mrc != RetCode.Success || mNb != nb || mBeg != beg) candleMutMoved = 1;
                         else {
                             for (int bi = 0; bi < nb; bi++) if (m0[bi] != b0[bi]) candleMutMoved = 1;
@@ -14391,7 +14677,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CEIL(0, svN - 1, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CEIL_Body(0, svN - 1, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CEIL_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -14529,7 +14817,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CMF(0, svN - 1, fz_h, fz_l, fz_c, fz_v, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CMF_Body(0, svN - 1, fz_h, fz_l, fz_c, fz_v, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CMF_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -14681,7 +14971,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CMO(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CMO_Body(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CMO_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -14826,7 +15118,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CMOU(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CMOU_Body(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CMOU_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -14971,7 +15265,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.CORREL(0, svN - 1, fz_c, fz_v, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.CORREL_Body(0, svN - 1, fz_c, fz_v, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.CORREL_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -15117,7 +15413,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.COS(0, svN - 1, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.COS_Body(0, svN - 1, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.COS_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -15254,7 +15552,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.COSH(0, svN - 1, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.COSH_Body(0, svN - 1, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.COSH_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -15393,7 +15693,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.DEMA(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.DEMA_Body(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.DEMA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -15537,7 +15839,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.DIV(0, svN - 1, fz_c, fz_v, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.DIV_Body(0, svN - 1, fz_c, fz_v, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.DIV_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -15678,7 +15982,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.DX(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.DX_Body(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.DX_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -15827,7 +16133,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.EFI(0, svN - 1, fz_c, fz_v, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.EFI_Body(0, svN - 1, fz_c, fz_v, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.EFI_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -15975,7 +16283,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.EMA(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.EMA_Body(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.EMA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -16119,7 +16429,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.EXP(0, svN - 1, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.EXP_Body(0, svN - 1, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.EXP_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -16256,7 +16568,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.FLOOR(0, svN - 1, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.FLOOR_Body(0, svN - 1, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.FLOOR_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -16394,7 +16708,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.HMA(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.HMA_Body(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.HMA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -16539,7 +16855,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.HT_DCPERIOD(0, svN - 1, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.HT_DCPERIOD_Body(0, svN - 1, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.HT_DCPERIOD_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -16677,7 +16995,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.HT_DCPHASE(0, svN - 1, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.HT_DCPHASE_Body(0, svN - 1, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.HT_DCPHASE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -16816,7 +17136,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.HT_PHASOR(0, svN - 1, fz_c, out beg, out nb, b0, b1);
+            RetCode rc;
+            try { rc = c2.HT_PHASOR_Body(0, svN - 1, fz_c, out beg, out nb, b0, b1); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.HT_PHASOR_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -16975,7 +17297,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.HT_SINE(0, svN - 1, fz_c, out beg, out nb, b0, b1);
+            RetCode rc;
+            try { rc = c2.HT_SINE_Body(0, svN - 1, fz_c, out beg, out nb, b0, b1); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.HT_SINE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -17133,7 +17457,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.HT_TRENDLINE(0, svN - 1, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.HT_TRENDLINE_Body(0, svN - 1, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.HT_TRENDLINE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -17271,7 +17597,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.HT_TRENDMODE(0, svN - 1, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.HT_TRENDMODE_Body(0, svN - 1, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.HT_TRENDMODE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -17405,7 +17733,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.IMI(0, svN - 1, fz_o, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.IMI_Body(0, svN - 1, fz_o, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.IMI_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -17553,7 +17883,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.KAMA(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.KAMA_Body(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.KAMA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -17698,7 +18030,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.LINEARREG(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.LINEARREG_Body(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.LINEARREG_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -17843,7 +18177,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.LINEARREG_ANGLE(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.LINEARREG_ANGLE_Body(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.LINEARREG_ANGLE_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -17988,7 +18324,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.LINEARREG_INTERCEPT(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.LINEARREG_INTERCEPT_Body(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.LINEARREG_INTERCEPT_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -18133,7 +18471,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.LINEARREG_SLOPE(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.LINEARREG_SLOPE_Body(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.LINEARREG_SLOPE_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -18277,7 +18617,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.LN(0, svN - 1, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.LN_Body(0, svN - 1, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.LN_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -18414,7 +18756,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.LOG10(0, svN - 1, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.LOG10_Body(0, svN - 1, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.LOG10_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -18570,7 +18914,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.MA(0, svN - 1, fz_c, optInTimePeriod, optInMAType, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.MA_Body(0, svN - 1, fz_c, optInTimePeriod, optInMAType, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MA_Lookback(optInTimePeriod, optInMAType);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -18720,7 +19066,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.MACD(0, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out beg, out nb, b0, b1, b2);
+            RetCode rc;
+            try { rc = c2.MACD_Body(0, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out beg, out nb, b0, b1, b2); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -18943,7 +19291,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.MACDEXT(0, svN - 1, fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out beg, out nb, b0, b1, b2);
+            RetCode rc;
+            try { rc = c2.MACDEXT_Body(0, svN - 1, fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out beg, out nb, b0, b1, b2); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -19139,7 +19489,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.MACDFIX(0, svN - 1, fz_c, optInSignalPeriod, out beg, out nb, b0, b1, b2);
+            RetCode rc;
+            try { rc = c2.MACDFIX_Body(0, svN - 1, fz_c, optInSignalPeriod, out beg, out nb, b0, b1, b2); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MACDFIX_Lookback(optInSignalPeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -19335,7 +19687,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.MAMA(0, svN - 1, fz_c, optInFastLimit, optInSlowLimit, out beg, out nb, b0, b1);
+            RetCode rc;
+            try { rc = c2.MAMA_Body(0, svN - 1, fz_c, optInFastLimit, optInSlowLimit, out beg, out nb, b0, b1); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MAMA_Lookback(optInFastLimit, optInSlowLimit);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -19492,7 +19846,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.MARKETFI(0, svN - 1, fz_h, fz_l, fz_v, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.MARKETFI_Body(0, svN - 1, fz_h, fz_l, fz_v, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MARKETFI_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -19654,7 +20010,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.MAVP(0, svN - 1, fz_c, fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.MAVP_Body(0, svN - 1, fz_c, fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -19801,7 +20159,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.MAX(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.MAX_Body(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MAX_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -19946,7 +20306,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.MAXINDEX(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.MAXINDEX_Body(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MAXINDEX_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -20086,7 +20448,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.MEDPRICE(0, svN - 1, fz_h, fz_l, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.MEDPRICE_Body(0, svN - 1, fz_h, fz_l, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MEDPRICE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -20226,7 +20590,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.MFI(0, svN - 1, fz_h, fz_l, fz_c, fz_v, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.MFI_Body(0, svN - 1, fz_h, fz_l, fz_c, fz_v, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MFI_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -20377,7 +20743,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.MIDPOINT(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.MIDPOINT_Body(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MIDPOINT_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -20522,7 +20890,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.MIDPRICE(0, svN - 1, fz_h, fz_l, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.MIDPRICE_Body(0, svN - 1, fz_h, fz_l, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MIDPRICE_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -20669,7 +21039,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.MIN(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.MIN_Body(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MIN_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -20814,7 +21186,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.MININDEX(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.MININDEX_Body(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MININDEX_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -20956,7 +21330,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.MINMAX(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0, b1);
+            RetCode rc;
+            try { rc = c2.MINMAX_Body(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0, b1); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MINMAX_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -21123,7 +21499,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.MINMAXINDEX(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0, b1);
+            RetCode rc;
+            try { rc = c2.MINMAXINDEX_Body(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0, b1); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MINMAXINDEX_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -21282,7 +21660,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.MINUS_DI(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.MINUS_DI_Body(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MINUS_DI_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -21432,7 +21812,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.MINUS_DM(0, svN - 1, fz_h, fz_l, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.MINUS_DM_Body(0, svN - 1, fz_h, fz_l, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MINUS_DM_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -21579,7 +21961,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.MOM(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.MOM_Body(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MOM_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -21723,7 +22107,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.MULT(0, svN - 1, fz_c, fz_v, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.MULT_Body(0, svN - 1, fz_c, fz_v, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.MULT_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -21864,7 +22250,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.NATR(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.NATR_Body(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.NATR_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -22012,7 +22400,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.NVI(0, svN - 1, fz_c, fz_v, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.NVI_Body(0, svN - 1, fz_c, fz_v, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.NVI_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -22151,7 +22541,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.OBV(0, svN - 1, fz_c, fz_v, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.OBV_Body(0, svN - 1, fz_c, fz_v, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.OBV_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -22292,7 +22684,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.PLUS_DI(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.PLUS_DI_Body(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.PLUS_DI_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -22442,7 +22836,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.PLUS_DM(0, svN - 1, fz_h, fz_l, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.PLUS_DM_Body(0, svN - 1, fz_h, fz_l, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.PLUS_DM_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -22608,7 +23004,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.PPO(0, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.PPO_Body(0, svN - 1, fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -22752,7 +23150,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.PVI(0, svN - 1, fz_c, fz_v, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.PVI_Body(0, svN - 1, fz_c, fz_v, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.PVI_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -22911,7 +23311,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.PVO(0, svN - 1, fz_v, optInFastPeriod, optInSlowPeriod, optInMAType, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.PVO_Body(0, svN - 1, fz_v, optInFastPeriod, optInSlowPeriod, optInMAType, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -23056,7 +23458,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.QSTICK(0, svN - 1, fz_o, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.QSTICK_Body(0, svN - 1, fz_o, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.QSTICK_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -23203,7 +23607,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.ROC(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.ROC_Body(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ROC_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -23348,7 +23754,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.ROCP(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.ROCP_Body(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ROCP_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -23493,7 +23901,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.ROCR(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.ROCR_Body(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ROCR_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -23638,7 +24048,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.ROCR100(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.ROCR100_Body(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ROCR100_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -23784,7 +24196,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.RSI(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.RSI_Body(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.RSI_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -23930,7 +24344,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.SAR(0, svN - 1, fz_h, fz_l, optInAcceleration, optInMaximum, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.SAR_Body(0, svN - 1, fz_h, fz_l, optInAcceleration, optInMaximum, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.SAR_Lookback(optInAcceleration, optInMaximum);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -24077,7 +24493,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.SAREXT(0, svN - 1, fz_h, fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.SAREXT_Body(0, svN - 1, fz_h, fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -24216,7 +24634,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.SIN(0, svN - 1, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.SIN_Body(0, svN - 1, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.SIN_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -24353,7 +24773,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.SINH(0, svN - 1, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.SINH_Body(0, svN - 1, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.SINH_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -24491,7 +24913,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.SMA(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.SMA_Body(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.SMA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -24635,7 +25059,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.SQRT(0, svN - 1, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.SQRT_Body(0, svN - 1, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.SQRT_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -24774,7 +25200,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.STDDEV(0, svN - 1, fz_c, optInTimePeriod, optInNbDev, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.STDDEV_Body(0, svN - 1, fz_c, optInTimePeriod, optInNbDev, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.STDDEV_Lookback(optInTimePeriod, optInNbDev);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -24944,7 +25372,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.STOCH(0, svN - 1, fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out beg, out nb, b0, b1);
+            RetCode rc;
+            try { rc = c2.STOCH_Body(0, svN - 1, fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out beg, out nb, b0, b1); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -25140,7 +25570,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.STOCHF(0, svN - 1, fz_h, fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out beg, out nb, b0, b1);
+            RetCode rc;
+            try { rc = c2.STOCHF_Body(0, svN - 1, fz_h, fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out beg, out nb, b0, b1); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -25338,7 +25770,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.STOCHRSI(0, svN - 1, fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out beg, out nb, b0, b1);
+            RetCode rc;
+            try { rc = c2.STOCHRSI_Body(0, svN - 1, fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out beg, out nb, b0, b1); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -25503,7 +25937,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.SUB(0, svN - 1, fz_c, fz_v, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.SUB_Body(0, svN - 1, fz_c, fz_v, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.SUB_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -25643,7 +26079,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.SUM(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.SUM_Body(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.SUM_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -25790,7 +26228,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.T3(0, svN - 1, fz_c, optInTimePeriod, optInVFactor, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.T3_Body(0, svN - 1, fz_c, optInTimePeriod, optInVFactor, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.T3_Lookback(optInTimePeriod, optInVFactor);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -25934,7 +26374,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.TAN(0, svN - 1, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.TAN_Body(0, svN - 1, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.TAN_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -26071,7 +26513,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.TANH(0, svN - 1, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.TANH_Body(0, svN - 1, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.TANH_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -26210,7 +26654,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.TEMA(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.TEMA_Body(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.TEMA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -26354,7 +26800,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.TRANGE(0, svN - 1, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.TRANGE_Body(0, svN - 1, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.TRANGE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -26496,7 +26944,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.TRIMA(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.TRIMA_Body(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.TRIMA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -26642,7 +27092,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.TRIX(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.TRIX_Body(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.TRIX_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -26787,7 +27239,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.TSF(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.TSF_Body(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.TSF_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -26931,7 +27385,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.TYPPRICE(0, svN - 1, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.TYPPRICE_Body(0, svN - 1, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.TYPPRICE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -27075,7 +27531,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.ULTOSC(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.ULTOSC_Body(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -27225,7 +27683,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.VAR(0, svN - 1, fz_c, optInTimePeriod, optInNbDev, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.VAR_Body(0, svN - 1, fz_c, optInTimePeriod, optInNbDev, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.VAR_Lookback(optInTimePeriod, optInNbDev);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -27370,7 +27830,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.VWMA(0, svN - 1, fz_c, fz_v, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.VWMA_Body(0, svN - 1, fz_c, fz_v, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.VWMA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -27516,7 +27978,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.WAD(0, svN - 1, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.WAD_Body(0, svN - 1, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.WAD_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -27657,7 +28121,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.WCLPRICE(0, svN - 1, fz_h, fz_l, fz_c, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.WCLPRICE_Body(0, svN - 1, fz_h, fz_l, fz_c, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.WCLPRICE_Lookback();
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -27799,7 +28265,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.WILLR(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.WILLR_Body(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.WILLR_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -27948,7 +28416,9 @@ public class TaCodegenServe {
             catch (ArgumentOutOfRangeException) {
                 return "{\"error\":\"unstablePeriod out of range\"}";
             }
-            RetCode rc = c2.WMA(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0);
+            RetCode rc;
+            try { rc = c2.WMA_Body(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
             int lb = c2.WMA_Lookback(optInTimePeriod);
             if (rc != RetCode.Success || nb == 0) {
                 bool openRejects;
@@ -28965,7 +29435,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.AC(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.AC_Body(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.AC(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outArr0);
@@ -29072,7 +29548,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.ACCBANDS(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
+                try {
+                    rc = core.ACCBANDS_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.ACCBANDS(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0, outArr1, outArr2);
@@ -29176,7 +29658,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.ACOS(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.ACOS_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.ACOS(startIdx, endIdx, inReal, outArr0);
@@ -29281,7 +29769,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.AD(startIdx, endIdx, inHigh, inLow, inClose, inVolume, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.AD_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.AD(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outArr0);
@@ -29386,7 +29880,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.ADD(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.ADD_Body(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.ADD(startIdx, endIdx, inReal0, inReal1, outArr0);
@@ -29495,7 +29995,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.ADOSC(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.ADOSC_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.ADOSC(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outArr0);
@@ -29605,7 +30111,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.ADX(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.ADX_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.ADX(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
@@ -29712,7 +30224,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.ADXR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.ADXR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.ADXR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
@@ -29817,7 +30335,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.AO(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.AO_Body(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.AO(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outArr0);
@@ -29918,7 +30442,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.APO(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.APO_Body(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.APO(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
@@ -30019,7 +30549,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.AROON(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1);
+                try {
+                    rc = core.AROON_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.AROON(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outArr0, outArr1);
@@ -30123,7 +30659,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.AROONOSC(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.AROONOSC_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.AROONOSC(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outArr0);
@@ -30221,7 +30763,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.ASIN(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.ASIN_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.ASIN(startIdx, endIdx, inReal, outArr0);
@@ -30317,7 +30865,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.ATAN(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.ATAN_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.ATAN(startIdx, endIdx, inReal, outArr0);
@@ -30421,7 +30975,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.ATR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.ATR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.ATR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
@@ -30522,7 +31082,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.AVGDEV(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.AVGDEV_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.AVGDEV(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -30627,7 +31193,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.AVGPRICE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.AVGPRICE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.AVGPRICE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -30735,7 +31307,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.BBANDS(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
+                try {
+                    rc = core.BBANDS_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.BBANDS(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outArr0, outArr1, outArr2);
@@ -30839,7 +31417,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.BETA(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.BETA_Body(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.BETA(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outArr0);
@@ -30946,7 +31530,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.BOP(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.BOP_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.BOP(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -31055,7 +31645,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CCI(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CCI_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CCI(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
@@ -31164,7 +31760,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDL2CROWS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDL2CROWS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDL2CROWS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -31275,7 +31877,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDL3BLACKCROWS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDL3BLACKCROWS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDL3BLACKCROWS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -31386,7 +31994,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDL3INSIDE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDL3INSIDE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDL3INSIDE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -31497,7 +32111,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDL3LINESTRIKE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDL3LINESTRIKE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDL3LINESTRIKE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -31608,7 +32228,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDL3OUTSIDE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDL3OUTSIDE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDL3OUTSIDE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -31719,7 +32345,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDL3STARSINSOUTH(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDL3STARSINSOUTH_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDL3STARSINSOUTH(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -31830,7 +32462,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDL3WHITESOLDIERS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDL3WHITESOLDIERS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDL3WHITESOLDIERS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -31942,7 +32580,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLABANDONEDBABY(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLABANDONEDBABY_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLABANDONEDBABY(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
@@ -32053,7 +32697,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLADVANCEBLOCK(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLADVANCEBLOCK_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLADVANCEBLOCK(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -32164,7 +32814,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLBELTHOLD(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLBELTHOLD_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLBELTHOLD(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -32275,7 +32931,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLBREAKAWAY(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLBREAKAWAY_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLBREAKAWAY(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -32386,7 +33048,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLCLOSINGMARUBOZU(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLCLOSINGMARUBOZU_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLCLOSINGMARUBOZU(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -32497,7 +33165,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLCONCEALBABYSWALL(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLCONCEALBABYSWALL_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLCONCEALBABYSWALL(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -32608,7 +33282,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLCOUNTERATTACK(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLCOUNTERATTACK_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLCOUNTERATTACK(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -32720,7 +33400,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLDARKCLOUDCOVER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLDARKCLOUDCOVER_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLDARKCLOUDCOVER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
@@ -32831,7 +33517,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLDOJI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLDOJI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLDOJI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -32942,7 +33634,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLDOJISTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLDOJISTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLDOJISTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -33053,7 +33751,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLDRAGONFLYDOJI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLDRAGONFLYDOJI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLDRAGONFLYDOJI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -33164,7 +33868,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLENGULFING(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLENGULFING_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLENGULFING(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -33276,7 +33986,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLEVENINGDOJISTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLEVENINGDOJISTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLEVENINGDOJISTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
@@ -33388,7 +34104,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLEVENINGSTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLEVENINGSTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLEVENINGSTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
@@ -33499,7 +34221,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLGAPSIDESIDEWHITE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLGAPSIDESIDEWHITE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLGAPSIDESIDEWHITE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -33610,7 +34338,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLGRAVESTONEDOJI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLGRAVESTONEDOJI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLGRAVESTONEDOJI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -33721,7 +34455,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLHAMMER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLHAMMER_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLHAMMER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -33832,7 +34572,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLHANGINGMAN(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLHANGINGMAN_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLHANGINGMAN(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -33943,7 +34689,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLHARAMI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLHARAMI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLHARAMI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -34054,7 +34806,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLHARAMICROSS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLHARAMICROSS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLHARAMICROSS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -34165,7 +34923,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLHIGHWAVE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLHIGHWAVE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLHIGHWAVE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -34276,7 +35040,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLHIKKAKE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLHIKKAKE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLHIKKAKE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -34387,7 +35157,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLHIKKAKEMOD(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLHIKKAKEMOD_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLHIKKAKEMOD(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -34498,7 +35274,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLHOMINGPIGEON(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLHOMINGPIGEON_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLHOMINGPIGEON(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -34609,7 +35391,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLIDENTICAL3CROWS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLIDENTICAL3CROWS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLIDENTICAL3CROWS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -34720,7 +35508,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLINNECK(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLINNECK_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLINNECK(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -34831,7 +35625,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLINVERTEDHAMMER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLINVERTEDHAMMER_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLINVERTEDHAMMER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -34942,7 +35742,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLKICKING(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLKICKING_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLKICKING(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -35053,7 +35859,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLKICKINGBYLENGTH(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLKICKINGBYLENGTH_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLKICKINGBYLENGTH(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -35164,7 +35976,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLLADDERBOTTOM(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLLADDERBOTTOM_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLLADDERBOTTOM(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -35275,7 +36093,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLLONGLEGGEDDOJI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLLONGLEGGEDDOJI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLLONGLEGGEDDOJI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -35386,7 +36210,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLLONGLINE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLLONGLINE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLLONGLINE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -35497,7 +36327,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLMARUBOZU(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLMARUBOZU_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLMARUBOZU(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -35608,7 +36444,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLMATCHINGLOW(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLMATCHINGLOW_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLMATCHINGLOW(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -35720,7 +36562,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLMATHOLD(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLMATHOLD_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLMATHOLD(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
@@ -35832,7 +36680,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLMORNINGDOJISTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLMORNINGDOJISTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLMORNINGDOJISTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
@@ -35944,7 +36798,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLMORNINGSTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLMORNINGSTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLMORNINGSTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
@@ -36055,7 +36915,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLONNECK(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLONNECK_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLONNECK(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -36166,7 +37032,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLPIERCING(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLPIERCING_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLPIERCING(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -36277,7 +37149,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLRICKSHAWMAN(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLRICKSHAWMAN_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLRICKSHAWMAN(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -36388,7 +37266,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLRISEFALL3METHODS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLRISEFALL3METHODS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLRISEFALL3METHODS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -36499,7 +37383,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLSEPARATINGLINES(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLSEPARATINGLINES_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLSEPARATINGLINES(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -36610,7 +37500,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLSHOOTINGSTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLSHOOTINGSTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLSHOOTINGSTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -36721,7 +37617,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLSHORTLINE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLSHORTLINE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLSHORTLINE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -36832,7 +37734,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLSPINNINGTOP(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLSPINNINGTOP_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLSPINNINGTOP(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -36943,7 +37851,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLSTALLEDPATTERN(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLSTALLEDPATTERN_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLSTALLEDPATTERN(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -37054,7 +37968,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLSTICKSANDWICH(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLSTICKSANDWICH_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLSTICKSANDWICH(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -37165,7 +38085,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLTAKURI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLTAKURI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLTAKURI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -37276,7 +38202,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLTASUKIGAP(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLTASUKIGAP_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLTASUKIGAP(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -37387,7 +38319,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLTHRUSTING(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLTHRUSTING_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLTHRUSTING(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -37498,7 +38436,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLTRISTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLTRISTAR_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLTRISTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -37609,7 +38553,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLUNIQUE3RIVER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLUNIQUE3RIVER_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLUNIQUE3RIVER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -37720,7 +38670,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLUPSIDEGAP2CROWS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLUPSIDEGAP2CROWS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLUPSIDEGAP2CROWS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -37831,7 +38787,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CDLXSIDEGAP3METHODS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CDLXSIDEGAP3METHODS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CDLXSIDEGAP3METHODS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
@@ -37933,7 +38895,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CEIL(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CEIL_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CEIL(startIdx, endIdx, inReal, outArr0);
@@ -38039,7 +39007,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CMF(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CMF_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CMF(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outArr0);
@@ -38143,7 +39117,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CMO(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CMO_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CMO(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -38240,7 +39220,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CMOU(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CMOU_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CMOU(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -38340,7 +39326,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.CORREL(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.CORREL_Body(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.CORREL(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outArr0);
@@ -38438,7 +39430,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.COS(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.COS_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.COS(startIdx, endIdx, inReal, outArr0);
@@ -38534,7 +39532,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.COSH(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.COSH_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.COSH(startIdx, endIdx, inReal, outArr0);
@@ -38631,7 +39635,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.DEMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.DEMA_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.DEMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -38730,7 +39740,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.DIV(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.DIV_Body(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.DIV(startIdx, endIdx, inReal0, inReal1, outArr0);
@@ -38836,7 +39852,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.DX(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.DX_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.DX(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
@@ -38940,7 +39962,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.EFI(startIdx, endIdx, inClose, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.EFI_Body(startIdx, endIdx, inClose, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.EFI(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outArr0);
@@ -39040,7 +40068,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.EMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.EMA_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.EMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -39136,7 +40170,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.EXP(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.EXP_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.EXP(startIdx, endIdx, inReal, outArr0);
@@ -39232,7 +40272,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.FLOOR(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.FLOOR_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.FLOOR(startIdx, endIdx, inReal, outArr0);
@@ -39329,7 +40375,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.HMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.HMA_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.HMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -39426,7 +40478,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.HT_DCPERIOD(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.HT_DCPERIOD_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.HT_DCPERIOD(startIdx, endIdx, inReal, outArr0);
@@ -39523,7 +40581,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.HT_DCPHASE(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.HT_DCPHASE_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.HT_DCPHASE(startIdx, endIdx, inReal, outArr0);
@@ -39621,7 +40685,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.HT_PHASOR(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0, outArr1);
+                try {
+                    rc = core.HT_PHASOR_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0, outArr1);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.HT_PHASOR(startIdx, endIdx, inReal, outArr0, outArr1);
@@ -39721,7 +40791,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.HT_SINE(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0, outArr1);
+                try {
+                    rc = core.HT_SINE_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0, outArr1);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.HT_SINE(startIdx, endIdx, inReal, outArr0, outArr1);
@@ -39820,7 +40896,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.HT_TRENDLINE(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.HT_TRENDLINE_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.HT_TRENDLINE(startIdx, endIdx, inReal, outArr0);
@@ -39917,7 +40999,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.HT_TRENDMODE(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.HT_TRENDMODE_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.HT_TRENDMODE(startIdx, endIdx, inReal, outArr0);
@@ -40017,7 +41105,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.IMI(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.IMI_Body(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.IMI(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outArr0);
@@ -40117,7 +41211,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.KAMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.KAMA_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.KAMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -40214,7 +41314,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.LINEARREG(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.LINEARREG_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.LINEARREG(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -40311,7 +41417,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.LINEARREG_ANGLE(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.LINEARREG_ANGLE_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.LINEARREG_ANGLE(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -40408,7 +41520,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.LINEARREG_INTERCEPT(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.LINEARREG_INTERCEPT_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.LINEARREG_INTERCEPT(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -40505,7 +41623,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.LINEARREG_SLOPE(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.LINEARREG_SLOPE_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.LINEARREG_SLOPE(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -40601,7 +41725,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.LN(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.LN_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.LN(startIdx, endIdx, inReal, outArr0);
@@ -40697,7 +41827,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.LOG10(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.LOG10_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.LOG10(startIdx, endIdx, inReal, outArr0);
@@ -40795,7 +41931,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.MA(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.MA_Body(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.MA(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outArr0);
@@ -40896,7 +42038,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.MACD(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
+                try {
+                    rc = core.MACD_Body(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.MACD(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outArr0, outArr1, outArr2);
@@ -41004,7 +42152,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.MACDEXT(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
+                try {
+                    rc = core.MACDEXT_Body(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.MACDEXT(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outArr0, outArr1, outArr2);
@@ -41107,7 +42261,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.MACDFIX(startIdx, endIdx, inReal, optInSignalPeriod, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
+                try {
+                    rc = core.MACDFIX_Body(startIdx, endIdx, inReal, optInSignalPeriod, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.MACDFIX(startIdx, endIdx, inReal, optInSignalPeriod, outArr0, outArr1, outArr2);
@@ -41211,7 +42371,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.MAMA(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, out outBegIdx, out outNBElement, outArr0, outArr1);
+                try {
+                    rc = core.MAMA_Body(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, out outBegIdx, out outNBElement, outArr0, outArr1);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.MAMA(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outArr0, outArr1);
@@ -41315,7 +42481,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.MARKETFI(startIdx, endIdx, inHigh, inLow, inVolume, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.MARKETFI_Body(startIdx, endIdx, inHigh, inLow, inVolume, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.MARKETFI(startIdx, endIdx, inHigh, inLow, inVolume, outArr0);
@@ -41421,7 +42593,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.MAVP(startIdx, endIdx, inReal0, inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.MAVP_Body(startIdx, endIdx, inReal0, inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.MAVP(startIdx, endIdx, inReal0, inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, outArr0);
@@ -41520,7 +42698,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.MAX(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.MAX_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.MAX(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -41617,7 +42801,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.MAXINDEX(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.MAXINDEX_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.MAXINDEX(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -41716,7 +42906,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.MEDPRICE(startIdx, endIdx, inHigh, inLow, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.MEDPRICE_Body(startIdx, endIdx, inHigh, inLow, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.MEDPRICE(startIdx, endIdx, inHigh, inLow, outArr0);
@@ -41824,7 +43020,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.MFI(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.MFI_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.MFI(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outArr0);
@@ -41927,7 +43129,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.MIDPOINT(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.MIDPOINT_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.MIDPOINT(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -42027,7 +43235,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.MIDPRICE(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.MIDPRICE_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.MIDPRICE(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outArr0);
@@ -42126,7 +43340,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.MIN(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.MIN_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.MIN(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -42223,7 +43443,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.MININDEX(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.MININDEX_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.MININDEX(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -42321,7 +43547,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.MINMAX(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1);
+                try {
+                    rc = core.MINMAX_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.MINMAX(startIdx, endIdx, inReal, optInTimePeriod, outArr0, outArr1);
@@ -42421,7 +43653,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.MINMAXINDEX(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1);
+                try {
+                    rc = core.MINMAXINDEX_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0, outArr1);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.MINMAXINDEX(startIdx, endIdx, inReal, optInTimePeriod, outArr0, outArr1);
@@ -42527,7 +43765,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.MINUS_DI(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.MINUS_DI_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.MINUS_DI(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
@@ -42632,7 +43876,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.MINUS_DM(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.MINUS_DM_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.MINUS_DM(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outArr0);
@@ -42731,7 +43981,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.MOM(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.MOM_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.MOM(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -42830,7 +44086,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.MULT(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.MULT_Body(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.MULT(startIdx, endIdx, inReal0, inReal1, outArr0);
@@ -42936,7 +44198,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.NATR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.NATR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.NATR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
@@ -43039,7 +44307,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.NVI(startIdx, endIdx, inClose, inVolume, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.NVI_Body(startIdx, endIdx, inClose, inVolume, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.NVI(startIdx, endIdx, inClose, inVolume, outArr0);
@@ -43140,7 +44414,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.OBV(startIdx, endIdx, inReal, inVolume, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.OBV_Body(startIdx, endIdx, inReal, inVolume, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.OBV(startIdx, endIdx, inReal, inVolume, outArr0);
@@ -43246,7 +44526,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.PLUS_DI(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.PLUS_DI_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.PLUS_DI(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
@@ -43351,7 +44637,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.PLUS_DM(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.PLUS_DM_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.PLUS_DM(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outArr0);
@@ -43452,7 +44744,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.PPO(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.PPO_Body(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.PPO(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
@@ -43551,7 +44849,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.PVI(startIdx, endIdx, inClose, inVolume, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.PVI_Body(startIdx, endIdx, inClose, inVolume, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.PVI(startIdx, endIdx, inClose, inVolume, outArr0);
@@ -43652,7 +44956,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.PVO(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.PVO_Body(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.PVO(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
@@ -43752,7 +45062,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.QSTICK(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.QSTICK_Body(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.QSTICK(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outArr0);
@@ -43851,7 +45167,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.ROC(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.ROC_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.ROC(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -43948,7 +45270,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.ROCP(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.ROCP_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.ROCP(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -44045,7 +45373,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.ROCR(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.ROCR_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.ROCR(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -44142,7 +45476,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.ROCR100(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.ROCR100_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.ROCR100(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -44240,7 +45580,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.RSI(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.RSI_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.RSI(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -44341,7 +45687,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.SAR(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.SAR_Body(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.SAR(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outArr0);
@@ -44450,7 +45802,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.SAREXT(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.SAREXT_Body(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.SAREXT(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outArr0);
@@ -44548,7 +45906,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.SIN(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.SIN_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.SIN(startIdx, endIdx, inReal, outArr0);
@@ -44644,7 +46008,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.SINH(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.SINH_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.SINH(startIdx, endIdx, inReal, outArr0);
@@ -44741,7 +46111,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.SMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.SMA_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.SMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -44837,7 +46213,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.SQRT(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.SQRT_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.SQRT(startIdx, endIdx, inReal, outArr0);
@@ -44935,7 +46317,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.STDDEV(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.STDDEV_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.STDDEV(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outArr0);
@@ -45043,7 +46431,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.STOCH(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outArr0, outArr1);
+                try {
+                    rc = core.STOCH_Body(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outArr0, outArr1);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.STOCH(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outArr0, outArr1);
@@ -45155,7 +46549,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.STOCHF(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outArr0, outArr1);
+                try {
+                    rc = core.STOCHF_Body(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outArr0, outArr1);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.STOCHF(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outArr0, outArr1);
@@ -45262,7 +46662,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.STOCHRSI(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outArr0, outArr1);
+                try {
+                    rc = core.STOCHRSI_Body(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outArr0, outArr1);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.STOCHRSI(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outArr0, outArr1);
@@ -45363,7 +46769,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.SUB(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.SUB_Body(startIdx, endIdx, inReal0, inReal1, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.SUB(startIdx, endIdx, inReal0, inReal1, outArr0);
@@ -45462,7 +46874,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.SUM(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.SUM_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.SUM(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -45561,7 +46979,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.T3(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.T3_Body(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.T3(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outArr0);
@@ -45657,7 +47081,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.TAN(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.TAN_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.TAN(startIdx, endIdx, inReal, outArr0);
@@ -45753,7 +47183,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.TANH(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.TANH_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.TANH(startIdx, endIdx, inReal, outArr0);
@@ -45850,7 +47286,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.TEMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.TEMA_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.TEMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -45952,7 +47394,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.TRANGE(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.TRANGE_Body(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.TRANGE(startIdx, endIdx, inHigh, inLow, inClose, outArr0);
@@ -46053,7 +47501,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.TRIMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.TRIMA_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.TRIMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -46150,7 +47604,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.TRIX(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.TRIX_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.TRIX(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -46247,7 +47707,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.TSF(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.TSF_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.TSF(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
@@ -46349,7 +47815,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.TYPPRICE(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.TYPPRICE_Body(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.TYPPRICE(startIdx, endIdx, inHigh, inLow, inClose, outArr0);
@@ -46458,7 +47930,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.ULTOSC(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.ULTOSC_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.ULTOSC(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outArr0);
@@ -46560,7 +48038,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.VAR(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.VAR_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.VAR(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outArr0);
@@ -46660,7 +48144,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.VWMA(startIdx, endIdx, inReal, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.VWMA_Body(startIdx, endIdx, inReal, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.VWMA(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outArr0);
@@ -46764,7 +48254,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.WAD(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.WAD_Body(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.WAD(startIdx, endIdx, inHigh, inLow, inClose, outArr0);
@@ -46870,7 +48366,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.WCLPRICE(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.WCLPRICE_Body(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.WCLPRICE(startIdx, endIdx, inHigh, inLow, inClose, outArr0);
@@ -46977,7 +48479,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.WILLR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.WILLR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.WILLR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
@@ -47078,7 +48586,13 @@ public class TaCodegenServe {
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
             if (_bi == 1) _t0 = GetNanoTime();
             if (GetInt(p, "timed", 0) != 0) {
-                rc = core.WMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                try {
+                    rc = core.WMA_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
             } else {
                 try {
                     OutRange _pr = core.WMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);

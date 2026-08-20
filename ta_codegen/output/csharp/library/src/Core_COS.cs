@@ -174,21 +174,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode COS( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inReal,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return COS_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Element-wise trigonometric cosine of the input series. Applies the C
    /// library cos() to each sample.
@@ -248,21 +233,6 @@ public partial class Core
          throw Failure("COS", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode COS( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inReal,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return COS_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

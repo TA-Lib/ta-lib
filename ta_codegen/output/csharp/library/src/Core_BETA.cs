@@ -452,23 +452,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode BETA( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<double> inReal0,
-                          ReadOnlySpan<double> inReal1,
-                          int optInTimePeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
-   {
-      try {
-         return BETA_Body(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Beta: the slope of a least-squares linear regression of one series'
    /// percentage returns (y, from inReal1) against another's (x, from inReal0)
@@ -537,23 +520,6 @@ public partial class Core
          throw Failure("BETA", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode BETA( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<float> inReal0,
-                          ReadOnlySpan<float> inReal1,
-                          int optInTimePeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
-   {
-      try {
-         return BETA_Body(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

@@ -736,25 +736,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode HT_PHASOR_Internal( int startIdx,
-                               int endIdx,
-                               double inReal[],
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outInPhase[],
-                               double outQuadrature[] )
-   {
-      try {
-         return HT_PHASOR_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Hilbert Transform indicator that decomposes the price series into its
     * in-phase (I) and quadrature (Q) phasor components. Shares the same
@@ -821,25 +802,6 @@
          throw failure("HT_PHASOR", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode HT_PHASOR_Internal( int startIdx,
-                               int endIdx,
-                               float inReal[],
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outInPhase[],
-                               double outQuadrature[] )
-   {
-      try {
-         return HT_PHASOR_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

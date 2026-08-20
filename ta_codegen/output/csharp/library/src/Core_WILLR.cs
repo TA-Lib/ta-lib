@@ -510,24 +510,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode WILLR( int startIdx,
-                           int endIdx,
-                           ReadOnlySpan<double> inHigh,
-                           ReadOnlySpan<double> inLow,
-                           ReadOnlySpan<double> inClose,
-                           int optInTimePeriod,
-                           out int outBegIdx,
-                           out int outNBElement,
-                           Span<double> outReal )
-   {
-      try {
-         return WILLR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Williams' %R momentum oscillator over a rolling period, bounded in [-100,
    /// 0]. Measures where the current close sits relative to the high-low range
@@ -598,24 +580,6 @@ public partial class Core
          throw Failure("WILLR", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode WILLR( int startIdx,
-                           int endIdx,
-                           ReadOnlySpan<float> inHigh,
-                           ReadOnlySpan<float> inLow,
-                           ReadOnlySpan<float> inClose,
-                           int optInTimePeriod,
-                           out int outBegIdx,
-                           out int outNBElement,
-                           Span<double> outReal )
-   {
-      try {
-         return WILLR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

@@ -320,24 +320,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode CDLUPSIDEGAP2CROWS( int startIdx,
-                                        int endIdx,
-                                        ReadOnlySpan<double> inOpen,
-                                        ReadOnlySpan<double> inHigh,
-                                        ReadOnlySpan<double> inLow,
-                                        ReadOnlySpan<double> inClose,
-                                        out int outBegIdx,
-                                        out int outNBElement,
-                                        Span<int> outInteger )
-   {
-      try {
-         return CDLUPSIDEGAP2CROWS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outInteger);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// A three-candle bearish reversal pattern: a long white candle, then a small
    /// black candle gapping up (a gap between the real bodies), then a black
@@ -409,24 +391,6 @@ public partial class Core
          throw Failure("CDLUPSIDEGAP2CROWS", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode CDLUPSIDEGAP2CROWS( int startIdx,
-                                        int endIdx,
-                                        ReadOnlySpan<float> inOpen,
-                                        ReadOnlySpan<float> inHigh,
-                                        ReadOnlySpan<float> inLow,
-                                        ReadOnlySpan<float> inClose,
-                                        out int outBegIdx,
-                                        out int outNBElement,
-                                        Span<int> outInteger )
-   {
-      try {
-         return CDLUPSIDEGAP2CROWS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outInteger);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

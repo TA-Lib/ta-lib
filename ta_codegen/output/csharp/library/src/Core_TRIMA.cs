@@ -557,22 +557,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode TRIMA( int startIdx,
-                           int endIdx,
-                           ReadOnlySpan<double> inReal,
-                           int optInTimePeriod,
-                           out int outBegIdx,
-                           out int outNBElement,
-                           Span<double> outReal )
-   {
-      try {
-         return TRIMA_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Triangular Moving Average: a double-smoothed moving average that weights
    /// prices toward the middle of the window most heavily. Equivalent to an SMA
@@ -641,22 +625,6 @@ public partial class Core
          throw Failure("TRIMA", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode TRIMA( int startIdx,
-                           int endIdx,
-                           ReadOnlySpan<float> inReal,
-                           int optInTimePeriod,
-                           out int outBegIdx,
-                           out int outNBElement,
-                           Span<double> outReal )
-   {
-      try {
-         return TRIMA_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

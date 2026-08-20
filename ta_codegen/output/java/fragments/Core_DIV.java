@@ -134,25 +134,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode DIV_Internal( int startIdx,
-                         int endIdx,
-                         double inReal0[],
-                         double inReal1[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
-   {
-      try {
-         return DIV_Body(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Element-wise division of two input series. Computes the quotient of
     * corresponding values from two real inputs.
@@ -218,25 +199,6 @@
          throw failure("DIV", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode DIV_Internal( int startIdx,
-                         int endIdx,
-                         float inReal0[],
-                         float inReal1[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
-   {
-      try {
-         return DIV_Body(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

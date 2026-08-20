@@ -349,24 +349,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode PVO( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inVolume,
-                         int optInFastPeriod,
-                         int optInSlowPeriod,
-                         MAType optInMAType,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return PVO_Body(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Percentage Volume Oscillator: a variation of the [Percentage Price
    /// Oscillator](/functions/ppo) (PPO, created by Gerald Appel) applied to the
@@ -446,24 +428,6 @@ public partial class Core
          throw Failure("PVO", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode PVO( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inVolume,
-                         int optInFastPeriod,
-                         int optInSlowPeriod,
-                         MAType optInMAType,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return PVO_Body(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

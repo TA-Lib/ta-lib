@@ -143,25 +143,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode MEDPRICE_Internal( int startIdx,
-                              int endIdx,
-                              double inHigh[],
-                              double inLow[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-   {
-      try {
-         return MEDPRICE_Body(startIdx, endIdx, inHigh, inLow, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Median Price: the midpoint of each bar's high and low. A price-transform
     * overlay.
@@ -224,25 +205,6 @@
          throw failure("MEDPRICE", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode MEDPRICE_Internal( int startIdx,
-                              int endIdx,
-                              float inHigh[],
-                              float inLow[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
-   {
-      try {
-         return MEDPRICE_Body(startIdx, endIdx, inHigh, inLow, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

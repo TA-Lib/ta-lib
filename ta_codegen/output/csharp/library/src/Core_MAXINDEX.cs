@@ -288,22 +288,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode MAXINDEX( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<double> inReal,
-                              int optInTimePeriod,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<int> outInteger )
-   {
-      try {
-         return MAXINDEX_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outInteger);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Returns the index of the highest input value within a rolling window of
    /// optInTimePeriod bars. Same as MAX but outputs the location instead of the
@@ -370,22 +354,6 @@ public partial class Core
          throw Failure("MAXINDEX", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode MAXINDEX( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<float> inReal,
-                              int optInTimePeriod,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<int> outInteger )
-   {
-      try {
-         return MAXINDEX_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outInteger);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

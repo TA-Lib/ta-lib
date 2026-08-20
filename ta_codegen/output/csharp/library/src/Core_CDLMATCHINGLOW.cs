@@ -283,24 +283,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode CDLMATCHINGLOW( int startIdx,
-                                    int endIdx,
-                                    ReadOnlySpan<double> inOpen,
-                                    ReadOnlySpan<double> inHigh,
-                                    ReadOnlySpan<double> inLow,
-                                    ReadOnlySpan<double> inClose,
-                                    out int outBegIdx,
-                                    out int outNBElement,
-                                    Span<int> outInteger )
-   {
-      try {
-         return CDLMATCHINGLOW_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outInteger);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// A two-candle pattern of two consecutive black (bearish) candles with equal
    /// closes (within a tolerance). Treated as a bullish reversal signal. A hit
@@ -376,24 +358,6 @@ public partial class Core
          throw Failure("CDLMATCHINGLOW", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode CDLMATCHINGLOW( int startIdx,
-                                    int endIdx,
-                                    ReadOnlySpan<float> inOpen,
-                                    ReadOnlySpan<float> inHigh,
-                                    ReadOnlySpan<float> inLow,
-                                    ReadOnlySpan<float> inClose,
-                                    out int outBegIdx,
-                                    out int outNBElement,
-                                    Span<int> outInteger )
-   {
-      try {
-         return CDLMATCHINGLOW_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outInteger);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

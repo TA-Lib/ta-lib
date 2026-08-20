@@ -338,24 +338,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode CDLHARAMICROSS( int startIdx,
-                                    int endIdx,
-                                    ReadOnlySpan<double> inOpen,
-                                    ReadOnlySpan<double> inHigh,
-                                    ReadOnlySpan<double> inLow,
-                                    ReadOnlySpan<double> inClose,
-                                    out int outBegIdx,
-                                    out int outNBElement,
-                                    Span<int> outInteger )
-   {
-      try {
-         return CDLHARAMICROSS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outInteger);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// A two-candle reversal pattern: a long real body followed by a doji whose
    /// real body is contained within the first candle's real body (the doji
@@ -428,24 +410,6 @@ public partial class Core
          throw Failure("CDLHARAMICROSS", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode CDLHARAMICROSS( int startIdx,
-                                    int endIdx,
-                                    ReadOnlySpan<float> inOpen,
-                                    ReadOnlySpan<float> inHigh,
-                                    ReadOnlySpan<float> inLow,
-                                    ReadOnlySpan<float> inClose,
-                                    out int outBegIdx,
-                                    out int outNBElement,
-                                    Span<int> outInteger )
-   {
-      try {
-         return CDLHARAMICROSS_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outInteger);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

@@ -486,23 +486,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode MIDPRICE( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<double> inHigh,
-                              ReadOnlySpan<double> inLow,
-                              int optInTimePeriod,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outReal )
-   {
-      try {
-         return MIDPRICE_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Midpoint of the price range over a rolling window: the average of the
    /// highest high and lowest low across the last optInTimePeriod bars. An
@@ -569,23 +552,6 @@ public partial class Core
          throw Failure("MIDPRICE", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode MIDPRICE( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<float> inHigh,
-                              ReadOnlySpan<float> inLow,
-                              int optInTimePeriod,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outReal )
-   {
-      try {
-         return MIDPRICE_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

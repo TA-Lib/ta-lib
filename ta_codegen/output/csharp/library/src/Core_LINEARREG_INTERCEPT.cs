@@ -321,22 +321,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode LINEARREG_INTERCEPT( int startIdx,
-                                         int endIdx,
-                                         ReadOnlySpan<double> inReal,
-                                         int optInTimePeriod,
-                                         out int outBegIdx,
-                                         out int outNBElement,
-                                         Span<double> outReal )
-   {
-      try {
-         return LINEARREG_INTERCEPT_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Returns the y-intercept (b) of the least-squares regression line fitted
    /// over the last optInTimePeriod values. Part of the linear-regression family
@@ -402,22 +386,6 @@ public partial class Core
          throw Failure("LINEARREG_INTERCEPT", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode LINEARREG_INTERCEPT( int startIdx,
-                                         int endIdx,
-                                         ReadOnlySpan<float> inReal,
-                                         int optInTimePeriod,
-                                         out int outBegIdx,
-                                         out int outNBElement,
-                                         Span<double> outReal )
-   {
-      try {
-         return LINEARREG_INTERCEPT_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

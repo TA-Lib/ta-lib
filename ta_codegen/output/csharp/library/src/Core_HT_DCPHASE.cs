@@ -893,21 +893,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode HT_DCPHASE( int startIdx,
-                                int endIdx,
-                                ReadOnlySpan<double> inReal,
-                                out int outBegIdx,
-                                out int outNBElement,
-                                Span<double> outReal )
-   {
-      try {
-         return HT_DCPHASE_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Hilbert Transform Dominant Cycle Phase: the instantaneous phase (in
    /// degrees) of the dominant market cycle, derived from a homodyne
@@ -966,21 +951,6 @@ public partial class Core
          throw Failure("HT_DCPHASE", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode HT_DCPHASE( int startIdx,
-                                int endIdx,
-                                ReadOnlySpan<float> inReal,
-                                out int outBegIdx,
-                                out int outNBElement,
-                                Span<double> outReal )
-   {
-      try {
-         return HT_DCPHASE_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

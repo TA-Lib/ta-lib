@@ -177,21 +177,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode LN( int startIdx,
-                        int endIdx,
-                        ReadOnlySpan<double> inReal,
-                        out int outBegIdx,
-                        out int outNBElement,
-                        Span<double> outReal )
-   {
-      try {
-         return LN_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Vector natural logarithm: applies the natural log (base e) elementwise to
    /// the input series.
@@ -254,21 +239,6 @@ public partial class Core
          throw Failure("LN", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode LN( int startIdx,
-                        int endIdx,
-                        ReadOnlySpan<float> inReal,
-                        out int outBegIdx,
-                        out int outNBElement,
-                        Span<double> outReal )
-   {
-      try {
-         return LN_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

@@ -427,23 +427,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode MA( int startIdx,
-                        int endIdx,
-                        ReadOnlySpan<double> inReal,
-                        int optInTimePeriod,
-                        MAType optInMAType,
-                        out int outBegIdx,
-                        out int outNBElement,
-                        Span<double> outReal )
-   {
-      try {
-         return MA_Body(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Generic moving-average dispatcher that forwards the job to the MA
    /// implementation selected by optInMAType. Single uniform interface over all
@@ -517,23 +500,6 @@ public partial class Core
          throw Failure("MA", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode MA( int startIdx,
-                        int endIdx,
-                        ReadOnlySpan<float> inReal,
-                        int optInTimePeriod,
-                        MAType optInMAType,
-                        out int outBegIdx,
-                        out int outNBElement,
-                        Span<double> outReal )
-   {
-      try {
-         return MA_Body(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

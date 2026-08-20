@@ -406,26 +406,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode BETA_Internal( int startIdx,
-                          int endIdx,
-                          double inReal0[],
-                          double inReal1[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
-   {
-      try {
-         return BETA_Body(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Beta: the slope of a least-squares linear regression of one series'
     * percentage returns (y, from inReal1) against another's (x, from inReal0)
@@ -495,26 +475,6 @@
          throw failure("BETA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode BETA_Internal( int startIdx,
-                          int endIdx,
-                          float inReal0[],
-                          float inReal1[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
-   {
-      try {
-         return BETA_Body(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

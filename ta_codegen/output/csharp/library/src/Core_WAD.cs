@@ -280,23 +280,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode WAD( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inHigh,
-                         ReadOnlySpan<double> inLow,
-                         ReadOnlySpan<double> inClose,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return WAD_Body(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Williams' Accumulation/Distribution: a cumulative line that measures each
    /// bar's close against the *true range* extreme — the previous close,
@@ -372,23 +355,6 @@ public partial class Core
          throw Failure("WAD", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode WAD( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inHigh,
-                         ReadOnlySpan<float> inLow,
-                         ReadOnlySpan<float> inClose,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return WAD_Body(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

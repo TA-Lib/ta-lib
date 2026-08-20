@@ -568,27 +568,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode STOCHF( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<double> inHigh,
-                            ReadOnlySpan<double> inLow,
-                            ReadOnlySpan<double> inClose,
-                            int optInFastK_Period,
-                            int optInFastD_Period,
-                            MAType optInFastD_MAType,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outFastK,
-                            Span<double> outFastD )
-   {
-      try {
-         return STOCHF_Body(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastK, outFastD);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Fast Stochastic Oscillator: the raw %K line and its
    /// moving-average-smoothed %D line. Unlike STOCH (which slows both lines),
@@ -675,27 +654,6 @@ public partial class Core
          throw Failure("STOCHF", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode STOCHF( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<float> inHigh,
-                            ReadOnlySpan<float> inLow,
-                            ReadOnlySpan<float> inClose,
-                            int optInFastK_Period,
-                            int optInFastD_Period,
-                            MAType optInFastD_MAType,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outFastK,
-                            Span<double> outFastD )
-   {
-      try {
-         return STOCHF_Body(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastK, outFastD);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

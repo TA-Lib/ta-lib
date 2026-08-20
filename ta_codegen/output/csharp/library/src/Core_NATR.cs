@@ -502,24 +502,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode NATR( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<double> inHigh,
-                          ReadOnlySpan<double> inLow,
-                          ReadOnlySpan<double> inClose,
-                          int optInTimePeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
-   {
-      try {
-         return NATR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Average True Range expressed as a percentage of the current close, making
    /// volatility comparable across price levels and securities. Same computation
@@ -591,24 +573,6 @@ public partial class Core
          throw Failure("NATR", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode NATR( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<float> inHigh,
-                          ReadOnlySpan<float> inLow,
-                          ReadOnlySpan<float> inClose,
-                          int optInTimePeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
-   {
-      try {
-         return NATR_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

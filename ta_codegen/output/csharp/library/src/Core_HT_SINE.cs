@@ -910,22 +910,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode HT_SINE( int startIdx,
-                             int endIdx,
-                             ReadOnlySpan<double> inReal,
-                             out int outBegIdx,
-                             out int outNBElement,
-                             Span<double> outSine,
-                             Span<double> outLeadSine )
-   {
-      try {
-         return HT_SINE_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outSine, outLeadSine);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Hilbert Transform SineWave: derives the dominant-cycle phase from price
    /// and emits its sine plus a 45-degree-lead sine. The two curves cross near
@@ -987,22 +971,6 @@ public partial class Core
          throw Failure("HT_SINE", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode HT_SINE( int startIdx,
-                             int endIdx,
-                             ReadOnlySpan<float> inReal,
-                             out int outBegIdx,
-                             out int outNBElement,
-                             Span<double> outSine,
-                             Span<double> outLeadSine )
-   {
-      try {
-         return HT_SINE_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outSine, outLeadSine);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

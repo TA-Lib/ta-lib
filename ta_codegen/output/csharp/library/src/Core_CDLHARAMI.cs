@@ -340,24 +340,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode CDLHARAMI( int startIdx,
-                               int endIdx,
-                               ReadOnlySpan<double> inOpen,
-                               ReadOnlySpan<double> inHigh,
-                               ReadOnlySpan<double> inLow,
-                               ReadOnlySpan<double> inClose,
-                               out int outBegIdx,
-                               out int outNBElement,
-                               Span<int> outInteger )
-   {
-      try {
-         return CDLHARAMI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outInteger);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Two-candle pattern: a long real body followed by a short real body
    /// contained within the first candle's real body. A reversal signal whose
@@ -429,24 +411,6 @@ public partial class Core
          throw Failure("CDLHARAMI", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode CDLHARAMI( int startIdx,
-                               int endIdx,
-                               ReadOnlySpan<float> inOpen,
-                               ReadOnlySpan<float> inHigh,
-                               ReadOnlySpan<float> inLow,
-                               ReadOnlySpan<float> inClose,
-                               out int outBegIdx,
-                               out int outNBElement,
-                               Span<int> outInteger )
-   {
-      try {
-         return CDLHARAMI_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outInteger);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

@@ -199,10 +199,16 @@ fn check_java_variants(j: &str, name: &str) {
         j.contains(&format!("{name}_Lookback(")),
         "{name}: Java missing {name}_Lookback"
     );
+    // #236 step 5 deleted the C-shaped tier. The body is what is left below
+    // the public wrapper, and it is what must exist.
     assert!(
-        j.contains(&format!("RetCode {name}_Internal("))
-            || j.contains(&format!("RetCode {name}_Internal (")),
-        "{name}: Java missing {name} internal core"
+        j.contains(&format!("RetCode {name}_Body("))
+            || j.contains(&format!("RetCode {name}_Body (")),
+        "{name}: Java missing {name} body"
+    );
+    assert!(
+        !j.contains(&format!("{name}_Internal")),
+        "{name}: the C-shaped tier must not come back"
     );
     assert!(
         !j.contains("Unguarded"),
@@ -575,7 +581,7 @@ fn test_java_sma_guarded_has_validation() {
     // Extract the double-precision core, bounded before the float overload
     // Bounded to the DOUBLE core alone: the float twin is an overload with the
     // same name, so a marker that spans both would let it satisfy the assertion.
-    let guarded = extract_section(&out.java, "RetCode SMA_Internal( int startIdx", "double inReal[]");
+    let guarded = extract_section(&out.java, "RetCode SMA_Body( int startIdx", "double inReal[]");
     let guarded = format!("{guarded}{}", extract_section(&out.java, "double inReal[]", "float inReal[]"));
     assert!(
         guarded.contains("OutOfRangeStartIndex"),
@@ -2714,7 +2720,7 @@ fn candle_settings_unpacking_in_lookback() {
         "Rust lookback should contain candle settings unpacking"
     );
 
-    let java_lookback_end = java_out.find("RetCode CDL2CROWS_Internal(").unwrap();
+    let java_lookback_end = java_out.find("RetCode CDL2CROWS_Body(").unwrap();
     let java_lookback = &java_out[..java_lookback_end];
     assert!(
         java_lookback.contains("this.candleSettings[CandleSettingType.BodyLong.ordinal()]"),
@@ -6389,7 +6395,7 @@ fn java_macd_lookback_code_rendering() {
     let out = generate_all(&func, &enums);
     let j = &out.java;
 
-    let lookback_end = j.find("RetCode MACD_Internal(").unwrap();
+    let lookback_end = j.find("RetCode MACD_Body(").unwrap();
     let lookback = &j[..lookback_end];
     assert!(
         lookback.contains("MACD_Lookback"),
@@ -8573,9 +8579,12 @@ fn csharp_resolve_call_agrees_with_the_emitted_method_names() {
         );
         // What the resolver promises must be what the emitter actually writes —
         // the literal a caller in another indicator will be compiled against.
+        // Since #236 step 5 the bare name is the PUBLIC overload -- the only tier
+        // left that carries it -- which is what a cross-call has bound since
+        // step 3 put the callee's argument checks on the composed path.
         let src = backends::csharp::generate(&func, &enums, &registry, &helpers);
         assert!(
-            src.contains(&format!("RetCode {bare}(")),
+            src.contains(&format!("OutRange {bare}(")),
             "{name}: emitter never defines the `{bare}` the resolver hands out"
         );
         assert!(

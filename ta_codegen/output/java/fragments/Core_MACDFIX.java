@@ -418,27 +418,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode MACDFIX_Internal( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             int optInSignalPeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outMACD[],
-                             double outMACDSignal[],
-                             double outMACDHist[] )
-   {
-      try {
-         return MACDFIX_Body(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * MACD with the fast/slow EMAs fixed to the classic 12/26 periods (with the
     * classic fixed smoothing factors 0.15 and 0.075), exposing only the signal
@@ -516,27 +495,6 @@
          throw failure("MACDFIX", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode MACDFIX_Internal( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             int optInSignalPeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outMACD[],
-                             double outMACDSignal[],
-                             double outMACDHist[] )
-   {
-      try {
-         return MACDFIX_Body(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

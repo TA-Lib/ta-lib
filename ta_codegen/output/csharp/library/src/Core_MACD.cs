@@ -547,26 +547,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode MACD( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<double> inReal,
-                          int optInFastPeriod,
-                          int optInSlowPeriod,
-                          int optInSignalPeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outMACD,
-                          Span<double> outMACDSignal,
-                          Span<double> outMACDHist )
-   {
-      try {
-         return MACD_Body(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Moving Average Convergence/Divergence: the difference between a fast and a
    /// slow EMA of the input, plus an EMA-smoothed signal line and their
@@ -649,26 +629,6 @@ public partial class Core
          throw Failure("MACD", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode MACD( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<float> inReal,
-                          int optInFastPeriod,
-                          int optInSlowPeriod,
-                          int optInSignalPeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outMACD,
-                          Span<double> outMACDSignal,
-                          Span<double> outMACDHist )
-   {
-      try {
-         return MACD_Body(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

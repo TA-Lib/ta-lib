@@ -251,26 +251,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode QSTICK_Internal( int startIdx,
-                            int endIdx,
-                            double inOpen[],
-                            double inClose[],
-                            int optInTimePeriod,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
-   {
-      try {
-         return QSTICK_Body(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Tushar Chande and Stanley Kroll's Qstick (*The New Technical Trader*,
     * 1994): a simple moving average of the candle body, close minus open. It
@@ -342,26 +322,6 @@
          throw failure("QSTICK", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode QSTICK_Internal( int startIdx,
-                            int endIdx,
-                            float inOpen[],
-                            float inClose[],
-                            int optInTimePeriod,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
-   {
-      try {
-         return QSTICK_Body(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

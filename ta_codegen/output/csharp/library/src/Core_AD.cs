@@ -248,24 +248,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode AD( int startIdx,
-                        int endIdx,
-                        ReadOnlySpan<double> inHigh,
-                        ReadOnlySpan<double> inLow,
-                        ReadOnlySpan<double> inClose,
-                        ReadOnlySpan<double> inVolume,
-                        out int outBegIdx,
-                        out int outNBElement,
-                        Span<double> outReal )
-   {
-      try {
-         return AD_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Chaikin Accumulation/Distribution Line, a cumulative volume-flow
    /// indicator. Sums a volume-weighted money-flow multiplier per bar to gauge
@@ -336,24 +318,6 @@ public partial class Core
          throw Failure("AD", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode AD( int startIdx,
-                        int endIdx,
-                        ReadOnlySpan<float> inHigh,
-                        ReadOnlySpan<float> inLow,
-                        ReadOnlySpan<float> inClose,
-                        ReadOnlySpan<float> inVolume,
-                        out int outBegIdx,
-                        out int outNBElement,
-                        Span<double> outReal )
-   {
-      try {
-         return AD_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

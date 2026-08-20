@@ -300,26 +300,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode VWMA_Internal( int startIdx,
-                          int endIdx,
-                          double inReal[],
-                          double inVolume[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
-   {
-      try {
-         return VWMA_Body(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Volume Weighted Moving Average: the mean price over a trailing window of
     * {@code optInTimePeriod} bars, each bar weighted by its own volume. Heavily
@@ -398,26 +378,6 @@
          throw failure("VWMA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode VWMA_Internal( int startIdx,
-                          int endIdx,
-                          float inReal[],
-                          float inVolume[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
-   {
-      try {
-         return VWMA_Body(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

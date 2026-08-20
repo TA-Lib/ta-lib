@@ -202,25 +202,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode PVI_Internal( int startIdx,
-                         int endIdx,
-                         double inClose[],
-                         double inVolume[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
-   {
-      try {
-         return PVI_Body(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Positive Volume Index: a running cumulative index that changes only on
     * days when volume rises versus the prior day, compounding that day's
@@ -291,25 +272,6 @@
          throw failure("PVI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode PVI_Internal( int startIdx,
-                         int endIdx,
-                         float inClose[],
-                         float inVolume[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
-   {
-      try {
-         return PVI_Body(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

@@ -490,23 +490,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode MINUS_DM( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<double> inHigh,
-                              ReadOnlySpan<double> inLow,
-                              int optInTimePeriod,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outReal )
-   {
-      try {
-         return MINUS_DM_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Minus Directional Movement, the downward component of Wilder's directional
    /// movement system. Measures Wilder-smoothed downward price motion over the
@@ -577,23 +560,6 @@ public partial class Core
          throw Failure("MINUS_DM", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode MINUS_DM( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<float> inHigh,
-                              ReadOnlySpan<float> inLow,
-                              int optInTimePeriod,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outReal )
-   {
-      try {
-         return MINUS_DM_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

@@ -158,25 +158,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode OBV_Internal( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         double inVolume[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
-   {
-      try {
-         return OBV_Body(startIdx, endIdx, inReal, inVolume, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * On Balance Volume: a running cumulative total of volume, added on up-price
     * bars and subtracted on down-price bars. Relates volume flow to price
@@ -235,25 +216,6 @@
          throw failure("OBV", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode OBV_Internal( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         float inVolume[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
-   {
-      try {
-         return OBV_Body(startIdx, endIdx, inReal, inVolume, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

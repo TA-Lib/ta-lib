@@ -246,25 +246,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode MAXINDEX_Internal( int startIdx,
-                              int endIdx,
-                              double inReal[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              int outInteger[] )
-   {
-      try {
-         return MAXINDEX_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Returns the index of the highest input value within a rolling window of
     * optInTimePeriod bars. Same as MAX but outputs the location instead of the
@@ -333,25 +314,6 @@
          throw failure("MAXINDEX", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode MAXINDEX_Internal( int startIdx,
-                              int endIdx,
-                              float inReal[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              int outInteger[] )
-   {
-      try {
-         return MAXINDEX_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

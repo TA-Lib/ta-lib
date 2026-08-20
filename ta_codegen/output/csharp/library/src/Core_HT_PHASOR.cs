@@ -783,22 +783,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode HT_PHASOR( int startIdx,
-                               int endIdx,
-                               ReadOnlySpan<double> inReal,
-                               out int outBegIdx,
-                               out int outNBElement,
-                               Span<double> outInPhase,
-                               Span<double> outQuadrature )
-   {
-      try {
-         return HT_PHASOR_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outInPhase, outQuadrature);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Hilbert Transform indicator that decomposes the price series into its
    /// in-phase (I) and quadrature (Q) phasor components. Shares the same
@@ -863,22 +847,6 @@ public partial class Core
          throw Failure("HT_PHASOR", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode HT_PHASOR( int startIdx,
-                               int endIdx,
-                               ReadOnlySpan<float> inReal,
-                               out int outBegIdx,
-                               out int outNBElement,
-                               Span<double> outInPhase,
-                               Span<double> outQuadrature )
-   {
-      try {
-         return HT_PHASOR_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outInPhase, outQuadrature);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

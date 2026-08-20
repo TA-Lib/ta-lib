@@ -650,24 +650,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode DX( int startIdx,
-                        int endIdx,
-                        ReadOnlySpan<double> inHigh,
-                        ReadOnlySpan<double> inLow,
-                        ReadOnlySpan<double> inClose,
-                        int optInTimePeriod,
-                        out int outBegIdx,
-                        out int outNBElement,
-                        Span<double> outReal )
-   {
-      try {
-         return DX_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Wilder's Directional Movement Index: the normalized spread between +DI and
    /// -DI. Measures the strength of directional (trending) movement,
@@ -742,24 +724,6 @@ public partial class Core
          throw Failure("DX", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode DX( int startIdx,
-                        int endIdx,
-                        ReadOnlySpan<float> inHigh,
-                        ReadOnlySpan<float> inLow,
-                        ReadOnlySpan<float> inClose,
-                        int optInTimePeriod,
-                        out int outBegIdx,
-                        out int outNBElement,
-                        Span<double> outReal )
-   {
-      try {
-         return DX_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

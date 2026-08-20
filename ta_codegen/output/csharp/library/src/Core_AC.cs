@@ -493,25 +493,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode AC( int startIdx,
-                        int endIdx,
-                        ReadOnlySpan<double> inHigh,
-                        ReadOnlySpan<double> inLow,
-                        int optInFastPeriod,
-                        int optInSlowPeriod,
-                        int optInSignalPeriod,
-                        out int outBegIdx,
-                        out int outNBElement,
-                        Span<double> outReal )
-   {
-      try {
-         return AC_Body(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Bill Williams' Accelerator/Decelerator Oscillator (*New Trading
    /// Dimensions*, 1998): the rate at which market momentum is itself speeding
@@ -600,25 +581,6 @@ public partial class Core
          throw Failure("AC", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode AC( int startIdx,
-                        int endIdx,
-                        ReadOnlySpan<float> inHigh,
-                        ReadOnlySpan<float> inLow,
-                        int optInFastPeriod,
-                        int optInSlowPeriod,
-                        int optInSignalPeriod,
-                        out int outBegIdx,
-                        out int outNBElement,
-                        Span<double> outReal )
-   {
-      try {
-         return AC_Body(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

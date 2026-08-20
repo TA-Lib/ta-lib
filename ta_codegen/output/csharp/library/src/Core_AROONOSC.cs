@@ -369,23 +369,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode AROONOSC( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<double> inHigh,
-                              ReadOnlySpan<double> inLow,
-                              int optInTimePeriod,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outReal )
-   {
-      try {
-         return AROONOSC_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Aroon Oscillator: AroonUp minus AroonDown over a lookback window. Measures
    /// trend direction and strength on a -100..+100 scale. Positive when the high
@@ -457,23 +440,6 @@ public partial class Core
          throw Failure("AROONOSC", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode AROONOSC( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<float> inHigh,
-                              ReadOnlySpan<float> inLow,
-                              int optInTimePeriod,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outReal )
-   {
-      try {
-         return AROONOSC_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

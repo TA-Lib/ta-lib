@@ -419,25 +419,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode MFI( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inHigh,
-                         ReadOnlySpan<double> inLow,
-                         ReadOnlySpan<double> inClose,
-                         ReadOnlySpan<double> inVolume,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return MFI_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Money Flow Index: a volume-weighted momentum oscillator (0-100) comparing
    /// positive vs negative money flow over a period. A volume-based analog of
@@ -512,25 +493,6 @@ public partial class Core
          throw Failure("MFI", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode MFI( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inHigh,
-                         ReadOnlySpan<float> inLow,
-                         ReadOnlySpan<float> inClose,
-                         ReadOnlySpan<float> inVolume,
-                         int optInTimePeriod,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return MFI_Body(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

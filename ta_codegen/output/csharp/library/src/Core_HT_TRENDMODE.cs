@@ -1037,21 +1037,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode HT_TRENDMODE( int startIdx,
-                                  int endIdx,
-                                  ReadOnlySpan<double> inReal,
-                                  out int outBegIdx,
-                                  out int outNBElement,
-                                  Span<int> outInteger )
-   {
-      try {
-         return HT_TRENDMODE_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outInteger);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Hilbert Transform classifier that labels each bar as trending (1) or
    /// cycling (0). Reuses the MAMA dominant-cycle/phase DSP plus a
@@ -1109,21 +1094,6 @@ public partial class Core
          throw Failure("HT_TRENDMODE", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode HT_TRENDMODE( int startIdx,
-                                  int endIdx,
-                                  ReadOnlySpan<float> inReal,
-                                  out int outBegIdx,
-                                  out int outNBElement,
-                                  Span<int> outInteger )
-   {
-      try {
-         return HT_TRENDMODE_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outInteger);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

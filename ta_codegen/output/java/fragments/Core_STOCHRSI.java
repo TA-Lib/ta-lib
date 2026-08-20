@@ -337,29 +337,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode STOCHRSI_Internal( int startIdx,
-                              int endIdx,
-                              double inReal[],
-                              int optInTimePeriod,
-                              int optInFastK_Period,
-                              int optInFastD_Period,
-                              MAType optInFastD_MAType,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outFastK[],
-                              double outFastD[] )
-   {
-      try {
-         return STOCHRSI_Body(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Applies the Fast Stochastic (STOCHF) oscillator to an RSI series instead
     * of price, measuring where RSI sits within its recent min/max range.
@@ -448,29 +425,6 @@
          throw failure("STOCHRSI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode STOCHRSI_Internal( int startIdx,
-                              int endIdx,
-                              float inReal[],
-                              int optInTimePeriod,
-                              int optInFastK_Period,
-                              int optInFastD_Period,
-                              MAType optInFastD_MAType,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outFastK[],
-                              double outFastD[] )
-   {
-      try {
-         return STOCHRSI_Body(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

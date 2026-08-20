@@ -915,24 +915,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode MAMA( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<double> inReal,
-                          double optInFastLimit,
-                          double optInSlowLimit,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outMAMA,
-                          Span<double> outFAMA )
-   {
-      try {
-         return MAMA_Body(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, out outBegIdx, out outNBElement, outMAMA, outFAMA);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// MESA Adaptive Moving Average: an adaptive EMA whose smoothing factor is
    /// driven by the dominant-cycle phase rate measured with a Hilbert transform.
@@ -1007,24 +989,6 @@ public partial class Core
          throw Failure("MAMA", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode MAMA( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<float> inReal,
-                          double optInFastLimit,
-                          double optInSlowLimit,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outMAMA,
-                          Span<double> outFAMA )
-   {
-      try {
-         return MAMA_Body(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, out outBegIdx, out outNBElement, outMAMA, outFAMA);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

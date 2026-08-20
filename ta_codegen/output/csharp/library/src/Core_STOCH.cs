@@ -634,29 +634,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode STOCH( int startIdx,
-                           int endIdx,
-                           ReadOnlySpan<double> inHigh,
-                           ReadOnlySpan<double> inLow,
-                           ReadOnlySpan<double> inClose,
-                           int optInFastK_Period,
-                           int optInSlowK_Period,
-                           MAType optInSlowK_MAType,
-                           int optInSlowD_Period,
-                           MAType optInSlowD_MAType,
-                           out int outBegIdx,
-                           out int outNBElement,
-                           Span<double> outSlowK,
-                           Span<double> outSlowD )
-   {
-      try {
-         return STOCH_Body(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outSlowK, outSlowD);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Slow Stochastic oscillator: locates the close within the high-low range
    /// over a lookback period, then double-smooths it. Returns the Slow-%K and
@@ -752,29 +729,6 @@ public partial class Core
          throw Failure("STOCH", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode STOCH( int startIdx,
-                           int endIdx,
-                           ReadOnlySpan<float> inHigh,
-                           ReadOnlySpan<float> inLow,
-                           ReadOnlySpan<float> inClose,
-                           int optInFastK_Period,
-                           int optInSlowK_Period,
-                           MAType optInSlowK_MAType,
-                           int optInSlowD_Period,
-                           MAType optInSlowD_MAType,
-                           out int outBegIdx,
-                           out int outNBElement,
-                           Span<double> outSlowK,
-                           Span<double> outSlowD )
-   {
-      try {
-         return STOCH_Body(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outSlowK, outSlowD);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

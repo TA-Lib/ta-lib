@@ -245,24 +245,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode CDL3OUTSIDE( int startIdx,
-                                 int endIdx,
-                                 ReadOnlySpan<double> inOpen,
-                                 ReadOnlySpan<double> inHigh,
-                                 ReadOnlySpan<double> inLow,
-                                 ReadOnlySpan<double> inClose,
-                                 out int outBegIdx,
-                                 out int outNBElement,
-                                 Span<int> outInteger )
-   {
-      try {
-         return CDL3OUTSIDE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outInteger);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// A three-candle pattern: an engulfing pair (candle 2's body fully engulfs
    /// candle 1's body) followed by a third candle that confirms in the engulfing
@@ -332,24 +314,6 @@ public partial class Core
          throw Failure("CDL3OUTSIDE", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode CDL3OUTSIDE( int startIdx,
-                                 int endIdx,
-                                 ReadOnlySpan<float> inOpen,
-                                 ReadOnlySpan<float> inHigh,
-                                 ReadOnlySpan<float> inLow,
-                                 ReadOnlySpan<float> inClose,
-                                 out int outBegIdx,
-                                 out int outNBElement,
-                                 Span<int> outInteger )
-   {
-      try {
-         return CDL3OUTSIDE_Body(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outInteger);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

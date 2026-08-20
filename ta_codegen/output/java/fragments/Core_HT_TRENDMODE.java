@@ -992,24 +992,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode HT_TRENDMODE_Internal( int startIdx,
-                                  int endIdx,
-                                  double inReal[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  int outInteger[] )
-   {
-      try {
-         return HT_TRENDMODE_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Hilbert Transform classifier that labels each bar as trending (1) or
     * cycling (0). Reuses the MAMA dominant-cycle/phase DSP plus a
@@ -1068,24 +1050,6 @@
          throw failure("HT_TRENDMODE", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode HT_TRENDMODE_Internal( int startIdx,
-                                  int endIdx,
-                                  float inReal[],
-                                  MInteger outBegIdx,
-                                  MInteger outNBElement,
-                                  int outInteger[] )
-   {
-      try {
-         return HT_TRENDMODE_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

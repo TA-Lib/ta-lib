@@ -126,24 +126,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode TAN_Internal( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
-   {
-      try {
-         return TAN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Vector trigonometric tangent: applies tan() element-wise to each input
     * value.
@@ -203,24 +185,6 @@
          throw failure("TAN", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode TAN_Internal( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
-   {
-      try {
-         return TAN_Body(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

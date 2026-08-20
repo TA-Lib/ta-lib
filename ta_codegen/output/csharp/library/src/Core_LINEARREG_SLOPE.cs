@@ -316,22 +316,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode LINEARREG_SLOPE( int startIdx,
-                                     int endIdx,
-                                     ReadOnlySpan<double> inReal,
-                                     int optInTimePeriod,
-                                     out int outBegIdx,
-                                     out int outNBElement,
-                                     Span<double> outReal )
-   {
-      try {
-         return LINEARREG_SLOPE_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Slope 'm' of the least-squares best-fit line (y = b + m*x) over the last
    /// optInTimePeriod bars. Reports the per-bar rate of change of the fitted
@@ -398,22 +382,6 @@ public partial class Core
          throw Failure("LINEARREG_SLOPE", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode LINEARREG_SLOPE( int startIdx,
-                                     int endIdx,
-                                     ReadOnlySpan<float> inReal,
-                                     int optInTimePeriod,
-                                     out int outBegIdx,
-                                     out int outNBElement,
-                                     Span<double> outReal )
-   {
-      try {
-         return LINEARREG_SLOPE_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

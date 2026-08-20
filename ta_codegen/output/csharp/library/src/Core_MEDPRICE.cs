@@ -191,22 +191,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode MEDPRICE( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<double> inHigh,
-                              ReadOnlySpan<double> inLow,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outReal )
-   {
-      try {
-         return MEDPRICE_Body(startIdx, endIdx, inHigh, inLow, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Median Price: the midpoint of each bar's high and low. A price-transform
    /// overlay.
@@ -269,22 +253,6 @@ public partial class Core
          throw Failure("MEDPRICE", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode MEDPRICE( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<float> inHigh,
-                              ReadOnlySpan<float> inLow,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outReal )
-   {
-      try {
-         return MEDPRICE_Body(startIdx, endIdx, inHigh, inLow, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

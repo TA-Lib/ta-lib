@@ -865,27 +865,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode MAMA_Internal( int startIdx,
-                          int endIdx,
-                          double inReal[],
-                          double optInFastLimit,
-                          double optInSlowLimit,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outMAMA[],
-                          double outFAMA[] )
-   {
-      try {
-         return MAMA_Body(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * MESA Adaptive Moving Average: an adaptive EMA whose smoothing factor is
     * driven by the dominant-cycle phase rate measured with a Hilbert transform.
@@ -959,27 +938,6 @@
          throw failure("MAMA", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode MAMA_Internal( int startIdx,
-                          int endIdx,
-                          float inReal[],
-                          double optInFastLimit,
-                          double optInSlowLimit,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outMAMA[],
-                          double outFAMA[] )
-   {
-      try {
-         return MAMA_Body(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

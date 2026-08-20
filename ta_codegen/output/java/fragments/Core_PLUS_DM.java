@@ -443,26 +443,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode PLUS_DM_Internal( int startIdx,
-                             int endIdx,
-                             double inHigh[],
-                             double inLow[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-   {
-      try {
-         return PLUS_DM_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Plus Directional Movement: the Wilder-smoothed accumulation of upward
     * directional movement (+DM1). A component of the Directional Movement
@@ -534,26 +514,6 @@
          throw failure("PLUS_DM", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode PLUS_DM_Internal( int startIdx,
-                             int endIdx,
-                             float inHigh[],
-                             float inLow[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
-   {
-      try {
-         return PLUS_DM_Body(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

@@ -191,23 +191,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode WCLPRICE( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<double> inHigh,
-                              ReadOnlySpan<double> inLow,
-                              ReadOnlySpan<double> inClose,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outReal )
-   {
-      try {
-         return WCLPRICE_Body(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Weighted Close Price: a per-bar price average giving the close double
    /// weight relative to high and low.
@@ -273,23 +256,6 @@ public partial class Core
          throw Failure("WCLPRICE", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode WCLPRICE( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<float> inHigh,
-                              ReadOnlySpan<float> inLow,
-                              ReadOnlySpan<float> inClose,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outReal )
-   {
-      try {
-         return WCLPRICE_Body(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

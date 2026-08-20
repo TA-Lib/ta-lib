@@ -395,26 +395,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode ACCBANDS( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<double> inHigh,
-                              ReadOnlySpan<double> inLow,
-                              ReadOnlySpan<double> inClose,
-                              int optInTimePeriod,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outRealUpperBand,
-                              Span<double> outRealMiddleBand,
-                              Span<double> outRealLowerBand )
-   {
-      try {
-         return ACCBANDS_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Acceleration Bands: three overlap lines around price. The middle band is
    /// an SMA of the close; the upper/lower bands are SMAs of the high/low scaled
@@ -493,26 +473,6 @@ public partial class Core
          throw Failure("ACCBANDS", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode ACCBANDS( int startIdx,
-                              int endIdx,
-                              ReadOnlySpan<float> inHigh,
-                              ReadOnlySpan<float> inLow,
-                              ReadOnlySpan<float> inClose,
-                              int optInTimePeriod,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              Span<double> outRealUpperBand,
-                              Span<double> outRealMiddleBand,
-                              Span<double> outRealLowerBand )
-   {
-      try {
-         return ACCBANDS_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

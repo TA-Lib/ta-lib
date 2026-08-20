@@ -174,21 +174,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode SIN( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<double> inReal,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return SIN_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Vector trigonometric sine: applies sin() element-wise to each input value.
    /// Part of the Math Transform group.
@@ -248,21 +233,6 @@ public partial class Core
          throw Failure("SIN", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode SIN( int startIdx,
-                         int endIdx,
-                         ReadOnlySpan<float> inReal,
-                         out int outBegIdx,
-                         out int outNBElement,
-                         Span<double> outReal )
-   {
-      try {
-         return SIN_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

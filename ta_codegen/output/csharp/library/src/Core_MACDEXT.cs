@@ -560,29 +560,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode MACDEXT( int startIdx,
-                             int endIdx,
-                             ReadOnlySpan<double> inReal,
-                             int optInFastPeriod,
-                             MAType optInFastMAType,
-                             int optInSlowPeriod,
-                             MAType optInSlowMAType,
-                             int optInSignalPeriod,
-                             MAType optInSignalMAType,
-                             out int outBegIdx,
-                             out int outNBElement,
-                             Span<double> outMACD,
-                             Span<double> outMACDSignal,
-                             Span<double> outMACDHist )
-   {
-      try {
-         return MACDEXT_Body(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// MACD variant where the fast, slow, and signal moving averages each use a
    /// user-selectable MA type. Outputs the MACD line, its signal line, and their
@@ -684,29 +661,6 @@ public partial class Core
          throw Failure("MACDEXT", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode MACDEXT( int startIdx,
-                             int endIdx,
-                             ReadOnlySpan<float> inReal,
-                             int optInFastPeriod,
-                             MAType optInFastMAType,
-                             int optInSlowPeriod,
-                             MAType optInSlowMAType,
-                             int optInSignalPeriod,
-                             MAType optInSignalMAType,
-                             out int outBegIdx,
-                             out int outNBElement,
-                             Span<double> outMACD,
-                             Span<double> outMACDSignal,
-                             Span<double> outMACDHist )
-   {
-      try {
-         return MACDEXT_Body(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

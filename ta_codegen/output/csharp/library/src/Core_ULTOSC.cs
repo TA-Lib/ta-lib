@@ -624,26 +624,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode ULTOSC( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<double> inHigh,
-                            ReadOnlySpan<double> inLow,
-                            ReadOnlySpan<double> inClose,
-                            int optInTimePeriod1,
-                            int optInTimePeriod2,
-                            int optInTimePeriod3,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outReal )
-   {
-      try {
-         return ULTOSC_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Ultimate Oscillator: momentum indicator combining
    /// buying-pressure/true-range ratios over three time periods into one 0-100
@@ -727,26 +707,6 @@ public partial class Core
          throw Failure("ULTOSC", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode ULTOSC( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<float> inHigh,
-                            ReadOnlySpan<float> inLow,
-                            ReadOnlySpan<float> inClose,
-                            int optInTimePeriod1,
-                            int optInTimePeriod2,
-                            int optInTimePeriod3,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outReal )
-   {
-      try {
-         return ULTOSC_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

@@ -268,23 +268,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode TRANGE( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<double> inHigh,
-                            ReadOnlySpan<double> inLow,
-                            ReadOnlySpan<double> inClose,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outReal )
-   {
-      try {
-         return TRANGE_Body(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// True Range: the greatest of today's high-low span and the two gaps between
    /// yesterday's close and today's high/low. Base volatility measure used to
@@ -355,23 +338,6 @@ public partial class Core
          throw Failure("TRANGE", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode TRANGE( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<float> inHigh,
-                            ReadOnlySpan<float> inLow,
-                            ReadOnlySpan<float> inClose,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outReal )
-   {
-      try {
-         return TRANGE_Body(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

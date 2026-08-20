@@ -335,26 +335,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode EFI_Internal( int startIdx,
-                         int endIdx,
-                         double inClose[],
-                         double inVolume[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
-   {
-      try {
-         return EFI_Body(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Alexander Elder's Force Index (*Trading for a Living*, 1993):
     * volume-weighted momentum. Each bar's close-to-close move is weighted by
@@ -433,26 +413,6 @@
          throw failure("EFI", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode EFI_Internal( int startIdx,
-                         int endIdx,
-                         float inClose[],
-                         float inVolume[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
-   {
-      try {
-         return EFI_Body(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

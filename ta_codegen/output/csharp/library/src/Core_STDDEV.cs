@@ -276,23 +276,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode STDDEV( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<double> inReal,
-                            int optInTimePeriod,
-                            double optInNbDev,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outReal )
-   {
-      try {
-         return STDDEV_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Rolling standard deviation of a series over a window, scaled by a
    /// deviations multiplier. Delegates to VAR, then takes the square root.
@@ -361,23 +344,6 @@ public partial class Core
          throw Failure("STDDEV", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode STDDEV( int startIdx,
-                            int endIdx,
-                            ReadOnlySpan<float> inReal,
-                            int optInTimePeriod,
-                            double optInNbDev,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            Span<double> outReal )
-   {
-      try {
-         return STDDEV_Body(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

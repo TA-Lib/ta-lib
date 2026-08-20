@@ -345,23 +345,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode MINMAXINDEX( int startIdx,
-                                 int endIdx,
-                                 ReadOnlySpan<double> inReal,
-                                 int optInTimePeriod,
-                                 out int outBegIdx,
-                                 out int outNBElement,
-                                 Span<int> outMinIdx,
-                                 Span<int> outMaxIdx )
-   {
-      try {
-         return MINMAXINDEX_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outMinIdx, outMaxIdx);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Returns the absolute input indices of the lowest and highest values within
    /// each rolling window of optInTimePeriod bars. Index variant of MINMAX.
@@ -431,23 +414,6 @@ public partial class Core
          throw Failure("MINMAXINDEX", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode MINMAXINDEX( int startIdx,
-                                 int endIdx,
-                                 ReadOnlySpan<float> inReal,
-                                 int optInTimePeriod,
-                                 out int outBegIdx,
-                                 out int outNBElement,
-                                 Span<int> outMinIdx,
-                                 Span<int> outMaxIdx )
-   {
-      try {
-         return MINMAXINDEX_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outMinIdx, outMaxIdx);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

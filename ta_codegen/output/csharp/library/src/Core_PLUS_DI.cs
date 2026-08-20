@@ -689,24 +689,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode PLUS_DI( int startIdx,
-                             int endIdx,
-                             ReadOnlySpan<double> inHigh,
-                             ReadOnlySpan<double> inLow,
-                             ReadOnlySpan<double> inClose,
-                             int optInTimePeriod,
-                             out int outBegIdx,
-                             out int outNBElement,
-                             Span<double> outReal )
-   {
-      try {
-         return PLUS_DI_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Plus Directional Indicator: the Wilder-smoothed positive directional
    /// movement expressed as a percentage of the true range. Measures the
@@ -784,24 +766,6 @@ public partial class Core
          throw Failure("PLUS_DI", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode PLUS_DI( int startIdx,
-                             int endIdx,
-                             ReadOnlySpan<float> inHigh,
-                             ReadOnlySpan<float> inLow,
-                             ReadOnlySpan<float> inClose,
-                             int optInTimePeriod,
-                             out int outBegIdx,
-                             out int outNBElement,
-                             Span<double> outReal )
-   {
-      try {
-         return PLUS_DI_Body(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

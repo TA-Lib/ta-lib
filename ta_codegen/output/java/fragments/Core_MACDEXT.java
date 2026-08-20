@@ -496,32 +496,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode MACDEXT_Internal( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             int optInFastPeriod,
-                             MAType optInFastMAType,
-                             int optInSlowPeriod,
-                             MAType optInSlowMAType,
-                             int optInSignalPeriod,
-                             MAType optInSignalMAType,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outMACD[],
-                             double outMACDSignal[],
-                             double outMACDHist[] )
-   {
-      try {
-         return MACDEXT_Body(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * MACD variant where the fast, slow, and signal moving averages each use a
     * user-selectable MA type. Outputs the MACD line, its signal line, and their
@@ -627,32 +601,6 @@
          throw failure("MACDEXT", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode MACDEXT_Internal( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             int optInFastPeriod,
-                             MAType optInFastMAType,
-                             int optInSlowPeriod,
-                             MAType optInSlowMAType,
-                             int optInSignalPeriod,
-                             MAType optInSignalMAType,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outMACD[],
-                             double outMACDSignal[],
-                             double outMACDHist[] )
-   {
-      try {
-         return MACDEXT_Body(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

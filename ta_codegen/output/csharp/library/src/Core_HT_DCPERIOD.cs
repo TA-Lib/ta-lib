@@ -762,21 +762,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode HT_DCPERIOD( int startIdx,
-                                 int endIdx,
-                                 ReadOnlySpan<double> inReal,
-                                 out int outBegIdx,
-                                 out int outNBElement,
-                                 Span<double> outReal )
-   {
-      try {
-         return HT_DCPERIOD_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Hilbert Transform estimate of the dominant cycle period (in bars) of the
    /// price series. Outputs the smoothed instantaneous cycle period. Output is
@@ -833,21 +818,6 @@ public partial class Core
          throw Failure("HT_DCPERIOD", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode HT_DCPERIOD( int startIdx,
-                                 int endIdx,
-                                 ReadOnlySpan<float> inReal,
-                                 out int outBegIdx,
-                                 out int outNBElement,
-                                 Span<double> outReal )
-   {
-      try {
-         return HT_DCPERIOD_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

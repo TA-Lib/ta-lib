@@ -274,22 +274,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode ROCP( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<double> inReal,
-                          int optInTimePeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
-   {
-      try {
-         return ROCP_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Rate of change expressed as a fraction of the price optInTimePeriod bars
    /// ago. Normalized and centered at zero (positive or negative). &gt;0 rising
@@ -353,22 +337,6 @@ public partial class Core
          throw Failure("ROCP", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode ROCP( int startIdx,
-                          int endIdx,
-                          ReadOnlySpan<float> inReal,
-                          int optInTimePeriod,
-                          out int outBegIdx,
-                          out int outNBElement,
-                          Span<double> outReal )
-   {
-      try {
-         return ROCP_Body(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

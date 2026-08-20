@@ -679,51 +679,6 @@ fn gen_public_wrapper(
     out.push_str("      return new OutRange(outBegIdx, outNBElement);\n");
     out.push_str("   }\n");
 
-    // The C-shaped overload, as a shim: the JSON-RPC server binds here, and
-    // nothing in the shipped library does since the cross-calls moved to the
-    // public overload. The `catch` is not defensive — a sub-function rejection
-    // now arrives as a throw and has to become a code again.
-    //
-    // It calls the BODY, not the public overload: the wrapper's length checks
-    // are a property of the public API, and putting them on this path would
-    // change what the server sees before the harness is pointed at that API.
-    //
-    // `out` parameters are not definitely assigned after a try that threw, so
-    // the catch assigns them — which is also the contract: a rejected call
-    // leaves the reported range at nothing.
-    {
-        let mut core_params = params.clone();
-        let out_at = core_params.len() - func.outputs.len();
-        core_params.insert(out_at, "out int outNBElement".to_string());
-        core_params.insert(out_at, "out int outBegIdx".to_string());
-        let sig_prefix = format!("   internal RetCode {base_name}( ");
-        let indent = " ".repeat(sig_prefix.len());
-        out.push_str(&sig_prefix);
-        for (i, param) in core_params.iter().enumerate() {
-            if i > 0 {
-                out.push_str(&format!(",\n{indent}"));
-            }
-            out.push_str(param);
-        }
-        out.push_str(" )\n   {\n");
-        out.push_str("      try {\n");
-        // The wrapper's arg list DECLARES the two out-locals inline
-        // (`out int outBegIdx`); here they are already parameters, so the shim
-        // passes them through instead of shadowing them.
-        let mut shim_args = args.clone();
-        let a_at = shim_args.len() - func.outputs.len() - 2;
-        shim_args[a_at] = "out outBegIdx".to_string();
-        shim_args[a_at + 1] = "out outNBElement".to_string();
-        let _ = write!(out, "         return {core}(");
-        out.push_str(&shim_args.join(", "));
-        out.push_str(");\n");
-        out.push_str("      } catch (Exception _e) when (_e is ITaLibFailure) {\n");
-        out.push_str("         outBegIdx = 0;\n");
-        out.push_str("         outNBElement = 0;\n");
-        out.push_str("         return ((ITaLibFailure)_e).RetCode;\n");
-        out.push_str("      }\n");
-        out.push_str("   }\n");
-    }
     out
 }
 
@@ -2491,8 +2446,13 @@ mod tests {
         assert!(output.contains("namespace TALib;"), "missing namespace");
         assert!(output.contains("public partial class Core"), "missing partial class");
 
-        // The internal core with the out-int pair and the CS0177 seeding prologue.
-        assert!(output.contains("   internal RetCode SMA( "), "missing guarded core");
+        // #236 step 5: the C-shaped overload is GONE. Two tiers remain -- the
+        // public wrapper and the body it calls -- and the only `out int` pair
+        // left in the file is the body's own.
+        assert!(
+            !output.contains("   internal RetCode SMA( "),
+            "the C-shaped overload must not come back"
+        );
         assert!(!output.contains("Unguarded"), "no unguarded tier may exist");
         assert!(output.contains("out int outBegIdx"), "missing out param");
         assert!(
@@ -2509,24 +2469,6 @@ mod tests {
         assert!(
             output[body_pos..body_pos + body_end].contains("OutOfRangeStartIndex"),
             "the body should contain validation"
-        );
-
-        // The C-shaped OVERLOAD is a shim over it. C# has no suffix to rename —
-        // the two tiers are `internal RetCode SMA(…, out int, out int, …)` beside
-        // `public OutRange SMA(…)` — so the shim keeps the bare name and the body
-        // takes the suffix. Its `catch` is why it exists: since #236 step 3 a
-        // cross-call inside the body calls the callee's public overload, which
-        // throws rather than answering a code.
-        let shim_pos = output.find("   internal RetCode SMA( ").unwrap();
-        let shim = &output[shim_pos..shim_pos + 900];
-        assert!(shim.contains("return SMA_Body("), "the shim must call the body");
-        assert!(
-            shim.contains("when (_e is ITaLibFailure)") && shim.contains("((ITaLibFailure)_e).RetCode"),
-            "the shim must convert a thrown failure back to its code"
-        );
-        assert!(
-            shim.contains("outBegIdx = 0;") && shim.contains("outNBElement = 0;"),
-            "an `out` parameter is not definitely assigned after a try that threw"
         );
 
         // The public surface is OutRange-returning wrappers over those cores,

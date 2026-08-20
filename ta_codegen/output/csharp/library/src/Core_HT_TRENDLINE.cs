@@ -844,21 +844,6 @@ public partial class Core
       }
       return new OutRange(outBegIdx, outNBElement);
    }
-   internal RetCode HT_TRENDLINE( int startIdx,
-                                  int endIdx,
-                                  ReadOnlySpan<double> inReal,
-                                  out int outBegIdx,
-                                  out int outNBElement,
-                                  Span<double> outReal )
-   {
-      try {
-         return HT_TRENDLINE_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
-   }
    /// <summary>
    /// Ehlers' Hilbert Transform Instantaneous Trendline: a smoothed, low-lag
    /// overlay whose averaging window adapts to the dominant cycle period
@@ -915,21 +900,6 @@ public partial class Core
          throw Failure("HT_TRENDLINE", retCode);
       }
       return new OutRange(outBegIdx, outNBElement);
-   }
-   internal RetCode HT_TRENDLINE( int startIdx,
-                                  int endIdx,
-                                  ReadOnlySpan<float> inReal,
-                                  out int outBegIdx,
-                                  out int outNBElement,
-                                  Span<double> outReal )
-   {
-      try {
-         return HT_TRENDLINE_Body(startIdx, endIdx, inReal, out outBegIdx, out outNBElement, outReal);
-      } catch (Exception _e) when (_e is ITaLibFailure) {
-         outBegIdx = 0;
-         outNBElement = 0;
-         return ((ITaLibFailure)_e).RetCode;
-      }
    }
    /**** Streaming API *****/
 

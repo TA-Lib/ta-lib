@@ -521,30 +521,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode STOCHF_Internal( int startIdx,
-                            int endIdx,
-                            double inHigh[],
-                            double inLow[],
-                            double inClose[],
-                            int optInFastK_Period,
-                            int optInFastD_Period,
-                            MAType optInFastD_MAType,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outFastK[],
-                            double outFastD[] )
-   {
-      try {
-         return STOCHF_Body(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Fast Stochastic Oscillator: the raw %K line and its
     * moving-average-smoothed %D line. Unlike STOCH (which slows both lines),
@@ -633,30 +609,6 @@
          throw failure("STOCHF", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode STOCHF_Internal( int startIdx,
-                            int endIdx,
-                            float inHigh[],
-                            float inLow[],
-                            float inClose[],
-                            int optInFastK_Period,
-                            int optInFastD_Period,
-                            MAType optInFastD_MAType,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outFastK[],
-                            double outFastD[] )
-   {
-      try {
-         return STOCHF_Body(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 

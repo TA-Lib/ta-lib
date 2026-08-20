@@ -273,25 +273,6 @@
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
-   RetCode LINEARREG_INTERCEPT_Internal( int startIdx,
-                                         int endIdx,
-                                         double inReal[],
-                                         int optInTimePeriod,
-                                         MInteger outBegIdx,
-                                         MInteger outNBElement,
-                                         double outReal[] )
-   {
-      try {
-         return LINEARREG_INTERCEPT_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
-   }
    /**
     * Returns the y-intercept (b) of the least-squares regression line fitted
     * over the last optInTimePeriod values. Part of the linear-regression family
@@ -357,25 +338,6 @@
          throw failure("LINEARREG_INTERCEPT", retCode);
       }
       return new OutRange(outBegIdx.value, outNBElement.value);
-   }
-   RetCode LINEARREG_INTERCEPT_Internal( int startIdx,
-                                         int endIdx,
-                                         float inReal[],
-                                         int optInTimePeriod,
-                                         MInteger outBegIdx,
-                                         MInteger outNBElement,
-                                         double outReal[] )
-   {
-      try {
-         return LINEARREG_INTERCEPT_Body(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
-      } catch (RuntimeException e) {
-         if (e instanceof TaLibFailure) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return ((TaLibFailure) e).retCode();
-         }
-         throw e;
-      }
    }
 /**** Streaming API *****/
 
