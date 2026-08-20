@@ -142,6 +142,7 @@ tree.
 | N-6 | A **negative** candlestick `factor` | Legal. It does not "never match" — it makes the comparison unconditionally true. |
 | N-7 | The set-all / restore-all **wildcards**, where a setter documents one | Legal on those setters, and rejected on the ones that name a single target (rule G-1). |
 | N-8 | **Peeking** a forming bar, any number of times | Never advances the stream and never writes the handle. It can still be *rejected* (U-3), and a rejected peek changes nothing either. |
+| N-9 | Buffers that **partially** overlap — same memory, different start | **Unspecified.** Only *identical* buffers are detected (rule B-6). See "Buffer overlap" below before assuming a diagnosis. |
 
 Part 1 is not a checklist — these behaviours are pinned by the value gates and
 the cross-language hash, over the whole corpus, on every run. N-5 is the
@@ -176,7 +177,7 @@ downstream index computation.
 | B-4 | An optional parameter is outside its documented domain | `TA_BAD_PARAM` | ✅ | ✅ | ✅ [7] | ✅ |
 | B-5 | A buffer is too short for what the call reads or writes | [B] | ⚠️ [8] | ⚠️ [9] | ✅ [10] | ✅ [10] |
 | B-5a | …including on a range shorter than the lookback, where the call produces nothing: an input that does not reach `endIdx` is still rejected | [B] | ⚠️ [8] | ⚠️ [9] | ✅ [10] | ✅ [10] |
-| B-6 | Two outputs share memory, or an output partially overlaps an input | `TA_BAD_PARAM` | ❌ [11] | ✅ [12] | ✅ [13] | ✅ |
+| B-6 | Two outputs are the **same buffer** | `TA_BAD_PARAM` | ✅ | ✅ [12] | ✅ [13] | ✅ |
 
 **Domains.** An optional parameter's domain is its documented range; a real
 parameter that is NaN is outside every range and is rejected (a plain `x < min ||
@@ -254,15 +255,54 @@ yet" rather than "your `endIdx` is wrong". The rationale is recorded on
 on such a range — nothing is produced, so any output length will do, including
 none — and all four agree on that.
 
-[11] Only whole-buffer output↔output aliasing is rejected. A **partial** overlap —
-which C can express and the guard cannot see — is undetected: the call returns
-success with wrong values. Tracked as issue #225.
+[11] *(retired — B-6 is identity-only by decision; partial overlap is rule N-9 and
+the "Buffer overlap" section below.)*
 
 [12] The borrow checker forbids a safe caller from aliasing two output slices at
 all; the pointer-equality guard in the internal tier covers the FFI boundary.
 
 [13] Two Java arrays are identical or disjoint — there is no partial overlap to
 express — so reference equality is complete for this rule.
+
+### Buffer overlap
+
+**What is guaranteed.** Two *outputs* that are the same buffer are rejected
+(rule B-6). That is a caller error with no correct answer — the second write
+destroys the first — and it is cheap to see, because it is an identity test.
+
+**What is allowed.** An output that **is** an input, whole buffer, is legal in the
+batch tier (rule N-4). Several bodies are written for it and elect their scratch by
+testing for exactly that case. This is not tolerated-but-discouraged; it is
+supported.
+
+**What is unspecified.** Anything in between — the same memory reached through
+buffers that start at different offsets (rule N-9). Not detected, not promised, and
+not a diagnosis you will get. Decided in **#225**: the library detects buffer
+identity and nothing finer.
+
+**Why the line is drawn at identity, and not further.** The four backends do not
+even *agree on whether a partial overlap can exist*, so a stronger rule could not be
+one rule:
+
+| backend | can a caller express a partial overlap? | detected? |
+|---|---|---|
+| C | Yes — two pointers into one allocation | **No.** Detecting it means ordering pointers into different declared objects, which C leaves undefined; a conforming check would have to launder them through `uintptr_t` and reason about representation |
+| Java | **No** — two arrays are the same object or disjoint; there is no offset to differ | n/a, so reference equality is complete |
+| Rust | **No** in safe code — `&[T]` and `&mut [T]` over the same data cannot coexist, and two `&mut` cannot either | the identity guard covers the FFI boundary |
+| C# | **Yes** — two `Span<T>` slices of one array | **Yes**, incidentally: `Span.Overlaps` exists, so the check is one call |
+
+So the guarantee is set by the weakest member that can express the problem, which is
+C — and C is the one language where the check is not merely expensive but not
+straightforwardly expressible. Java and Rust satisfy the stronger rule for free by
+making the state unreachable, which is not the same as enforcing it.
+
+**C# currently detects more than this specifies.** Its generated guard is
+`if (outReal.Overlaps(inReal) && outReal != inReal)`, which rejects a partial
+input↔output overlap while still allowing whole-buffer in place. That is a superset
+of the guarantee, kept because it costs one call on a type that already answers the
+question. **Callers must not rely on it**: the same call is unspecified in C, and
+inexpressible in Java and Rust. If uniformity is ever preferred over the extra
+safety, removing it is the change — not adding the check elsewhere.
 
 ### 2.3 Streaming tier — opening (`Open`, `OpenAndFill`)
 
@@ -380,11 +420,11 @@ Global settings in C; a builder producing an immutable core in Rust, Java and C#
 |---|---|---|:---:|:---:|:---:|:---:|
 | G-1 | A setter that names a **single** target rejects the set-all wildcard, and any out-of-domain target | `TA_BAD_PARAM` | ✅ | ✅ [20] | ✅ [20] | ✅ |
 | G-2 | The unstable period is within `[0, MAX_INDEX]` | `TA_BAD_PARAM` | ✅ | ✅ | ✅ | ✅ |
-| G-3 | **Reading** a per-function setting for a target that names no single function | `TA_BAD_PARAM` | ❌ [21] | ✅ | ✅ | ✅ |
+| G-3 | **Reading** a per-function setting for a target that names no single function | `TA_BAD_PARAM` | ⚠️ [21] | ✅ | ✅ | ✅ |
 | G-4 | The candlestick range type is in domain | `TA_BAD_PARAM` | ✅ | — | — | ✅ |
 | G-5 | The candlestick average period is within `[0, MAX_INDEX]` | `TA_BAD_PARAM` | ✅ | ✅ | ✅ | ✅ |
 | G-6 | The candlestick factor is not NaN | `TA_BAD_PARAM` | ✅ | ✅ | ✅ | ✅ |
-| G-7 | The compatibility mode is in domain | `TA_BAD_PARAM` | ❌ [22] | — [22] | — [22] | — [22] |
+| G-7 | The compatibility mode is in domain | `TA_BAD_PARAM` | ✅ [22] | — [22] | — [22] | — [22] |
 | G-8 | A rejected setting leaves the configuration unchanged | — | ✅ | ✅ [23] | ✅ | ✅ |
 
 The bounds in G-2 and G-5 are not arbitrary. Both values are added to a lookback
@@ -397,13 +437,17 @@ nothing legitimate is refused.
 [20] The wildcard is a declared member, so it is rejected by value; a target outside
 the declared set is unrepresentable.
 
-[21] C's getter has no error channel and answers `0` — itself a legal period — so a
-bad target is indistinguishable from a genuine reading. Fixing it is an ABI
-break; recorded, not scheduled.
+[21] C's getter returns the period itself, so it carries no error channel: a target
+that names no single function reads as `0`. Accepted, and pinned by
+`test_internals.c`; the other three backends reject it because a getter that can
+throw costs them nothing.
 
-[22] C accepts any value and echoes it back from the getter (measured: set an
-out-of-domain mode, read the same value back). Rust, Java and C# expose no public
-setter at all, so the mode is pinned and the domain cannot be violated.
+[22] C rejects an out-of-domain value with `TA_BAD_PARAM` and leaves the mode
+unchanged. It previously accepted anything and echoed it back from the getter, so a
+caller could not tell a typo from a setting; the two-line domain check was taken even
+though `TA_SetCompatibility` is deprecated, because it was that cheap. Rust, Java and
+C# expose no public setter at all, so the mode is pinned and the domain cannot be
+violated there.
 
 [23] Rust's setters chain and cannot fail individually; each latches the **first**
 rejection, which surfaces when the core is built. Verified that a later valid
@@ -422,17 +466,21 @@ alongside a passing rule (item 7). Each is measured, not inferred.
 | 2 | C | B-3 | Output-buffer presence is checked *after* parameter validation, so a bad parameter masks an absent output. |
 | 3 | Java | B-3 | Buffer presence is checked *before* the index and parameter rules, inverting the specified precedence. |
 | 4 | Java | B-4 | A null enum parameter yields a raw JVM `NullPointerException` naming neither function nor parameter. |
-| 5 | C | B-6 | Partial output↔input overlap is undetected: success, wrong values. Issue #225. |
+| ~~5~~ | — | — | *Withdrawn, not fixed.* Partial output↔input overlap in C. Decided in #225: detection stops at buffer identity, and partial overlap is unspecified — rule N-9 and the "Buffer overlap" section. Numbering left as-is so existing references to items 8 and 9 keep pointing at the same rows. |
 | 6 | Java | S-1 | A null history, or a null `OpenAndFill` output, yields a raw JVM exception from inside the algorithm. |
 | 7 | C# | S-2 | Rule passes; the empty-history *message* omits the cross-language `<NAME> open: ` prefix. |
 | 8 | all | S-6 | `TA_RetCode` has **no member** for "history shorter than the lookback". C and Rust fall back to the catch-all, so the library's only recoverable condition is indistinguishable from a programming error; Java and C# borrow `TA_OUT_OF_RANGE_END_INDEX` and re-type it. The fix is additive — append a member — and would let all four converge. |
 | 9 | Rust, Java, C# | S-8 | `OpenAndFill` validates no output capacity, unlike the batch tier which does; an undersized output faults inside the fill. (C cannot — no sizes.) |
-| 10 | C | G-7 | The compatibility setter accepts any value and the getter echoes it back. |
-| 11 | C | G-3 | The unstable-period getter cannot report a bad target. ABI-locked. |
+| ~~10~~ | C | G-7 | *Fixed.* `TA_SetCompatibility` now returns `TA_BAD_PARAM` for a value outside the enum instead of latching it. The function stays deprecated — this was taken only because it was a two-line domain check. |
 
 Items 8 and 9 are the two that change what a *correct* caller can do: 8 denies
 them the ability to retry, and 9 turns a sizing mistake into a partly-written
 buffer.
+
+**Sequencing is tracked in #236**, which reworks the tier these rules are checked
+in: item 8 goes first (it appends a `TA_RetCode` member, and #236 normalises to that
+vocabulary), items 3 and 4 are folded into its first step, and the streaming items 6
+and 9 follow it. Items 1, 2 and 7 are independent of it.
 
 ---
 

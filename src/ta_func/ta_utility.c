@@ -111,6 +111,15 @@ unsigned int TA_GetUnstablePeriod( TA_FuncUnstId id )
 
 TA_RetCode TA_SetCompatibility( TA_Compatibility value )
 {
+   /* Reject a value outside the enum rather than latching it. Without this the
+    * setter accepted anything and the getter echoed it back, so a caller had no
+    * way to tell a typo from a setting (open item 10 of
+    * docs/error-handling-spec.md). The function is deprecated; this is the whole
+    * fix, not a step toward a larger one.
+    */
+   if( value != TA_COMPATIBILITY_DEFAULT && value != TA_COMPATIBILITY_METASTOCK )
+      return TA_BAD_PARAM;
+
    TA_GLOBALS_COMPATIBILITY = value;
    return TA_SUCCESS;
 }
