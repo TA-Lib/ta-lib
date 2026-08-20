@@ -60,6 +60,12 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - ~10%: ATR and NATR
 
 ### Changed
+- (#236) The cross-language test harness now drives each language's public API for
+  every correctness comparison, so the surface a caller actually touches — its
+  argument checks, its exception mapping, the range it reports — is compared against
+  the C reference on every case in the cross-language corpus. It was comparing an
+  internal tier before. No behaviour changed: the return code of every case is
+  identical either way, which is how the switch was verified.
 - (#236) Java and C#: when one indicator is built from another (APO from MA, BBANDS
   from MA and STDDEV, …) the inner call now goes through the same public API you
   would call yourself. One consequence is visible: if the inner call is the one that

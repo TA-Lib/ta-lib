@@ -105,7 +105,19 @@ cargo test                                       # ta_codegen's own test suite
 `ta_regtest` is the **universal test runner** for all languages. Instead of
 linking against each language's compiled code, it drives one generated JSON-RPC
 server per language over stdin/stdout and compares every call against the C
-reference. Flags, tolerances and the individual gates are specified in
+reference.
+
+A **correctness** request goes through each language's PUBLIC API, and the
+server turns the exception back into the `retCode` / `outBegIdx` /
+`outNBElement` wire shape — normalisation is the server's job, not the
+library's. In **Java and C#** a request that declares itself timed
+(`"timed":1`, which only `ta_bench` sends) keeps calling the C-shaped tier
+inside the timed loop, because these servers are also the cross-language
+benchmark and nothing measured may quietly acquire the public tier's argument
+checks. Rust has no such split and never did: `tools` is a separate crate, so
+the public entry point is the only one it can reach, and `ta_bench
+--language=rust` has always measured it. Flags, tolerances and the individual
+gates are specified in
 `src/tools/ta_regtest/CLAUDE.md`.
 
 A new ta_regtest source file must be registered in BOTH `CMakeLists.txt` and the

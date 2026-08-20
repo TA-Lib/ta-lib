@@ -188,7 +188,7 @@ static int build_bench_request(char *buf, int sz, const TA_FuncInfo *fi,
         /* no_output: only timing_ns is read here, and serialising the output
            arrays costs far more than the call being timed. */
         "{\"method\":\"TA_%s\",\"params\":{\"startIdx\":%d,\"endIdx\":%d,"
-        "\"use_preloaded\":1,\"no_output\":1,\"iters\":%d,\"bench_mode\":%d",
+        "\"use_preloaded\":1,\"no_output\":1,\"timed\":1,\"iters\":%d,\"bench_mode\":%d",
         fi->name, startIdx, endIdx, iters, g_bench_mode);
 
     /* Add optional params with default values */
@@ -439,7 +439,7 @@ int main(int argc, char *argv[]) {
 
     snprintf(g_canary_req, sizeof(g_canary_req),
              "{\"method\":\"TA_SMA\",\"params\":{\"startIdx\":0,\"endIdx\":%d,"
-             "\"use_preloaded\":1,\"no_output\":1,\"iters\":50,"
+             "\"use_preloaded\":1,\"no_output\":1,\"timed\":1,\"iters\":50,"
              "\"optInTimePeriod\":30}}", n_points - 1);
 
     printf("ta_bench: %d points, %d iters, shape=%s seed=%d regime-period=%d"

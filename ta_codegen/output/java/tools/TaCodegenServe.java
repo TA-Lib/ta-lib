@@ -153233,15 +153233,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.AC_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            optInFastPeriod,
-            optInSlowPeriod,
-            optInSignalPeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.AC_Internal(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.AC(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.AC_Open(_warm_inHigh, _warm_inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -153258,14 +153266,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
             float[] f_inLow = new float[inLow.length];
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
-            rc = core.AC_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                optInFastPeriod,
-                optInSlowPeriod,
-                optInSignalPeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.AC(startIdx, endIdx, f_inHigh, f_inLow, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -153349,14 +153360,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.ACCBANDS_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            inClose,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.ACCBANDS_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+        } else {
+            try {
+                OutRange _pr = core.ACCBANDS(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0, outArr1, outArr2);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.ACCBANDS_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
@@ -153375,13 +153395,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.ACCBANDS_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+            try {
+                OutRange _fr = core.ACCBANDS(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInTimePeriod, outArr0, outArr1, outArr2);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -153456,11 +153480,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.ACOS_Internal(
-            startIdx, endIdx,
-            inReal,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.ACOS_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.ACOS(startIdx, endIdx, inReal, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.ACOS_Open(_warm_inReal);
@@ -153475,10 +153511,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.ACOS_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.ACOS(startIdx, endIdx, f_inReal, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -153564,14 +153607,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.AD_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            inClose,
-            inVolume,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.AD_Internal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.AD(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.AD_Open(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume);
@@ -153592,13 +153644,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
             float[] f_inVolume = new float[inVolume.length];
             for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
-            rc = core.AD_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                f_inVolume,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.AD(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, f_inVolume, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -153674,12 +153730,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.ADD_Internal(
-            startIdx, endIdx,
-            inReal0,
-            inReal1,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.ADD_Internal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.ADD(startIdx, endIdx, inReal0, inReal1, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.ADD_Open(_warm_inReal0, _warm_inReal1);
@@ -153696,11 +153763,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inReal0.length; _fi++) f_inReal0[_fi] = (float)inReal0[_fi];
             float[] f_inReal1 = new float[inReal1.length];
             for (int _fi = 0; _fi < inReal1.length; _fi++) f_inReal1[_fi] = (float)inReal1[_fi];
-            rc = core.ADD_Internal(
-                startIdx, endIdx,
-                f_inReal0,
-                f_inReal1,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.ADD(startIdx, endIdx, f_inReal0, f_inReal1, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -153788,16 +153861,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.ADOSC_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            inClose,
-            inVolume,
-            optInFastPeriod,
-            optInSlowPeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.ADOSC_Internal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.ADOSC(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.ADOSC_Open(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume, optInFastPeriod, optInSlowPeriod);
@@ -153818,15 +153898,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
             float[] f_inVolume = new float[inVolume.length];
             for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
-            rc = core.ADOSC_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                f_inVolume,
-                optInFastPeriod,
-                optInSlowPeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.ADOSC(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, f_inVolume, optInFastPeriod, optInSlowPeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -153909,14 +153991,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.ADX_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            inClose,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.ADX_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.ADX(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.ADX_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
@@ -153935,13 +154026,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.ADX_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.ADX(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -154023,14 +154118,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.ADXR_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            inClose,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.ADXR_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.ADXR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.ADXR_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
@@ -154049,13 +154153,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.ADXR_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.ADXR(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -154133,14 +154241,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.AO_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            optInFastPeriod,
-            optInSlowPeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.AO_Internal(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.AO(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.AO_Open(_warm_inHigh, _warm_inLow, optInFastPeriod, optInSlowPeriod);
@@ -154157,13 +154274,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
             float[] f_inLow = new float[inLow.length];
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
-            rc = core.AO_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                optInFastPeriod,
-                optInSlowPeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.AO(startIdx, endIdx, f_inHigh, f_inLow, optInFastPeriod, optInSlowPeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -154237,14 +154358,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.APO_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInFastPeriod,
-            optInSlowPeriod,
-            optInMAType,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.APO_Internal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.APO(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.APO_Open(_warm_inReal, optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -154259,13 +154389,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.APO_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInFastPeriod,
-                optInSlowPeriod,
-                optInMAType,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.APO(startIdx, endIdx, f_inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -154343,13 +154477,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.AROON_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0, outArr1);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.AROON_Internal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outArr0, outArr1);
+        } else {
+            try {
+                OutRange _pr = core.AROON(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outArr0, outArr1);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.AROON_Open(_warm_inHigh, _warm_inLow, optInTimePeriod);
@@ -154366,12 +154510,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
             float[] f_inLow = new float[inLow.length];
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
-            rc = core.AROON_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0, outArr1);
+            try {
+                OutRange _fr = core.AROON(startIdx, endIdx, f_inHigh, f_inLow, optInTimePeriod, outArr0, outArr1);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -154450,13 +154599,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.AROONOSC_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.AROONOSC_Internal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.AROONOSC(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.AROONOSC_Open(_warm_inHigh, _warm_inLow, optInTimePeriod);
@@ -154473,12 +154632,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
             float[] f_inLow = new float[inLow.length];
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
-            rc = core.AROONOSC_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.AROONOSC(startIdx, endIdx, f_inHigh, f_inLow, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -154549,11 +154713,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.ASIN_Internal(
-            startIdx, endIdx,
-            inReal,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.ASIN_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.ASIN(startIdx, endIdx, inReal, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.ASIN_Open(_warm_inReal);
@@ -154568,10 +154744,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.ASIN_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.ASIN(startIdx, endIdx, f_inReal, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -154642,11 +154825,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.ATAN_Internal(
-            startIdx, endIdx,
-            inReal,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.ATAN_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.ATAN(startIdx, endIdx, inReal, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.ATAN_Open(_warm_inReal);
@@ -154661,10 +154856,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.ATAN_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.ATAN(startIdx, endIdx, f_inReal, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -154747,14 +154949,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.ATR_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            inClose,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.ATR_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.ATR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.ATR_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
@@ -154773,13 +154984,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.ATR_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.ATR(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -154851,12 +155066,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.AVGDEV_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.AVGDEV_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.AVGDEV(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.AVGDEV_Open(_warm_inReal, optInTimePeriod);
@@ -154871,11 +155097,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.AVGDEV_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.AVGDEV(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -154961,14 +155193,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.AVGPRICE_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.AVGPRICE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.AVGPRICE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.AVGPRICE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -154989,13 +155230,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.AVGPRICE_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.AVGPRICE(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -155072,15 +155317,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.BBANDS_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            optInNbDevUp,
-            optInNbDevDn,
-            optInMAType,
-            outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.BBANDS_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+        } else {
+            try {
+                OutRange _pr = core.BBANDS(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outArr0, outArr1, outArr2);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.BBANDS_Open(_warm_inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
@@ -155095,14 +155348,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.BBANDS_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                optInNbDevUp,
-                optInNbDevDn,
-                optInMAType,
-                outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+            try {
+                OutRange _fr = core.BBANDS(startIdx, endIdx, f_inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outArr0, outArr1, outArr2);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -155183,13 +155439,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.BETA_Internal(
-            startIdx, endIdx,
-            inReal0,
-            inReal1,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.BETA_Internal(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.BETA(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.BETA_Open(_warm_inReal0, _warm_inReal1, optInTimePeriod);
@@ -155206,12 +155472,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inReal0.length; _fi++) f_inReal0[_fi] = (float)inReal0[_fi];
             float[] f_inReal1 = new float[inReal1.length];
             for (int _fi = 0; _fi < inReal1.length; _fi++) f_inReal1[_fi] = (float)inReal1[_fi];
-            rc = core.BETA_Internal(
-                startIdx, endIdx,
-                f_inReal0,
-                f_inReal1,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.BETA(startIdx, endIdx, f_inReal0, f_inReal1, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -155297,14 +155568,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.BOP_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.BOP_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.BOP(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.BOP_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -155325,13 +155605,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.BOP_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.BOP(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -155413,14 +155697,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CCI_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            inClose,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CCI_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CCI(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CCI_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
@@ -155439,13 +155732,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CCI_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CCI(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -155531,14 +155828,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDL2CROWS_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDL2CROWS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDL2CROWS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDL2CROWS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -155559,13 +155865,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDL2CROWS_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDL2CROWS(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -155651,14 +155961,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDL3BLACKCROWS_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDL3BLACKCROWS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDL3BLACKCROWS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDL3BLACKCROWS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -155679,13 +155998,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDL3BLACKCROWS_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDL3BLACKCROWS(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -155771,14 +156094,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDL3INSIDE_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDL3INSIDE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDL3INSIDE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDL3INSIDE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -155799,13 +156131,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDL3INSIDE_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDL3INSIDE(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -155891,14 +156227,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDL3LINESTRIKE_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDL3LINESTRIKE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDL3LINESTRIKE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDL3LINESTRIKE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -155919,13 +156264,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDL3LINESTRIKE_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDL3LINESTRIKE(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -156011,14 +156360,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDL3OUTSIDE_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDL3OUTSIDE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDL3OUTSIDE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDL3OUTSIDE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -156039,13 +156397,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDL3OUTSIDE_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDL3OUTSIDE(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -156131,14 +156493,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDL3STARSINSOUTH_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDL3STARSINSOUTH_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDL3STARSINSOUTH(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDL3STARSINSOUTH_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -156159,13 +156530,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDL3STARSINSOUTH_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDL3STARSINSOUTH(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -156251,14 +156626,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDL3WHITESOLDIERS_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDL3WHITESOLDIERS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDL3WHITESOLDIERS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDL3WHITESOLDIERS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -156279,13 +156663,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDL3WHITESOLDIERS_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDL3WHITESOLDIERS(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -156372,15 +156760,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLABANDONEDBABY_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            optInPenetration,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLABANDONEDBABY_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLABANDONEDBABY(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLABANDONEDBABY_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
@@ -156401,14 +156797,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLABANDONEDBABY_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                optInPenetration,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLABANDONEDBABY(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, optInPenetration, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -156494,14 +156893,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLADVANCEBLOCK_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLADVANCEBLOCK_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLADVANCEBLOCK(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLADVANCEBLOCK_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -156522,13 +156930,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLADVANCEBLOCK_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLADVANCEBLOCK(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -156614,14 +157026,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLBELTHOLD_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLBELTHOLD_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLBELTHOLD(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLBELTHOLD_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -156642,13 +157063,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLBELTHOLD_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLBELTHOLD(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -156734,14 +157159,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLBREAKAWAY_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLBREAKAWAY_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLBREAKAWAY(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLBREAKAWAY_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -156762,13 +157196,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLBREAKAWAY_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLBREAKAWAY(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -156854,14 +157292,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLCLOSINGMARUBOZU_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLCLOSINGMARUBOZU_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLCLOSINGMARUBOZU(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLCLOSINGMARUBOZU_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -156882,13 +157329,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLCLOSINGMARUBOZU_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLCLOSINGMARUBOZU(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -156974,14 +157425,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLCONCEALBABYSWALL_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLCONCEALBABYSWALL_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLCONCEALBABYSWALL(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLCONCEALBABYSWALL_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -157002,13 +157462,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLCONCEALBABYSWALL_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLCONCEALBABYSWALL(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -157094,14 +157558,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLCOUNTERATTACK_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLCOUNTERATTACK_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLCOUNTERATTACK(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLCOUNTERATTACK_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -157122,13 +157595,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLCOUNTERATTACK_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLCOUNTERATTACK(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -157215,15 +157692,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLDARKCLOUDCOVER_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            optInPenetration,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLDARKCLOUDCOVER_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLDARKCLOUDCOVER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLDARKCLOUDCOVER_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
@@ -157244,14 +157729,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLDARKCLOUDCOVER_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                optInPenetration,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLDARKCLOUDCOVER(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, optInPenetration, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -157337,14 +157825,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLDOJI_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLDOJI_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLDOJI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLDOJI_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -157365,13 +157862,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLDOJI_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLDOJI(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -157457,14 +157958,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLDOJISTAR_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLDOJISTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLDOJISTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLDOJISTAR_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -157485,13 +157995,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLDOJISTAR_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLDOJISTAR(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -157577,14 +158091,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLDRAGONFLYDOJI_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLDRAGONFLYDOJI_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLDRAGONFLYDOJI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLDRAGONFLYDOJI_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -157605,13 +158128,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLDRAGONFLYDOJI_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLDRAGONFLYDOJI(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -157697,14 +158224,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLENGULFING_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLENGULFING_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLENGULFING(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLENGULFING_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -157725,13 +158261,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLENGULFING_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLENGULFING(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -157818,15 +158358,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLEVENINGDOJISTAR_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            optInPenetration,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLEVENINGDOJISTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLEVENINGDOJISTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLEVENINGDOJISTAR_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
@@ -157847,14 +158395,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLEVENINGDOJISTAR_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                optInPenetration,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLEVENINGDOJISTAR(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, optInPenetration, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -157941,15 +158492,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLEVENINGSTAR_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            optInPenetration,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLEVENINGSTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLEVENINGSTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLEVENINGSTAR_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
@@ -157970,14 +158529,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLEVENINGSTAR_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                optInPenetration,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLEVENINGSTAR(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, optInPenetration, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -158063,14 +158625,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLGAPSIDESIDEWHITE_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLGAPSIDESIDEWHITE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLGAPSIDESIDEWHITE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLGAPSIDESIDEWHITE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -158091,13 +158662,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLGAPSIDESIDEWHITE_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLGAPSIDESIDEWHITE(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -158183,14 +158758,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLGRAVESTONEDOJI_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLGRAVESTONEDOJI_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLGRAVESTONEDOJI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLGRAVESTONEDOJI_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -158211,13 +158795,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLGRAVESTONEDOJI_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLGRAVESTONEDOJI(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -158303,14 +158891,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLHAMMER_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLHAMMER_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLHAMMER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLHAMMER_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -158331,13 +158928,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLHAMMER_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLHAMMER(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -158423,14 +159024,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLHANGINGMAN_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLHANGINGMAN_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLHANGINGMAN(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLHANGINGMAN_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -158451,13 +159061,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLHANGINGMAN_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLHANGINGMAN(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -158543,14 +159157,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLHARAMI_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLHARAMI_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLHARAMI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLHARAMI_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -158571,13 +159194,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLHARAMI_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLHARAMI(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -158663,14 +159290,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLHARAMICROSS_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLHARAMICROSS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLHARAMICROSS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLHARAMICROSS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -158691,13 +159327,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLHARAMICROSS_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLHARAMICROSS(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -158783,14 +159423,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLHIGHWAVE_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLHIGHWAVE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLHIGHWAVE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLHIGHWAVE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -158811,13 +159460,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLHIGHWAVE_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLHIGHWAVE(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -158903,14 +159556,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLHIKKAKE_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLHIKKAKE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLHIKKAKE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLHIKKAKE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -158931,13 +159593,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLHIKKAKE_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLHIKKAKE(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -159023,14 +159689,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLHIKKAKEMOD_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLHIKKAKEMOD_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLHIKKAKEMOD(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLHIKKAKEMOD_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -159051,13 +159726,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLHIKKAKEMOD_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLHIKKAKEMOD(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -159143,14 +159822,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLHOMINGPIGEON_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLHOMINGPIGEON_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLHOMINGPIGEON(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLHOMINGPIGEON_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -159171,13 +159859,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLHOMINGPIGEON_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLHOMINGPIGEON(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -159263,14 +159955,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLIDENTICAL3CROWS_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLIDENTICAL3CROWS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLIDENTICAL3CROWS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLIDENTICAL3CROWS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -159291,13 +159992,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLIDENTICAL3CROWS_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLIDENTICAL3CROWS(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -159383,14 +160088,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLINNECK_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLINNECK_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLINNECK(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLINNECK_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -159411,13 +160125,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLINNECK_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLINNECK(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -159503,14 +160221,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLINVERTEDHAMMER_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLINVERTEDHAMMER_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLINVERTEDHAMMER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLINVERTEDHAMMER_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -159531,13 +160258,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLINVERTEDHAMMER_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLINVERTEDHAMMER(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -159623,14 +160354,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLKICKING_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLKICKING_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLKICKING(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLKICKING_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -159651,13 +160391,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLKICKING_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLKICKING(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -159743,14 +160487,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLKICKINGBYLENGTH_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLKICKINGBYLENGTH_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLKICKINGBYLENGTH(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLKICKINGBYLENGTH_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -159771,13 +160524,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLKICKINGBYLENGTH_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLKICKINGBYLENGTH(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -159863,14 +160620,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLLADDERBOTTOM_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLLADDERBOTTOM_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLLADDERBOTTOM(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLLADDERBOTTOM_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -159891,13 +160657,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLLADDERBOTTOM_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLLADDERBOTTOM(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -159983,14 +160753,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLLONGLEGGEDDOJI_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLLONGLEGGEDDOJI_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLLONGLEGGEDDOJI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLLONGLEGGEDDOJI_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -160011,13 +160790,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLLONGLEGGEDDOJI_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLLONGLEGGEDDOJI(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -160103,14 +160886,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLLONGLINE_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLLONGLINE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLLONGLINE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLLONGLINE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -160131,13 +160923,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLLONGLINE_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLLONGLINE(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -160223,14 +161019,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLMARUBOZU_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLMARUBOZU_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLMARUBOZU(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLMARUBOZU_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -160251,13 +161056,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLMARUBOZU_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLMARUBOZU(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -160343,14 +161152,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLMATCHINGLOW_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLMATCHINGLOW_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLMATCHINGLOW(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLMATCHINGLOW_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -160371,13 +161189,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLMATCHINGLOW_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLMATCHINGLOW(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -160464,15 +161286,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLMATHOLD_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            optInPenetration,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLMATHOLD_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLMATHOLD(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLMATHOLD_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
@@ -160493,14 +161323,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLMATHOLD_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                optInPenetration,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLMATHOLD(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, optInPenetration, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -160587,15 +161420,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLMORNINGDOJISTAR_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            optInPenetration,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLMORNINGDOJISTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLMORNINGDOJISTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLMORNINGDOJISTAR_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
@@ -160616,14 +161457,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLMORNINGDOJISTAR_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                optInPenetration,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLMORNINGDOJISTAR(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, optInPenetration, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -160710,15 +161554,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLMORNINGSTAR_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            optInPenetration,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLMORNINGSTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLMORNINGSTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLMORNINGSTAR_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
@@ -160739,14 +161591,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLMORNINGSTAR_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                optInPenetration,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLMORNINGSTAR(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, optInPenetration, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -160832,14 +161687,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLONNECK_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLONNECK_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLONNECK(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLONNECK_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -160860,13 +161724,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLONNECK_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLONNECK(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -160952,14 +161820,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLPIERCING_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLPIERCING_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLPIERCING(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLPIERCING_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -160980,13 +161857,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLPIERCING_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLPIERCING(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -161072,14 +161953,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLRICKSHAWMAN_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLRICKSHAWMAN_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLRICKSHAWMAN(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLRICKSHAWMAN_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -161100,13 +161990,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLRICKSHAWMAN_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLRICKSHAWMAN(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -161192,14 +162086,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLRISEFALL3METHODS_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLRISEFALL3METHODS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLRISEFALL3METHODS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLRISEFALL3METHODS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -161220,13 +162123,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLRISEFALL3METHODS_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLRISEFALL3METHODS(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -161312,14 +162219,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLSEPARATINGLINES_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLSEPARATINGLINES_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLSEPARATINGLINES(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLSEPARATINGLINES_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -161340,13 +162256,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLSEPARATINGLINES_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLSEPARATINGLINES(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -161432,14 +162352,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLSHOOTINGSTAR_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLSHOOTINGSTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLSHOOTINGSTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLSHOOTINGSTAR_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -161460,13 +162389,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLSHOOTINGSTAR_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLSHOOTINGSTAR(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -161552,14 +162485,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLSHORTLINE_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLSHORTLINE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLSHORTLINE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLSHORTLINE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -161580,13 +162522,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLSHORTLINE_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLSHORTLINE(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -161672,14 +162618,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLSPINNINGTOP_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLSPINNINGTOP_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLSPINNINGTOP(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLSPINNINGTOP_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -161700,13 +162655,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLSPINNINGTOP_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLSPINNINGTOP(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -161792,14 +162751,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLSTALLEDPATTERN_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLSTALLEDPATTERN_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLSTALLEDPATTERN(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLSTALLEDPATTERN_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -161820,13 +162788,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLSTALLEDPATTERN_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLSTALLEDPATTERN(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -161912,14 +162884,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLSTICKSANDWICH_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLSTICKSANDWICH_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLSTICKSANDWICH(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLSTICKSANDWICH_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -161940,13 +162921,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLSTICKSANDWICH_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLSTICKSANDWICH(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -162032,14 +163017,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLTAKURI_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLTAKURI_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLTAKURI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLTAKURI_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -162060,13 +163054,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLTAKURI_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLTAKURI(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -162152,14 +163150,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLTASUKIGAP_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLTASUKIGAP_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLTASUKIGAP(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLTASUKIGAP_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -162180,13 +163187,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLTASUKIGAP_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLTASUKIGAP(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -162272,14 +163283,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLTHRUSTING_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLTHRUSTING_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLTHRUSTING(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLTHRUSTING_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -162300,13 +163320,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLTHRUSTING_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLTHRUSTING(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -162392,14 +163416,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLTRISTAR_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLTRISTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLTRISTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLTRISTAR_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -162420,13 +163453,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLTRISTAR_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLTRISTAR(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -162512,14 +163549,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLUNIQUE3RIVER_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLUNIQUE3RIVER_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLUNIQUE3RIVER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLUNIQUE3RIVER_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -162540,13 +163586,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLUNIQUE3RIVER_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLUNIQUE3RIVER(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -162632,14 +163682,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLUPSIDEGAP2CROWS_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLUPSIDEGAP2CROWS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLUPSIDEGAP2CROWS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLUPSIDEGAP2CROWS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -162660,13 +163719,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLUPSIDEGAP2CROWS_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLUPSIDEGAP2CROWS(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -162752,14 +163815,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CDLXSIDEGAP3METHODS_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CDLXSIDEGAP3METHODS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CDLXSIDEGAP3METHODS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CDLXSIDEGAP3METHODS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
@@ -162780,13 +163852,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.CDLXSIDEGAP3METHODS_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CDLXSIDEGAP3METHODS(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -162857,11 +163933,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CEIL_Internal(
-            startIdx, endIdx,
-            inReal,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CEIL_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CEIL(startIdx, endIdx, inReal, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CEIL_Open(_warm_inReal);
@@ -162876,10 +163964,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.CEIL_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CEIL(startIdx, endIdx, f_inReal, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -162966,15 +164061,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CMF_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            inClose,
-            inVolume,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CMF_Internal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CMF(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CMF_Open(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume, optInTimePeriod);
@@ -162995,14 +164098,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
             float[] f_inVolume = new float[inVolume.length];
             for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
-            rc = core.CMF_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                f_inVolume,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CMF(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, f_inVolume, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -163075,12 +164181,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CMO_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CMO_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CMO(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CMO_Open(_warm_inReal, optInTimePeriod);
@@ -163095,11 +164212,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.CMO_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CMO(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -163171,12 +164294,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CMOU_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CMOU_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CMOU(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CMOU_Open(_warm_inReal, optInTimePeriod);
@@ -163191,11 +164325,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.CMOU_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CMOU(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -163272,13 +164412,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.CORREL_Internal(
-            startIdx, endIdx,
-            inReal0,
-            inReal1,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.CORREL_Internal(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.CORREL(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.CORREL_Open(_warm_inReal0, _warm_inReal1, optInTimePeriod);
@@ -163295,12 +164445,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inReal0.length; _fi++) f_inReal0[_fi] = (float)inReal0[_fi];
             float[] f_inReal1 = new float[inReal1.length];
             for (int _fi = 0; _fi < inReal1.length; _fi++) f_inReal1[_fi] = (float)inReal1[_fi];
-            rc = core.CORREL_Internal(
-                startIdx, endIdx,
-                f_inReal0,
-                f_inReal1,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.CORREL(startIdx, endIdx, f_inReal0, f_inReal1, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -163371,11 +164526,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.COS_Internal(
-            startIdx, endIdx,
-            inReal,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.COS_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.COS(startIdx, endIdx, inReal, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.COS_Open(_warm_inReal);
@@ -163390,10 +164557,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.COS_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.COS(startIdx, endIdx, f_inReal, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -163464,11 +164638,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.COSH_Internal(
-            startIdx, endIdx,
-            inReal,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.COSH_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.COSH(startIdx, endIdx, inReal, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.COSH_Open(_warm_inReal);
@@ -163483,10 +164669,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.COSH_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.COSH(startIdx, endIdx, f_inReal, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -163558,12 +164751,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.DEMA_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.DEMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.DEMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.DEMA_Open(_warm_inReal, optInTimePeriod);
@@ -163578,11 +164782,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.DEMA_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.DEMA(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -163658,12 +164868,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.DIV_Internal(
-            startIdx, endIdx,
-            inReal0,
-            inReal1,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.DIV_Internal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.DIV(startIdx, endIdx, inReal0, inReal1, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.DIV_Open(_warm_inReal0, _warm_inReal1);
@@ -163680,11 +164901,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inReal0.length; _fi++) f_inReal0[_fi] = (float)inReal0[_fi];
             float[] f_inReal1 = new float[inReal1.length];
             for (int _fi = 0; _fi < inReal1.length; _fi++) f_inReal1[_fi] = (float)inReal1[_fi];
-            rc = core.DIV_Internal(
-                startIdx, endIdx,
-                f_inReal0,
-                f_inReal1,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.DIV(startIdx, endIdx, f_inReal0, f_inReal1, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -163767,14 +164994,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.DX_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            inClose,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.DX_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.DX(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.DX_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
@@ -163793,13 +165029,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.DX_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.DX(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -163876,13 +165116,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.EFI_Internal(
-            startIdx, endIdx,
-            inClose,
-            inVolume,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.EFI_Internal(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.EFI(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.EFI_Open(_warm_inClose, _warm_inVolume, optInTimePeriod);
@@ -163899,12 +165149,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
             float[] f_inVolume = new float[inVolume.length];
             for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
-            rc = core.EFI_Internal(
-                startIdx, endIdx,
-                f_inClose,
-                f_inVolume,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.EFI(startIdx, endIdx, f_inClose, f_inVolume, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -163977,12 +165232,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.EMA_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.EMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.EMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.EMA_Open(_warm_inReal, optInTimePeriod);
@@ -163997,11 +165263,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.EMA_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.EMA(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -164072,11 +165344,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.EXP_Internal(
-            startIdx, endIdx,
-            inReal,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.EXP_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.EXP(startIdx, endIdx, inReal, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.EXP_Open(_warm_inReal);
@@ -164091,10 +165375,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.EXP_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.EXP(startIdx, endIdx, f_inReal, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -164165,11 +165456,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.FLOOR_Internal(
-            startIdx, endIdx,
-            inReal,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.FLOOR_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.FLOOR(startIdx, endIdx, inReal, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.FLOOR_Open(_warm_inReal);
@@ -164184,10 +165487,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.FLOOR_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.FLOOR(startIdx, endIdx, f_inReal, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -164259,12 +165569,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.HMA_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.HMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.HMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.HMA_Open(_warm_inReal, optInTimePeriod);
@@ -164279,11 +165600,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.HMA_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.HMA(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -164355,11 +165682,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.HT_DCPERIOD_Internal(
-            startIdx, endIdx,
-            inReal,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.HT_DCPERIOD_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.HT_DCPERIOD(startIdx, endIdx, inReal, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.HT_DCPERIOD_Open(_warm_inReal);
@@ -164374,10 +165713,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.HT_DCPERIOD_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.HT_DCPERIOD(startIdx, endIdx, f_inReal, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -164449,11 +165795,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.HT_DCPHASE_Internal(
-            startIdx, endIdx,
-            inReal,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.HT_DCPHASE_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.HT_DCPHASE(startIdx, endIdx, inReal, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.HT_DCPHASE_Open(_warm_inReal);
@@ -164468,10 +165826,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.HT_DCPHASE_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.HT_DCPHASE(startIdx, endIdx, f_inReal, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -164544,11 +165909,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.HT_PHASOR_Internal(
-            startIdx, endIdx,
-            inReal,
-            outBegIdx, outNBElement, outArr0, outArr1);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.HT_PHASOR_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0, outArr1);
+        } else {
+            try {
+                OutRange _pr = core.HT_PHASOR(startIdx, endIdx, inReal, outArr0, outArr1);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.HT_PHASOR_Open(_warm_inReal);
@@ -164563,10 +165940,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.HT_PHASOR_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                outBegIdx, outNBElement, outArr0, outArr1);
+            try {
+                OutRange _fr = core.HT_PHASOR(startIdx, endIdx, f_inReal, outArr0, outArr1);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -164641,11 +166025,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.HT_SINE_Internal(
-            startIdx, endIdx,
-            inReal,
-            outBegIdx, outNBElement, outArr0, outArr1);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.HT_SINE_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0, outArr1);
+        } else {
+            try {
+                OutRange _pr = core.HT_SINE(startIdx, endIdx, inReal, outArr0, outArr1);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.HT_SINE_Open(_warm_inReal);
@@ -164660,10 +166056,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.HT_SINE_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                outBegIdx, outNBElement, outArr0, outArr1);
+            try {
+                OutRange _fr = core.HT_SINE(startIdx, endIdx, f_inReal, outArr0, outArr1);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -164737,11 +166140,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.HT_TRENDLINE_Internal(
-            startIdx, endIdx,
-            inReal,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.HT_TRENDLINE_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.HT_TRENDLINE(startIdx, endIdx, inReal, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.HT_TRENDLINE_Open(_warm_inReal);
@@ -164756,10 +166171,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.HT_TRENDLINE_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.HT_TRENDLINE(startIdx, endIdx, f_inReal, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -164831,11 +166253,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.HT_TRENDMODE_Internal(
-            startIdx, endIdx,
-            inReal,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.HT_TRENDMODE_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.HT_TRENDMODE(startIdx, endIdx, inReal, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.HT_TRENDMODE_Open(_warm_inReal);
@@ -164850,10 +166284,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.HT_TRENDMODE_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.HT_TRENDMODE(startIdx, endIdx, f_inReal, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -164930,13 +166371,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.IMI_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inClose,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.IMI_Internal(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.IMI(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.IMI_Open(_warm_inOpen, _warm_inClose, optInTimePeriod);
@@ -164953,12 +166404,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.IMI_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inClose,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.IMI(startIdx, endIdx, f_inOpen, f_inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -165031,12 +166487,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.KAMA_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.KAMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.KAMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.KAMA_Open(_warm_inReal, optInTimePeriod);
@@ -165051,11 +166518,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.KAMA_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.KAMA(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -165127,12 +166600,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.LINEARREG_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.LINEARREG_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.LINEARREG(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.LINEARREG_Open(_warm_inReal, optInTimePeriod);
@@ -165147,11 +166631,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.LINEARREG_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.LINEARREG(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -165223,12 +166713,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.LINEARREG_ANGLE_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.LINEARREG_ANGLE_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.LINEARREG_ANGLE(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.LINEARREG_ANGLE_Open(_warm_inReal, optInTimePeriod);
@@ -165243,11 +166744,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.LINEARREG_ANGLE_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.LINEARREG_ANGLE(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -165319,12 +166826,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.LINEARREG_INTERCEPT_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.LINEARREG_INTERCEPT_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.LINEARREG_INTERCEPT(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.LINEARREG_INTERCEPT_Open(_warm_inReal, optInTimePeriod);
@@ -165339,11 +166857,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.LINEARREG_INTERCEPT_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.LINEARREG_INTERCEPT(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -165415,12 +166939,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.LINEARREG_SLOPE_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.LINEARREG_SLOPE_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.LINEARREG_SLOPE(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.LINEARREG_SLOPE_Open(_warm_inReal, optInTimePeriod);
@@ -165435,11 +166970,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.LINEARREG_SLOPE_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.LINEARREG_SLOPE(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -165510,11 +167051,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.LN_Internal(
-            startIdx, endIdx,
-            inReal,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.LN_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.LN(startIdx, endIdx, inReal, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.LN_Open(_warm_inReal);
@@ -165529,10 +167082,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.LN_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.LN(startIdx, endIdx, f_inReal, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -165603,11 +167163,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.LOG10_Internal(
-            startIdx, endIdx,
-            inReal,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.LOG10_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.LOG10(startIdx, endIdx, inReal, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.LOG10_Open(_warm_inReal);
@@ -165622,10 +167194,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.LOG10_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.LOG10(startIdx, endIdx, f_inReal, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -165698,13 +167277,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.MA_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            optInMAType,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.MA_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.MA(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.MA_Open(_warm_inReal, optInTimePeriod, optInMAType);
@@ -165719,12 +167308,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.MA_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                optInMAType,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.MA(startIdx, endIdx, f_inReal, optInTimePeriod, optInMAType, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -165800,14 +167394,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.MACD_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInFastPeriod,
-            optInSlowPeriod,
-            optInSignalPeriod,
-            outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.MACD_Internal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+        } else {
+            try {
+                OutRange _pr = core.MACD(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outArr0, outArr1, outArr2);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.MACD_Open(_warm_inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -165822,13 +167425,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.MACD_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInFastPeriod,
-                optInSlowPeriod,
-                optInSignalPeriod,
-                outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+            try {
+                OutRange _fr = core.MACD(startIdx, endIdx, f_inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outArr0, outArr1, outArr2);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -165911,17 +167518,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.MACDEXT_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInFastPeriod,
-            optInFastMAType,
-            optInSlowPeriod,
-            optInSlowMAType,
-            optInSignalPeriod,
-            optInSignalMAType,
-            outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.MACDEXT_Internal(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+        } else {
+            try {
+                OutRange _pr = core.MACDEXT(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outArr0, outArr1, outArr2);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.MACDEXT_Open(_warm_inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
@@ -165936,16 +167549,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.MACDEXT_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInFastPeriod,
-                optInFastMAType,
-                optInSlowPeriod,
-                optInSlowMAType,
-                optInSignalPeriod,
-                optInSignalMAType,
-                outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+            try {
+                OutRange _fr = core.MACDEXT(startIdx, endIdx, f_inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outArr0, outArr1, outArr2);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -166023,12 +167637,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.MACDFIX_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInSignalPeriod,
-            outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.MACDFIX_Internal(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+        } else {
+            try {
+                OutRange _pr = core.MACDFIX(startIdx, endIdx, inReal, optInSignalPeriod, outArr0, outArr1, outArr2);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.MACDFIX_Open(_warm_inReal, optInSignalPeriod);
@@ -166043,11 +167668,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.MACDFIX_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInSignalPeriod,
-                outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+            try {
+                OutRange _fr = core.MACDFIX(startIdx, endIdx, f_inReal, optInSignalPeriod, outArr0, outArr1, outArr2);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -166126,13 +167757,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.MAMA_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInFastLimit,
-            optInSlowLimit,
-            outBegIdx, outNBElement, outArr0, outArr1);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.MAMA_Internal(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outArr0, outArr1);
+        } else {
+            try {
+                OutRange _pr = core.MAMA(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outArr0, outArr1);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.MAMA_Open(_warm_inReal, optInFastLimit, optInSlowLimit);
@@ -166147,12 +167788,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.MAMA_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInFastLimit,
-                optInSlowLimit,
-                outBegIdx, outNBElement, outArr0, outArr1);
+            try {
+                OutRange _fr = core.MAMA(startIdx, endIdx, f_inReal, optInFastLimit, optInSlowLimit, outArr0, outArr1);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -166235,13 +167881,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.MARKETFI_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            inVolume,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.MARKETFI_Internal(startIdx, endIdx, inHigh, inLow, inVolume, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.MARKETFI(startIdx, endIdx, inHigh, inLow, inVolume, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.MARKETFI_Open(_warm_inHigh, _warm_inLow, _warm_inVolume);
@@ -166260,12 +167916,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inVolume = new float[inVolume.length];
             for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
-            rc = core.MARKETFI_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                f_inVolume,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.MARKETFI(startIdx, endIdx, f_inHigh, f_inLow, f_inVolume, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -166344,15 +168005,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.MAVP_Internal(
-            startIdx, endIdx,
-            inReal0,
-            inReal1,
-            optInMinPeriod,
-            optInMaxPeriod,
-            optInMAType,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.MAVP_Internal(startIdx, endIdx, inReal0, inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.MAVP(startIdx, endIdx, inReal0, inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.MAVP_Open(_warm_inReal0, _warm_inReal1, optInMinPeriod, optInMaxPeriod, optInMAType);
@@ -166369,14 +168038,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inReal0.length; _fi++) f_inReal0[_fi] = (float)inReal0[_fi];
             float[] f_inReal1 = new float[inReal1.length];
             for (int _fi = 0; _fi < inReal1.length; _fi++) f_inReal1[_fi] = (float)inReal1[_fi];
-            rc = core.MAVP_Internal(
-                startIdx, endIdx,
-                f_inReal0,
-                f_inReal1,
-                optInMinPeriod,
-                optInMaxPeriod,
-                optInMAType,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.MAVP(startIdx, endIdx, f_inReal0, f_inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -166448,12 +168120,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.MAX_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.MAX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.MAX(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.MAX_Open(_warm_inReal, optInTimePeriod);
@@ -166468,11 +168151,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.MAX_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.MAX(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -166544,12 +168233,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.MAXINDEX_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.MAXINDEX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.MAXINDEX(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.MAXINDEX_Open(_warm_inReal, optInTimePeriod);
@@ -166564,11 +168264,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.MAXINDEX_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.MAXINDEX(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -166644,12 +168350,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.MEDPRICE_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.MEDPRICE_Internal(startIdx, endIdx, inHigh, inLow, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.MEDPRICE(startIdx, endIdx, inHigh, inLow, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.MEDPRICE_Open(_warm_inHigh, _warm_inLow);
@@ -166666,11 +168383,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
             float[] f_inLow = new float[inLow.length];
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
-            rc = core.MEDPRICE_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.MEDPRICE(startIdx, endIdx, f_inHigh, f_inLow, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -166757,15 +168480,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.MFI_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            inClose,
-            inVolume,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.MFI_Internal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.MFI(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.MFI_Open(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume, optInTimePeriod);
@@ -166786,14 +168517,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
             float[] f_inVolume = new float[inVolume.length];
             for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
-            rc = core.MFI_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                f_inVolume,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.MFI(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, f_inVolume, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -166865,12 +168599,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.MIDPOINT_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.MIDPOINT_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.MIDPOINT(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.MIDPOINT_Open(_warm_inReal, optInTimePeriod);
@@ -166885,11 +168630,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.MIDPOINT_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.MIDPOINT(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -166966,13 +168717,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.MIDPRICE_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.MIDPRICE_Internal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.MIDPRICE(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.MIDPRICE_Open(_warm_inHigh, _warm_inLow, optInTimePeriod);
@@ -166989,12 +168750,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
             float[] f_inLow = new float[inLow.length];
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
-            rc = core.MIDPRICE_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.MIDPRICE(startIdx, endIdx, f_inHigh, f_inLow, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -167066,12 +168832,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.MIN_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.MIN_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.MIN(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.MIN_Open(_warm_inReal, optInTimePeriod);
@@ -167086,11 +168863,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.MIN_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.MIN(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -167162,12 +168945,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.MININDEX_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.MININDEX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.MININDEX(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.MININDEX_Open(_warm_inReal, optInTimePeriod);
@@ -167182,11 +168976,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.MININDEX_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.MININDEX(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -167259,12 +169059,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.MINMAX_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0, outArr1);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.MINMAX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0, outArr1);
+        } else {
+            try {
+                OutRange _pr = core.MINMAX(startIdx, endIdx, inReal, optInTimePeriod, outArr0, outArr1);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.MINMAX_Open(_warm_inReal, optInTimePeriod);
@@ -167279,11 +169090,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.MINMAX_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0, outArr1);
+            try {
+                OutRange _fr = core.MINMAX(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0, outArr1);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -167358,12 +169175,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.MINMAXINDEX_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0, outArr1);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.MINMAXINDEX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0, outArr1);
+        } else {
+            try {
+                OutRange _pr = core.MINMAXINDEX(startIdx, endIdx, inReal, optInTimePeriod, outArr0, outArr1);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.MINMAXINDEX_Open(_warm_inReal, optInTimePeriod);
@@ -167378,11 +169206,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.MINMAXINDEX_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0, outArr1);
+            try {
+                OutRange _fr = core.MINMAXINDEX(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0, outArr1);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -167467,14 +169301,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.MINUS_DI_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            inClose,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.MINUS_DI_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.MINUS_DI(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.MINUS_DI_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
@@ -167493,13 +169336,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.MINUS_DI_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.MINUS_DI(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -167577,13 +169424,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.MINUS_DM_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.MINUS_DM_Internal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.MINUS_DM(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.MINUS_DM_Open(_warm_inHigh, _warm_inLow, optInTimePeriod);
@@ -167600,12 +169457,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
             float[] f_inLow = new float[inLow.length];
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
-            rc = core.MINUS_DM_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.MINUS_DM(startIdx, endIdx, f_inHigh, f_inLow, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -167677,12 +169539,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.MOM_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.MOM_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.MOM(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.MOM_Open(_warm_inReal, optInTimePeriod);
@@ -167697,11 +169570,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.MOM_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.MOM(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -167777,12 +169656,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.MULT_Internal(
-            startIdx, endIdx,
-            inReal0,
-            inReal1,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.MULT_Internal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.MULT(startIdx, endIdx, inReal0, inReal1, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.MULT_Open(_warm_inReal0, _warm_inReal1);
@@ -167799,11 +169689,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inReal0.length; _fi++) f_inReal0[_fi] = (float)inReal0[_fi];
             float[] f_inReal1 = new float[inReal1.length];
             for (int _fi = 0; _fi < inReal1.length; _fi++) f_inReal1[_fi] = (float)inReal1[_fi];
-            rc = core.MULT_Internal(
-                startIdx, endIdx,
-                f_inReal0,
-                f_inReal1,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.MULT(startIdx, endIdx, f_inReal0, f_inReal1, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -167886,14 +169782,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.NATR_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            inClose,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.NATR_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.NATR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.NATR_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
@@ -167912,13 +169817,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.NATR_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.NATR(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -167994,12 +169903,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.NVI_Internal(
-            startIdx, endIdx,
-            inClose,
-            inVolume,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.NVI_Internal(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.NVI(startIdx, endIdx, inClose, inVolume, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.NVI_Open(_warm_inClose, _warm_inVolume);
@@ -168016,11 +169936,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
             float[] f_inVolume = new float[inVolume.length];
             for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
-            rc = core.NVI_Internal(
-                startIdx, endIdx,
-                f_inClose,
-                f_inVolume,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.NVI(startIdx, endIdx, f_inClose, f_inVolume, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -168096,12 +170022,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.OBV_Internal(
-            startIdx, endIdx,
-            inReal,
-            inVolume,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.OBV_Internal(startIdx, endIdx, inReal, inVolume, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.OBV(startIdx, endIdx, inReal, inVolume, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.OBV_Open(_warm_inReal, _warm_inVolume);
@@ -168118,11 +170055,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
             float[] f_inVolume = new float[inVolume.length];
             for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
-            rc = core.OBV_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                f_inVolume,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.OBV(startIdx, endIdx, f_inReal, f_inVolume, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -168205,14 +170148,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.PLUS_DI_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            inClose,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.PLUS_DI_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.PLUS_DI(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.PLUS_DI_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
@@ -168231,13 +170183,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.PLUS_DI_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.PLUS_DI(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -168315,13 +170271,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.PLUS_DM_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.PLUS_DM_Internal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.PLUS_DM(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.PLUS_DM_Open(_warm_inHigh, _warm_inLow, optInTimePeriod);
@@ -168338,12 +170304,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
             float[] f_inLow = new float[inLow.length];
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
-            rc = core.PLUS_DM_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.PLUS_DM(startIdx, endIdx, f_inHigh, f_inLow, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -168417,14 +170388,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.PPO_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInFastPeriod,
-            optInSlowPeriod,
-            optInMAType,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.PPO_Internal(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.PPO(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.PPO_Open(_warm_inReal, optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -168439,13 +170419,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.PPO_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInFastPeriod,
-                optInSlowPeriod,
-                optInMAType,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.PPO(startIdx, endIdx, f_inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -168521,12 +170505,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.PVI_Internal(
-            startIdx, endIdx,
-            inClose,
-            inVolume,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.PVI_Internal(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.PVI(startIdx, endIdx, inClose, inVolume, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.PVI_Open(_warm_inClose, _warm_inVolume);
@@ -168543,11 +170538,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
             float[] f_inVolume = new float[inVolume.length];
             for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
-            rc = core.PVI_Internal(
-                startIdx, endIdx,
-                f_inClose,
-                f_inVolume,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.PVI(startIdx, endIdx, f_inClose, f_inVolume, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -168621,14 +170622,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.PVO_Internal(
-            startIdx, endIdx,
-            inVolume,
-            optInFastPeriod,
-            optInSlowPeriod,
-            optInMAType,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.PVO_Internal(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.PVO(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.PVO_Open(_warm_inVolume, optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -168643,13 +170653,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inVolume = new float[inVolume.length];
             for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
-            rc = core.PVO_Internal(
-                startIdx, endIdx,
-                f_inVolume,
-                optInFastPeriod,
-                optInSlowPeriod,
-                optInMAType,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.PVO(startIdx, endIdx, f_inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -168726,13 +170740,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.QSTICK_Internal(
-            startIdx, endIdx,
-            inOpen,
-            inClose,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.QSTICK_Internal(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.QSTICK(startIdx, endIdx, inOpen, inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.QSTICK_Open(_warm_inOpen, _warm_inClose, optInTimePeriod);
@@ -168749,12 +170773,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.QSTICK_Internal(
-                startIdx, endIdx,
-                f_inOpen,
-                f_inClose,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.QSTICK(startIdx, endIdx, f_inOpen, f_inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -168826,12 +170855,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.ROC_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.ROC_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.ROC(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.ROC_Open(_warm_inReal, optInTimePeriod);
@@ -168846,11 +170886,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.ROC_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.ROC(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -168922,12 +170968,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.ROCP_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.ROCP_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.ROCP(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.ROCP_Open(_warm_inReal, optInTimePeriod);
@@ -168942,11 +170999,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.ROCP_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.ROCP(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -169018,12 +171081,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.ROCR_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.ROCR_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.ROCR(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.ROCR_Open(_warm_inReal, optInTimePeriod);
@@ -169038,11 +171112,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.ROCR_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.ROCR(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -169114,12 +171194,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.ROCR100_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.ROCR100_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.ROCR100(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.ROCR100_Open(_warm_inReal, optInTimePeriod);
@@ -169134,11 +171225,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.ROCR100_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.ROCR100(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -169211,12 +171308,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.RSI_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.RSI_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.RSI(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.RSI_Open(_warm_inReal, optInTimePeriod);
@@ -169231,11 +171339,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.RSI_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.RSI(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -169313,14 +171427,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.SAR_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            optInAcceleration,
-            optInMaximum,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.SAR_Internal(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.SAR(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.SAR_Open(_warm_inHigh, _warm_inLow, optInAcceleration, optInMaximum);
@@ -169337,13 +171460,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
             float[] f_inLow = new float[inLow.length];
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
-            rc = core.SAR_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                optInAcceleration,
-                optInMaximum,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.SAR(startIdx, endIdx, f_inHigh, f_inLow, optInAcceleration, optInMaximum, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -169427,20 +171554,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.SAREXT_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            optInStartValue,
-            optInOffsetOnReverse,
-            optInAccelerationInitLong,
-            optInAccelerationLong,
-            optInAccelerationMaxLong,
-            optInAccelerationInitShort,
-            optInAccelerationShort,
-            optInAccelerationMaxShort,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.SAREXT_Internal(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.SAREXT(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.SAREXT_Open(_warm_inHigh, _warm_inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
@@ -169457,19 +171587,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
             float[] f_inLow = new float[inLow.length];
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
-            rc = core.SAREXT_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                optInStartValue,
-                optInOffsetOnReverse,
-                optInAccelerationInitLong,
-                optInAccelerationLong,
-                optInAccelerationMaxLong,
-                optInAccelerationInitShort,
-                optInAccelerationShort,
-                optInAccelerationMaxShort,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.SAREXT(startIdx, endIdx, f_inHigh, f_inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -169540,11 +171668,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.SIN_Internal(
-            startIdx, endIdx,
-            inReal,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.SIN_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.SIN(startIdx, endIdx, inReal, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.SIN_Open(_warm_inReal);
@@ -169559,10 +171699,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.SIN_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.SIN(startIdx, endIdx, f_inReal, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -169633,11 +171780,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.SINH_Internal(
-            startIdx, endIdx,
-            inReal,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.SINH_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.SINH(startIdx, endIdx, inReal, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.SINH_Open(_warm_inReal);
@@ -169652,10 +171811,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.SINH_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.SINH(startIdx, endIdx, f_inReal, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -169727,12 +171893,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.SMA_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.SMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.SMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.SMA_Open(_warm_inReal, optInTimePeriod);
@@ -169747,11 +171924,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.SMA_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.SMA(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -169822,11 +172005,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.SQRT_Internal(
-            startIdx, endIdx,
-            inReal,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.SQRT_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.SQRT(startIdx, endIdx, inReal, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.SQRT_Open(_warm_inReal);
@@ -169841,10 +172036,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.SQRT_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.SQRT(startIdx, endIdx, f_inReal, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -169917,13 +172119,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.STDDEV_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            optInNbDev,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.STDDEV_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.STDDEV(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.STDDEV_Open(_warm_inReal, optInTimePeriod, optInNbDev);
@@ -169938,12 +172150,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.STDDEV_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                optInNbDev,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.STDDEV(startIdx, endIdx, f_inReal, optInTimePeriod, optInNbDev, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -170030,18 +172247,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.STOCH_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            inClose,
-            optInFastK_Period,
-            optInSlowK_Period,
-            optInSlowK_MAType,
-            optInSlowD_Period,
-            optInSlowD_MAType,
-            outBegIdx, outNBElement, outArr0, outArr1);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.STOCH_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outArr0, outArr1);
+        } else {
+            try {
+                OutRange _pr = core.STOCH(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outArr0, outArr1);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.STOCH_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
@@ -170060,17 +172282,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.STOCH_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                optInFastK_Period,
-                optInSlowK_Period,
-                optInSlowK_MAType,
-                optInSlowD_Period,
-                optInSlowD_MAType,
-                outBegIdx, outNBElement, outArr0, outArr1);
+            try {
+                OutRange _fr = core.STOCH(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outArr0, outArr1);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -170157,16 +172379,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.STOCHF_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            inClose,
-            optInFastK_Period,
-            optInFastD_Period,
-            optInFastD_MAType,
-            outBegIdx, outNBElement, outArr0, outArr1);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.STOCHF_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outArr0, outArr1);
+        } else {
+            try {
+                OutRange _pr = core.STOCHF(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outArr0, outArr1);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.STOCHF_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
@@ -170185,15 +172414,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.STOCHF_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                optInFastK_Period,
-                optInFastD_Period,
-                optInFastD_MAType,
-                outBegIdx, outNBElement, outArr0, outArr1);
+            try {
+                OutRange _fr = core.STOCHF(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outArr0, outArr1);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -170271,15 +172502,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.STOCHRSI_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            optInFastK_Period,
-            optInFastD_Period,
-            optInFastD_MAType,
-            outBegIdx, outNBElement, outArr0, outArr1);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.STOCHRSI_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outArr0, outArr1);
+        } else {
+            try {
+                OutRange _pr = core.STOCHRSI(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outArr0, outArr1);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.STOCHRSI_Open(_warm_inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
@@ -170294,14 +172533,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.STOCHRSI_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                optInFastK_Period,
-                optInFastD_Period,
-                optInFastD_MAType,
-                outBegIdx, outNBElement, outArr0, outArr1);
+            try {
+                OutRange _fr = core.STOCHRSI(startIdx, endIdx, f_inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outArr0, outArr1);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -170379,12 +172621,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.SUB_Internal(
-            startIdx, endIdx,
-            inReal0,
-            inReal1,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.SUB_Internal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.SUB(startIdx, endIdx, inReal0, inReal1, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.SUB_Open(_warm_inReal0, _warm_inReal1);
@@ -170401,11 +172654,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inReal0.length; _fi++) f_inReal0[_fi] = (float)inReal0[_fi];
             float[] f_inReal1 = new float[inReal1.length];
             for (int _fi = 0; _fi < inReal1.length; _fi++) f_inReal1[_fi] = (float)inReal1[_fi];
-            rc = core.SUB_Internal(
-                startIdx, endIdx,
-                f_inReal0,
-                f_inReal1,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.SUB(startIdx, endIdx, f_inReal0, f_inReal1, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -170477,12 +172736,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.SUM_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.SUM_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.SUM(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.SUM_Open(_warm_inReal, optInTimePeriod);
@@ -170497,11 +172767,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.SUM_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.SUM(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -170575,13 +172851,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.T3_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            optInVFactor,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.T3_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.T3(startIdx, endIdx, inReal, optInTimePeriod, optInVFactor, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.T3_Open(_warm_inReal, optInTimePeriod, optInVFactor);
@@ -170596,12 +172882,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.T3_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                optInVFactor,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.T3(startIdx, endIdx, f_inReal, optInTimePeriod, optInVFactor, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -170672,11 +172963,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.TAN_Internal(
-            startIdx, endIdx,
-            inReal,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.TAN_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.TAN(startIdx, endIdx, inReal, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.TAN_Open(_warm_inReal);
@@ -170691,10 +172994,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.TAN_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.TAN(startIdx, endIdx, f_inReal, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -170765,11 +173075,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.TANH_Internal(
-            startIdx, endIdx,
-            inReal,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.TANH_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.TANH(startIdx, endIdx, inReal, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.TANH_Open(_warm_inReal);
@@ -170784,10 +173106,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.TANH_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.TANH(startIdx, endIdx, f_inReal, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -170859,12 +173188,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.TEMA_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.TEMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.TEMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.TEMA_Open(_warm_inReal, optInTimePeriod);
@@ -170879,11 +173219,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.TEMA_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.TEMA(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -170964,13 +173310,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.TRANGE_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.TRANGE_Internal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.TRANGE(startIdx, endIdx, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.TRANGE_Open(_warm_inHigh, _warm_inLow, _warm_inClose);
@@ -170989,12 +173345,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.TRANGE_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.TRANGE(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -171066,12 +173427,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.TRIMA_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.TRIMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.TRIMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.TRIMA_Open(_warm_inReal, optInTimePeriod);
@@ -171086,11 +173458,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.TRIMA_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.TRIMA(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -171162,12 +173540,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.TRIX_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.TRIX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.TRIX(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.TRIX_Open(_warm_inReal, optInTimePeriod);
@@ -171182,11 +173571,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.TRIX_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.TRIX(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -171258,12 +173653,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.TSF_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.TSF_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.TSF(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.TSF_Open(_warm_inReal, optInTimePeriod);
@@ -171278,11 +173684,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.TSF_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.TSF(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -171363,13 +173775,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.TYPPRICE_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.TYPPRICE_Internal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.TYPPRICE(startIdx, endIdx, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.TYPPRICE_Open(_warm_inHigh, _warm_inLow, _warm_inClose);
@@ -171388,12 +173810,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.TYPPRICE_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.TYPPRICE(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -171477,16 +173904,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.ULTOSC_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            inClose,
-            optInTimePeriod1,
-            optInTimePeriod2,
-            optInTimePeriod3,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.ULTOSC_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.ULTOSC(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.ULTOSC_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
@@ -171505,15 +173939,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.ULTOSC_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                optInTimePeriod1,
-                optInTimePeriod2,
-                optInTimePeriod3,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.ULTOSC(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -171586,13 +174022,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.VAR_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            optInNbDev,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.VAR_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.VAR(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.VAR_Open(_warm_inReal, optInTimePeriod, optInNbDev);
@@ -171607,12 +174053,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.VAR_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                optInNbDev,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.VAR(startIdx, endIdx, f_inReal, optInTimePeriod, optInNbDev, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -171689,13 +174140,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.VWMA_Internal(
-            startIdx, endIdx,
-            inReal,
-            inVolume,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.VWMA_Internal(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.VWMA(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.VWMA_Open(_warm_inReal, _warm_inVolume, optInTimePeriod);
@@ -171712,12 +174173,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
             float[] f_inVolume = new float[inVolume.length];
             for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
-            rc = core.VWMA_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                f_inVolume,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.VWMA(startIdx, endIdx, f_inReal, f_inVolume, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -171798,13 +174264,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.WAD_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.WAD_Internal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.WAD(startIdx, endIdx, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.WAD_Open(_warm_inHigh, _warm_inLow, _warm_inClose);
@@ -171823,12 +174299,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.WAD_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.WAD(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -171909,13 +174390,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.WCLPRICE_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            inClose,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.WCLPRICE_Internal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.WCLPRICE(startIdx, endIdx, inHigh, inLow, inClose, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.WCLPRICE_Open(_warm_inHigh, _warm_inLow, _warm_inClose);
@@ -171934,12 +174425,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.WCLPRICE_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.WCLPRICE(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -172021,14 +174517,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.WILLR_Internal(
-            startIdx, endIdx,
-            inHigh,
-            inLow,
-            inClose,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.WILLR_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.WILLR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.WILLR_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
@@ -172047,13 +174552,17 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
             float[] f_inClose = new float[inClose.length];
             for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
-            rc = core.WILLR_Internal(
-                startIdx, endIdx,
-                f_inHigh,
-                f_inLow,
-                f_inClose,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.WILLR(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -172125,12 +174634,23 @@ public class TaCodegenServe {
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
-        if (bench_mode == 0)
-        rc = core.WMA_Internal(
-            startIdx, endIdx,
-            inReal,
-            optInTimePeriod,
-            outBegIdx, outNBElement, outArr0);
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            rc = core.WMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outArr0);
+        } else {
+            try {
+                OutRange _pr = core.WMA(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+        }
+        }
         else { try {
             if (bench_mode == 1) {
                 core.WMA_Open(_warm_inReal, optInTimePeriod);
@@ -172145,11 +174665,17 @@ public class TaCodegenServe {
         if (jsonInt(json, "use_float") != 0) {
             float[] f_inReal = new float[inReal.length];
             for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
-            rc = core.WMA_Internal(
-                startIdx, endIdx,
-                f_inReal,
-                optInTimePeriod,
-                outBegIdx, outNBElement, outArr0);
+            try {
+                OutRange _fr = core.WMA(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
             usedFloat = 1;
         }
         if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
@@ -191347,9 +193873,9 @@ public class TaCodegenServe {
 
 /* Default-package twins of the shipped io.github.talib failure types (the
  * hand-written library scaffolding is the canonical copy — keep the two in
- * sync). The server never calls a public wrapper, but the spliced fragment
- * text has to compile, and it has to compile against the SAME types the
- * library ships, or the identity that splice exists to preserve would be an
+ * sync). The server calls the public wrapper on every correctness request
+ * (#236 step 4), so the spliced fragment text has to compile, and it has to
+ * compile against the SAME types the library ships, or the identity that splice exists to preserve would be an
  * identity of text only. */
 interface TaLibFailure {
    RetCode retCode();

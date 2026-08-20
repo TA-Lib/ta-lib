@@ -2882,20 +2882,64 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         s.push_str("        if (_bi == 1) startNs = System.nanoTime();\n");
 
         // Call
-        s.push_str("        if (bench_mode == 0)\n");
-        s.push_str(&format!("        rc = core.{func_base}_Internal(\n"));
-        s.push_str("            startIdx, endIdx,\n");
-        for name in &input_names {
-            s.push_str(&format!("            {name},\n"));
+        // ---- Correctness goes through the PUBLIC API; the benchmark does not.
+        //
+        // The harness drove the C-shaped tier, so the tier a user can actually
+        // reach — its argument checks, its exception mapping, the OutRange it
+        // returns — was compared against nothing (#236 step 4). It is compared
+        // now, and the exception is normalised HERE, in the server, rather than
+        // by the library pre-flattening it: a thrown failure carries its code
+        // (#236 step 1), the server reads it and reports the same
+        // retCode / outBegIdx / outNBElement wire shape it always did.
+        //
+        // A request that declares itself TIMED (`"timed":1`, which only ta_bench
+        // sends) keeps calling the C-shaped tier inside the timed loop,
+        // unchanged. These servers ARE the cross-language benchmark, and nothing
+        // measured may quietly acquire the public tier's argument checks.
+        //
+        // Declared, not inferred from `iters > 1`: `ta_bench --iters=1` is a
+        // legitimate invocation, and inferring would have made it measure the
+        // public tier in Java and C# while C and Rust stayed on their single
+        // one -- a tier switch nothing in the output would mention.
+        //
+        // Only the library's OWN failure is converted. An out-of-bounds access
+        // or an allocation failure is not something C can produce, so it is not
+        // something to report as a code — it escapes to the top-level handler
+        // and the driver treats the error response as the divergence it is.
+        {
+            let mut pub_args = String::from("startIdx, endIdx");
+            let mut core_args = String::from("startIdx, endIdx");
+            for name in &input_names {
+                pub_args.push_str(&format!(", {name}"));
+                core_args.push_str(&format!(", {name}"));
+            }
+            for opt in &func.optional_inputs {
+                pub_args.push_str(&format!(", {}", opt.name));
+                core_args.push_str(&format!(", {}", opt.name));
+            }
+            core_args.push_str(", outBegIdx, outNBElement");
+            for k in 0..outputs.len() {
+                pub_args.push_str(&format!(", outArr{k}"));
+                core_args.push_str(&format!(", outArr{k}"));
+            }
+            s.push_str("        if (bench_mode == 0) {\n");
+            s.push_str("        if (jsonInt(json, \"timed\") != 0) {\n");
+            s.push_str(&format!("            rc = core.{func_base}_Internal({core_args});\n"));
+            s.push_str("        } else {\n");
+            s.push_str("            try {\n");
+            s.push_str(&format!("                OutRange _pr = core.{func_base}({pub_args});\n"));
+            s.push_str("                outBegIdx.value = _pr.begIdx();\n");
+            s.push_str("                outNBElement.value = _pr.count();\n");
+            s.push_str("                rc = RetCode.Success;\n");
+            s.push_str("            } catch (RuntimeException _e) {\n");
+            s.push_str("                if (!(_e instanceof TaLibFailure)) throw _e;\n");
+            s.push_str("                rc = ((TaLibFailure) _e).retCode();\n");
+            s.push_str("                outBegIdx.value = 0;\n");
+            s.push_str("                outNBElement.value = 0;\n");
+            s.push_str("            }\n");
+            s.push_str("        }\n");
+            s.push_str("        }\n");
         }
-        for opt in &func.optional_inputs {
-            s.push_str(&format!("            {},\n", opt.name));
-        }
-        s.push_str("            outBegIdx, outNBElement");
-        for k in 0..outputs.len() {
-            s.push_str(&format!(", outArr{k}"));
-        }
-        s.push_str(");\n");
         // --- warm-up arms (ta_bench --mode=open / openfill). Java handles are
         // GC-managed (no Close) and the public Open throws instead of returning
         // a code, so the arms convert the throw into a RetCode.
@@ -2951,19 +2995,31 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
                  \x20           for (int _fi = 0; _fi < {name}.length; _fi++) f_{name}[_fi] = (float){name}[_fi];\n"
             ));
         }
-        s.push_str(&format!("            rc = core.{func_base}_Internal(\n"));
-        s.push_str("                startIdx, endIdx,\n");
-        for name in &input_names {
-            s.push_str(&format!("                f_{name},\n"));
+        // The float leg is a CORRECTNESS leg, so it takes the public overload
+        // for the same reason the double one does. Normalised here, same shape.
+        s.push_str("            try {\n");
+        {
+            let mut f_args = String::from("startIdx, endIdx");
+            for name in &input_names {
+                f_args.push_str(&format!(", f_{name}"));
+            }
+            for opt in &func.optional_inputs {
+                f_args.push_str(&format!(", {}", opt.name));
+            }
+            for k in 0..outputs.len() {
+                f_args.push_str(&format!(", outArr{k}"));
+            }
+            s.push_str(&format!("                OutRange _fr = core.{func_base}({f_args});\n"));
+            s.push_str("                outBegIdx.value = _fr.begIdx();\n");
+            s.push_str("                outNBElement.value = _fr.count();\n");
+            s.push_str("                rc = RetCode.Success;\n");
+            s.push_str("            } catch (RuntimeException _e) {\n");
+            s.push_str("                if (!(_e instanceof TaLibFailure)) throw _e;\n");
+            s.push_str("                rc = ((TaLibFailure) _e).retCode();\n");
+            s.push_str("                outBegIdx.value = 0;\n");
+            s.push_str("                outNBElement.value = 0;\n");
+            s.push_str("            }\n");
         }
-        for opt in &func.optional_inputs {
-            s.push_str(&format!("                {},\n", opt.name));
-        }
-        s.push_str("                outBegIdx, outNBElement");
-        for k in 0..outputs.len() {
-            s.push_str(&format!(", outArr{k}"));
-        }
-        s.push_str(");\n");
         s.push_str("            usedFloat = 1;\n");
         s.push_str("        }\n");
 
@@ -3712,7 +3768,35 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
         s.push_str("        long _t0 = 0;\n");
         s.push_str("        for (int _bi = 0; _bi <= bench_iters; _bi++) {\n");
         s.push_str("            if (_bi == 1) _t0 = GetNanoTime();\n");
-        s.push_str(&format!("            rc = core.{base}({call_args});\n"));
+        // Correctness through the PUBLIC overload, the benchmark through the
+        // C-shaped one. See the Java emitter for why, and for why only the
+        // library's own failure is converted to a code here.
+        {
+            let mut pub_args = String::from("startIdx, endIdx");
+            for name in &input_names {
+                pub_args.push_str(&format!(", {name}"));
+            }
+            for opt in &func.optional_inputs {
+                pub_args.push_str(&format!(", {}", opt.name));
+            }
+            for k in 0..outputs.len() {
+                pub_args.push_str(&format!(", outArr{k}"));
+            }
+            s.push_str("            if (GetInt(p, \"timed\", 0) != 0) {\n");
+            s.push_str(&format!("                rc = core.{base}({call_args});\n"));
+            s.push_str("            } else {\n");
+            s.push_str("                try {\n");
+            s.push_str(&format!("                    OutRange _pr = core.{base}({pub_args});\n"));
+            s.push_str("                    outBegIdx = _pr.BegIdx;\n");
+            s.push_str("                    outNBElement = _pr.Count;\n");
+            s.push_str("                    rc = RetCode.Success;\n");
+            s.push_str("                } catch (Exception _e) when (_e is ITaLibFailure) {\n");
+            s.push_str("                    rc = ((ITaLibFailure)_e).RetCode;\n");
+            s.push_str("                    outBegIdx = 0;\n");
+            s.push_str("                    outNBElement = 0;\n");
+            s.push_str("                }\n");
+            s.push_str("            }\n");
+        }
         s.push_str("        }\n");
         s.push_str("        long elapsedNs = (GetNanoTime() - _t0) / bench_iters;\n");
 
@@ -3740,7 +3824,28 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
                      \x20           for (int _fi = 0; _fi < {name}.Length; _fi++) f_{name}[_fi] = (float){name}[_fi];\n"
                 ));
             }
-            s.push_str(&format!("            rc = core.{base}({f_args});\n"));
+            {
+                let mut fpub = String::from("startIdx, endIdx");
+                for name in &input_names {
+                    fpub.push_str(&format!(", f_{name}"));
+                }
+                for opt in &func.optional_inputs {
+                    fpub.push_str(&format!(", {}", opt.name));
+                }
+                for k in 0..outputs.len() {
+                    fpub.push_str(&format!(", outArr{k}"));
+                }
+                s.push_str("            try {\n");
+                s.push_str(&format!("                OutRange _fr = core.{base}({fpub});\n"));
+                s.push_str("                outBegIdx = _fr.BegIdx;\n");
+                s.push_str("                outNBElement = _fr.Count;\n");
+                s.push_str("                rc = RetCode.Success;\n");
+                s.push_str("            } catch (Exception _e) when (_e is ITaLibFailure) {\n");
+                s.push_str("                rc = ((ITaLibFailure)_e).RetCode;\n");
+                s.push_str("                outBegIdx = 0;\n");
+                s.push_str("                outNBElement = 0;\n");
+                s.push_str("            }\n");
+            }
             s.push_str("            usedFloat = 1;\n");
             s.push_str("        }\n");
         }

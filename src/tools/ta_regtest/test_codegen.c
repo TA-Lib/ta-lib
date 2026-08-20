@@ -185,6 +185,52 @@ static long g_startSweepWithOutput[NUM_LANGUAGES];
  * ref_diverges_on_partial_range). Printed, so the carve-out cannot quietly grow
  * to swallow the axis. */
 static long g_startSweepSkipped98 = 0;
+/* ---- Return-code census (#236 step 4) ----
+ * The retCode of every value-comparison call and every index-range case,
+ * counted per LANGUAGE and per code. NOT every code on the wire: the unstable
+ * period, candle-setting, predicate-parity and stream_verify legs answer codes
+ * this census does not see.
+ *
+ * Two jobs. The first is a floor: the server is about to become the place where
+ * a thrown failure is turned back into a code, and a normalisation layer is a
+ * new place for vacuity to hide. If it mapped everything onto one code and the
+ * corpus only ever produced that code, nothing would notice — so the codes the
+ * corpus is known to reach are required to keep being reached, per language,
+ * because one server erroring on every request of a kind is invisible in a total
+ * another server keeps non-zero. Same lesson as the float-sentinel counters
+ * above, same shape.
+ *
+ * The second was a one-off: the printed distribution was captured from the
+ * C-shaped path BEFORE the harness was pointed at the public API and diffed
+ * against the same run afterwards, byte for byte, which is how the switch was
+ * shown to move no return code — something no value comparison can see, because
+ * a rejected call has no values to compare. That diff was manual and nothing
+ * here re-checks it; what SURVIVES in the code is the floor above. Pinning the
+ * exact counts was considered and rejected: they move with every added
+ * function, so the pin would be re-baselined rather than believed.
+ */
+#define RC_BUCKETS 8
+static const int RC_CODE[RC_BUCKETS] = { 0, 2, 3, 12, 13, 17, 5000, -1 };
+static const char *const RC_NAME[RC_BUCKETS] = {
+    "Success", "BadParam", "AllocErr", "OutOfRangeStartIndex",
+    "OutOfRangeEndIndex", "InsufficientHistory", "InternalError", "other"
+};
+static long g_retCodeSeen[NUM_LANGUAGES][RC_BUCKETS];
+/* Set when a language's pass COMPLETED, which `g_codegenCompared[]` cannot
+ * stand in for: a filter selecting only post-cutover functions compares no
+ * values and leaves that counter at 0 on a language that very much ran. */
+static int g_langRan[NUM_LANGUAGES];
+
+static void record_retcode( int langIndex, int code )
+{
+    int b;
+    if( langIndex < 0 || langIndex >= (int)NUM_LANGUAGES )
+        return;
+    for( b = 0; b < RC_BUCKETS - 1; b++ )
+        if( RC_CODE[b] == code ) { g_retCodeSeen[langIndex][b]++; return; }
+    g_retCodeSeen[langIndex][RC_BUCKETS - 1]++;
+}
+
 /* Calls where the server REPORTED allocating an output buffer larger than the
  * count it produced. Counted and floored: with the servers sized to the produced
  * count by default, dropping this would leave the whole harness proving only
@@ -503,6 +549,15 @@ static int json_get_int_array(const char *json, const char *field,
 static int json_is_error(const char *json)
 {
     return strstr(json, "\"error\"") != NULL;
+}
+
+/* The only error responses a `call` may legitimately answer: a name this
+ * backend does not implement. Every other error on that path is a defect --
+ * see the caller. */
+static int json_error_is_unsupported(const char *json)
+{
+    return strstr(json, "Unknown function") != NULL ||
+           strstr(json, "Unknown method")   != NULL;
 }
 
 /* ---- Unstable period lookup ---- */
@@ -937,12 +992,34 @@ static void compare_codegen_output_generic(
     if( p->codegenError != TA_TEST_PASS )
         return;
 
-    /* Unsupported function -- skip silently */
+    /* An error response is one of two very different things. A name this
+     * backend does not implement is the legitimate skip this leg has always
+     * allowed. Anything else is an exception that ESCAPED -- and #236 step 4
+     * put the public wrapper in this call path, which is exactly where a
+     * genuine NullPointerException or IndexOutOfBounds would newly surface
+     * (a carried failure is converted to a code and never reaches here).
+     *
+     * Returning silently on the second counted the call as compared --
+     * `ctx->passed++` runs regardless -- so a crash in the tier this harness
+     * now exists to test read as PASS. */
     if( json_is_error(p->responseBuf) )
+    {
+        if( json_error_is_unsupported(p->responseBuf) )
+            return;
+        printf("CODEGEN MISMATCH [TA_%s]: %s answered an ERROR response where a "
+               "retCode was due -- an exception escaped the public API: %s\n",
+               p->funcInfo->name, ALL_LANGUAGES[p->langIndex].display,
+               p->responseBuf);
+        p->codegenError = TA_CODEGEN_RETCODE_MISMATCH;
         return;
+    }
 
     /* Compare retCode */
     int cg_retCode = json_get_int(p->responseBuf, "retCode");
+    /* Once per CALL, not once per output: the census counts what the server
+     * answered, and it answers once however many outputs are then read out. */
+    if( outputNb == 0 )
+        record_retcode(p->langIndex, cg_retCode);
     if( (int)p->lastRetCode != cg_retCode )
     {
         printf("CODEGEN MISMATCH [TA_%s]: retCode C=%d codegen=%d\n",
@@ -3470,20 +3547,39 @@ typedef struct
     int         endIdx;
     TA_RetCode  expected;
     const char *what;
+    /* When non-NULL, appended to the request verbatim. Lets one table carry the
+     * PARAMETER rejection beside the index ones: `--codegen` reached
+     * TA_BAD_PARAM on no call at all in any language before this, so the one
+     * code every backend routes its catch-all through was compared nowhere in
+     * the default pipeline. (`--xlang-hash` does compare it, on the min-1 /
+     * max+1 vector of every integer parameter — but it is not part of a plain
+     * `--codegen` run, so the tier this step rerouted had no BadParam case
+     * looking at it.) The census below is what made that visible. */
+    const char *extraParams;
 } XlangIndexRangeCase;
 
 static ErrorNumber test_index_range_xlang(CodegenPipe *cp, const CodegenLanguage *lang,
+                                          int langIndex,
                                           char *reqBuf, char *respBuf)
 {
     static const XlangIndexRangeCase CASES[] = {
         { TA_MAX_INDEX+1, TA_MAX_INDEX+1, TA_OUT_OF_RANGE_START_INDEX,
-          "startIdx > TA_MAX_INDEX" },
+          "startIdx > TA_MAX_INDEX", NULL },
         { TA_MAX_INDEX,   TA_MAX_INDEX+1, TA_OUT_OF_RANGE_END_INDEX,
-          "endIdx > TA_MAX_INDEX" },
+          "endIdx > TA_MAX_INDEX", NULL },
         { 10,             9,              TA_OUT_OF_RANGE_END_INDEX,
-          "endIdx < startIdx" },
+          "endIdx < startIdx", NULL },
         { TA_MAX_INDEX,   TA_MAX_INDEX-1, TA_OUT_OF_RANGE_END_INDEX,
-          "startIdx == TA_MAX_INDEX accepted" }
+          "startIdx == TA_MAX_INDEX accepted", NULL },
+        /* Valid indices, out-of-domain period: the catch-all, on a call every
+         * backend has to reject the same way. `optInTimePeriod` is spelled
+         * explicitly rather than left absent, because an absent field is a
+         * different test in each server -- C and Java read 0, Rust substitutes
+         * the documented default -- and this case is about the DOMAIN check, not
+         * about what a missing field means. TA_AD takes no optional parameter and
+         * is skipped. */
+        { 0,              5,              TA_BAD_PARAM,
+          "optInTimePeriod below its documented range", ",\"optInTimePeriod\":0" }
     };
     /* One per input shape: a single real array, a real array with several
      * outputs, and a full price bundle. The prologue is emitted from one
@@ -3500,6 +3596,10 @@ static ErrorNumber test_index_range_xlang(CodegenPipe *cp, const CodegenLanguage
         {
             const XlangIndexRangeCase *tc = &CASES[c];
             int rc, pos;
+
+            /* A parameter case needs a parameter. TA_AD has none. */
+            if( tc->extraParams != NULL && strcmp(FUNCS[f], "TA_AD") == 0 )
+                continue;
 
             pos = codegen_appendf(reqBuf, JSON_BUF_SIZE, 0,
                     "{\"method\":\"%s\",\"params\":{\"startIdx\":%d,\"endIdx\":%d",
@@ -3520,6 +3620,8 @@ static ErrorNumber test_index_range_xlang(CodegenPipe *cp, const CodegenLanguage
                 pos = codegen_appendf(reqBuf, JSON_BUF_SIZE, pos, ",\"inReal\":");
                 pos = json_write_double_array(reqBuf, JSON_BUF_SIZE, pos, data, NB, 0);
             }
+            if( tc->extraParams != NULL )
+                pos = codegen_appendf(reqBuf, JSON_BUF_SIZE, pos, "%s", tc->extraParams);
             codegen_appendf(reqBuf, JSON_BUF_SIZE, pos, "}}");
 
             if( codegen_pipe_call(cp, reqBuf, respBuf, JSON_BUF_SIZE) != TA_TEST_PASS
@@ -3532,6 +3634,9 @@ static ErrorNumber test_index_range_xlang(CodegenPipe *cp, const CodegenLanguage
                 return TA_INDEX_RANGE_XLANG_CALL_FAILED;
             }
             rc = json_get_int(respBuf, "retCode");
+            /* This leg is where OUT_OF_RANGE_{START,END}_INDEX come from — the
+             * census floor below would have nothing to stand on without it. */
+            record_retcode(langIndex, rc);
             if( rc != (int)tc->expected )
             {
                 printf("  INDEX RANGE XLANG [%s]: %s %s (startIdx=%d endIdx=%d) "
@@ -3945,7 +4050,7 @@ static ErrorNumber test_codegen_for_language(
      * expectation comes from the in-process C contract. */
     if( ctx.error == TA_TEST_PASS )
     {
-        ErrorNumber idxErr = test_index_range_xlang(&cp, lang, requestBuf, responseBuf);
+        ErrorNumber idxErr = test_index_range_xlang(&cp, lang, langIndex, requestBuf, responseBuf);
         if( idxErr != TA_TEST_PASS )
         {
             ctx.error = idxErr;
@@ -4102,6 +4207,7 @@ static ErrorNumber test_codegen_for_language(
 
     if( langIndex >= 0 && (unsigned int)langIndex < NUM_LANGUAGES )
         g_codegenCompared[langIndex] = ctx.passed;
+    g_langRan[langIndex] = 1;
 
     /* Name the skips — an unnamed "6 skipped" reads as noise. The set is the
      * same for every language, so print it once (issue #137). All four variants
@@ -7335,6 +7441,100 @@ ErrorNumber test_codegen(const TA_History *history,
                        "every server-facing call is back at startIdx 0\n");
                 return TA_CODEGEN_OUTPUT_MISMATCH;
             }
+        /* ---- Return-code census (#236 step 4) ----
+         * Printed per language, and floored on the codes this corpus is known to
+         * reach. The floor is a LIST, not a total: a server that stopped
+         * answering one of them entirely is invisible in a sum the others keep
+         * non-zero, and that is precisely the shape of a normalisation layer
+         * that has quietly collapsed onto one code.
+         *
+         * AllocErr, InternalError and InsufficientHistory are NOT floored here
+         * and are named rather than silently omitted: the first two are
+         * unreachable from the managed batch tier (an allocation failure
+         * terminates the process, #178), and the third is streaming-only, which
+         * this leg does not drive. `other` must stay ZERO — a code outside the
+         * documented function-tier set reaching the wire is a defect however
+         * often it happens. */
+        {
+            static const int FLOORED[] = { 0, 2, 12, 13 };   /* Success, BadParam, both index codes */
+            unsigned int li, b, fi;
+            int anyLang = 0;
+            for( li = 0; li < NUM_LANGUAGES; li++ )
+            {
+                long total = 0;
+                for( b = 0; b < RC_BUCKETS; b++ ) total += g_retCodeSeen[li][b];
+                if( total == 0 )
+                    continue;               /* language not run */
+                anyLang = 1;
+                printf("  retCode census [%s]:", ALL_LANGUAGES[li].display);
+                for( b = 0; b < RC_BUCKETS; b++ )
+                    if( g_retCodeSeen[li][b] > 0 )
+                        printf(" %s=%ld", RC_NAME[b], g_retCodeSeen[li][b]);
+                printf("\n");
+                if( g_retCodeSeen[li][RC_BUCKETS - 1] > 0 )
+                {
+                    printf("\nCODEGEN FAILED: %s answered %ld call(s) with a code outside "
+                           "the documented function-tier set\n",
+                           ALL_LANGUAGES[li].display,
+                           g_retCodeSeen[li][RC_BUCKETS - 1]);
+                    return TA_CODEGEN_RETCODE_MISMATCH;
+                }
+                for( fi = 0; fi < sizeof(FLOORED)/sizeof(FLOORED[0]); fi++ )
+                {
+                    /* Success comes from the VALUE comparison, which a filtered
+                     * run — or a corpus of post-cutover functions, which have no
+                     * frozen baseline to compare against — legitimately never
+                     * reaches. The other three come from test_index_range_xlang,
+                     * which runs whatever the filter says, so they are floored
+                     * unconditionally. Found by the synth gate: its nine
+                     * synthetic functions are all post-cutover, so Rust compared
+                     * no values and a blanket floor called that a defect. */
+                    if( FLOORED[fi] == 0 && g_codegenCompared[li] == 0 )
+                        continue;
+                    for( b = 0; b < RC_BUCKETS; b++ )
+                    {
+                        if( RC_CODE[b] != FLOORED[fi] ) continue;
+                        if( g_retCodeSeen[li][b] == 0 )
+                        {
+                            printf("\nCODEGEN FAILED: %s never answered %s (%d) — a code this "
+                                   "corpus reaches on every other language stopped being "
+                                   "produced, so whatever maps codes on this one is no longer "
+                                   "being exercised across its range\n",
+                                   ALL_LANGUAGES[li].display, RC_NAME[b], RC_CODE[b]);
+                            return TA_CODEGEN_RETCODE_MISMATCH;
+                        }
+                    }
+                }
+            }
+            /* The guard this replaces asked whether the census counted
+             * nothing ANYWHERE, and could not fire: a language only reaches
+             * the census after its own pass completed clean, and that pass
+             * includes the index-range leg, which records unconditionally --
+             * so "compared something" already implied "counted something".
+             *
+             * The reachable hole is per-language, and it is the shape every
+             * other floor in this file is written per-language to avoid: one
+             * server's row going empty is read as "language not run" by the
+             * skip above and absorbed, because the other three keep the total
+             * non-zero. A language that RAN must have answered something. */
+            for( li = 0; li < NUM_LANGUAGES; li++ )
+            {
+                long total = 0;
+                if( !g_langRan[li] )
+                    continue;
+                for( b = 0; b < RC_BUCKETS; b++ ) total += g_retCodeSeen[li][b];
+                if( total == 0 )
+                {
+                    printf("\nCODEGEN FAILED: %s ran but its retCode census is "
+                           "EMPTY -- the census stopped observing this one "
+                           "language, which the per-language floors below "
+                           "cannot see because they skip an empty row as "
+                           "\"language not run\"\n", ALL_LANGUAGES[li].display);
+                    return TA_CODEGEN_RETCODE_MISMATCH;
+                }
+            }
+        }
+
             /* The other half of the bound: it is a MINIMUM. Every leg above
              * asks for exactly the produced count, so without this the harness
              * would prove only that the minimum is accepted — never that a

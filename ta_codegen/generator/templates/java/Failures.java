@@ -1,8 +1,8 @@
 /* Default-package twins of the shipped io.github.talib failure types (the
  * hand-written library scaffolding is the canonical copy — keep the two in
- * sync). The server never calls a public wrapper, but the spliced fragment
- * text has to compile, and it has to compile against the SAME types the
- * library ships, or the identity that splice exists to preserve would be an
+ * sync). The server calls the public wrapper on every correctness request
+ * (#236 step 4), so the spliced fragment text has to compile, and it has to
+ * compile against the SAME types the library ships, or the identity that splice exists to preserve would be an
  * identity of text only. */
 interface TaLibFailure {
    RetCode retCode();
